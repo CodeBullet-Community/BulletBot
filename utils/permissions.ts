@@ -1,3 +1,5 @@
 namespace utils.permissions {
-    export var placeholder;
+    export const MEMBER = 0;
+    export const MOD = 1;
+    export const ADMIN = 2;
 }
