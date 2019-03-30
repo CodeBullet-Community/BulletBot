@@ -1,0 +1,26 @@
+{
+  "name": "bulletbot",
+  "version": "1.0.0",
+  "description": "Bot for the CodeBullet Discord server",
+  "main": "bin/index.js",
+  "bin": {
+    "bulletbot": "index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jet132/BulletBot.git"
+  },
+  "author": "Staff of the CB Discord server",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jet132/BulletBot/issues"
+  },
+  "homepage": "https://github.com/Jet132/BulletBot#readme",
+  "dependencies": {
+    "@types/node": "^11.12.2",
+    "discord.js": "^11.4.2"
+  }
+}

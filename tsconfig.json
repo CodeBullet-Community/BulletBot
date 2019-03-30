@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "watch": true,
+        "outDir": "bin",
+        "moduleResolution": "node"
+    }
+}
