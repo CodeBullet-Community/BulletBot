@@ -3,6 +3,9 @@
         "target": "esnext",
         "watch": true,
         "outDir": "bin",
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+        "module": "commonjs",
+        "resolveJsonModule": true,
+        "esModuleInterop": true
     }
 }
