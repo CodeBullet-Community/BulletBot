@@ -105,6 +105,7 @@ export class Database {
         settings: mongoose.Model<placeholderInterface>;
     };
     webhookDB: {
+        connection: mongoose.Connection;
         youtube: mongoose.Model<webhookInterface>;
     };
 
@@ -122,15 +123,16 @@ export class Database {
             commands: mainConnection.model("commands", commandsSchema, "commands"),
             filters: mainConnection.model("filters", filtersSchema, "filters"),
             settings: mainConnection.model("setting", placeholderSchema, "settings")
-        }
+        };
 
         var webhookConnection = mongoose.createConnection(URI + "/webhooks", { useNewUrlParser: true });
         webhookConnection.on('error', console.error.bind(console, 'connection error:'));
         webhookConnection.once('open', function () {
-            console.log("connected to " + URI + "/webhooks")
+            console.log("connected to " + URI + "/webhooks");
         });
         this.webhookDB = {
+            connection: webhookConnection,
             youtube: webhookConnection.model("webhook", webhookSchema, "youtube")
-        }
+        };
     }
 }
