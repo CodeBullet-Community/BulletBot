@@ -1,4 +1,4 @@
-import * as mongoose from "mongoose";
+import mongoose = require("mongoose");
 
 // guild 
 interface guildInterface extends mongoose.Document {
@@ -41,8 +41,8 @@ interface logInterface extends mongoose.Document {
     action: string;
 };
 
-// command settings
-interface cmdSetInterface extends mongoose.Document {
+// commands settings
+interface commandsInterface extends mongoose.Document {
     guild: string;
     commands: {
         [key: string]: {
@@ -50,13 +50,13 @@ interface cmdSetInterface extends mongoose.Document {
         };
     };
 };
-const cmdSetSchema = new mongoose.Schema({
+const commandsSchema = new mongoose.Schema({
     guild: String,
     commands: mongoose.Schema.Types.Mixed
 }, { strict: false });
 
 // filter settings
-interface filterSetInterface extends mongoose.Document {
+interface filtersInterface extends mongoose.Document {
     guild: string;
     filters: {
         [key: string]: {
@@ -64,7 +64,7 @@ interface filterSetInterface extends mongoose.Document {
         };
     };
 };
-const filterSetSchema = new mongoose.Schema({
+const filtersSchema = new mongoose.Schema({
     guild: String,
     filters: mongoose.Schema.Types.Mixed
 }, { strict: false });
@@ -76,6 +76,12 @@ interface webhookInterface extends mongoose.Document {
     channel: string;
     message: string;
 };
+const webhookSchema = new mongoose.Schema({
+    feed: String,
+    guild: String,
+    channel: String,
+    message: String
+})
 
 // placeholder
 interface placeholderInterface extends mongoose.Document {
@@ -94,12 +100,37 @@ export class Database {
         connection: mongoose.Connection;
         guilds: mongoose.Model<guildInterface>;
         logs: mongoose.Model<logInterface>;
-        commands: mongoose.Model<cmdSetInterface>;
-        filters: mongoose.Model<filterSetInterface>;
-        global: mongoose.Model<placeholderInterface>;
+        commands: mongoose.Model<commandsInterface>;
+        filters: mongoose.Model<filtersInterface>;
+        settings: mongoose.Model<placeholderInterface>;
+    };
+    webhookDB: {
+        youtube: mongoose.Model<webhookInterface>;
     };
 
     constructor(URI: string) {
+        var mainConnection = mongoose.createConnection(URI + "/main", { useNewUrlParser: true });
+        mainConnection.on('error', console.error.bind(console, 'connection error:'));
+        mainConnection.once('open', function () {
+            console.log("connected to " + URI + "/main")
+        });
+        // TODO: define logs
+        this.mainDB = {
+            connection: mainConnection,
+            guilds: mainConnection.model("guild", guildSchema, "guilds"),
+            logs: null,
+            commands: mainConnection.model("commands", commandsSchema, "commands"),
+            filters: mainConnection.model("filters", filtersSchema, "filters"),
+            settings: mainConnection.model("setting", placeholderSchema, "settings")
+        }
 
+        var webhookConnection = mongoose.createConnection(URI + "/webhooks", { useNewUrlParser: true });
+        webhookConnection.on('error', console.error.bind(console, 'connection error:'));
+        webhookConnection.once('open', function () {
+            console.log("connected to " + URI + "/webhooks")
+        });
+        this.webhookDB = {
+            youtube: webhookConnection.model("webhook", webhookSchema, "youtube")
+        }
     }
 }
