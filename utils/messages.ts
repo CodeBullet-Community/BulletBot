@@ -1,3 +1,1 @@
-namespace utils.messages {
-    export var placeholder;
-}
+export var placeholder;

@@ -1,3 +1,3 @@
-export default class webhooks{
+export default class Webhooks{
 
 }

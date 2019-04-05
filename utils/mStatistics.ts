@@ -1,5 +1,3 @@
-namespace utils {
-    export class mStatistics {
+export class MStatistics {
 
-    }
 }

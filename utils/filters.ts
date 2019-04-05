@@ -1,3 +1,1 @@
-namespace utils.filters {
-    export var placeholder;
-}
+export var placeholder;

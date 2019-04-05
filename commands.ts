@@ -1,3 +1,3 @@
-export default class commands{
+export default class Commands{
 
 }

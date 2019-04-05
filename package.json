@@ -21,6 +21,11 @@
   "homepage": "https://github.com/Jet132/BulletBot#readme",
   "dependencies": {
     "@types/node": "^11.12.2",
-    "discord.js": "^11.4.2"
+    "discord.js": "^11.4.2",
+    "mongoose": "^5.4.20"
+  },
+  "devDependencies": {
+    "@types/mongodb": "^3.1.22",
+    "@types/mongoose": "^5.3.24"
   }
 }

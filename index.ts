@@ -1,34 +1,30 @@
 import * as discord from "discord.js";
-import commands from "./commands";
-import filters from "./filters";
-import webhooks from "./webhooks";
+import Commands from "./commands";
+import Filters from "./filters";
+import Webhooks from "./webhooks";
+import { Database } from "./Database";
+import { MStatistics } from "./utils/mStatistics";
+import utils from "./utils";
+
+// Database reference gets added in class
+const DBURI = "mongodb://localhost";
 
 interface botInterface {
     client: discord.Client;
-    commands: commands;
-    filters: filters;
-    webhooks: webhooks;
-    database: {
-        guilds: utils.database.guilds;
-        commands: utils.database.commands;
-        filters: utils.database.filters;
-        webhooks: utils.database.webhooks;
-    };
-    mStatistics: utils.mStatistics;
+    commands: Commands;
+    filters: Filters;
+    webhooks: Webhooks;
+    database: Database;
+    mStatistics: MStatistics;
 }
 
 const bot:botInterface = {
     client: new discord.Client(),
-    commands: new commands(),
-    filters: new filters(),
-    webhooks: new webhooks(),
-    database: {
-        guilds: new utils.database.guilds(),
-        commands: new utils.database.commands(),
-        filters: new utils.database.filters(),
-        webhooks: new utils.database.webhooks()
-    },
-    mStatistics: new utils.mStatistics()
+    commands: new Commands(),
+    filters: new Filters(),
+    webhooks: new Webhooks(),
+    database: new Database(DBURI),
+    mStatistics: new utils.MStatistics()
 };
 
 bot.client.on('ready', () => {
