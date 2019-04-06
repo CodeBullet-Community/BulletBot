@@ -93,9 +93,9 @@ interface placeholderInterface extends mongoose.Document {
 const placeholderSchema = new mongoose.Schema({}, { strict: false });
 
 const GLOBAL = {
-    commands: "",
-    filters: "",
-    general: ""
+    commands: "5ca889e805bac8342004ff6f",
+    filters: "5ca889ef05bac8342004ff70",
+    general: "5ca8896005bac8342004ff6e"
 };
 
 export class Database {
@@ -111,6 +111,11 @@ export class Database {
         connection: mongoose.Connection;
         youtube: mongoose.Model<webhookInterface>;
     };
+    cache:{
+        general: any;
+        commands: any;
+        filters: any;
+    }
 
     /** manages connections to databases */
     constructor(URI: string) {
@@ -138,7 +143,44 @@ export class Database {
             connection: webhookConnection,
             youtube: webhookConnection.model("webhook", webhookSchema, "youtube")
         };
+
+        this.updateGlobalSettings();
     };
+
+    /** updates cached global settings */
+    async updateGlobalSettings(){
+        var general = await this.mainDB.settings.findById(GLOBAL.general);
+        var commands = await this.mainDB.settings.findById(GLOBAL.commands);
+        var filters = await this.mainDB.settings.findById(GLOBAL.filters);
+        this.cache = {
+            general: general.toObject(),
+            commands: commands.toObject(),
+            filters: filters.toObject()
+        }
+
+    }
+
+    /** returns chached global general settings */
+    getGlobalSettings(){
+        return this.cache.general;
+    }
+
+    /** returns default prefix */
+    getPrefix(): string{
+        return this.cache.general.prefix;
+    }
+
+    /** returns global command settings if exist else null */
+    getGlobalCommandSettings(command:string){
+        if(command in this.cache.commands) return this.cache.commands[command];
+        return null;
+    }
+
+    /** returns global filter settings if exist else null */
+    getGlobalFilterSettings(filter:string){
+        if(filter in this.cache.filters) return this.cache.filters[filter];
+        return null;
+    }
 
     /** find Guild Doc */
     findGuild(guild: Guild) {

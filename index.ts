@@ -16,16 +16,25 @@ interface botInterface {
     webhooks: Webhooks;
     database: Database;
     mStatistics: MStatistics;
+    log: Function;
 }
 
-const bot:botInterface = {
+const bot: botInterface = {
     client: new discord.Client(),
     commands: new Commands(),
     filters: new Filters(),
     webhooks: new Webhooks(),
     database: new Database(DBURI),
-    mStatistics: new utils.MStatistics()
+    mStatistics: new utils.MStatistics(),
+    log: function (message) {
+        console.log(new Date().toISOString() + ": " + message);
+    }
 };
+
+var globalUpdate = setInterval(() => {
+    bot.database.updateGlobalSettings();
+    bot.log("global cache was updated");
+}, 60000);
 
 bot.client.on('ready', () => {
     console.log("Bot is ready");
@@ -33,20 +42,32 @@ bot.client.on('ready', () => {
 
 bot.client.on('message', message => {
     if (message.author.bot) return;
-    message.channel.send("messages recieved");
-    switch(message.content){
+    if (!message.content.startsWith(bot.database.getPrefix())) return;
+
+    var command = message.content.split(" ")[0].slice(bot.database.getPrefix().length);
+    var args = message.content.slice(bot.database.getPrefix().length + command.length+1);
+    
+    switch (command) {
         case "add":
-        console.log("adding guild");
-        bot.database.addGuild(message.guild).then((guildDoc)=>{
-            console.log(guildDoc);
-        });
-        break;
+            bot.database.addGuild(message.guild).then((guildDoc) => {
+                message.channel.send("added this guild");
+            });
+            break;
         case "remove":
-        console.log("removing guild");
-        bot.database.removeGuild(message.guild).then(() => {
-            console.log("deleted");
-        })
-        break;
+            bot.database.removeGuild(message.guild).then(() => {
+                message.channel.send("removed this guild");
+            })
+            break;
+        case "update":
+            bot.database.updateGlobalSettings().then(() => {
+                message.channel.send("updated global settings");
+            })
+        case "command":
+            console.log(bot.database.getGlobalCommandSettings(args));
+            break;
+        case "filter":
+            console.log(bot.database.getGlobalFilterSettings(args));
+            break;
     }
 });
 
