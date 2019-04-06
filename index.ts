@@ -44,9 +44,9 @@ bot.client.on('message', message => {
     if (message.author.bot) return;
     if (!message.content.startsWith(bot.database.getPrefix())) return;
 
-    var command = message.content.split(" ")[0].slice(bot.database.getPrefix().length);
-    var args = message.content.slice(bot.database.getPrefix().length + command.length+1);
-    
+    var command = message.content.split(" ")[0].slice(bot.database.getPrefix().length).toLowerCase();
+    var args = message.content.slice(bot.database.getPrefix().length + command.length + 1);
+
     switch (command) {
         case "add":
             bot.database.addGuild(message.guild).then((guildDoc) => {
@@ -62,11 +62,15 @@ bot.client.on('message', message => {
             bot.database.updateGlobalSettings().then(() => {
                 message.channel.send("updated global settings");
             })
-        case "command":
-            console.log(bot.database.getGlobalCommandSettings(args));
+        case "setcommand":
+            bot.database.setCommandSettings(message.guild, "testcommand", { stuff: "stuff1" }).then(settings => {
+                console.log(settings);
+            });
             break;
-        case "filter":
-            console.log(bot.database.getGlobalFilterSettings(args));
+        case "getcommand":
+            bot.database.getCommandSettings(message.guild, "testcommand").then(settings => {
+                console.log(settings);
+            });
             break;
     }
 });

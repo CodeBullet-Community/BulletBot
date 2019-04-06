@@ -111,7 +111,7 @@ export class Database {
         connection: mongoose.Connection;
         youtube: mongoose.Model<webhookInterface>;
     };
-    cache:{
+    cache: {
         general: any;
         commands: any;
         filters: any;
@@ -148,7 +148,7 @@ export class Database {
     };
 
     /** updates cached global settings */
-    async updateGlobalSettings(){
+    async updateGlobalSettings() {
         var general = await this.mainDB.settings.findById(GLOBAL.general);
         var commands = await this.mainDB.settings.findById(GLOBAL.commands);
         var filters = await this.mainDB.settings.findById(GLOBAL.filters);
@@ -161,36 +161,35 @@ export class Database {
     }
 
     /** returns chached global general settings */
-    getGlobalSettings(){
+    getGlobalSettings() {
         return this.cache.general;
     }
 
     /** returns default prefix */
-    getPrefix(): string{
+    getPrefix(): string {
         return this.cache.general.prefix;
     }
 
     /** returns global command settings if exist else null */
-    getGlobalCommandSettings(command:string){
-        if(command in this.cache.commands) return this.cache.commands[command];
+    getGlobalCommandSettings(command: string) {
+        if (command in this.cache.commands) return this.cache.commands[command];
         return null;
     }
 
     /** returns global filter settings if exist else null */
-    getGlobalFilterSettings(filter:string){
-        if(filter in this.cache.filters) return this.cache.filters[filter];
+    getGlobalFilterSettings(filter: string) {
+        if (filter in this.cache.filters) return this.cache.filters[filter];
         return null;
     }
 
     /** find Guild Doc */
-    findGuild(guild: Guild) {
-        var query = this.mainDB.guilds.findOne({ guild: guild.id });
-        return query.exec();
+    findGuildDoc(guild: Guild) {
+        return this.mainDB.guilds.findOne({ guild: guild.id }).exec();
     }
 
     /** adds initial Guild Doc if there isn't one */
     async addGuild(guild: Guild) {
-        var guildDoc = await this.findGuild(guild);
+        var guildDoc = await this.findGuildDoc(guild);
         if (guildDoc) {
             return guildDoc.toObject();
         }
@@ -202,10 +201,46 @@ export class Database {
 
     /** removes all objects related to guild */
     async removeGuild(guild: Guild) {
-        // TODO: remove logs, commands, filters, webhooks
-        var guildDoc = await this.findGuild(guild);
+        // TODO: remove logs, filters, webhooks
+        var guildDoc = await this.findGuildDoc(guild);
         if (!guildDoc) return;
         guildDoc.remove();
+        var commandDoc = await this.findCommandsDoc(guild);
+        if (!commandDoc) return;
+        commandDoc.remove();
+    }
+
+    /** find Command Doc */
+    findCommandsDoc(guild: Guild) {
+        return this.mainDB.commands.findOne({ guild: guild.id }).exec();
+    }
+
+    /** gets guild specific command settings of certain command*/
+    async getCommandSettings(guild: Guild, command: string, doc?: commandsInterface) {
+        // if the doc isn't null, but it got deleted in the DB it will always return null
+        var commandSettings = doc;
+        if (!commandSettings || commandSettings.guild != guild.id) commandSettings = await this.findCommandsDoc(guild);
+        if (!commandSettings) return null;
+        commandSettings = commandSettings.toObject().commands
+        if (command in commandSettings) return commandSettings[command];
+        return null;
+    }
+
+    /** sets settings of specific command in a guild */
+    async setCommandSettings(guild: Guild, command: string, settings, doc?: commandsInterface) {
+        // if the doc isn't null, but it got deleted in the DB it won't change anything
+        var cmdDoc = doc;
+        if (!cmdDoc || doc.guild != guild.id) {
+            cmdDoc = await this.findCommandsDoc(guild);
+        }
+        if (!cmdDoc) {
+            cmdDoc = new this.mainDB.commands();
+            cmdDoc.guild = guild.id;
+            cmdDoc.commands = {};
+        }
+        cmdDoc.commands[command] = settings;
+        cmdDoc.markModified('commands.' + command);
+        return await cmdDoc.save();
     }
 
 }
