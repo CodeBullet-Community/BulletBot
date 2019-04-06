@@ -34,13 +34,30 @@ bot.client.on('ready', () => {
 bot.client.on('message', message => {
     if (message.author.bot) return;
     message.channel.send("messages recieved");
-    if(message.content == "test"){
+    switch(message.content){
+        case "add":
         console.log("adding guild");
         bot.database.addGuild(message.guild).then((guildDoc)=>{
             console.log(guildDoc);
         });
+        break;
+        case "remove":
+        console.log("removing guild");
+        bot.database.removeGuild(message.guild).then(() => {
+            console.log("deleted");
+        })
+        break;
     }
-    
+});
+
+bot.client.on('guildCreate', guild => {
+    console.log(`joined ${guild.name} with id ${guild.id}`);
+    bot.database.addGuild(guild);
+});
+
+bot.client.on('guildDelete', guild => {
+    console.log(`left ${guild.name} with id ${guild.id}`);
+    bot.database.removeGuild(guild);
 });
 
 import token = require("./token.json");

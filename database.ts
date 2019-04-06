@@ -111,7 +111,7 @@ export class Database {
         connection: mongoose.Connection;
         youtube: mongoose.Model<webhookInterface>;
     };
-    
+
     /** manages connections to databases */
     constructor(URI: string) {
         var mainConnection = mongoose.createConnection(URI + "/main", { useNewUrlParser: true });
@@ -140,14 +140,16 @@ export class Database {
         };
     };
 
-    findGuild(guild: Guild){
-        var query = this.mainDB.guilds.findOne({guild:guild.id});
+    /** find Guild Doc */
+    findGuild(guild: Guild) {
+        var query = this.mainDB.guilds.findOne({ guild: guild.id });
         return query.exec();
     }
 
-    async addGuild(guild:Guild) {
+    /** adds initial Guild Doc if there isn't one */
+    async addGuild(guild: Guild) {
         var guildDoc = await this.findGuild(guild);
-        if(guildDoc){
+        if (guildDoc) {
             return guildDoc.toObject();
         }
         guildDoc = new this.mainDB.guilds();
@@ -155,5 +157,13 @@ export class Database {
         guildDoc.save();
         return guildDoc.toObject();
     };
+
+    /** removes all objects related to guild */
+    async removeGuild(guild: Guild) {
+        // TODO: remove logs, commands, filters, webhooks
+        var guildDoc = await this.findGuild(guild);
+        if (!guildDoc) return;
+        guildDoc.remove();
+    }
 
 }
