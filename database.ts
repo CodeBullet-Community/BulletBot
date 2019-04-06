@@ -203,14 +203,14 @@ export class Database {
     async removeGuild(guild: Guild) {
         // TODO: remove logs, filters, webhooks
         var guildDoc = await this.findGuildDoc(guild);
-        if (!guildDoc) return;
-        guildDoc.remove();
+        if (guildDoc) guildDoc.remove();
         var commandDoc = await this.findCommandsDoc(guild);
-        if (!commandDoc) return;
-        commandDoc.remove();
+        if (commandDoc) commandDoc.remove();
+        var fitlerDoc = await this.findFiltersDoc(guild);
+        if (fitlerDoc) fitlerDoc.remove();
     }
 
-    /** find Command Doc */
+    /** find commands doc */
     findCommandsDoc(guild: Guild) {
         return this.mainDB.commands.findOne({ guild: guild.id }).exec();
     }
@@ -241,6 +241,39 @@ export class Database {
         cmdDoc.commands[command] = settings;
         cmdDoc.markModified('commands.' + command);
         return await cmdDoc.save();
+    }
+
+    /** find filters doc */
+    findFiltersDoc(guild: Guild) {
+        return this.mainDB.filters.findOne({ guild: guild.id }).exec();
+    }
+
+    /** gets guild specific filter settings of certain filter*/
+    async getFilterSettings(guild: Guild, filter: string, doc?: filtersInterface) {
+        // if the doc isn't null, but it got deleted in the DB it will always return null
+        var filterSettings = doc;
+        if (!filterSettings || filterSettings.guild != guild.id) filterSettings = await this.findFiltersDoc(guild);
+        if (!filterSettings) return null;
+        filterSettings = filterSettings.toObject().filters
+        if (filter in filterSettings) return filterSettings[filter];
+        return null;
+    }
+
+    /** sets settings of specific filter in a guild */
+    async setFilterSettings(guild: Guild, filter: string, settings, doc?: filtersInterface) {
+        // if the doc isn't null, but it got deleted in the DB it won't change anything
+        var filterDoc = doc;
+        if (!filterDoc || doc.guild != guild.id) {
+            filterDoc = await this.findFiltersDoc(guild);
+        }
+        if (!filterDoc) {
+            filterDoc = new this.mainDB.filters();
+            filterDoc.guild = guild.id;
+            filterDoc.filters = {};
+        }
+        filterDoc.filters[filter] = settings;
+        filterDoc.markModified('filters.' + filter);
+        return await filterDoc.save();
     }
 
 }

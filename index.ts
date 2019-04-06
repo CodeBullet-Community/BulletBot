@@ -62,13 +62,13 @@ bot.client.on('message', message => {
             bot.database.updateGlobalSettings().then(() => {
                 message.channel.send("updated global settings");
             })
-        case "setcommand":
-            bot.database.setCommandSettings(message.guild, "testcommand", { stuff: "stuff1" }).then(settings => {
+        case "setfilter":
+            bot.database.setFilterSettings(message.guild, "testfilter", { stuff: "stuff1" }).then(settings => {
                 console.log(settings);
             });
             break;
-        case "getcommand":
-            bot.database.getCommandSettings(message.guild, "testcommand").then(settings => {
+        case "getfilter":
+            bot.database.getFilterSettings(message.guild, "testfilter").then(settings => {
                 console.log(settings);
             });
             break;
