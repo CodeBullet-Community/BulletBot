@@ -1,7 +1,9 @@
 import mongoose = require("mongoose");
+import { Guild } from "discord.js";
 
 // guild 
 interface guildInterface extends mongoose.Document {
+    guild: string;
     staff: {
         mods: {
             roles: { [index: number]: string };
@@ -18,6 +20,7 @@ interface guildInterface extends mongoose.Document {
     }
 };
 const guildSchema = new mongoose.Schema({
+    guild: String,
     staff: {
         mods: {
             roles: [String],
@@ -108,7 +111,8 @@ export class Database {
         connection: mongoose.Connection;
         youtube: mongoose.Model<webhookInterface>;
     };
-
+    
+    /** manages connections to databases */
     constructor(URI: string) {
         var mainConnection = mongoose.createConnection(URI + "/main", { useNewUrlParser: true });
         mainConnection.on('error', console.error.bind(console, 'connection error:'));
@@ -134,5 +138,22 @@ export class Database {
             connection: webhookConnection,
             youtube: webhookConnection.model("webhook", webhookSchema, "youtube")
         };
+    };
+
+    findGuild(guild: Guild){
+        var query = this.mainDB.guilds.findOne({guild:guild.id});
+        return query.exec();
     }
+
+    async addGuild(guild:Guild) {
+        var guildDoc = await this.findGuild(guild);
+        if(guildDoc){
+            return guildDoc.toObject();
+        }
+        guildDoc = new this.mainDB.guilds();
+        guildDoc.guild = guild.id;
+        guildDoc.save();
+        return guildDoc.toObject();
+    };
+
 }

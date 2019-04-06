@@ -34,6 +34,13 @@ bot.client.on('ready', () => {
 bot.client.on('message', message => {
     if (message.author.bot) return;
     message.channel.send("messages recieved");
+    if(message.content == "test"){
+        console.log("adding guild");
+        bot.database.addGuild(message.guild).then((guildDoc)=>{
+            console.log(guildDoc);
+        });
+    }
+    
 });
 
 import token = require("./token.json");
