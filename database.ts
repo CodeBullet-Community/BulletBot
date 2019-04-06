@@ -201,7 +201,7 @@ export class Database {
 
     /** removes all objects related to guild */
     async removeGuild(guild: Guild) {
-        // TODO: remove logs, filters, webhooks
+        // TODO: remove logs, webhooks
         var guildDoc = await this.findGuildDoc(guild);
         if (guildDoc) guildDoc.remove();
         var commandDoc = await this.findCommandsDoc(guild);
