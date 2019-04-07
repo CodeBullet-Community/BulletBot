@@ -18,10 +18,10 @@ export interface botInterface {
     database: Database;
     mStatistics: MStatistics;
 }
-
+// commands and fitlers only works if you define whole path
 const bot: botInterface = {
     client: new discord.Client(),
-    commands: new Commands(),
+    commands: new Commands("bin/commands/"),
     filters: new Filters(),
     webhooks: new Webhooks(),
     database: new Database(DBURI),
@@ -37,16 +37,15 @@ bot.client.on('ready', () => {
     console.info("Bot is ready");
 });
 
-bot.client.on('message', message => {
+bot.client.on('message', async message => {
     if (message.author.bot) return;
+    var permissionLevel = await utils.permissions.getPermissionLevel(bot,message.member);
     if (!message.content.startsWith(bot.database.getPrefix())) return;
 
     var command = message.content.split(" ")[0].slice(bot.database.getPrefix().length).toLowerCase();
     var args = message.content.slice(bot.database.getPrefix().length + command.length + 1);
 
-    utils.permissions.getPermissionLevel(bot,message.member).then(permLevel => {
-        message.channel.send("You are "+utils.permissions.permToString(permLevel));
-    });
+    bot.commands.runCommand(bot,message,args,command,permissionLevel);
 });
 
 bot.client.on('guildCreate', guild => {
