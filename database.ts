@@ -6,17 +6,17 @@ interface guildInterface extends mongoose.Document {
     guild: string;
     staff: {
         mods: {
-            roles: { [index: number]: string };
-            users: { [index: number]: string };
+            roles: Array<string>;
+            users: Array<string>;
         };
         admins: {
-            roles: { [index: number]: string };
-            users: { [index: number]: string };
+            roles: Array<string>;
+            users: Array<string>;
         }
     };
     logChannel: string;
     webhooks: {
-        [key: string]: { [index: number]: string };
+        [key: string]: Array<string>;
     }
 };
 const guildSchema = new mongoose.Schema({
@@ -168,6 +168,11 @@ export class Database {
     /** returns default prefix */
     getPrefix(): string {
         return this.cache.general.prefix;
+    }
+
+    /** returns array of bot masters */
+    getBotMasters(): Array<string>{
+        return this.cache.general.botMasters;
     }
 
     /** returns global command settings if exist else null */

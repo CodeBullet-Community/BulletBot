@@ -9,7 +9,7 @@ import utils from "./utils";
 // Database reference gets added in class
 const DBURI = "mongodb://localhost";
 
-interface botInterface {
+export interface botInterface {
     client: discord.Client;
     commands: Commands;
     filters: Filters;
@@ -47,32 +47,9 @@ bot.client.on('message', message => {
     var command = message.content.split(" ")[0].slice(bot.database.getPrefix().length).toLowerCase();
     var args = message.content.slice(bot.database.getPrefix().length + command.length + 1);
 
-    switch (command) {
-        case "add":
-            bot.database.addGuild(message.guild).then((guildDoc) => {
-                message.channel.send("added this guild");
-            });
-            break;
-        case "remove":
-            bot.database.removeGuild(message.guild).then(() => {
-                message.channel.send("removed this guild");
-            })
-            break;
-        case "update":
-            bot.database.updateGlobalSettings().then(() => {
-                message.channel.send("updated global settings");
-            })
-        case "setfilter":
-            bot.database.setFilterSettings(message.guild, "testfilter", { stuff: "stuff1" }).then(settings => {
-                console.log(settings);
-            });
-            break;
-        case "getfilter":
-            bot.database.getFilterSettings(message.guild, "testfilter").then(settings => {
-                console.log(settings);
-            });
-            break;
-    }
+    utils.permissions.getPermissionLevel(bot,message.member).then(permLevel => {
+        message.channel.send("You are "+utils.permissions.permToString(permLevel));
+    });
 });
 
 bot.client.on('guildCreate', guild => {
