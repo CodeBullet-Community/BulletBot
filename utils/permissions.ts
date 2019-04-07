@@ -53,6 +53,7 @@ export function permToString(permissionLevel:number){
         case BOTMASTER:
             return "my master";
         default:
+            console.warn("unknow permission level: "+permissionLevel);
             return "Unknown PermissionLevel";
     }
 }

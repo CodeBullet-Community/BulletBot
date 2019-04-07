@@ -1,4 +1,5 @@
 import * as discord from "discord.js";
+require('console-stamp')(console, { pattern: 'dd/mm/yyyy HH:MM:ss.l' });
 import Commands from "./commands";
 import Filters from "./filters";
 import Webhooks from "./webhooks";
@@ -16,7 +17,6 @@ export interface botInterface {
     webhooks: Webhooks;
     database: Database;
     mStatistics: MStatistics;
-    log: Function;
 }
 
 const bot: botInterface = {
@@ -26,18 +26,15 @@ const bot: botInterface = {
     webhooks: new Webhooks(),
     database: new Database(DBURI),
     mStatistics: new utils.MStatistics(),
-    log: function (message) {
-        console.log(new Date().toISOString() + ": " + message);
-    }
 };
 
 var globalUpdate = setInterval(() => {
     bot.database.updateGlobalSettings();
-    bot.log("global cache was updated");
+    //console.log("global cache was updated");
 }, 60000);
 
 bot.client.on('ready', () => {
-    console.log("Bot is ready");
+    console.info("Bot is ready");
 });
 
 bot.client.on('message', message => {
