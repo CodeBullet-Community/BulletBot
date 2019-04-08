@@ -9,6 +9,9 @@ export const BOTMASTER = 3;
 /** returns permission level of member corresponding to MEMBER, MOD, ADMIN and BOTMASTER */
 export async function getPermissionLevel(bot: botInterface, member: GuildMember) {
     // TODO: test this function
+    if(member==null){
+        return MEMBER;
+    }
     if (bot.database.getBotMasters().includes(member.user.id)) {
         return BOTMASTER;
     }

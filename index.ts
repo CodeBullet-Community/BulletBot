@@ -17,15 +17,20 @@ export interface botInterface {
     webhooks: Webhooks;
     database: Database;
     mStatistics: MStatistics;
+    error: (message: discord.Message, error: any) => void;
 }
 
 const bot: botInterface = {
     client: new discord.Client(),
-    commands: new Commands(__dirname+"/commands/"),
+    commands: new Commands(__dirname + "/commands/"),
     filters: new Filters(),
     webhooks: new Webhooks(),
     database: new Database(DBURI),
     mStatistics: new utils.MStatistics(),
+    error: function (message: discord.Message, error: any) {
+        message.channel.send("Oops something went wrong. #BlameEvan");
+        console.error(error);
+    }
 };
 
 var globalUpdate = setInterval(() => {
@@ -39,13 +44,22 @@ bot.client.on('ready', () => {
 
 bot.client.on('message', async message => {
     if (message.author.bot) return;
-    var permissionLevel = await utils.permissions.getPermissionLevel(bot,message.member);
-    if (!message.content.startsWith(bot.database.getPrefix())) return;
+    var permissionLevel = await utils.permissions.getPermissionLevel(bot, message.member);
+    if (!message.content.startsWith(bot.database.getPrefix())) {
+        // if message is only a mention of the bot, he dms help
+        if (message.content == "<@" + bot.client.user.id + ">") {
+            message.author.createDM().then(dmChannel => {
+                message.channel = dmChannel;
+                bot.commands.runCommand(bot, message, "", "help", 0);
+            });
+        }
+        return;
+    }
 
     var command = message.content.split(" ")[0].slice(bot.database.getPrefix().length).toLowerCase();
     var args = message.content.slice(bot.database.getPrefix().length + command.length + 1);
 
-    bot.commands.runCommand(bot,message,args,command,permissionLevel);
+    bot.commands.runCommand(bot, message, args, command, permissionLevel);
 });
 
 bot.client.on('guildCreate', guild => {

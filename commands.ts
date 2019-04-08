@@ -27,7 +27,7 @@ export default class Commands {
             var folders = files.filter(f => fs.lstatSync(dir + f).isDirectory());
             folders.forEach((f, i) => {
                 structureObject[f] = {}
-                this.loadCommands(structureObject[f], dir + f + "/");
+                this.loadCommands(dir + f + "/",structureObject[f]);
             });
 
             var commands = files.filter(f => f.split(".").pop() == "js");
@@ -53,7 +53,7 @@ export default class Commands {
     }
 
     get(command: string) {
-        this.commands.get(command);
+        return this.commands.get(command);
     }
 
 }
