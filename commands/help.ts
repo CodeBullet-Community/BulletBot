@@ -4,9 +4,10 @@ import utils from "../utils";
 import { Message, RichEmbed } from "discord.js";
 import { commandInterface } from "../commands";
 
-function sendCommandlist(bot: botInterface, message: Message, strucObject: any) {
+function sendCommandlist(bot: botInterface, message: Message, strucObject: any, path:string) {
     var output = new RichEmbed();
-    output.setAuthor("Command Help:", bot.client.user.avatarURL)
+    output.setAuthor("Command List:", bot.client.user.avatarURL);
+    if(path) output.setFooter("Path: ~"+path);
     output.setColor(bot.database.getGlobalSettings().helpEmbedColor);
     var categories = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) === "undefined");
     if (categories.length != 0) {
@@ -32,14 +33,14 @@ var command: commandInterface = { name: null, path: null, permissionLevel: null,
 command.run = async (bot: botInterface, message: Message, args: string, permissionLevel: number) => {
     try {
         if (args.length == 0) {
-            sendCommandlist(bot, message, bot.commands.structure);
+            sendCommandlist(bot, message, bot.commands.structure, null);
             return;
         }
         var command = bot.commands.get(args.toLowerCase());
         if (command == null) {
-            if (typeof (bot.commands.structure[args.toLowerCase().split(".")[0]]) != "undefined") {
+            if (typeof (bot.commands.structure[args.toLowerCase().split("/")[0]]) != "undefined") {
                 var strucObject = bot.commands.structure;
-                var keys = args.toLowerCase().split(".");
+                var keys = args.toLowerCase().split("/");
                 for (var i = 0; i < keys.length; i++) {
                     if (typeof (strucObject[keys[i]]) === "undefined") {
                         message.channel.send("Couldn't find '" + args.toLowerCase() + "' category");
@@ -48,7 +49,7 @@ command.run = async (bot: botInterface, message: Message, args: string, permissi
                         strucObject = strucObject[keys[i]];
                     }
                 }
-                sendCommandlist(bot, message, strucObject);
+                sendCommandlist(bot, message, strucObject,args);
                 return;
             } else {
                 message.channel.send("Couldn't find '" + args.toLowerCase() + "' command");
@@ -83,7 +84,7 @@ command.embedHelp = function (bot: botInterface) {
                 },
                 {
                     "name": "Usage:",
-                    "value": "{command}\n{command} [command name/category]\nuse `category.subcategory` to get list from subcategory".replace(/\{command\}/g, bot.database.getPrefix() + command.name)
+                    "value": "{command}\n{command} [command name/category]\nuse `category/subcategory` to get list from subcategory".replace(/\{command\}/g, bot.database.getPrefix() + command.name)
                 },
                 {
                     "name": "Example:",

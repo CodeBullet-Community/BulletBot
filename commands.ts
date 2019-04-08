@@ -40,7 +40,19 @@ export default class Commands {
                 var props = require(dir + f).default;
                 console.info(`${i + 1}: ${f} loaded!`);
                 this.commands.set(props.name, props);
-                structureObject[props.name] = props;
+                // puts command in structure
+                var strucObject = structureObject;
+                if(props.path != ""){
+                    var keys = props.path.split("/");
+                    strucObject = this.structure;
+                    for(var i = 0; i < keys.length; i++){
+                        if(!strucObject[keys[i]]){
+                            strucObject[keys[i]] = {};
+                        }
+                        strucObject = strucObject[keys[i]];
+                    }
+                }
+                strucObject[props.name] = props;
             });
         });
     }
