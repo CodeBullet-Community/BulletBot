@@ -7,9 +7,8 @@ export interface commandInterface {
     path: string;
     permissionLevel: 0 | 1 | 2 | 3
     shortHelp: string;
-    embedHelp: any;
-    run: any;
-
+    embedHelp: (bot: botInterface) => void;
+    run: (bot: botInterface, message: Message, args: string, permissionLevel: number) => Promise<void>;
 }
 
 export default class Commands {
@@ -46,14 +45,14 @@ export default class Commands {
         });
     }
 
-    runCommand(bot: botInterface, message: Message, args: string, command: string, permissionLevel:number) {
+    runCommand(bot: botInterface, message: Message, args: string, command: string, permissionLevel: number) {
         var cmd = this.commands.get(command);
-        if(!cmd) return;
-        if(permissionLevel < cmd.permissionLevel) return;
-        cmd.run(bot,message,args);
+        if (!cmd) return;
+        if (permissionLevel < cmd.permissionLevel) return;
+        cmd.run(bot, message, args, permissionLevel);
     }
 
-    get(command:string){
+    get(command: string) {
         this.commands.get(command);
     }
 
