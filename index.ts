@@ -18,10 +18,10 @@ export interface botInterface {
     database: Database;
     mStatistics: MStatistics;
 }
-// commands and fitlers only works if you define whole path
+
 const bot: botInterface = {
     client: new discord.Client(),
-    commands: new Commands("bin/commands/"),
+    commands: new Commands(__dirname+"/commands/"),
     filters: new Filters(),
     webhooks: new Webhooks(),
     database: new Database(DBURI),
