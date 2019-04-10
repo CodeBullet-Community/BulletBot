@@ -1,5 +1,5 @@
 import { GuildMember } from "discord.js";
-import { botInterface } from "..";
+import { bot } from "..";
 
 export const MEMBER = 0;
 export const MOD = 1;
@@ -7,7 +7,7 @@ export const ADMIN = 2;
 export const BOTMASTER = 3;
 
 /** returns permission level of member corresponding to MEMBER, MOD, ADMIN and BOTMASTER */
-export async function getPermissionLevel(bot: botInterface, member: GuildMember) {
+export async function getPermissionLevel(bot: bot, member: GuildMember) {
     // TODO: test this function
     if(member==null){
         return MEMBER;

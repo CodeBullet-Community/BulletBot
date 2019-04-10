@@ -10,7 +10,7 @@ import utils from "./utils";
 // Database reference gets added in class
 const DBURI = "mongodb://localhost";
 
-export interface botInterface {
+export interface bot {
     client: discord.Client;
     commands: Commands;
     filters: Filters;
@@ -20,10 +20,10 @@ export interface botInterface {
     error: (message: discord.Message, error: any) => void;
 }
 
-const bot: botInterface = {
+const bot: bot = {
     client: new discord.Client(),
     commands: new Commands(__dirname + "/commands/"),
-    filters: new Filters(),
+    filters: new Filters(__dirname + "/filters/"),
     webhooks: new Webhooks(),
     database: new Database(DBURI),
     mStatistics: new utils.MStatistics(),
@@ -44,14 +44,19 @@ bot.client.on('ready', () => {
 
 bot.client.on('message', async message => {
     if (message.author.bot) return;
+    // if message is only a mention of the bot, he dms help
+    if (message.content == "<@" + bot.client.user.id + ">") {
+        message.author.createDM().then(dmChannel => {
+            message.channel = dmChannel;
+            bot.commands.runCommand(bot, message, "", "help", 0);
+        });
+        return;
+    }
+
     var permissionLevel = await utils.permissions.getPermissionLevel(bot, message.member);
     if (!message.content.startsWith(bot.database.getPrefix())) {
-        // if message is only a mention of the bot, he dms help
-        if (message.content == "<@" + bot.client.user.id + ">") {
-            message.author.createDM().then(dmChannel => {
-                message.channel = dmChannel;
-                bot.commands.runCommand(bot, message, "", "help", 0);
-            });
+        if(permissionLevel==MEMBER){
+            bot.filters.filterMessage(bot,message);
         }
         return;
     }
@@ -73,4 +78,5 @@ bot.client.on('guildDelete', guild => {
 });
 
 import token = require("./token.json");
+import { MEMBER } from "./utils/permissions";
 bot.client.login(token.token);

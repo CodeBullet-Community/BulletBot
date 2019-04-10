@@ -1,18 +1,18 @@
 import { Collection, Message } from "discord.js";
 import * as fs from "fs";
-import { botInterface } from ".";
+import { bot } from ".";
 
-export interface commandInterface {
+export interface command {
     name: string;
     path: string;
     permissionLevel: 0 | 1 | 2 | 3
     shortHelp: string;
-    embedHelp: (bot: botInterface) => void;
-    run: (bot: botInterface, message: Message, args: string, permissionLevel: number) => Promise<void>;
+    embedHelp: (bot: bot) => void;
+    run: (bot: bot, message: Message, args: string, permissionLevel: number) => Promise<void>;
 }
 
 export default class Commands {
-    commands: Collection<string, commandInterface>;
+    commands: Collection<string, command>;
     structure: Object;
     constructor(dir: string) {
         this.commands = new Collection();
@@ -57,7 +57,7 @@ export default class Commands {
         });
     }
 
-    runCommand(bot: botInterface, message: Message, args: string, command: string, permissionLevel: number) {
+    runCommand(bot: bot, message: Message, args: string, command: string, permissionLevel: number) {
         var cmd = this.commands.get(command);
         if (!cmd) return;
         if (permissionLevel < cmd.permissionLevel) return;

@@ -1,10 +1,10 @@
 import { BOTMASTER, MEMBER } from "../utils/permissions";
-import { botInterface } from "..";
+import { bot } from "..";
 import utils from "../utils";
 import { Message, RichEmbed } from "discord.js";
-import { commandInterface } from "../commands";
+import { command as commandInterface } from "../commands";
 
-function sendCommandlist(bot: botInterface, message: Message, strucObject: any, path:string) {
+function sendCommandlist(bot: bot, message: Message, strucObject: any, path:string) {
     var output = new RichEmbed();
     output.setAuthor("Command List:", bot.client.user.avatarURL);
     if(path) output.setFooter("Path: ~"+path);
@@ -30,7 +30,7 @@ function sendCommandlist(bot: botInterface, message: Message, strucObject: any, 
 var command: commandInterface = { name: null, path: null, permissionLevel: null, shortHelp: null, embedHelp: null, run: null };
 
 
-command.run = async (bot: botInterface, message: Message, args: string, permissionLevel: number) => {
+command.run = async (bot: bot, message: Message, args: string, permissionLevel: number) => {
     try {
         if (args.length == 0) {
             sendCommandlist(bot, message, bot.commands.structure, null);
@@ -66,7 +66,7 @@ command.name = "help";
 command.path = "";
 command.permissionLevel = MEMBER;
 command.shortHelp = "Gives a command list";
-command.embedHelp = function (bot: botInterface) {
+command.embedHelp = function (bot: bot) {
     return {
         "embed": {
             "color": bot.database.getGlobalSettings().helpEmbedColor,
