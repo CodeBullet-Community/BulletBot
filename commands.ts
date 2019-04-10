@@ -5,6 +5,7 @@ import { bot } from ".";
 export interface command {
     name: string;
     path: string;
+    dm: boolean;
     permissionLevel: 0 | 1 | 2 | 3
     shortHelp: string;
     embedHelp: (bot: bot) => void;
@@ -57,9 +58,13 @@ export default class Commands {
         });
     }
 
-    runCommand(bot: bot, message: Message, args: string, command: string, permissionLevel: number) {
+    runCommand(bot: bot, message: Message, args: string, command: string, permissionLevel: number, dm:boolean) {
         var cmd = this.commands.get(command);
         if (!cmd) return;
+        if(!cmd.dm && dm) {
+            message.reply(cmd.embedHelp(bot));
+            return;
+        }
         if (permissionLevel < cmd.permissionLevel) return;
         cmd.run(bot, message, args, permissionLevel);
     }

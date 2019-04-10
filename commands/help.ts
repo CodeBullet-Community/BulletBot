@@ -27,7 +27,7 @@ function sendCommandlist(bot: bot, message: Message, strucObject: any, path:stri
     message.channel.send(output);
 }
 
-var command: commandInterface = { name: null, path: null, permissionLevel: null, shortHelp: null, embedHelp: null, run: null };
+var command: commandInterface = { name: null, path: null,dm:null, permissionLevel: null, shortHelp: null, embedHelp: null, run: null };
 
 
 command.run = async (bot: bot, message: Message, args: string, permissionLevel: number) => {
@@ -64,6 +64,7 @@ command.run = async (bot: bot, message: Message, args: string, permissionLevel: 
 
 command.name = "help";
 command.path = "";
+command.dm = false;
 command.permissionLevel = MEMBER;
 command.shortHelp = "Gives a command list";
 command.embedHelp = function (bot: bot) {
@@ -80,7 +81,13 @@ command.embedHelp = function (bot: bot) {
                 },
                 {
                     "name": "Need to be:",
-                    "value": utils.permissions.permToString(command.permissionLevel)
+                    "value": utils.permissions.permToString(command.permissionLevel),
+                    "inline": true
+                },
+                {
+                    "name": "DM capable:",
+                    "value": command.dm,
+                    "inline": true
                 },
                 {
                     "name": "Usage:",

@@ -44,19 +44,26 @@ bot.client.on('ready', () => {
 
 bot.client.on('message', async message => {
     if (message.author.bot) return;
+    var dm = false;
+    if (!message.guild) {
+        dm = true;
+    }
     // if message is only a mention of the bot, he dms help
     if (message.content == "<@" + bot.client.user.id + ">") {
         message.author.createDM().then(dmChannel => {
             message.channel = dmChannel;
-            bot.commands.runCommand(bot, message, "", "help", 0);
+            bot.commands.runCommand(bot, message, "", "help", 0,dm);
         });
         return;
     }
 
-    var permissionLevel = await utils.permissions.getPermissionLevel(bot, message.member);
-    if (!message.content.startsWith(bot.database.getPrefix())) {
-        if(permissionLevel==MEMBER){
-            bot.filters.filterMessage(bot,message);
+    var permissionLevel = MEMBER;
+    if (dm) {
+        permissionLevel = await utils.permissions.getPermissionLevel(bot, message.member);
+    }
+    if (!message.content.startsWith(bot.database.getPrefix()) && !dm) {
+        if (permissionLevel == MEMBER) {
+            bot.filters.filterMessage(bot, message);
         }
         return;
     }
@@ -64,7 +71,7 @@ bot.client.on('message', async message => {
     var command = message.content.split(" ")[0].slice(bot.database.getPrefix().length).toLowerCase();
     var args = message.content.slice(bot.database.getPrefix().length + command.length + 1);
 
-    bot.commands.runCommand(bot, message, args, command, permissionLevel);
+    bot.commands.runCommand(bot, message, args, command, permissionLevel, dm);
 });
 
 bot.client.on('guildCreate', guild => {
