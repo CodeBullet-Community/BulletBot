@@ -8,7 +8,7 @@ To make the code more readable to uniform we have coding style rules
 
 ## naming
 
-camelCase for everything, except constant variables. Constant variables like PI will be written in uppercase. Imports just by the actual package name.
+camelCase for everything, except constant variables. Constant variables like PI will be written in uppercase. Imports just by the actual package name. Classes start with capital case letters.
 
 ## for loops
 
