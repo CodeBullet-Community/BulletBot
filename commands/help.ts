@@ -21,6 +21,7 @@ function sendCommandlist(bot: bot, message: Message, strucObject: any, path:stri
     var commands = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) != "undefined");
     for (var i = 0; i < commands.length; i++) {
         var f = bot.commands.get(commands[i]);
+        if(f.permissionLevel == BOTMASTER) continue;
         output.addField(bot.database.getPrefix() + f.name, f.shortHelp);
     }
 

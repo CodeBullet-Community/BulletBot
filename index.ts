@@ -66,7 +66,7 @@ bot.client.on('message', async message => {
     }
 
     var permissionLevel = MEMBER;
-    if (dm) {
+    if (!dm) {
         permissionLevel = await utils.permissions.getPermissionLevel(bot, message.member);
     }
     if (!message.content.startsWith(bot.database.getPrefix()) && !dm) {
