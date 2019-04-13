@@ -13,9 +13,9 @@ camelCase for everything, except constant variables. Constant variables like PI 
 ## for loops
 
 ``` JavaScript
-for (i = 0; i < 5; i++) {
-  x += i;
-}
+for (var i = 0; i < 5; i++)
+for(const e of array)
+for(const key in object)
 ```
 
 `i` can also be `i[something]`
