@@ -65,6 +65,7 @@ const FromToMStatsSchema = new mongoose.Schema(allTimeMStats);
 
 
 export class MStatistics {
+    connection: mongoose.Connection;
     allTime: mongoose.Model<allTimeMStats>;
     daily: mongoose.Model<dailyMstats>;
     hourly: {
@@ -74,24 +75,24 @@ export class MStatistics {
 
     /** manages management statistics */
     constructor(URI: string) {
-        var connection = mongoose.createConnection(URI + "/mStatistics", { useNewUrlParser: true });
-        connection.on('error', console.error.bind(console, 'connection error:'));
-        connection.once('open', function () {
+        this.connection = mongoose.createConnection(URI + "/mStatistics", { useNewUrlParser: true });
+        this.connection.on('error', console.error.bind(console, 'connection error:'));
+        this.connection.once('open', function () {
             console.log("connected to " + URI + "/mStatistics")
         });
-        this.allTime = connection.model<allTimeMStats>("allTime", FromToMStatsSchema, "allTime");
-        this.daily = connection.model<dailyMstats>("day", FromToMStatsSchema, "daily");
-        this._init(connection);
+        this.allTime = this.connection.model<allTimeMStats>("allTime", FromToMStatsSchema, "allTime");
+        this.daily = this.connection.model<dailyMstats>("day", FromToMStatsSchema, "daily");
+        this._init();
     }
 
     /** async constructor function */
-    async _init(connection: mongoose.Connection) {
+    async _init() {
         var date = new Date();
         var UTC = date.getTime();
         var day = UTC - (UTC % MS_DAY);
         var hour = date.getUTCHours();
 
-        var model = connection.model<hourlyMStats>("hour", hourlyMStatsSchema, "hourly");
+        var model = this.connection.model<hourlyMStats>("hour", hourlyMStatsSchema, "hourly");
         var doc = await model.findOne({ day: day, hour: hour }).exec();
         if (!doc) {
             doc = new model({
