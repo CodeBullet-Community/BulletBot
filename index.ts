@@ -37,8 +37,8 @@ const bot: bot = {
 exitHook(() => {
     console.log('Saving cached data...');
     bot.mStatistics.hourly.doc.save();
-    var until = new Date().getTime()+3000;
-    while(until > new Date().getTime()){}
+    var until = new Date().getTime() + 3000;
+    while (until > new Date().getTime()) { }
     console.log("cached data saved");
 });
 
@@ -50,6 +50,10 @@ var globalUpdate = setInterval(() => {
 bot.client.on('ready', () => {
     console.info("Bot is ready");
 });
+
+bot.client.on('error', error => {
+    console.error({ info: "from client.on()", error });
+})
 
 bot.client.on('message', async message => {
     if (message.author.bot) return;
