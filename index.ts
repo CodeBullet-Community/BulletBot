@@ -1,5 +1,6 @@
 import * as discord from "discord.js";
 require('console-stamp')(console, { pattern: 'dd/mm/yyyy HH:MM:ss.l' });
+import exitHook = require('exit-hook');
 import Commands from "./commands";
 import Filters from "./filters";
 import Webhooks from "./webhooks";
@@ -32,6 +33,12 @@ const bot: bot = {
         console.error(error);
     }
 };
+
+exitHook(() => {
+    console.log('Saving cached data...');
+    bot.mStatistics.hourly.doc.save();
+    console.log("cached data saved");
+});
 
 var globalUpdate = setInterval(() => {
     bot.database.updateGlobalSettings();

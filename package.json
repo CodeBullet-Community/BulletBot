@@ -23,6 +23,7 @@
     "@types/node": "^11.12.2",
     "console-stamp": "^0.2.7",
     "discord.js": "^11.4.2",
+    "exit-hook": "^2.1.0",
     "mongoose": "^5.4.20"
   },
   "devDependencies": {
