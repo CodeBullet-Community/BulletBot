@@ -81,7 +81,7 @@ export class MStatistics {
             console.log("connected to " + URI + "/mStatistics")
         });
         this.allTime = this.connection.model<allTimeMStats>("allTime", FromToMStatsSchema, "allTime");
-        this.daily = this.connection.model<dailyMstats>("day", FromToMStatsSchema, "daily");
+        this.daily = this.connection.model<dailyMstats>("day", dailyMstatsSchema, "daily");
         this._init();
     }
 
@@ -169,6 +169,7 @@ export class MStatistics {
         var allTime = await this.allTime.findOne();
         var alltimeStats = this.mergeStats([allTime.toObject(),dayDoc.toObject()]);
         allTime.set(alltimeStats);
+        allTime.to = day+MS_DAY;
         allTime.save();
         console.log("updated all time");
     }
