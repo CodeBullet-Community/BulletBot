@@ -149,7 +149,7 @@ export class MStatistics {
             webhooks: {}
         });
         this.hourly.doc.save();
-        console.log(`MStatistics hour updated at ${UTC}(${new Date(UTC).toISOString().replace(/[ZT]/g, " ").slice(0, -1)}) from ${oldHour.hour} to ${hour}`);
+        console.log(`MStatistics hour from ${oldHour.hour} to ${hour}`);
     }
 
     /** changes summarises hour docs */
@@ -164,6 +164,12 @@ export class MStatistics {
         mergedObject.day = day;
         var dayDoc = new this.daily(mergedObject);
         dayDoc.save();
+
+        var allTime = await this.allTime.findOne();
+        var alltimeStats = this.mergeStats([allTime.toObject(),dayDoc.toObject()]);
+        allTime.set(alltimeStats);
+        allTime.save();
+        console.log("updated all time");
     }
 
     /** accumalates stats of docs into a object */

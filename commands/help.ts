@@ -57,7 +57,7 @@ command.run = async (bot: bot, message: Message, args: string, permissionLevel: 
                 return;
             }
         }
-        bot.mStatistics.logCommandUsage(command.name,"commandHelp");
+        bot.mStatistics.logCommandUsage("help","commandHelp");
         message.channel.send(command.embedHelp(bot));
     } catch (e) {
         bot.error(message, e);

@@ -60,7 +60,7 @@ bot.client.on('message', async message => {
     if (message.content == "<@" + bot.client.user.id + ">") {
         message.author.createDM().then(dmChannel => {
             message.channel = dmChannel;
-            bot.commands.runCommand(bot, message, "", "help", 0,dm);
+            bot.commands.runCommand(bot, message, "", "help", 0, dm);
         });
         return;
     }
