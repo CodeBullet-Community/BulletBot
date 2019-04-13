@@ -71,6 +71,7 @@ export default class Filters{
                 if(!(await filterArray[i].active(bot,message.guild))) continue;
                 var output = await filterArray[i].run(bot,message);
                 if(output){
+                    bot.mStatistics.logFilterCatch(filterArray[i].name);
                     executeActions(message,output.actions);
                     sendLog(bot,message.guild,output.report);
                     return;

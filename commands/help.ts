@@ -25,6 +25,7 @@ function sendCommandlist(bot: bot, message: Message, strucObject: any, path:stri
     }
 
     message.channel.send(output);
+    bot.mStatistics.logCommandUsage(command.name,"commandList");
 }
 
 var command: commandInterface = { name: null, path: null,dm:null, permissionLevel: null, shortHelp: null, embedHelp: null, run: null };
@@ -56,6 +57,7 @@ command.run = async (bot: bot, message: Message, args: string, permissionLevel: 
                 return;
             }
         }
+        bot.mStatistics.logCommandUsage(command.name,"commandHelp");
         message.channel.send(command.embedHelp(bot));
     } catch (e) {
         bot.error(message, e);
@@ -64,7 +66,7 @@ command.run = async (bot: bot, message: Message, args: string, permissionLevel: 
 
 command.name = "help";
 command.path = "";
-command.dm = false;
+command.dm = true;
 command.permissionLevel = MEMBER;
 command.shortHelp = "Gives a command list";
 command.embedHelp = function (bot: bot) {

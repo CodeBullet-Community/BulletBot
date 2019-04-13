@@ -26,7 +26,7 @@ const bot: bot = {
     filters: new Filters(__dirname + "/filters/"),
     webhooks: new Webhooks(),
     database: new Database(DBURI),
-    mStatistics: new utils.MStatistics(),
+    mStatistics: new utils.MStatistics(DBURI),
     error: function (message: discord.Message, error: any) {
         message.channel.send("Oops something went wrong. #BlameEvan");
         console.error(error);
@@ -44,6 +44,7 @@ bot.client.on('ready', () => {
 
 bot.client.on('message', async message => {
     if (message.author.bot) return;
+    bot.mStatistics.logMessage();
     var dm = false;
     if (!message.guild) {
         dm = true;
