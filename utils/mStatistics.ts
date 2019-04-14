@@ -2,6 +2,7 @@ import mongoose = require("mongoose");
 
 const MS_DAY = 86400000;
 const MS_HOUR = MS_DAY / 24;
+const MS_MINUTE = MS_HOUR / 60;
 
 interface mStats extends mongoose.Document {
     commands: {
@@ -71,6 +72,7 @@ export class MStatistics {
     hourly: {
         model: mongoose.Model<hourlyMStats>;
         doc: hourlyMStats;
+        interval: NodeJS.Timeout;
     }
 
     /** manages management statistics */
@@ -83,6 +85,24 @@ export class MStatistics {
         this.allTime = this.connection.model<allTimeMStats>("allTime", FromToMStatsSchema, "allTime");
         this.daily = this.connection.model<dailyMstats>("day", dailyMstatsSchema, "daily");
         this._init();
+    }
+
+    /** saves hour document */
+    saveHour(doc:hourlyMStats) {
+        doc.markModified("commands");
+        doc.markModified("filters");
+        doc.markModified("webhooks");
+        doc.save();
+        //console.log("saved hourly mStats");
+    }
+
+    /** creates interval with specified timeout and clears it 59min58sec later */
+    _createHourInterval(timeout: number) {
+        var interval = setInterval(this.saveHour, timeout,this.hourly.doc);
+        setTimeout(() => {
+            clearInterval(interval);
+        }, MS_HOUR - 2000);
+        return interval;
     }
 
     /** async constructor function */
@@ -107,18 +127,13 @@ export class MStatistics {
         } else {
             console.info("Using existing hour document");
         }
-        setInterval(() => {
-            this.hourly.doc.markModified("commands");
-            this.hourly.doc.markModified("filters");
-            this.hourly.doc.markModified("webhooks");
-            this.hourly.doc.save();
-            //console.log("saved hourly mStats");
-        }, 60000);
 
         this.hourly = {
             model: model,
-            doc: doc
+            doc: doc,
+            interval: null
         };
+        this.hourly.interval = this._createHourInterval(MS_MINUTE);
 
         setTimeout(() => {
             this.changeHour();
@@ -130,16 +145,16 @@ export class MStatistics {
 
     /** changes the hour doc and changes the day when needed */
     changeHour() {
-        this.hourly.doc.save();
-        var oldHour = this.hourly.doc.toObject();
-        if (oldHour == 23) {
-            this.changeDay(oldHour.day);
-        }
-
         var date = new Date();
         var UTC = date.getTime();
         var day = UTC - (UTC % MS_DAY);
         var hour = date.getUTCHours();
+
+        this.saveHour(this.hourly.doc);
+        var oldHour = this.hourly.doc.toObject();
+        if (oldHour == 23) {
+            this.changeDay(oldHour.day);
+        }
 
         this.hourly.doc = new this.hourly.model({
             day: day,
@@ -150,6 +165,7 @@ export class MStatistics {
             webhooks: {}
         });
         this.hourly.doc.save();
+        this.hourly.interval = this._createHourInterval(MS_MINUTE);
         console.log(`MStatistics hour from ${oldHour.hour} to ${hour}`);
     }
 
@@ -167,9 +183,9 @@ export class MStatistics {
         dayDoc.save();
 
         var allTime = await this.allTime.findOne();
-        var alltimeStats = this.mergeStats([allTime.toObject(),dayDoc.toObject()]);
+        var alltimeStats = this.mergeStats([allTime.toObject(), dayDoc.toObject()]);
         allTime.set(alltimeStats);
-        allTime.to = day+MS_DAY;
+        allTime.to = day + MS_DAY;
         allTime.save();
         console.log("updated all time");
     }
@@ -216,7 +232,7 @@ export class MStatistics {
         if (!subCommand) {
             subCommand = "_main";
         }
-        if(!this.hourly.doc.commands){
+        if (!this.hourly.doc.commands) {
             this.hourly.doc.commands = {};
         }
         if (!this.hourly.doc.commands[command]) {
@@ -230,18 +246,18 @@ export class MStatistics {
     }
 
     /** registers processed message */
-    logMessage(){
+    logMessage() {
         this.hourly.doc.messages += 1;
     }
 
     /** registers filter catch */
-    logFilterCatch(filter:string){
-        if(!this.hourly.doc.filters){
+    logFilterCatch(filter: string) {
+        if (!this.hourly.doc.filters) {
             this.hourly.doc.filters = {};
         }
-        if(this.hourly.doc.filters[filter]){
+        if (this.hourly.doc.filters[filter]) {
             this.hourly.doc.filters[filter] += 1;
-        }else{
+        } else {
             this.hourly.doc.filters[filter] = 1;
         }
     }

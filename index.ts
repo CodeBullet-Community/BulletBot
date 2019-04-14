@@ -36,7 +36,7 @@ const bot: bot = {
 
 exitHook(() => {
     console.log('Saving cached data...');
-    bot.mStatistics.hourly.doc.save();
+    bot.mStatistics.saveHour(bot.mStatistics.hourly.doc);
     var until = new Date().getTime() + 3000;
     while (until > new Date().getTime()) { }
     console.log("cached data saved");
