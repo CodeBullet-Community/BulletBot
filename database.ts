@@ -73,7 +73,7 @@ const filtersSchema = new mongoose.Schema({
 }, { strict: false });
 
 // webhook
-interface webhookInterface extends mongoose.Document {
+export interface webhookInterface extends mongoose.Document {
     feed: string;
     guild: string;
     channel: string;
