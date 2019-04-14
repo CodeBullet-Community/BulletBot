@@ -88,7 +88,7 @@ export class MStatistics {
     }
 
     /** saves hour document */
-    saveHour(doc:hourlyMStats) {
+    saveHour(doc: hourlyMStats) {
         doc.markModified("commands");
         doc.markModified("filters");
         doc.markModified("webhooks");
@@ -97,11 +97,14 @@ export class MStatistics {
     }
 
     /** creates interval with specified timeout and clears it 59min58sec later */
-    _createHourInterval(timeout: number) {
-        var interval = setInterval(this.saveHour, timeout,this.hourly.doc);
+    _createHourInterval(timeout: number, clearTimeout?: number) {
+        if (!clearTimeout) {
+            clearTimeout = MS_HOUR - 2000;
+        }
+        var interval = setInterval(this.saveHour, timeout, this.hourly.doc);
         setTimeout(() => {
             clearInterval(interval);
-        }, MS_HOUR - 2000);
+        }, clearTimeout);
         return interval;
     }
 
@@ -133,7 +136,7 @@ export class MStatistics {
             doc: doc,
             interval: null
         };
-        this.hourly.interval = this._createHourInterval(MS_MINUTE);
+        this.hourly.interval = this._createHourInterval(MS_MINUTE, MS_HOUR - (UTC % MS_HOUR) - 2000);
 
         setTimeout(() => {
             this.changeHour();
