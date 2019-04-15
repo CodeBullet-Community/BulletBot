@@ -97,10 +97,10 @@ export class MStatistics {
         //console.log("saved hourly mStats");
     }
 
-    /** creates interval with specified timeout and clears it 59min58sec later */
+    /** creates interval with specified timeout and clears it 59min later */
     _createHourInterval(timeout: number, clearTimeout?: number) {
         if (!clearTimeout) {
-            clearTimeout = MS_HOUR - 2000;
+            clearTimeout = MS_HOUR - MS_MINUTE;
         }
         var interval = setInterval(this.saveHour, timeout, this.hourly.doc);
         setTimeout(() => {
