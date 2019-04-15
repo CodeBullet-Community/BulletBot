@@ -1,5 +1,5 @@
 import mongoose = require("mongoose");
-import { Guild } from "discord.js";
+import { Guild, Channel } from "discord.js";
 
 // guild 
 interface guildInterface extends mongoose.Document {
@@ -171,7 +171,7 @@ export class Database {
     }
 
     /** returns array of bot masters */
-    getBotMasters(): Array<string>{
+    getBotMasters(): Array<string> {
         return this.cache.general.botMasters;
     }
 
@@ -188,20 +188,21 @@ export class Database {
     }
 
     /** find Guild Doc */
-    findGuildDoc(guild: Guild) {
-        return this.mainDB.guilds.findOne({ guild: guild.id }).exec();
+    findGuildDoc(guild: Guild, guildId?: string) {
+        if (!guildId) guildId = guild.id;
+        return this.mainDB.guilds.findOne({ guild: guildId }).exec();
     }
 
     /** adds initial Guild Doc if there isn't one */
-    async addGuild(guild: Guild) {
+    async addGuild(guild?: Guild) {
         var guildDoc = await this.findGuildDoc(guild);
         if (guildDoc) {
-            return guildDoc.toObject();
+            return guildDoc;
         }
         guildDoc = new this.mainDB.guilds();
         guildDoc.guild = guild.id;
         guildDoc.save();
-        return guildDoc.toObject();
+        return guildDoc;
     };
 
     /** removes all objects related to guild */
@@ -279,6 +280,59 @@ export class Database {
         filterDoc.filters[filter] = settings;
         filterDoc.markModified('filters.' + filter);
         return await filterDoc.save();
+    }
+
+    /** creates webhook doc with sepcific values */
+    async createWebhook(guild: Guild, channel: Channel, service: string, feed: string, message: string) {
+        if (this.webhookDB[service] instanceof mongoose.Model) {
+            console.warn("unkown service inputed in createWebhook()");
+            return;
+        }
+        var webhookDoc: webhookInterface = new this.webhookDB[service]({
+            feed: feed,
+            guild: guild.id,
+            channel: channel,
+            message: message
+        });
+        webhookDoc.save();
+        var guildDoc = await this.findGuildDoc(guild);
+        if (!guildDoc) {
+            console.warn("no guildDoc found in createWebhook(). Creating one");
+            guildDoc = await this.addGuild(guild);
+        }
+        guildDoc.webhooks[service].push(webhookDoc._id);
+        return webhookDoc;
+    }
+
+    /** deletes webhook doc using id and service and then returns the content */
+    async deleteWebhook(service: string, id: string): Promise<{ feed: string, guild: string, channel: string, message: string }> {
+        if (this.webhookDB[service] instanceof mongoose.Model) {
+            console.warn("unkown service inputed in deleteWebhook()");
+            return;
+        }
+        var webhookDoc: webhookInterface = await this.webhookDB[service].findById(id).exec();
+        if (!webhookDoc) return;
+        var webhookObject = webhookDoc.toObject();
+        webhookDoc.remove();
+        var guildDoc = await this.findGuildDoc(webhookObject.guild);
+        var guildObject = guildDoc.toObject();
+        if (guildObject.webhooks[service] && guildObject.webhooks[service].includes(id)) {
+            delete guildDoc.webhooks[service][guildObject.webhooks[service].indexOf(id)];
+        }
+        return webhookObject;
+    }
+
+    /** finds webhook doc with certain attributes */
+    async findWebhook(guild: Guild, channel: Channel, service: string, feed: string): Promise<webhookInterface> {
+        if (this.webhookDB[service] instanceof mongoose.Model) {
+            console.warn("unkown service inputed in findWebhook()");
+            return;
+        }
+        return await this.webhookDB[service].findOne({
+            feed:feed,
+            guild:guild.id,
+            channel:channel.id
+        });
     }
 
 }

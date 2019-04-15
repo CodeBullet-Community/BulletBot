@@ -1,13 +1,13 @@
 import { youtubeWebhookManager, YoutubeManager } from "./webhooks/youtube";
 import { bot } from ".";
-import { Guild, GuildChannel } from "discord.js";
+import { Guild, Channel } from "discord.js";
 import { webhookInterface } from "./Database";
 
 export interface webhookManager {
     name: string;
-    createWebhook: (bot: bot, guild: Guild, channel: GuildChannel, URL: string) => Promise<webhookInterface>;
-    deleteWebhook: (bot: bot, guild: Guild, channel: GuildChannel, URL: string) => Promise<webhookInterface>;
-    changeWebhook: (bot: bot, guild: Guild, channel: GuildChannel, URL: string, newChannel?: GuildChannel, newURL?: string) => Promise<webhookInterface>;
+    createWebhook: (bot: bot, guild: Guild, channel: Channel, URL: string, message: string) => Promise<webhookInterface>;
+    deleteWebhook: (bot: bot, guild: Guild, channel: Channel, URL: string) => Promise<{ feed: string, guild: string, channel: string, message: string }>;
+    changeWebhook: (bot: bot, guild: Guild, channel: Channel, URL: string, newChannel?: Channel, newURL?: string, newMessage?: string) => Promise<webhookInterface>;
 }
 export default class Webhooks {
     youtube: youtubeWebhookManager;

@@ -21,6 +21,7 @@
   "homepage": "https://github.com/Jet132/BulletBot#readme",
   "dependencies": {
     "@types/node": "^11.12.2",
+    "@types/request": "^2.48.1",
     "console-stamp": "^0.2.7",
     "discord.js": "^11.4.2",
     "exit-hook": "^2.1.0",
