@@ -55,6 +55,7 @@ export function actionToString(action: filterAction) {
     }
 }
 
+/** creates embed filter report to be send as log */
 export function createFilterReport(bot:bot,message:Message,filter:filter, reason:string,actions:filterAction[]){
     var actionsString = actionToString(actions[0]);
     var deleted = false;
