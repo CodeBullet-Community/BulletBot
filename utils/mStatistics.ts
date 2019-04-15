@@ -1,4 +1,5 @@
 import mongoose = require("mongoose");
+import { bot } from "..";
 
 const MS_DAY = 86400000;
 const MS_HOUR = MS_DAY / 24;
@@ -18,7 +19,7 @@ interface mStats extends mongoose.Document {
         [key: string]: {
             total: number;
             creates: number;
-            modified: number;
+            changes: number;
             deletes: number;
         }
     };
@@ -31,7 +32,7 @@ var schemaStruc = {
         youtube: {
             total: Number,
             creates: Number,
-            modified: Number,
+            changes: Number,
             deletes: Number
         }
     }
@@ -263,6 +264,20 @@ export class MStatistics {
         } else {
             this.hourly.doc.filters[filter] = 1;
         }
+    }
+
+    logWebhookAction(bot:bot,service: string, action: "creates" | "deletes" | "changes") {
+        if(!bot.webhooks.serviceNames.includes(service)) {
+            console.warn(`unknown service "${service}" inputed to logWebhookAction()`);
+            return;
+        }
+        if (!this.hourly.doc.webhooks) {
+            this.hourly.doc.webhooks = {};
+        }
+        if (!this.hourly.doc.webhooks[service]) {
+            this.hourly.doc.webhooks[service] = { total: 0, creates: 0, changes: 0, deletes: 0 };
+        }
+        this.hourly.doc.webhooks[service][action] += 1;
     }
 
 }

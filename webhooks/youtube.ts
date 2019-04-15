@@ -67,6 +67,7 @@ YoutubeManager.createWebhook = async (bot: bot, guild: Guild, channel: Channel, 
             return null;
         }
     }
+    bot.mStatistics.logWebhookAction(bot,YoutubeManager.name,"creates");
     return await bot.database.createWebhook(guild, channel, YoutubeManager.name, channelID, message);
 }
 
@@ -95,12 +96,18 @@ YoutubeManager.deleteWebhook = async (bot: bot, guild: Guild, channel: Channel, 
             console.error("error while deleting youtube webhook", e);
         }
     }
+    bot.mStatistics.logWebhookAction(bot,YoutubeManager.name,"deletes");
     return (await bot.database.deleteWebhook(YoutubeManager.name,webhookDoc._id));
 }
 
 YoutubeManager.changeWebhook =  async (bot: bot, guild: Guild, channel: Channel, URL: string, newChannel?: Channel, newURL?: string, newMessage?: string)=>{
     var channelID = await YoutubeManager.getChannelID(URL);
     var webhookDoc = await bot.database.findWebhook(guild,channel,YoutubeManager.name,channelID);
+    if(!webhookDoc){
+        console.warn("webhook doc not found in changeWebhook() with properties:",{feed:channelID,guild:guild,channel:channel});
+        return;
+    }
+    bot.mStatistics.logWebhookAction(bot,YoutubeManager.name,"changes");
     if(newURL){
         var oldWebhookObject = await YoutubeManager.deleteWebhook(bot,guild,channel,channelID);
         return await YoutubeManager.createWebhook(bot,guild,(newChannel?newChannel:channel),newURL,(newMessage?newMessage:oldWebhookObject.message));

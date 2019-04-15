@@ -11,7 +11,9 @@ export interface webhookManager {
 }
 export default class Webhooks {
     youtube: youtubeWebhookManager;
+    serviceNames:string[];
     constructor() {
         this.youtube = YoutubeManager;
+        this.serviceNames = [this.youtube.name];
     }
 }
