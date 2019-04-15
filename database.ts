@@ -6,17 +6,17 @@ interface guildInterface extends mongoose.Document {
     guild: string;
     staff: {
         mods: {
-            roles: Array<string>;
-            users: Array<string>;
+            roles: string[];
+            users: string[];
         };
         admins: {
-            roles: Array<string>;
-            users: Array<string>;
+            roles: string[];
+            users: string[];
         }
     };
     logChannel: string;
     webhooks: {
-        [key: string]: Array<string>;
+        [key: string]: string[];
     }
 };
 const guildSchema = new mongoose.Schema({
@@ -171,7 +171,7 @@ export class Database {
     }
 
     /** returns array of bot masters */
-    getBotMasters(): Array<string> {
+    getBotMasters(): string[] {
         return this.cache.general.botMasters;
     }
 
@@ -188,32 +188,37 @@ export class Database {
     }
 
     /** find Guild Doc */
-    findGuildDoc(guild: Guild, guildId?: string) {
-        if (!guildId) guildId = guild.id;
+    findGuildDoc(guildId: string) {
         return this.mainDB.guilds.findOne({ guild: guildId }).exec();
     }
 
     /** adds initial Guild Doc if there isn't one */
-    async addGuild(guild?: Guild) {
-        var guildDoc = await this.findGuildDoc(guild);
+    async addGuild(guildId: string) {
+        var guildDoc = await this.findGuildDoc(guildId);
         if (guildDoc) {
             return guildDoc;
         }
         guildDoc = new this.mainDB.guilds();
-        guildDoc.guild = guild.id;
+        guildDoc.guild = guildId;
         guildDoc.save();
         return guildDoc;
     };
 
     /** removes all objects related to guild */
     async removeGuild(guild: Guild) {
-        // TODO: remove logs, webhooks
-        var guildDoc = await this.findGuildDoc(guild);
+        // TODO: remove logs
+        var guildDoc = await this.findGuildDoc(guild.id);
+        var webhooks = guildDoc.toObject().webhooks;
         if (guildDoc) guildDoc.remove();
         var commandDoc = await this.findCommandsDoc(guild);
         if (commandDoc) commandDoc.remove();
         var fitlerDoc = await this.findFiltersDoc(guild);
         if (fitlerDoc) fitlerDoc.remove();
+        for(const service in webhooks){
+            for(const webhookDocId of webhooks[service]){
+                this.webhookDB[service].remove({_id:webhookDocId});
+            }
+        }
     }
 
     /** find commands doc */
@@ -291,16 +296,17 @@ export class Database {
         var webhookDoc: webhookInterface = new this.webhookDB[service]({
             feed: feed,
             guild: guild.id,
-            channel: channel,
+            channel: channel.id,
             message: message
         });
         webhookDoc.save();
-        var guildDoc = await this.findGuildDoc(guild);
+        var guildDoc = await this.findGuildDoc(guild.id);
         if (!guildDoc) {
             console.warn("no guildDoc found in createWebhook(). Creating one");
-            guildDoc = await this.addGuild(guild);
+            guildDoc = await this.addGuild(guild.id);
         }
         guildDoc.webhooks[service].push(webhookDoc._id);
+        guildDoc.save();
         return webhookDoc;
     }
 
@@ -314,11 +320,9 @@ export class Database {
         if (!webhookDoc) return;
         var webhookObject = webhookDoc.toObject();
         webhookDoc.remove();
-        var guildDoc = await this.findGuildDoc(webhookObject.guild);
-        var guildObject = guildDoc.toObject();
-        if (guildObject.webhooks[service] && guildObject.webhooks[service].includes(id)) {
-            delete guildDoc.webhooks[service][guildObject.webhooks[service].indexOf(id)];
-        }
+        var update:any = {$pull:{}};
+        update.$pull["webhooks."+service] = id;
+        await this.mainDB.guilds.findOneAndUpdate({guild:webhookObject.guild},update);
         return webhookObject;
     }
 

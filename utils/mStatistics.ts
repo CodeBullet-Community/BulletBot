@@ -274,7 +274,7 @@ export class MStatistics {
         if (!this.hourly.doc.webhooks) {
             this.hourly.doc.webhooks = {};
         }
-        if (!this.hourly.doc.webhooks[service]) {
+        if (!this.hourly.doc.webhooks[service].creates) {
             this.hourly.doc.webhooks[service] = { total: 0, creates: 0, changes: 0, deletes: 0 };
         }
         this.hourly.doc.webhooks[service][action] += 1;

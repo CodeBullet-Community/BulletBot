@@ -1,5 +1,6 @@
 import { Guild } from "discord.js";
 
+//actually doesn't get used, it's just as a note
 const REGEX = {
     user: {
         id: /<@(\d*)>/g,
@@ -13,14 +14,14 @@ const REGEX = {
 /** parses a string into a GuildMember object */
 export function stringToUser(guild: Guild, text: string) {
 
-    if (REGEX.user.id.test(text)) {
-        var result = REGEX.user.id.exec(text);
+    if (/<@(\d*)>/g.test(text)) {
+        var result = /<@(\d*)>/g.exec(text);
         if (result != null) {
             text = result[1];
         }
     }
-    if (REGEX.user.name.test(text)) {
-        var result = REGEX.user.name.exec(text);
+    if (/([^#@:]{2,32})#\d{4}/g.test(text)) {
+        var result = /([^#@:]{2,32})#\d{4}/g.exec(text);
         if (result != null) {
             text = result[1];
         }
@@ -43,8 +44,8 @@ export function stringToRole(guild: Guild, text: string) {
         return "@everyone";
     }
 
-    if (REGEX.role.test(text)) {
-        var result = REGEX.role.exec(text);
+    if (/<@&(\d*)>/g.test(text)) {
+        var result = /<@&(\d*)>/g.exec(text);
         if (result != null) {
             text = result[1];
         }
@@ -59,8 +60,8 @@ export function stringToRole(guild: Guild, text: string) {
 }
 /** parses a string into a Channel object */
 export function stringToChannel(guild: Guild, text: string) {
-    if (REGEX.channel.test(text)) {
-        var result = REGEX.channel.exec(text);
+    if (/<#(\d*)>/g.test(text)) {
+        var result = /<#(\d*)>/g.exec(text);
         if (result != null) {
             text = result[1];
         }

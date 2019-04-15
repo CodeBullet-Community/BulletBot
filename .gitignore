@@ -65,3 +65,5 @@ typings/
 
 # token
 token.json
+# api keys
+apikeys.json

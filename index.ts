@@ -90,7 +90,7 @@ bot.client.on('message', async message => {
 
 bot.client.on('guildCreate', guild => {
     console.log(`joined ${guild.name} with id ${guild.id}`);
-    bot.database.addGuild(guild);
+    bot.database.addGuild(guild.id);
 });
 
 bot.client.on('guildDelete', guild => {

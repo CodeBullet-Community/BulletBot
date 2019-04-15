@@ -40,12 +40,12 @@ command.run = async (bot: bot, message: Message, args: string, permissionLevel: 
         }
         var command = bot.commands.get(args.toLowerCase());
         if (command == null) {
-            if (typeof (bot.commands.structure[args.toLowerCase().split("/")[0]]) != "undefined") {
+            if (typeof (bot.commands.structure[args.split("/")[0]]) != "undefined") {
                 var strucObject = bot.commands.structure;
-                var keys = args.toLowerCase().split("/");
+                var keys = args.split("/");
                 for (var i = 0; i < keys.length; i++) {
                     if (typeof (strucObject[keys[i]]) === "undefined") {
-                        message.channel.send("Couldn't find '" + args.toLowerCase() + "' category");
+                        message.channel.send("Couldn't find '" + args + "' category");
                         return;
                     } else {
                         strucObject = strucObject[keys[i]];

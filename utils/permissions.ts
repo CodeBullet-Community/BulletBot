@@ -19,7 +19,7 @@ export async function getPermissionLevel(bot: bot, member: GuildMember) {
         return ADMIN;
     }
 
-    var guildDoc = await bot.database.findGuildDoc(member.guild)
+    var guildDoc = await bot.database.findGuildDoc(member.guild.id)
     if (!guildDoc) { 
         return MEMBER; 
     }
