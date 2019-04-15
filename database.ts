@@ -212,8 +212,8 @@ export class Database {
         if (guildDoc) guildDoc.remove();
         var commandDoc = await this.findCommandsDoc(guild);
         if (commandDoc) commandDoc.remove();
-        var fitlerDoc = await this.findFiltersDoc(guild);
-        if (fitlerDoc) fitlerDoc.remove();
+        var filterDoc = await this.findFiltersDoc(guild);
+        if (filterDoc) filterDoc.remove();
         for(const service in webhooks){
             for(const webhookDocId of webhooks[service]){
                 this.webhookDB[service].remove({_id:webhookDocId});
@@ -287,10 +287,10 @@ export class Database {
         return await filterDoc.save();
     }
 
-    /** creates webhook doc with sepcific values */
+    /** creates webhook doc with specific values */
     async createWebhook(guild: Guild, channel: Channel, service: string, feed: string, message: string) {
         if (this.webhookDB[service] instanceof mongoose.Model) {
-            console.warn("unkown service inputed in createWebhook()");
+            console.warn("unknown service input in createWebhook()");
             return;
         }
         var webhookDoc: webhookInterface = new this.webhookDB[service]({
@@ -313,7 +313,7 @@ export class Database {
     /** deletes webhook doc using id and service and then returns the content */
     async deleteWebhook(service: string, id: string): Promise<{ feed: string, guild: string, channel: string, message: string }> {
         if (this.webhookDB[service] instanceof mongoose.Model) {
-            console.warn("unkown service inputed in deleteWebhook()");
+            console.warn("unknown service input in deleteWebhook()");
             return;
         }
         var webhookDoc: webhookInterface = await this.webhookDB[service].findById(id).exec();
@@ -329,7 +329,7 @@ export class Database {
     /** finds webhook doc with certain attributes */
     async findWebhook(guild: Guild, channel: Channel, service: string, feed: string): Promise<webhookInterface> {
         if (this.webhookDB[service] instanceof mongoose.Model) {
-            console.warn("unkown service inputed in findWebhook()");
+            console.warn("unknown service input in findWebhook()");
             return;
         }
         return await this.webhookDB[service].findOne({

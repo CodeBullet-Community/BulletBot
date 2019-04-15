@@ -4,7 +4,7 @@ import utils from "../utils";
 import { Message, RichEmbed } from "discord.js";
 import { command as commandInterface } from "../commands";
 
-function sendCommandlist(bot: bot, message: Message, strucObject: any, path:string) {
+function sendCommandList(bot: bot, message: Message, strucObject: any, path:string) {
     var output = new RichEmbed();
     output.setAuthor("Command List:", bot.client.user.avatarURL);
     if(path) output.setFooter("Path: ~"+path);
@@ -35,7 +35,7 @@ var command: commandInterface = { name: null, path: null,dm:null, permissionLeve
 command.run = async (bot: bot, message: Message, args: string, permissionLevel: number) => {
     try {
         if (args.length == 0) {
-            sendCommandlist(bot, message, bot.commands.structure, null);
+            sendCommandList(bot, message, bot.commands.structure, null);
             return;
         }
         var command = bot.commands.get(args.toLowerCase());
@@ -51,7 +51,7 @@ command.run = async (bot: bot, message: Message, args: string, permissionLevel: 
                         strucObject = strucObject[keys[i]];
                     }
                 }
-                sendCommandlist(bot, message, strucObject,args);
+                sendCommandList(bot, message, strucObject,args);
                 return;
             } else {
                 message.channel.send("Couldn't find '" + args.toLowerCase() + "' command");

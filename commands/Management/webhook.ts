@@ -137,7 +137,7 @@ command.run = async (bot: bot, message: Message, args: string, permissionLevel: 
 
                     var output = await bot.webhooks[service].createWebhook(bot, message.guild, channel, feed, text);
                     if (!output) {
-                        message.channel.send("Adding Webhook was unsuccessful. Most likely the inputed feed (" + feed + ") doesn't exist **or** there is already a webhook with the same feed for " + channel + ".");
+                        message.channel.send("Adding Webhook was unsuccessful. Most likely the input feed (" + feed + ") doesn't exist **or** there is already a webhook with the same feed for " + channel + ".");
                         return;
                     } else {
                         message.channel.send(`Successfully added webhook to ${channel.toString()} for ${feed}`);
@@ -237,7 +237,7 @@ command.run = async (bot: bot, message: Message, args: string, permissionLevel: 
                     }
                     break;
                 default:
-                    message.channel.send(`unknow option "${argsArray[argIndex]}"\navailable options:\n **-** \`list\`\n **-** \`add\`\n **-** \`rem\`\n **-** \`change\``);
+                    message.channel.send(`unknown option "${argsArray[argIndex]}"\navailable options:\n **-** \`list\`\n **-** \`add\`\n **-** \`rem\`\n **-** \`change\``);
                     break;
             }
         } else {

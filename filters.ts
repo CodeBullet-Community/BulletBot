@@ -37,13 +37,13 @@ export default class Filters{
                 this.loadFilters(dir + f + "/",structureObject[f]);
             });
 
-            var fitlers = files.filter(f => f.split(".").pop() == "js");
-            if (fitlers.length <= 0) {
+            var filters = files.filter(f => f.split(".").pop() == "js");
+            if (filters.length <= 0) {
                 console.error("no filters to load in " + dir);
                 return;
             }
-            console.info(`loading ${fitlers.length} filters in ${dir}`);
-            fitlers.forEach((f, i) => {
+            console.info(`loading ${filters.length} filters in ${dir}`);
+            filters.forEach((f, i) => {
                 var props = require(dir + f).default;
                 console.info(`${i + 1}: ${f} loaded!`);
                 this.filters.set(props.name, props);
@@ -78,7 +78,7 @@ export default class Filters{
                 }
             }
         }catch(e){
-            bot.error(message,{error:"Error occured at filterMessage",e});
+            bot.error(message,{error:"Error occurred at filterMessage",e});
         }
     }
 

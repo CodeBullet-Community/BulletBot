@@ -173,7 +173,7 @@ export class MStatistics {
         console.log(`MStatistics hour from ${oldHour.hour} to ${hour}`);
     }
 
-    /** changes summarises hour docs */
+    /** changes summaries hour docs */
     async changeDay(day: number) {
         var hourDocs = await this.hourly.model.find({ day: day }).exec();
         var hourObjects = [];
@@ -187,14 +187,14 @@ export class MStatistics {
         dayDoc.save();
 
         var allTime = await this.allTime.findOne();
-        var alltimeStats = this.mergeStats([allTime.toObject(), dayDoc.toObject()]);
-        allTime.set(alltimeStats);
+        var allTimeStats = this.mergeStats([allTime.toObject(), dayDoc.toObject()]);
+        allTime.set(allTimeStats);
         allTime.to = day + MS_DAY;
         allTime.save();
         console.log("updated all time");
     }
 
-    /** accumalates stats of docs into a object */
+    /** accumulates stats of docs into a object */
     mergeStats(docs: mStats[]) {
         var merged = { commands: {}, messages: 0, filters: {}, webhooks: {} };
         for (const doc of docs) {
@@ -268,7 +268,7 @@ export class MStatistics {
 
     logWebhookAction(bot:bot,service: string, action: "creates" | "deletes" | "changes") {
         if(!bot.webhooks.serviceNames.includes(service)) {
-            console.warn(`unknown service "${service}" inputed to logWebhookAction()`);
+            console.warn(`unknown service "${service}" input to logWebhookAction()`);
             return;
         }
         if (!this.hourly.doc.webhooks) {
