@@ -93,7 +93,7 @@ export class MStatistics {
         doc.markModified("commands");
         doc.markModified("filters");
         doc.markModified("webhooks");
-        doc.save();
+        return doc.save();
         //console.log("saved hourly mStats");
     }
 
@@ -148,15 +148,15 @@ export class MStatistics {
     }
 
     /** changes the hour doc and changes the day when needed */
-    changeHour() {
+    async changeHour() {
         var date = new Date();
         var UTC = date.getTime();
         var day = UTC - (UTC % MS_DAY);
         var hour = date.getUTCHours();
 
-        this.saveHour(this.hourly.doc);
+        await this.saveHour(this.hourly.doc);
         var oldHour = this.hourly.doc.toObject();
-        if (oldHour == 23) {
+        if (oldHour > hour) {
             this.changeDay(oldHour.day);
         }
 
@@ -168,7 +168,7 @@ export class MStatistics {
             filters: {},
             webhooks: {}
         });
-        this.hourly.doc.save();
+        await this.hourly.doc.save();
         this.hourly.interval = this._createHourInterval(MS_MINUTE);
         console.log(`MStatistics hour from ${oldHour.hour} to ${hour}`);
     }
@@ -266,8 +266,8 @@ export class MStatistics {
         }
     }
 
-    logWebhookAction(bot:bot,service: string, action: "creates" | "deletes" | "changes") {
-        if(!bot.webhooks.serviceNames.includes(service)) {
+    logWebhookAction(bot: bot, service: string, action: "creates" | "deletes" | "changes") {
+        if (!bot.webhooks.serviceNames.includes(service)) {
             console.warn(`unknown service "${service}" input to logWebhookAction()`);
             return;
         }
