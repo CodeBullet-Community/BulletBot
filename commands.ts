@@ -65,7 +65,7 @@ export default class Commands {
             message.reply(cmd.embedHelp(bot));
             return;
         }
-        if (permissionLevel < cmd.permissionLevel) return;
+        if (permissionLevel < cmd.permissionLevel && !dm) return;
         cmd.run(bot, message, args, permissionLevel);
     }
 
