@@ -94,7 +94,7 @@ YoutubeManager.deleteWebhook = async (bot: bot, guild: Guild, channel: Channel, 
             await promisePost('https://pubsubhubbub.appspot.com/subscribe', {
                 form: {
                     'hub.mode': 'unsubscribe',
-                    'hub.callback': `https://${bot.database.getGlobalSettings().callbackURL}/youtube`,
+                    'hub.callback': `https://${bot.database.getGlobalSettings().callbackURL}:${bot.database.getGlobalSettings().callbackPort}/webhooks/youtube`,
                     'hub.topic': 'https://www.youtube.com/xml/feeds/videos.xml?channel_id=' + channelID
                 }
             });

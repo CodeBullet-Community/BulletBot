@@ -4,6 +4,7 @@ import exitHook = require('exit-hook');
 import Commands from "./commands";
 import Filters from "./filters";
 import Webhooks from "./webhooks";
+import Catcher from "./catcher";
 import { Database } from "./Database";
 import { MStatistics } from "./utils/mStatistics";
 import utils from "./utils";
@@ -46,6 +47,12 @@ var globalUpdate = setInterval(() => {
     bot.database.updateGlobalSettings();
     //console.log("global cache was updated");
 }, 60000);
+
+var catcher:Catcher;
+
+setTimeout(()=>{
+    catcher = new Catcher(bot,bot.database.getGlobalSettings().callbackPort);
+},2000);
 
 bot.client.on('ready', () => {
     console.info("Bot is ready");
