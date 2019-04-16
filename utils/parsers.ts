@@ -60,6 +60,7 @@ export function stringToRole(guild: Guild, text: string) {
 }
 /** parses a string into a Channel object */
 export function stringToChannel(guild: Guild, text: string) {
+    if(!guild) return null;
     if (/<#(\d*)>/g.test(text)) {
         var result = /<#(\d*)>/g.exec(text);
         if (result != null) {

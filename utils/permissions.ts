@@ -1,4 +1,4 @@
-import { GuildMember } from "discord.js";
+import { GuildMember, GuildChannel } from "discord.js";
 import { bot } from "..";
 
 export const MEMBER = 0;
@@ -45,6 +45,7 @@ export async function getPermissionLevel(bot: bot, member: GuildMember) {
     return MEMBER;
 }
 
+/** stringifies permission level */
 export function permToString(permissionLevel:number){
     switch(permissionLevel){
         case MEMBER:

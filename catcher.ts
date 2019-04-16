@@ -2,6 +2,7 @@ import express = require("express");
 import { bot } from ".";
 import bodyParser = require("body-parser");
 import xml2js = require('xml2js')
+import { sendMentionMessage } from "./utils/messages";
 const xmlParser = new xml2js.Parser({ explicitArray: false })
 
 export default class Catcher {
@@ -21,10 +22,14 @@ export default class Catcher {
                 } else {
                     var video = result.feed.entry
                     var publishUpdateDifference = Date.parse(video.updated) - Date.parse(video.published)
-                    const type = (publishUpdateDifference > 60000) ? 'updated' : 'published'
+                    const type = (publishUpdateDifference > 300000) ? 'updated' : 'published'
+                    if(type != "published") return;
                     var webhooks = await bot.database.webhookDB.youtube.find({ feed: video["yt:channelId"] }).exec();
+                    if(webhooks.length == 0){
+                        res.sendStatus(404);
+                        return;
+                    }
 
-                    const channelId = video["yt:channelId"];
                     const channelLink = video.author.uri;
                     const channelName = video.author.name;
                     const link = "https://youtu.be/" + video["yt:videoId"];
@@ -41,8 +46,13 @@ export default class Catcher {
                         if (!channel) webhook.remove();
                         var message: string = webhookObject.message;
                         message = message.replace("{{link}}", link).replace("{{title}}", title).replace("{{channelName}}", channelName).replace("{{channelLink}}", channelLink);
-                        channel.send(message);
+                        if (message.includes("{{role:")) {
+                            sendMentionMessage(guild,channel,message);
+                        } else {
+                            channel.send(message);
+                        }
                     }
+                    res.sendStatus(200);
                 }
             })
         })
