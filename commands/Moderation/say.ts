@@ -27,12 +27,12 @@ command.run = async (bot: bot, message: Message, args: string, permissionLevel: 
                     message.channel.send("You don't have permission to write in " + channel);
                     return;
                 }
-                if(!channel.permissionsFor(message.guild.me).hasPermission("SEND_MESSAGES")){
+                if (!channel.permissionsFor(message.guild.me).hasPermission("SEND_MESSAGES")) {
                     message.channel.send("I don't have permission to write in " + channel);
                     return
                 }
             }
-            if(!channel.send){
+            if (!channel.send) {
                 message.channel.send("I can't write in a voice channel");
                 return
             }
@@ -68,7 +68,7 @@ command.run = async (bot: bot, message: Message, args: string, permissionLevel: 
             channel.send(content, embedObject);
         }
 
-        bot.mStatistics.logCommandUsage(command.name, "normal");
+        bot.mStatistics.logCommandUsage(command.name, embed ? "embed" : "normal");
     } catch (e) {
         bot.error(message, e);
     }

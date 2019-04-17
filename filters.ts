@@ -3,22 +3,23 @@ import * as fs from "fs";
 import { bot } from ".";
 import { filterAction, ACTION_NOTHING, executeAction, executeActions } from "./utils/filters";
 import { sendLog } from "./utils/messages";
+import { LOG_FILTER_CATCH, filterCatch } from "./Database";
 
-export interface filterOutput{
+export interface filterOutput {
     report: any;
     actions: filterAction[];
 }
 
-export interface filter{
+export interface filter {
     name: string;
     path: string;
-    active: (bot:bot,guild:Guild)=>Promise<boolean>;
+    active: (bot: bot, guild: Guild) => Promise<boolean>;
     shortHelp: string;
     embedHelp: (bot: bot) => any;
-    run: (bot:bot,message:Message) => Promise<filterOutput>;
+    run: (bot: bot, message: Message) => Promise<filterOutput>;
 };
 
-export default class Filters{
+export default class Filters {
     filters: Collection<string, filter>;
     structure: Object;
     constructor(dir: string) {
@@ -34,7 +35,7 @@ export default class Filters{
             var folders = files.filter(f => fs.lstatSync(dir + f).isDirectory());
             folders.forEach((f, i) => {
                 structureObject[f] = {}
-                this.loadFilters(dir + f + "/",structureObject[f]);
+                this.loadFilters(dir + f + "/", structureObject[f]);
             });
 
             var filters = files.filter(f => f.split(".").pop() == "js");
@@ -49,11 +50,11 @@ export default class Filters{
                 this.filters.set(props.name, props);
                 // puts filter in structure
                 var strucObject = structureObject;
-                if(props.path != ""){
+                if (props.path != "") {
                     var keys = props.path.split("/");
                     strucObject = this.structure;
-                    for(var i = 0; i < keys.length; i++){
-                        if(!strucObject[keys[i]]){
+                    for (var i = 0; i < keys.length; i++) {
+                        if (!strucObject[keys[i]]) {
                             strucObject[keys[i]] = {};
                         }
                         strucObject = strucObject[keys[i]];
@@ -64,21 +65,28 @@ export default class Filters{
         });
     }
 
-    async filterMessage(bot:bot,message:Message){
-        try{
+    async filterMessage(bot: bot, message: Message) {
+        try {
             var filterArray = this.filters.array();
-            for(var i = 0; i < filterArray.length; i++){
-                if(!(await filterArray[i].active(bot,message.guild))) continue;
-                var output = await filterArray[i].run(bot,message);
-                if(output){
+            for (var i = 0; i < filterArray.length; i++) {
+                if (!(await filterArray[i].active(bot, message.guild))) continue;
+                var output = await filterArray[i].run(bot, message);
+                if (output) {
                     bot.mStatistics.logFilterCatch(filterArray[i].name);
-                    executeActions(message,output.actions);
-                    sendLog(bot,message.guild,output.report);
+                    var logObject: filterCatch = {
+                        filter: filterArray[i].name,
+                        user: message.member.id,
+                        channel: message.channel.id,
+                        actions: output.actions
+                    }
+                    bot.database.log(message.guild, message.guild.me, LOG_FILTER_CATCH, logObject);
+                    executeActions(message, output.actions);
+                    sendLog(bot, message.guild, output.report);
                     return;
                 }
             }
-        }catch(e){
-            bot.error(message,{error:"Error occurred at filterMessage",e});
+        } catch (e) {
+            bot.error(message, { error: "Error occurred at filterMessage", e });
         }
     }
 

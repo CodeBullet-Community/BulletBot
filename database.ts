@@ -1,5 +1,6 @@
 import mongoose = require("mongoose");
-import { Guild, Channel } from "discord.js";
+import { Guild, Channel, GuildMember } from "discord.js";
+import { filterAction } from "./utils/filters";
 
 // guild 
 interface guildInterface extends mongoose.Document {
@@ -37,12 +38,64 @@ const guildSchema = new mongoose.Schema({
     }
 });
 
+
+// log actions
+export const LOG_TYPE_ADD = 0;
+export const LOG_TYPE_REMOVE = 1;
+export const LOG_TYPE_CHANGE = 2;
+
+export const LOG_ADMIN_CHANGE = 0;
+export const LOG_MOD_CHANGE = 1;
+export interface StaffChange {
+    type: 0 | 1;
+    role?: string;
+    user?: string;
+}
+export const LOG_LOG_CHANNEL = 2;
+export interface logChannelChange {
+    type: 0 | 1;
+    channel: string;
+}
+export const LOG_WEBHOOK = 3;
+export interface webhookChange {
+    type: 0 | 1 | 2;
+    service: string;
+    feed: string;
+    channel: string;
+    newChannel?: string;
+    newFeed?: string;
+    newMessage?: boolean;
+}
+export const LOG_FILTER = 4;
+export interface filterChange {
+    type: 0 | 1;
+    filter: string;
+    channel?: string;
+}
+export const LOG_FILTER_CATCH = 5;
+export interface filterCatch {
+    filter: string;
+    user: string;
+    channel: string;
+    actions: filterAction[];
+}
 // log
-// undefined for now
 interface logInterface extends mongoose.Document {
     guild: string;
-    action: string;
+    action: Number;
+    mod: string;
+    timestamp: number;
+    info: {
+        [key: string]: any;
+    };
 };
+const logSchema = new mongoose.Schema({
+    guild: String,
+    action: Number,
+    mod: String,
+    timestamp: Number,
+    info: mongoose.Schema.Types.Mixed
+});
 
 // commands settings
 interface commandsInterface extends mongoose.Document {
@@ -128,7 +181,7 @@ export class Database {
         this.mainDB = {
             connection: mainConnection,
             guilds: mainConnection.model("guild", guildSchema, "guilds"),
-            logs: null,
+            logs: mainConnection.model("log", logSchema, "logs"),
             commands: mainConnection.model("commands", commandsSchema, "commands"),
             filters: mainConnection.model("filters", filtersSchema, "filters"),
             settings: mainConnection.model("setting", placeholderSchema, "settings")
@@ -145,7 +198,7 @@ export class Database {
         };
 
         this.updateGlobalSettings();
-    };
+    }
 
     /** updates cached global settings */
     async updateGlobalSettings() {
@@ -214,9 +267,9 @@ export class Database {
         if (commandDoc) commandDoc.remove();
         var filterDoc = await this.findFiltersDoc(guild);
         if (filterDoc) filterDoc.remove();
-        for(const service in webhooks){
-            for(const webhookDocId of webhooks[service]){
-                this.webhookDB[service].remove({_id:webhookDocId});
+        for (const service in webhooks) {
+            for (const webhookDocId of webhooks[service]) {
+                this.webhookDB[service].remove({ _id: webhookDocId });
             }
         }
     }
@@ -230,7 +283,8 @@ export class Database {
     async getCommandSettings(guild: Guild, command: string, doc?: commandsInterface) {
         // if the doc isn't null, but it got deleted in the DB it will always return null
         var commandSettings = doc;
-        if (!commandSettings || commandSettings.guild != guild.id) commandSettings = await this.findCommandsDoc(guild);
+        if (!commandSettings || commandSettings.guild != guild.id)
+            commandSettings = await this.findCommandsDoc(guild);
         if (!commandSettings) return null;
         commandSettings = commandSettings.toObject().commands
         if (command in commandSettings) return commandSettings[command];
@@ -311,7 +365,8 @@ export class Database {
     }
 
     /** deletes webhook doc using id and service and then returns the content */
-    async deleteWebhook(service: string, id: string): Promise<{ feed: string, guild: string, channel: string, message: string }> {
+    async deleteWebhook(service: string, id: string):
+        Promise<{ feed: string, guild: string, channel: string, message: string }> {
         if (this.webhookDB[service] instanceof mongoose.Model) {
             console.warn("unknown service input in deleteWebhook()");
             return;
@@ -320,9 +375,9 @@ export class Database {
         if (!webhookDoc) return;
         var webhookObject = webhookDoc.toObject();
         webhookDoc.remove();
-        var update:any = {$pull:{}};
-        update.$pull["webhooks."+service] = id;
-        await this.mainDB.guilds.findOneAndUpdate({guild:webhookObject.guild},update);
+        var update: any = { $pull: {} };
+        update.$pull["webhooks." + service] = id;
+        await this.mainDB.guilds.findOneAndUpdate({ guild: webhookObject.guild }, update);
         return webhookObject;
     }
 
@@ -333,10 +388,23 @@ export class Database {
             return;
         }
         return await this.webhookDB[service].findOne({
-            feed:feed,
-            guild:guild.id,
-            channel:channel.id
+            feed: feed,
+            guild: guild.id,
+            channel: channel.id
         });
+    }
+
+    /** logs action in database */
+    log(guild: Guild, mod: GuildMember, action: 0 | 1 | 2 | 3 | 4 | 5,
+        info: StaffChange | logChannelChange | webhookChange | filterChange | filterCatch) {
+        var logDoc = new this.mainDB.logs();
+        logDoc.guild = guild.id;
+        logDoc.action = action;
+        logDoc.mod = mod.id;
+        logDoc.timestamp = new Date().getTime();
+        logDoc.info = info;
+        logDoc.markModified("info");
+        return logDoc.save();
     }
 
 }

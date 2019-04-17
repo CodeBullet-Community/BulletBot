@@ -13,19 +13,23 @@ export interface filterAction {
 };
 
 /** executes single filter action */
-export function executeAction(message: Message, action: filterAction) {
-    switch (action.type) {
-        case ACTION_NOTHING:
-            break;
-        case ACTION_DELETE:
-            message.delete(action.delay);
-            break;
-        case ACTION_SEND:
-            message.reply(action.message);
-            break;
-        default:
-            console.warn("unknown action:" + action);
-            break;
+export async function executeAction(message: Message, action: filterAction) {
+    try {
+        switch (action.type) {
+            case ACTION_NOTHING:
+                return true;
+            case ACTION_DELETE:
+                await message.delete(action.delay);
+                return true;
+            case ACTION_SEND:
+                await message.reply(action.message);
+                return true;
+            default:
+                console.warn("unknown action:" + action);
+                return false;
+        }
+    } catch (e) {
+        return false;
     }
 }
 
@@ -48,6 +52,7 @@ export function actionToString(action: filterAction) {
             }
             return `deleted message after ${action.delay}ms`;
         case ACTION_SEND:
+
             return `replied with "${action.message}" to message`;
         default:
             console.warn("actionToString: unknown action");
@@ -56,17 +61,17 @@ export function actionToString(action: filterAction) {
 }
 
 /** creates embed filter report to be send as log */
-export function createFilterReport(bot:bot,message:Message,filter:filter, reason:string,actions:filterAction[]){
+export function createFilterReport(bot: bot, message: Message, filter: filter, reason: string, actions: filterAction[]) {
     var actionsString = actionToString(actions[0]);
     var deleted = false;
-    if(actions[0].type == ACTION_DELETE) deleted = true;
-    for(var i = 1; i < actions.length; i++){
-        if(actions[i].type == ACTION_DELETE) deleted = true;
-        actionsString += "\n"+actionToString(actions[i]);
+    if (actions[0].type == ACTION_DELETE) deleted = true;
+    for (var i = 1; i < actions.length; i++) {
+        if (actions[i].type == ACTION_DELETE) deleted = true;
+        actionsString += "\n" + actionToString(actions[i]);
     }
     var content = message.content;
-    if(!deleted){
-        content = `[Jump to Message](${message.url})\n`+content;
+    if (!deleted) {
+        content = `[Jump to Message](${message.url})\n` + content;
     }
 
     return {
