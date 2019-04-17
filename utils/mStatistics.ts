@@ -156,7 +156,7 @@ export class MStatistics {
 
         await this.saveHour(this.hourly.doc);
         var oldHour = this.hourly.doc.toObject();
-        if (oldHour > hour) {
+        if (oldHour.hour > hour) {
             this.changeDay(oldHour.day);
         }
 
