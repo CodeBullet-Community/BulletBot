@@ -2,7 +2,7 @@ import { webhookManager } from "../webhooks";
 import request = require("request");
 import { bot } from "..";
 import { Guild, Channel } from "discord.js";
-import { google as GOOGLE_API_KEY } from "../apiKeys.json";
+import { googleApiKey as GOOGLE_API_KEY } from "../bot-config.json";
 import { google } from "googleapis";
 
 export interface youtubeWebhookManager extends webhookManager {

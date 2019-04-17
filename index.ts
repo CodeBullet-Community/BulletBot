@@ -8,9 +8,7 @@ import Catcher from "./catcher";
 import { Database } from "./Database";
 import { MStatistics } from "./utils/mStatistics";
 import utils from "./utils";
-
-// Database reference gets added in class
-const DBURI = "mongodb://localhost";
+import {DBURI,token} from "./bot-config.json";
 
 export interface bot {
     client: discord.Client;
@@ -105,6 +103,5 @@ bot.client.on('guildDelete', guild => {
     bot.database.removeGuild(guild);
 });
 
-import token = require("./token.json");
 import { MEMBER } from "./utils/permissions";
-bot.client.login(token.token);
+bot.client.login(token);

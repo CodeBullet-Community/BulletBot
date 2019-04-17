@@ -172,10 +172,10 @@ export class Database {
 
     /** manages connections to databases */
     constructor(URI: string) {
-        var mainConnection = mongoose.createConnection(URI + "/main", { useNewUrlParser: true });
+        var mainConnection = mongoose.createConnection(URI + "/main?authSource=admin", { useNewUrlParser: true });
         mainConnection.on('error', console.error.bind(console, 'connection error:'));
         mainConnection.once('open', function () {
-            console.log("connected to " + URI + "/main")
+            console.log("connected to " + URI + "/main?authSource=admin")
         });
         // TODO: define logs
         this.mainDB = {
@@ -187,10 +187,10 @@ export class Database {
             settings: mainConnection.model("setting", placeholderSchema, "settings")
         };
 
-        var webhookConnection = mongoose.createConnection(URI + "/webhooks", { useNewUrlParser: true });
+        var webhookConnection = mongoose.createConnection(URI + "/webhooks?authSource=admin", { useNewUrlParser: true });
         webhookConnection.on('error', console.error.bind(console, 'connection error:'));
         webhookConnection.once('open', function () {
-            console.log("connected to " + URI + "/webhooks");
+            console.log("connected to " + URI + "/webhooks?authSource=admin");
         });
         this.webhookDB = {
             connection: webhookConnection,

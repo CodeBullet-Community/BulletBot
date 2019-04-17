@@ -4,7 +4,7 @@ import utils from "../../utils";
 import { Message } from "discord.js";
 import { command as commandInterface } from "../../commands";
 import { webhookInterface, LOG_WEBHOOK, webhookChange, LOG_TYPE_ADD, LOG_TYPE_REMOVE, LOG_TYPE_CHANGE } from "../../Database";
-import { google as GOOGLE_API_KEY } from "../../apiKeys.json";
+import { googleApiKey as GOOGLE_API_KEY } from "../../bot-config.json";
 import { google, youtube_v3, GoogleApis } from "googleapis";
 import { sendLog } from "../../utils/messages";
 

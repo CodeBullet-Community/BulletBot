@@ -78,10 +78,10 @@ export class MStatistics {
 
     /** manages management statistics */
     constructor(URI: string) {
-        this.connection = mongoose.createConnection(URI + "/mStatistics", { useNewUrlParser: true });
+        this.connection = mongoose.createConnection(URI + "/mStatistics?authSource=admin", { useNewUrlParser: true });
         this.connection.on('error', console.error.bind(console, 'connection error:'));
         this.connection.once('open', function () {
-            console.log("connected to " + URI + "/mStatistics")
+            console.log("connected to " + URI + "/mStatistics?authSource=admin")
         });
         this.allTime = this.connection.model<allTimeMStats>("allTime", FromToMStatsSchema, "allTime");
         this.daily = this.connection.model<dailyMstats>("day", dailyMstatsSchema, "daily");
