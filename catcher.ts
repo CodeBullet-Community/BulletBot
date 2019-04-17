@@ -3,19 +3,20 @@ import { bot } from ".";
 import bodyParser = require("body-parser");
 import xml2js = require('xml2js')
 import { sendMentionMessage } from "./utils/messages";
+import { Server } from "http";
 const xmlParser = new xml2js.Parser({ explicitArray: false })
 
 export default class Catcher {
-    app: express.Express;
+    server: Server;
     constructor(bot: bot, port: number) {
-        this.app = express();
-        this.app.use(bodyParser.text({ type: 'application/atom+xml' }))
+        var app = express();
+        app.use(bodyParser.text({ type: 'application/atom+xml' }))
 
         // youtube
-        this.app.get("/webhooks/youtube", (req, res) => {
+        app.get("/webhooks/youtube", (req, res) => {
             res.status(200).send(req.query['hub.challenge']);
         })
-        this.app.post("/webhooks/youtube", function (req, res) {
+        app.post("/webhooks/youtube", function (req, res) {
             xmlParser.parseString(req.body, async (error, result) => {
                 if (error) {
                     res.status(422).json({ code: 'xml_parse_error', details: "Something went wrong while parsing the XML", error })
@@ -57,8 +58,12 @@ export default class Catcher {
             })
         })
 
-        this.app.listen(port, () => {
+        this.server = app.listen(port, () => {
             console.log(`catcher listening to port ${port}`);
         });
+    }
+
+    close(){
+        this.server.close();
     }
 }

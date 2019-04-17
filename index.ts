@@ -8,7 +8,7 @@ import Catcher from "./catcher";
 import { Database } from "./Database";
 import { MStatistics } from "./utils/mStatistics";
 import utils from "./utils";
-import {DBURI,token} from "./bot-config.json";
+import { DBURI, token } from "./bot-config.json";
 
 export interface bot {
     client: discord.Client;
@@ -17,6 +17,7 @@ export interface bot {
     webhooks: Webhooks;
     database: Database;
     mStatistics: MStatistics;
+    catcher: Catcher;
     error: (message: discord.Message, error: any) => void;
 }
 
@@ -25,13 +26,15 @@ const bot: bot = {
     commands: new Commands(__dirname + "/commands/"),
     filters: new Filters(__dirname + "/filters/"),
     webhooks: new Webhooks(),
-    database: new Database(DBURI),
+    database: null,
     mStatistics: new utils.MStatistics(DBURI),
+    catcher: null,
     error: function (message: discord.Message, error: any) {
         message.channel.send("Oops something went wrong. #BlameEvan");
         console.error(error);
     }
 };
+bot.database = new Database(bot, DBURI);
 
 exitHook(() => {
     console.log('Saving cached data...');
@@ -46,11 +49,9 @@ var globalUpdate = setInterval(() => {
     //console.log("global cache was updated");
 }, 60000);
 
-var catcher:Catcher;
-
-setTimeout(()=>{
-    catcher = new Catcher(bot,bot.database.getGlobalSettings().callbackPort);
-},2000);
+setTimeout(() => {
+    bot.catcher = new Catcher(bot, bot.database.getGlobalSettings().callbackPort);
+}, 2000);
 
 bot.client.on('ready', () => {
     console.info("Bot is ready");

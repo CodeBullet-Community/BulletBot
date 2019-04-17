@@ -1,6 +1,8 @@
 import mongoose = require("mongoose");
 import { Guild, Channel, GuildMember } from "discord.js";
 import { filterAction } from "./utils/filters";
+import { bot } from ".";
+import Catcher from "./catcher";
 
 // guild 
 interface guildInterface extends mongoose.Document {
@@ -168,10 +170,12 @@ export class Database {
         general: any;
         commands: any;
         filters: any;
-    }
+    };
+    bot: bot;
 
     /** manages connections to databases */
-    constructor(URI: string) {
+    constructor(bot: bot, URI: string) {
+        this.bot = bot;
         var mainConnection = mongoose.createConnection(URI + "/main?authSource=admin", { useNewUrlParser: true });
         mainConnection.on('error', console.error.bind(console, 'connection error:'));
         mainConnection.once('open', function () {
@@ -205,12 +209,17 @@ export class Database {
         var general = await this.mainDB.settings.findById(GLOBAL.general);
         var commands = await this.mainDB.settings.findById(GLOBAL.commands);
         var filters = await this.mainDB.settings.findById(GLOBAL.filters);
+        var oldPort: number;
+        if (this.cache) oldPort = this.cache.general.callbackPort;
         this.cache = {
             general: general.toObject(),
             commands: commands.toObject(),
             filters: filters.toObject()
         }
-
+        if (oldPort && this.bot.catcher && oldPort != this.cache.general.callbackPort) {
+            this.bot.catcher.close();
+            this.bot.catcher = new Catcher(this.bot, this.cache.general.callbackPort);
+        }
     }
 
     /** returns chached global general settings */
