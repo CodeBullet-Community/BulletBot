@@ -15,5 +15,14 @@
   "bugs": {
     "url": "https://github.com/Jet132/BulletBot/issues"
   },
-  "homepage": "https://github.com/Jet132/BulletBot#readme"
+  "homepage": "https://github.com/Jet132/BulletBot#readme",
+  "dependencies": {
+    "@types/mongodb": "^3.1.23",
+    "@types/mongoose": "^5.3.26",
+    "@types/node": "^11.13.5",
+    "console-stamp": "^0.2.7",
+    "discord.js": "^11.4.2",
+    "exit-hook": "^2.2.0",
+    "mongoose": "^5.5.2"
+  }
 }
