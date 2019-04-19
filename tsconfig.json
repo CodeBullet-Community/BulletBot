@@ -2,7 +2,8 @@
     "compilerOptions": {
         "target": "esnext",
         "watch": true,
-        "outDir": "bin",
+        "outDir": "out",
+        "rootDir": "src",
         "moduleResolution": "node",
         "module": "commonjs",
         "resolveJsonModule": true,
