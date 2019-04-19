@@ -113,7 +113,7 @@ export const logSchema = new mongoose.Schema({
     mod: String,
     timestamp: Number,
     info: mongoose.Schema.Types.Mixed
-})
+});
 
 // types
 export const LOG_TYPE_ADD = 0;
@@ -312,4 +312,4 @@ export const globalSettingsSchema = new mongoose.Schema({
     botMasters: [String],
     commands: mongoose.Schema.Types.Mixed,
     filters: mongoose.Schema.Types.Mixed
-})
+});
