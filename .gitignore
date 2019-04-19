@@ -61,7 +61,7 @@ typings/
 .next
 
 # typescript
-/out
+out/
 
 # auth stuff
 bot-config.json

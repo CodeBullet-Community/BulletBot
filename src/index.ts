@@ -8,7 +8,7 @@ import { Catcher } from './catcher';
 import { Logger } from './database/logger';
 import { Database } from './database/database';
 import { MStats } from './database/mStats';
-import { botToken } from './bot-config.json';
+import { botToken, DBURI } from './bot-config.json';
 
 class Bot {
     static client: discord.Client;
@@ -34,7 +34,7 @@ class Bot {
 }
 
 var mStats = new MStats();
-var database = new Database();
+var database = new Database(DBURI, 'admin');
 var logger = new Logger();
 var client = new discord.Client();
 var commands = new Commands();
@@ -52,7 +52,56 @@ client.on('error', error => {
 });
 
 client.on('message', async message => {
-    console.log(message);
+    if (message.author.bot) return;
+    var dm = false;
+    if (!message.guild) {
+        dm = true;
+    }
+
+    // if message is only a mention of the bot, he dms help
+    if (message.content == "<@" + Bot.client.user.id + ">") {
+        message.author.createDM().then(dmChannel => {
+            message.channel = dmChannel;
+            // TODO: dm help command
+        });
+        return;
+    }
+
+    var prefix = await Bot.database.getPrefix(message.guild.id);
+    if (!message.content.startsWith(prefix) && !dm) {
+        // TODO: filter message
+        return;
+    }
+
+    var command = message.content.split(" ")[0].slice(prefix.length).toLowerCase();
+    var args = message.content.slice(prefix.length + command.length + 1);
+
+    switch (command) {
+        case "create":
+            Bot.database.addGuild(message.guild.id);
+            break;
+        case "delete":
+            Bot.database.removeGuild(message.guild.id);
+            break;
+        case "setcommand":
+            Bot.database.setCommandSettings(message.guild.id, "testcommand", { text: args });
+            break;
+        case "getcommand":
+            var settings = await Bot.database.getCommandSettings(message.guild.id, "testcommand");
+            console.debug(settings);
+            message.channel.send(settings.text);
+            break;
+        case "setfilter":
+            Bot.database.setFilterSettings(message.guild.id, "testfilter", { text: args });
+            break;
+        case "getfilter":
+            var settings = await Bot.database.getFilterSettings(message.guild.id, "testfilter");
+            console.debug(settings);
+            message.channel.send(settings.text);
+            break;
+    }
+
+    // TODO: run command
 });
 
 client.on('reconnecting', () => {
@@ -64,7 +113,7 @@ client.on('resume', missed => {
 })
 
 client.on('debug', info => {
-    console.log('Client debug:', info);
+    //console.debug(info);
 });
 
 client.on('warn', info => {

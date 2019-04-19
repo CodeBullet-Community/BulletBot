@@ -17,7 +17,9 @@ export const guildSchema = new mongoose.Schema({
     logChannel: String,
     logs: [mongoose.Schema.Types.ObjectId],
     staff: mongoose.Schema.Types.ObjectId,
-    webhooks: mongoose.Schema.Types.Mixed
+    webhooks: {
+        youtube: [mongoose.Schema.Types.ObjectId]
+    }
 });
 
 // staff
