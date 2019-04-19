@@ -33,7 +33,7 @@ class Bot {
     }
 }
 
-var mStats = new MStats();
+var mStats = new MStats(DBURI, 'admin');
 var database = new Database(DBURI, 'admin');
 var logger = new Logger(DBURI, 'admin');
 var client = new discord.Client();

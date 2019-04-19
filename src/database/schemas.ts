@@ -181,9 +181,9 @@ export interface mStatsObject {
     commands: {
         // key is command name, usage data
         [key: string]: {
-            _error: number; // total errors caught
-            _resp: number; //response time in ms (when first replay send, so ping doesn't get counted)
-            _main: number; // main command
+            _errors: number; // total errors caught
+            _resp: number; // response time in ms (when first replay send, so ping doesn't get counted)
+            _main?: number; // main command
             // subcommand like add, rem, list
             [key: string]: number;
         }
@@ -204,9 +204,7 @@ export interface mStatsObject {
     ping: {
         discord: number; // message ping
         clientAPI: number; // client ping
-        mainDB: number; // main database ping
-        webhookDB: number; // webhook database ping
-        mStatsDB: number; // maintenance statistics ping
+        cluster: number;
     };
 }
 const mStatsSchemaStruc = {
@@ -220,20 +218,11 @@ const mStatsSchemaStruc = {
     commandTotal: Number,
     commands: mongoose.Schema.Types.Mixed,
     filters: mongoose.Schema.Types.Mixed,
-    webhooks: {
-        youtube: {
-            total: Number,
-            created: Number,
-            changed: Number,
-            deleted: Number
-        }
-    },
+    webhooks: mongoose.Schema.Types.Mixed,
     ping: {
         discord: Number,
         clientAPI: Number,
-        mainDB: Number,
-        webhookDB: Number,
-        mStatsDB: Number
+        cluster: Number
     }
 }
 
