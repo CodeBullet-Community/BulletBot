@@ -37,7 +37,7 @@ export class Database {
         var mainCon = mongoose.createConnection(URI + '/main' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true });
         mainCon.on('error', console.error.bind(console, 'connection error:'));
         mainCon.once('open', function () {
-            console.log('connected to /main database')
+            console.log('connected to /main database');
         });
 
         this.mainDB = {

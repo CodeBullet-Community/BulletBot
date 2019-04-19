@@ -67,7 +67,7 @@ export const prefixSchema = new mongoose.Schema({
 });
 
 // commands
-export interface commandObject {
+export interface commandsObject {
     guild: string;
     commands: {
         // key is command name
@@ -77,14 +77,14 @@ export interface commandObject {
         }
     }
 }
-export interface commandsDoc extends mongoose.Document, commandObject { }
+export interface commandsDoc extends mongoose.Document, commandsObject { }
 export const commandsSchema = new mongoose.Schema({
     guild: String,
     commands: mongoose.Schema.Types.Mixed
 });
 
 // filters
-export interface filterObject {
+export interface filtersObject {
     guild: string;
     filters: {
         // key is filter name
@@ -94,7 +94,7 @@ export interface filterObject {
         }
     }
 }
-export interface filtersDoc extends mongoose.Document, filterObject { }
+export interface filtersDoc extends mongoose.Document, filtersObject { }
 export const filtersSchema = new mongoose.Schema({
     guild: String,
     filters: mongoose.Schema.Types.Mixed
