@@ -1,4 +1,4 @@
-import { Guild, Role, TextChannel } from "discord.js";
+import { Guild, Role, TextChannel, DMChannel, GroupDMChannel } from "discord.js";
 import { stringToRole } from "./parsers";
 import { Bot } from "..";
 
@@ -43,7 +43,7 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
     }
 }
 
-export function sendError(channel:TextChannel, error: any) {
+export function sendError(channel: TextChannel | DMChannel | GroupDMChannel, error: any) {
     console.error(error);
     return channel.send("Oops something went wrong. #BlameEvan");
 }

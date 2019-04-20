@@ -57,6 +57,9 @@ export class MStats {
                     cluster: 0
                 }
             });
+            doc.markModified("commands");
+            doc.markModified("filters");
+            doc.markModified("webhooks");
             doc.save();
             pingTestCounter = 0;
         } else {
@@ -139,7 +142,7 @@ export class MStats {
             }
         };
         this.hourly.doc = new this.hourly.model(hourObject);
-        await this.hourly.doc.save();
+        await this.saveHour(this.hourly);
         this.hourly.pingTestCounter = 0;
         this.hourly.interval = this.createHourInterval(MS_MINUTE);
         console.log(`MStats hour from ${oldHourObject.hour} to ${hour}`);
@@ -273,8 +276,12 @@ export class MStats {
 
     logError(command?: string) {
         this.hourly.doc.errors += 1;
-        if (!this.hourly.doc.commands[command]) {
-            this.hourly.doc.commands[command] = { _resp: 0, _errors: 0 };
+        if (command) {
+            if (!this.hourly.doc.commands[command]) {
+                this.hourly.doc.commands[command] = { _resp: 0, _errors: 0 };
+            } else {
+                this.hourly.doc.commands[command]._errors += 1;
+            }
         }
     }
 
@@ -294,19 +301,19 @@ export class MStats {
     }
 
     logResponseTime(command: string, requestTimestamp: number) {
-        var date = new Date();
+        var timestamp = new Date().getTime();
         if (!this.hourly.doc.commands[command]) {
-            this.hourly.doc.commands[command] = { _errors: 0, _resp: date.getTime() - requestTimestamp };
+            this.hourly.doc.commands[command] = { _errors: 0, _resp: timestamp - requestTimestamp };
             return;
         }
         var uses = 0;
-        var commandStats = this.hourly.doc.toObject()[command];
+        var commandStats = this.hourly.doc.toObject().commands[command];
         for (const subCommand in commandStats) {
             if (subCommand == "_resp" || subCommand == "_errors") continue;
             uses += commandStats[subCommand];
         }
-        var resp = (commandStats._resp * uses) + date.getTime() - requestTimestamp;
-        this.hourly.doc.commands[command]._resp = resp / uses + 1;
+        var resp = (commandStats._resp * uses) + timestamp - requestTimestamp;
+        this.hourly.doc.commands[command]._resp = resp / (uses + 1);
     }
 
     logFilterCatch(filter: string) {

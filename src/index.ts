@@ -9,6 +9,7 @@ import { Logger } from './database/logger';
 import { Database } from './database/database';
 import { MStats } from './database/mStats';
 import { botToken, DBURI } from './bot-config.json';
+import { MEMBER, getPermissionLevel } from './utils/permissions';
 
 export class Bot {
     static client: discord.Client;
@@ -37,7 +38,7 @@ var mStats = new MStats(DBURI, 'admin');
 var database = new Database(DBURI, 'admin');
 var logger = new Logger(DBURI, 'admin');
 var client = new discord.Client();
-var commands = new Commands();
+var commands = new Commands(__dirname + "/commands/");
 var filters = new Filters();
 var youtube = new YTWebhookManager();
 var catcher = new Catcher();
@@ -48,11 +49,13 @@ client.on('ready', () => {
 });
 
 client.on('error', error => {
+    Bot.mStats.logError();
     console.error('from client.on():', error);
 });
 
 client.on('message', async message => {
     if (message.author.bot) return;
+    var requestTimestamp = new Date().getTime();
     var dm = false;
     if (!message.guild) {
         dm = true;
@@ -62,11 +65,15 @@ client.on('message', async message => {
     if (message.content == "<@" + Bot.client.user.id + ">") {
         message.author.createDM().then(dmChannel => {
             message.channel = dmChannel;
-            // TODO: dm help command
+            Bot.commands.runCommand(message, '', 'help', MEMBER, true, requestTimestamp);
         });
         return;
     }
 
+    var permLevel = MEMBER;
+    if (!dm) {
+        permLevel = await getPermissionLevel(message.member);
+    }
     var prefix = await Bot.database.getPrefix(message.guild.id);
     if (!message.content.startsWith(prefix) && !dm) {
         // TODO: filter message
@@ -76,7 +83,7 @@ client.on('message', async message => {
     var command = message.content.split(" ")[0].slice(prefix.length).toLowerCase();
     var args = message.content.slice(prefix.length + command.length + 1);
 
-    // TODO: run command
+    Bot.commands.runCommand(message, args, command, permLevel, dm, requestTimestamp);
 });
 
 client.on('reconnecting', () => {
@@ -95,4 +102,6 @@ client.on('warn', info => {
     console.warn(info);
 })
 
-client.login(botToken);
+setTimeout(() => {
+    client.login(botToken);
+}, 2000);
