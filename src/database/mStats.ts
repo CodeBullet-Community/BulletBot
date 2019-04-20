@@ -53,8 +53,8 @@ export class MStats {
                 filters: {},
                 webhooks: {},
                 ping: {
-                    clientAPI: 0.001,
-                    cluster: 0.001
+                    clientAPI: 0,
+                    cluster: 0
                 }
             });
             doc.save();
@@ -86,8 +86,8 @@ export class MStats {
         var ping = hourly.doc.toObject().ping;
         var clientAPI = Math.round(Bot.client.ping);
         var cluster = await Bot.database.ping();
-        hourly.doc.ping.clientAPI = ((ping.clientAPI * hourly.pingTestCounter) + clientAPI) / hourly.pingTestCounter + 1;
-        hourly.doc.ping.cluster = ((ping.cluster * hourly.pingTestCounter) + cluster) / hourly.pingTestCounter + 1;
+        hourly.doc.ping.clientAPI = ((ping.clientAPI * hourly.pingTestCounter) + clientAPI) / (hourly.pingTestCounter + 1);
+        hourly.doc.ping.cluster = ((ping.cluster * hourly.pingTestCounter) + cluster) / (hourly.pingTestCounter + 1);
         hourly.pingTestCounter++;
 
         hourly.doc.guildsTotal = Bot.client.guilds.size;
@@ -134,8 +134,8 @@ export class MStats {
             filters: {},
             webhooks: {},
             ping: {
-                clientAPI: 0.001,
-                cluster: 0.001
+                clientAPI: 0,
+                cluster: 0
             }
         };
         this.hourly.doc = new this.hourly.model(hourObject);
@@ -194,8 +194,8 @@ export class MStats {
             filters: {},
             webhooks: {},
             ping: {
-                clientAPI: 0.001,
-                cluster: 0.001
+                clientAPI: 0,
+                cluster: 0
             }
         };
         for (const doc of docs) {
