@@ -10,7 +10,7 @@ import { Database } from './database/database';
 import { MStats } from './database/mStats';
 import { botToken, DBURI } from './bot-config.json';
 
-class Bot {
+export class Bot {
     static client: discord.Client;
     static commands: Commands;
     static filters: Filters;

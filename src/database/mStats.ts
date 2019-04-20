@@ -1,5 +1,6 @@
 import mongoose = require('mongoose');
 import { mStatsAllTimeDoc, mStatsDayDoc, mStatsHourDoc, mStatsAllTimeSchema, mStatsDaySchema, mStatsHourSchema, mStatsHourObject, mStatsObject } from './schemas';
+import { Bot } from '..';
 
 const MS_DAY = 86400000;
 const MS_HOUR = MS_DAY / 24;
@@ -12,6 +13,7 @@ export class MStats {
     hourly: {
         model: mongoose.Model<mStatsHourDoc>;
         doc: mStatsHourDoc;
+        pingTestCounter: number;
         interval: NodeJS.Timeout;
     }
 
@@ -34,6 +36,7 @@ export class MStats {
 
         var model = this.connection.model<mStatsHourDoc>("hour", mStatsHourSchema, "hourly");
         var doc = await model.findOne({ day: day, hour: hour }).exec();
+        var pingTestCounter = 1;
         if (!doc) {
             doc = new model({
                 day: day,
@@ -50,12 +53,12 @@ export class MStats {
                 filters: {},
                 webhooks: {},
                 ping: {
-                    discord: 0,
                     clientAPI: 0,
                     cluster: 0
                 }
             });
             doc.save();
+            pingTestCounter = 0;
         } else {
             console.info("Using existing hour document");
         }
@@ -63,6 +66,7 @@ export class MStats {
         this.hourly = {
             model: model,
             doc: doc,
+            pingTestCounter: pingTestCounter,
             interval: null
         };
         this.hourly.interval = this.createHourInterval(MS_MINUTE, MS_HOUR - (UTC % MS_HOUR) - MS_MINUTE);
@@ -75,15 +79,32 @@ export class MStats {
         }, MS_HOUR - (UTC % MS_HOUR) + 1000);
     }
 
-    saveHour(doc: mStatsHourDoc) {
-        doc.markModified("commands");
-        doc.markModified("filters");
-        doc.markModified("webhooks");
-        return doc.save();
+    async saveHour(hourly: {
+        model: mongoose.Model<mStatsHourDoc>; doc: mStatsHourDoc;
+        pingTestCounter: number; interval: NodeJS.Timeout;
+    }) {
+        var ping = hourly.doc.toObject().ping;
+        var clientAPI = Math.round(Bot.client.ping);
+        var cluster = await Bot.database.ping();
+        if (hourly.pingTestCounter == 0) {
+            clientAPI = ((ping.clientAPI * hourly.pingTestCounter) + clientAPI) / hourly.pingTestCounter + 1;
+            cluster = ((ping.cluster * hourly.pingTestCounter) + cluster) / hourly.pingTestCounter + 1;;
+        }
+        hourly.doc.ping.clientAPI = clientAPI;
+        hourly.doc.ping.cluster = cluster;
+        hourly.pingTestCounter++;
+
+        hourly.doc.guildsTotal = Bot.client.guilds.size;
+        // TODO: webhook count
+
+        hourly.doc.markModified("commands");
+        hourly.doc.markModified("filters");
+        hourly.doc.markModified("webhooks");
+        return hourly.doc.save();
     }
 
     private createHourInterval(timeout: number, clearTimeout: number = MS_HOUR - MS_MINUTE) {
-        var interval = setInterval(this.saveHour, timeout, this.hourly.doc);
+        var interval = setInterval(this.saveHour, timeout, this.hourly);
         setTimeout(() => {
             clearInterval(interval);
         }, clearTimeout);
@@ -96,10 +117,10 @@ export class MStats {
         var day = UTC - (UTC % MS_DAY);
         var hour = date.getUTCHours();
 
-        await this.saveHour(this.hourly.doc);
+        await this.saveHour(this.hourly);
         var oldHourObject = this.hourly.doc.toObject();
         if (oldHourObject.hour > hour) {
-            this.changeDay(oldHourObject.day);
+            await this.changeDay(oldHourObject.day);
         }
 
         var hourObject: mStatsHourObject = {
@@ -117,18 +138,18 @@ export class MStats {
             filters: {},
             webhooks: {},
             ping: {
-                discord: 0,
                 clientAPI: 0,
                 cluster: 0
             }
         };
         this.hourly.doc = new this.hourly.model(hourObject);
         await this.hourly.doc.save();
+        this.hourly.pingTestCounter = 0;
         this.hourly.interval = this.createHourInterval(MS_MINUTE);
         console.log(`MStats hour from ${oldHourObject.hour} to ${hour}`);
     }
 
-    private async changeDay(day: number) {
+    async changeDay(day: number) {
         var hourDocs = await this.hourly.model.find({ day: day }).exec();
         var hourObjects = [];
         for (const hour of hourDocs) {
@@ -139,13 +160,19 @@ export class MStats {
         var mergedObject: any = this.mergeStats(hourObjects);
         mergedObject.day = day;
         var dayDoc = new this.daily(mergedObject);
-        dayDoc.save();
+        dayDoc.markModified("commands");
+        dayDoc.markModified("filters");
+        dayDoc.markModified("webhooks");
+        await dayDoc.save();
 
         var allTimeDoc = await this.allTime.findOne();
         if (!allTimeDoc) {
             mergedObject.from = day;
             mergedObject.to = day + MS_DAY;
             allTimeDoc = new this.allTime(mergedObject);
+            allTimeDoc.markModified("commands");
+            allTimeDoc.markModified("filters");
+            allTimeDoc.markModified("webhooks");
             allTimeDoc.save();
             console.log("made new all time doc");
             return;
@@ -153,7 +180,7 @@ export class MStats {
         var allTimeObject = this.mergeStats([allTimeDoc.toObject(), dayDoc.toObject()]);
         allTimeDoc.set(allTimeObject);
         allTimeDoc.to = day + MS_DAY;
-        allTimeDoc.save();
+        await allTimeDoc.save();
         console.log("updated all time");
     }
 
@@ -171,7 +198,6 @@ export class MStats {
             filters: {},
             webhooks: {},
             ping: {
-                discord: 0,
                 clientAPI: 0,
                 cluster: 0
             }
@@ -217,14 +243,12 @@ export class MStats {
                 }
             }
 
-            merged.ping.discord += doc.ping.discord;
             merged.ping.clientAPI += doc.ping.clientAPI;
             merged.ping.cluster += doc.ping.cluster;
         }
         for (const command in merged.commands) {
             merged.commands[command]._resp /= docs.length;
         }
-        merged.ping.discord /= docs.length;
         merged.ping.clientAPI /= docs.length;
         merged.ping.cluster /= docs.length;
 

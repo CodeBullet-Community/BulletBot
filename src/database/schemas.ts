@@ -202,7 +202,6 @@ export interface mStatsObject {
         }
     };
     ping: {
-        discord: number; // message ping
         clientAPI: number; // client ping
         cluster: number;
     };
@@ -220,7 +219,6 @@ const mStatsSchemaStruc = {
     filters: mongoose.Schema.Types.Mixed,
     webhooks: mongoose.Schema.Types.Mixed,
     ping: {
-        discord: Number,
         clientAPI: Number,
         cluster: Number
     }

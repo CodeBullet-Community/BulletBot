@@ -67,6 +67,18 @@ export class Database {
     }
 
     /**
+     * pings cluster and returns the ping latency
+     *
+     * @returns
+     * @memberof Database
+     */
+    async ping() {
+        var ping = new Date().getTime();
+        await this.mainDB.connection.db.command({ ping: 1 });
+        return new Date().getTime() - ping;
+    }
+
+    /**
      * updates cache of global settings
      *
      * @returns
