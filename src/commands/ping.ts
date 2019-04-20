@@ -5,7 +5,7 @@ import { Bot } from "..";
 import { sendError } from "../utils/messages";
 import { permToString } from "../utils/parsers";
 
-var command: commandInterface = { name: null, path: null, dm: null, permLevel: null, shortHelp: null, embedHelp: null, run: null };
+var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
 
 command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => {
@@ -24,9 +24,10 @@ command.name = "ping";
 command.path = "";
 command.dm = true;
 command.permLevel = MEMBER;
+command.togglable = false;
 command.shortHelp = "check bots responsiveness";
 command.embedHelp = async function (guild: Guild) {
-    var prefix = Bot.database.getPrefix(guild.id);
+    var prefix = await Bot.database.getPrefix(guild);
     return {
         "embed": {
             "color": Bot.database.settingsDB.cache.helpEmbedColor,
@@ -46,6 +47,11 @@ command.embedHelp = async function (guild: Guild) {
                 {
                     "name": "DM capable:",
                     "value": command.dm,
+                    "inline": true
+                },
+                {
+                    "name": "Togglable:",
+                    "value": command.togglable,
                     "inline": true
                 },
                 {

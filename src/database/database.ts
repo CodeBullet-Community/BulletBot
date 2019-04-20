@@ -2,6 +2,7 @@ import mongoose = require('mongoose');
 import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval } from '../bot-config.json';
+import { Guild } from 'discord.js';
 
 /**
  * Manages all connections to the main database.
@@ -136,10 +137,13 @@ export class Database {
      * @returns
      * @memberof Database
      */
-    async getPrefix(guildID: string): Promise<string> {
-        var prefixDoc = await this.mainDB.prefix.findOne({ guild: guildID }).exec();
-        if (prefixDoc) return prefixDoc.toObject().prefix;
-        if (!this.settingsDB.cache) return "!?";
+    async getPrefix(guild?: Guild, guildID?: string): Promise<string> {
+        if (!guildID && guild) guildID = guild.id;
+        if (guildID) {
+            var prefixDoc = await this.mainDB.prefix.findOne({ guild: guildID }).exec();
+            if (prefixDoc) return prefixDoc.toObject().prefix;
+            if (!this.settingsDB.cache) return "!?";
+        }
         return this.settingsDB.cache.prefix;
     }
 

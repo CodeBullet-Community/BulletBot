@@ -66,6 +66,7 @@ client.on('message', async message => {
         message.author.createDM().then(dmChannel => {
             message.channel = dmChannel;
             Bot.commands.runCommand(message, '', 'help', MEMBER, true, requestTimestamp);
+            Bot.commands.runCommand(message, 'help', 'help', MEMBER, true, requestTimestamp);
         });
         return;
     }
@@ -74,7 +75,7 @@ client.on('message', async message => {
     if (!dm) {
         permLevel = await getPermissionLevel(message.member);
     }
-    var prefix = await Bot.database.getPrefix(message.guild.id);
+    var prefix = await Bot.database.getPrefix(message.guild);
     if (!message.content.startsWith(prefix) && !dm) {
         // TODO: filter message
         return;

@@ -1,6 +1,8 @@
 import mongoose = require('mongoose');
-import { logDoc, logSchema, guildDoc, guildSchema, youtubeWebhookDoc, logObject, LOG_ACTION_STAFF } from './schemas';
-import { Message, Guild, Role, User, GuildMember, GuildChannel, TextChannel } from 'discord.js';
+import { logDoc, logSchema, guildDoc, guildSchema, logObject, LOG_ACTION_STAFF, LOG_ACTION_COMMAND } from './schemas';
+import { Guild, Role, User, GuildMember, } from 'discord.js';
+import { commandInterface } from '../commands';
+import { Bot } from '..';
 
 export class Logger {
 
@@ -64,6 +66,60 @@ export class Logger {
         }
         logMessage += ` was ${type ? 'removed' : 'added'} to the ${rank} rank`;
         logChannel.send(logMessage);
+    }
+
+
+    /**
+     * logs the toggling of a command
+     *
+     * @param {Guild} guild
+     * @param {GuildMember} mod
+     * @param {commandInterface} command
+     * @param {(0 | 1)} type
+     * @returns
+     * @memberof Logger
+     */
+    async logCommand(guild: Guild, mod: GuildMember, command: commandInterface, type: 0 | 1) {
+        var date = new Date();
+        var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
+        if (!guildDoc) return;
+
+        var logObject: logObject = {
+            guild: guild.id,
+            mod: mod.id,
+            action: LOG_ACTION_COMMAND,
+            timestamp: date.getTime(),
+            info: {
+                type: type,
+                command: command.name
+            }
+        }
+        var logDoc = new this.logs(logObject);
+        await logDoc.save();
+
+        var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
+        if (!logChannel) return;
+        logChannel.send({
+            "embed": {
+                "description": `Command \`${command.name}\` was  ${type ? 'disabled' : 'enabled'}`,
+                "color": Bot.database.settingsDB.cache.defaultEmbedColor,
+                "timestamp": date.toISOString(),
+                "author": {
+                    "name": "Command Change:",
+                    "icon_url": Bot.client.user.avatarURL
+                },
+                "fields": [
+                    {
+                        "name": "Description:",
+                        "value": command.shortHelp
+                    },
+                    {
+                        "name": `${type?'Re-enable':'Disable'} Command:`,
+                        "value": "[command]" // TODO: make command
+                    }
+                ]
+            }
+        });
     }
 
 }

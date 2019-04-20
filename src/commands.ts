@@ -7,6 +7,7 @@ export interface commandInterface {
     path: string;
     dm: boolean;
     permLevel: 0 | 1 | 2 | 3 | 4;
+    togglable: boolean;
     shortHelp: string;
     embedHelp: (guild?: Guild) => Promise<any>;
     run: (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => Promise<void>;
@@ -80,7 +81,7 @@ export class Commands {
      * @returns
      * @memberof Commands
      */
-    runCommand(message: Message, args: string, command: string, permLevel: number, dm: boolean, requestTimestamp: number) {
+    async runCommand(message: Message, args: string, command: string, permLevel: number, dm: boolean, requestTimestamp: number) {
         var cmd = this.commands.get(command);
         if (!cmd) return;
         if (!cmd.dm && dm) {
@@ -88,6 +89,10 @@ export class Commands {
             return;
         }
         if (permLevel < cmd.permLevel && !dm) return;
+        if (!dm) {
+            var commandSettings = await Bot.database.getCommandSettings(message.guild.id, command);
+            if (commandSettings && !commandSettings._enabled) return;
+        }
         cmd.run(message, args, permLevel, dm, requestTimestamp);
     }
 
