@@ -265,6 +265,17 @@ export class Database {
     }
 
     /**
+     * finds staff doc of specified guild
+     *
+     * @param {string} guildID
+     * @returns
+     * @memberof Database
+     */
+    findStaffDoc(guildID: string) {
+        return this.mainDB.staff.findOne({ guild: guildID }).exec();
+    }
+
+    /**
      * find command settings doc of specified guild
      *
      * @param {string} guildID
