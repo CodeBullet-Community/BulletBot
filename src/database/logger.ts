@@ -96,6 +96,8 @@ export class Logger {
         }
         var logDoc = new this.logs(logObject);
         await logDoc.save();
+        guildDoc.logs.push(logDoc.id);
+        guildDoc.save();
 
         var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
@@ -114,8 +116,8 @@ export class Logger {
                         "value": command.shortHelp
                     },
                     {
-                        "name": `${type?'Re-enable':'Disable'} Command:`,
-                        "value": "[command]" // TODO: make command
+                        "name": `${type ? 'Re-enable' : 'Disable'} Command:`,
+                        "value": `${await Bot.database.getPrefix(guild)}commands ${type ? 'enable' : 'disable'} ${command.name}` // TODO: make command
                     }
                 ]
             }
