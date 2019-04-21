@@ -15,7 +15,7 @@ export interface filter {
 	action:(bot:Bot)=>Promise<completion>,//
 	shortHelp:string,//used by the help command to describe the filter
 	embededHelp:any,//used by the help command to describe the filter in detail
-
+	cache?:any
 }
 export interface completion {//a type that contains the actions that were taken with arbituary details
 	actions:Set<symbol>,//should be a symbol from the FILTER_ACTION object which indicate what actions the bot took

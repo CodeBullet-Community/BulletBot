@@ -1,12 +1,15 @@
 import { Message } from "discord.js";
 import { Bot } from "..";
 
-export const FILTER_ACTION_NOTHING = 0;
-export const FILTER_ACTION_DELETE = 1;
-export const FILTER_ACTION_SEND = 2;
+export const FILTER_ACTION = {
+    send:Symbol("send"),
+    delete:Symbol("delete"),
+    nothing:Symbol("nothing")
+
+}
 
 export interface filterAction {
-    type: number;
+    type: symbol;
     delay?: number;
     message?: any;
 };
@@ -22,12 +25,12 @@ export interface filterAction {
 export async function executeAction(message: Message, action: filterAction) {
     try {
         switch (action.type) {
-            case FILTER_ACTION_NOTHING:
+            case FILTER_ACTION.nothing:
                 return true;
-            case FILTER_ACTION_DELETE:
+            case FILTER_ACTION.delete:
                 await message.delete(action.delay);
                 return true;
-            case FILTER_ACTION_SEND:
+            case FILTER_ACTION.send:
                 await message.reply(action.message);
                 return true;
             default:
