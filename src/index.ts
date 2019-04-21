@@ -77,9 +77,17 @@ client.on('message', async message => {
         permLevel = await getPermissionLevel(message.member);
     }
     var prefix = await Bot.database.getPrefix(message.guild);
-    if (!message.content.startsWith(prefix) && !dm) {
-        // TODO: filter message
-        return;
+    if (!message.content.startsWith(prefix)) {
+        if (!message.content.toLowerCase().startsWith(Bot.database.settingsDB.cache.prefix + 'prefix')) {
+            if (!dm) {
+                // TODO: filter message
+            }
+            return;
+        }
+    }
+    // if the command is ?!prefix isn't ?!
+    if (prefix != Bot.database.settingsDB.cache.prefix && message.content.startsWith(Bot.database.settingsDB.cache.prefix)) {
+        prefix = Bot.database.settingsDB.cache.prefix;
     }
 
     var command = message.content.split(" ")[0].slice(prefix.length).toLowerCase();
