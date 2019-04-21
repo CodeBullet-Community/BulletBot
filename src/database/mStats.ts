@@ -277,6 +277,9 @@ export class MStats {
     logError(command?: string) {
         this.hourly.doc.errors += 1;
         if (command) {
+            if (!this.hourly.doc.commands) {
+                this.hourly.doc.commands = {};
+            }
             if (!this.hourly.doc.commands[command]) {
                 this.hourly.doc.commands[command] = { _resp: 0, _errors: 0 };
             } else {
@@ -290,6 +293,9 @@ export class MStats {
         if (!subCommand) {
             subCommand = "_main";
         }
+        if (!this.hourly.doc.commands) {
+            this.hourly.doc.commands = {};
+        }
         if (!this.hourly.doc.commands[command]) {
             this.hourly.doc.commands[command] = { _resp: 0, _errors: 0 };
         }
@@ -302,6 +308,9 @@ export class MStats {
 
     logResponseTime(command: string, requestTimestamp: number) {
         var timestamp = new Date().getTime();
+        if (!this.hourly.doc.commands) {
+            this.hourly.doc.commands = {};
+        }
         if (!this.hourly.doc.commands[command]) {
             this.hourly.doc.commands[command] = { _errors: 0, _resp: timestamp - requestTimestamp };
             return;
@@ -317,6 +326,9 @@ export class MStats {
     }
 
     logFilterCatch(filter: string) {
+        if (!this.hourly.doc.filters) {
+            this.hourly.doc.filters = {};
+        }
         if (this.hourly.doc.filters[filter]) {
             this.hourly.doc.filters[filter] += 1;
         } else {
@@ -325,6 +337,9 @@ export class MStats {
     }
 
     logWebhookAction(service: string, action: 'created' | 'changed' | 'deleted') {
+        if (!this.hourly.doc.webhooks) {
+            this.hourly.doc.webhooks = {};
+        }
         if (!this.hourly.doc.webhooks[service].created) {
             this.hourly.doc.webhooks[service] = { total: 0, created: 0, changed: 0, deleted: 0 };
         }
