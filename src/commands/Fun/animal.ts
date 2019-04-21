@@ -1,10 +1,10 @@
-import { Message, RichEmbed, Guild } from "discord.js";
-import { commandInterface } from "../../commands";
-import { Bot } from "../..";
-import { sendError } from "../../utils/messages";
-import { permToString } from "../../utils/parsers";
-import { MEMBER } from "../../utils/permissions";
-import { get } from "snekfetch";
+import { Message, RichEmbed, Guild } from 'discord.js';
+import { commandInterface } from '../../commands';
+import { Bot } from '../..';
+import { sendError } from '../../utils/messages';
+import { permToString } from '../../utils/parsers';
+import { MEMBER } from '../../utils/permissions';
+import { get } from 'snekfetch';
 
 function selectRandom(array: any[]) {
     return array[Math.floor(Math.random() * Math.floor(array.length))];
@@ -17,7 +17,7 @@ async function sendRandomImage(message: Message, API: string, requestTimestamp: 
         setname = message.member.nickname;
     }
     var embed = new RichEmbed();
-    embed.setAuthor("requested by: " + setname + " (" + message.author.tag + ")", message.author.avatarURL);
+    embed.setAuthor('requested by: ' + setname + ' (' + message.author.tag + ')', message.author.avatarURL);
     embed.setImage(res.body.link);
     embed.setColor(Bot.database.settingsDB.cache.defaultEmbedColor);
     Bot.mStats.logResponseTime(command.name, requestTimestamp);
@@ -38,9 +38,9 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 
         var apis = Bot.database.settingsDB.cache.commands[command.name].apis;
         var animals = Object.keys(apis);
-        if (args == "random") {
+        if (args == 'random') {
             await sendRandomImage(message, apis[selectRandom(animals)], requestTimestamp);
-            Bot.mStats.logCommandUsage(command.name, "random");
+            Bot.mStats.logCommandUsage(command.name, 'random');
         } else {
             if (animals.includes(args)) {
                 await sendRandomImage(message, apis[args], requestTimestamp);
@@ -56,51 +56,51 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
     }
 }
 
-command.name = "animal";
-command.path = "";
+command.name = 'animal';
+command.path = '';
 command.dm = true;
 command.permLevel = MEMBER;
 command.togglable = true;
-command.shortHelp = "returns cute animal images";
+command.shortHelp = 'returns cute animal images';
 command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
-        "embed": {
-            "color": Bot.database.settingsDB.cache.helpEmbedColor,
-            "author": {
-                "name": "Command: " + prefix + command.name
+        'embed': {
+            'color': Bot.database.settingsDB.cache.helpEmbedColor,
+            'author': {
+                'name': 'Command: ' + prefix + command.name
             },
-            "fields": [
+            'fields': [
                 {
-                    "name": "Description:",
-                    "value": "Gets image of specified animal."
+                    'name': 'Description:',
+                    'value': 'Gets image of specified animal.'
                 },
                 {
-                    "name": "Valid animals:",
-                    "value": "cat, dog, fox, panda, red-panda, bird, pikachu"
+                    'name': 'Valid animals:',
+                    'value': 'cat, dog, fox, panda, red-panda, bird, pikachu'
                 },
                 {
-                    "name": "Need to be:",
-                    "value": permToString(command.permLevel),
-                    "inline": true
+                    'name': 'Need to be:',
+                    'value': permToString(command.permLevel),
+                    'inline': true
                 },
                 {
-                    "name": "DM capable:",
-                    "value": command.dm,
-                    "inline": true
+                    'name': 'DM capable:',
+                    'value': command.dm,
+                    'inline': true
                 },
                 {
-                    "name": "Togglable:",
-                    "value": command.togglable,
-                    "inline": true
+                    'name': 'Togglable:',
+                    'value': command.togglable,
+                    'inline': true
                 },
                 {
-                    "name": "Usage:",
-                    "value": "{command} [animal]\n{command} random".replace(/\{command\}/g, prefix + command.name)
+                    'name': 'Usage:',
+                    'value': '{command} [animal]\n{command} random'.replace(/\{command\}/g, prefix + command.name)
                 },
                 {
-                    "name": "Example:",
-                    "value": "{command} bird\n{command} random".replace(/\{command\}/g, prefix + command.name)
+                    'name': 'Example:',
+                    'value': '{command} bird\n{command} random'.replace(/\{command\}/g, prefix + command.name)
                 }
             ]
         }

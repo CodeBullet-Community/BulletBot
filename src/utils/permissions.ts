@@ -1,6 +1,6 @@
-import { GuildMember, GuildChannel } from "discord.js";
-import { Bot } from "..";
-import { staffObject } from "../database/schemas";
+import { GuildMember, GuildChannel } from 'discord.js';
+import { Bot } from '..';
+import { staffObject } from '../database/schemas';
 
 export const MEMBER = 0;
 export const IMMUNE = 1;
@@ -28,7 +28,7 @@ export async function getPermissionLevel(member: GuildMember) {
     if (Bot.database.getBotMasters().includes(member.user.id)) {
         return BOTMASTER;
     }
-    if (member.hasPermission("ADMINISTRATOR")) {
+    if (member.hasPermission('ADMINISTRATOR')) {
         return ADMIN;
     }
 

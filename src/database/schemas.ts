@@ -1,4 +1,4 @@
-import mongoose = require("mongoose");
+import mongoose = require('mongoose');
 
 // guild
 export interface guildObject {
@@ -131,7 +131,7 @@ export const LOG_ACTION_PREFIX = 4;
 
 export interface logStaff {
     type: 0 | 1; // add or remove
-    rank: "admins" | "mods" | "immune";
+    rank: 'admins' | 'mods' | 'immune';
     role?: string; // role id
     user?: string; // user id
 }

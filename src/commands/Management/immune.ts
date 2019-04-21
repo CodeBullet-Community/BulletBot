@@ -1,10 +1,10 @@
-import { Message, RichEmbed, Guild, GuildMember, Role, MessageMentions } from "discord.js";
-import { commandInterface } from "../../commands";
-import { Bot } from "../..";
-import { sendError } from "../../utils/messages";
-import { permToString, stringToChannel, stringToRole, stringToMember } from "../../utils/parsers";
-import { MOD, ADMIN } from "../../utils/permissions";
-import { LOG_TYPE_ADD, LOG_TYPE_REMOVE, staffObject } from "../../database/schemas";
+import { Message, RichEmbed, Guild, GuildMember, Role, MessageMentions } from 'discord.js';
+import { commandInterface } from '../../commands';
+import { Bot } from '../..';
+import { sendError } from '../../utils/messages';
+import { permToString, stringToChannel, stringToRole, stringToMember } from '../../utils/parsers';
+import { MOD, ADMIN } from '../../utils/permissions';
+import { LOG_TYPE_ADD, LOG_TYPE_REMOVE, staffObject } from '../../database/schemas';
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
@@ -16,7 +16,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             Bot.mStats.logMessageSend();
             return;
         }
-        var argsArray = args.split(" ").filter(x => x.length != 0);
+        var argsArray = args.split(' ').filter(x => x.length != 0);
         switch (argsArray[argIndex]) {
             case 'rem':
             case 'add':
@@ -66,19 +66,19 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 break;
             case 'list':
                 var staffDoc = await Bot.database.findStaffDoc(message.guild.id);
-                var roles = "No Roles";
-                var users = "No Users";
+                var roles = 'No Roles';
+                var users = 'No Users';
                 if (staffDoc) {
                     var staffObject: staffObject = staffDoc.toObject();
                     if (staffObject.immune.roles.length > 0) {
-                        roles = "";
+                        roles = '';
                         for (const roleID of staffObject.immune.roles) {
                             var roleObject = message.guild.roles.get(roleID);
                             roles += roleObject.toString() + '\n';
                         }
                     }
                     if (staffObject.immune.users.length > 0) {
-                        users = "";
+                        users = '';
                         for (const roleID of staffObject.immune.users) {
                             var user = message.guild.members.get(roleID);
                             users += user.toString() + '\n';
@@ -87,23 +87,23 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 }
                 Bot.mStats.logResponseTime(command.name, requestTimestamp);
                 message.channel.send({
-                    "embed": {
-                        "color": Bot.database.settingsDB.cache.defaultEmbedColor,
-                        "timestamp": new Date().toISOString(),
-                        "author": {
-                            "name": "Immune:",
-                            "icon_url": Bot.client.user.avatarURL
+                    'embed': {
+                        'color': Bot.database.settingsDB.cache.defaultEmbedColor,
+                        'timestamp': new Date().toISOString(),
+                        'author': {
+                            'name': 'Immune:',
+                            'icon_url': Bot.client.user.avatarURL
                         },
-                        "fields": [
+                        'fields': [
                             {
-                                "name": "Roles:",
-                                "value": roles,
-                                "inline": true
+                                'name': 'Roles:',
+                                'value': roles,
+                                'inline': true
                             },
                             {
-                                "name": "Users:",
-                                "value": users,
-                                "inline": true
+                                'name': 'Users:',
+                                'value': users,
+                                'inline': true
                             }
                         ]
                     }
@@ -112,7 +112,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 Bot.mStats.logMessageSend();
                 break;
             default:
-                message.channel.send("Unkown action " + argsArray[argIndex]);
+                message.channel.send('Unkown action ' + argsArray[argIndex]);
                 Bot.mStats.logMessageSend();
                 break;
         }
@@ -122,47 +122,47 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
     }
 }
 
-command.name = "immune";
-command.path = "";
+command.name = 'immune';
+command.path = '';
 command.dm = false;
 command.permLevel = ADMIN;
 command.togglable = false;
-command.shortHelp = "for managing the immune rank";
+command.shortHelp = 'for managing the immune rank';
 command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
-        "embed": {
-            "color": Bot.database.settingsDB.cache.helpEmbedColor,
-            "author": {
-                "name": "Command: " + prefix + command.name
+        'embed': {
+            'color': Bot.database.settingsDB.cache.helpEmbedColor,
+            'author': {
+                'name': 'Command: ' + prefix + command.name
             },
-            "fields": [
+            'fields': [
                 {
-                    "name": "Description:",
-                    "value": "let's you add, remove and list immune roles and users"
+                    'name': 'Description:',
+                    'value': 'let\'s you add, remove and list immune roles and users'
                 },
                 {
-                    "name": "Need to be:",
-                    "value": permToString(command.permLevel),
-                    "inline": true
+                    'name': 'Need to be:',
+                    'value': permToString(command.permLevel),
+                    'inline': true
                 },
                 {
-                    "name": "DM capable:",
-                    "value": command.dm,
-                    "inline": true
+                    'name': 'DM capable:',
+                    'value': command.dm,
+                    'inline': true
                 },
                 {
-                    "name": "Togglable:",
-                    "value": command.togglable,
-                    "inline": true
+                    'name': 'Togglable:',
+                    'value': command.togglable,
+                    'inline': true
                 },
                 {
-                    "name": "Usage:",
-                    "value": "{command} add [role/user]\n{command} rem [role/user]\n{command} list".replace(/\{command\}/g, prefix + command.name)
+                    'name': 'Usage:',
+                    'value': '{command} add [role/user]\n{command} rem [role/user]\n{command} list'.replace(/\{command\}/g, prefix + command.name)
                 },
                 {
-                    "name": "Example:",
-                    "value": "{command} add @immune\n{command} rem @jeff#1234\n{command} list".replace(/\{command\}/g, prefix + command.name)
+                    'name': 'Example:',
+                    'value': '{command} add @immune\n{command} rem @jeff#1234\n{command} list'.replace(/\{command\}/g, prefix + command.name)
                 }
             ]
         }

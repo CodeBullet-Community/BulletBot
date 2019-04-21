@@ -1,9 +1,9 @@
-import { Message, RichEmbed, Guild } from "discord.js";
-import { commandInterface } from "../commands";
-import { MEMBER } from "../utils/permissions";
-import { Bot } from "..";
-import { sendError } from "../utils/messages";
-import { permToString } from "../utils/parsers";
+import { Message, RichEmbed, Guild } from 'discord.js';
+import { commandInterface } from '../commands';
+import { MEMBER } from '../utils/permissions';
+import { Bot } from '..';
+import { sendError } from '../utils/messages';
+import { permToString } from '../utils/parsers';
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
@@ -11,7 +11,7 @@ var command: commandInterface = { name: undefined, path: undefined, dm: undefine
 command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => {
     try {
         Bot.mStats.logResponseTime(command.name, requestTimestamp);
-        const m: any = await message.channel.send("Ping?");
+        const m: any = await message.channel.send('Ping?');
         m.edit(`Pong! \`${m.createdTimestamp - message.createdTimestamp}ms\``);
         Bot.mStats.logCommandUsage(command.name);
     } catch (e) {
@@ -20,47 +20,47 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
     }
 }
 
-command.name = "ping";
-command.path = "";
+command.name = 'ping';
+command.path = '';
 command.dm = true;
 command.permLevel = MEMBER;
 command.togglable = false;
-command.shortHelp = "check bots responsiveness";
+command.shortHelp = 'check bots responsiveness';
 command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
-        "embed": {
-            "color": Bot.database.settingsDB.cache.helpEmbedColor,
-            "author": {
-                "name": "Command: " + prefix + command.name
+        'embed': {
+            'color': Bot.database.settingsDB.cache.helpEmbedColor,
+            'author': {
+                'name': 'Command: ' + prefix + command.name
             },
-            "fields": [
+            'fields': [
                 {
-                    "name": "Description:",
-                    "value": "let's you see if bot is responsive"
+                    'name': 'Description:',
+                    'value': 'let\'s you see if bot is responsive'
                 },
                 {
-                    "name": "Need to be:",
-                    "value": permToString(command.permLevel),
-                    "inline": true
+                    'name': 'Need to be:',
+                    'value': permToString(command.permLevel),
+                    'inline': true
                 },
                 {
-                    "name": "DM capable:",
-                    "value": command.dm,
-                    "inline": true
+                    'name': 'DM capable:',
+                    'value': command.dm,
+                    'inline': true
                 },
                 {
-                    "name": "Togglable:",
-                    "value": command.togglable,
-                    "inline": true
+                    'name': 'Togglable:',
+                    'value': command.togglable,
+                    'inline': true
                 },
                 {
-                    "name": "Usage:",
-                    "value": "{command}".replace(/\{command\}/g, prefix + command.name)
+                    'name': 'Usage:',
+                    'value': '{command}'.replace(/\{command\}/g, prefix + command.name)
                 },
                 {
-                    "name": "Example:",
-                    "value": "{command}".replace(/\{command\}/g, prefix + command.name)
+                    'name': 'Example:',
+                    'value': '{command}'.replace(/\{command\}/g, prefix + command.name)
                 }
             ]
         }

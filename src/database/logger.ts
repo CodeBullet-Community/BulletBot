@@ -106,22 +106,22 @@ export class Logger {
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
         logChannel.send({
-            "embed": {
-                "description": `Command \`${command.name}\` was  ${type ? 'disabled' : 'enabled'}`,
-                "color": Bot.database.settingsDB.cache.defaultEmbedColor,
-                "timestamp": date.toISOString(),
-                "author": {
-                    "name": "Command Change:",
-                    "icon_url": Bot.client.user.avatarURL
+            'embed': {
+                'description': `Command \`${command.name}\` was  ${type ? 'disabled' : 'enabled'}`,
+                'color': Bot.database.settingsDB.cache.defaultEmbedColor,
+                'timestamp': date.toISOString(),
+                'author': {
+                    'name': 'Command Change:',
+                    'icon_url': Bot.client.user.avatarURL
                 },
-                "fields": [
+                'fields': [
                     {
-                        "name": "Description:",
-                        "value": command.shortHelp
+                        'name': 'Description:',
+                        'value': command.shortHelp
                     },
                     {
-                        "name": `${type ? 'Re-enable' : 'Disable'} Command:`,
-                        "value": `${await Bot.database.getPrefix(guild)}commands ${type ? 'enable' : 'disable'} ${command.name}` // TODO: make command
+                        'name': `${type ? 'Re-enable' : 'Disable'} Command:`,
+                        'value': `${await Bot.database.getPrefix(guild)}commands ${type ? 'enable' : 'disable'} ${command.name}` // TODO: make command
                     }
                 ]
             }
@@ -163,27 +163,27 @@ export class Logger {
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
         logChannel.send({
-            "embed": {
-                "color": Bot.database.settingsDB.cache.defaultEmbedColor,
-                "timestamp": date.toISOString(),
-                "author": {
-                    "name": "Changed Prefix:",
-                    "icon_url": Bot.client.user.avatarURL
+            'embed': {
+                'color': Bot.database.settingsDB.cache.defaultEmbedColor,
+                'timestamp': date.toISOString(),
+                'author': {
+                    'name': 'Changed Prefix:',
+                    'icon_url': Bot.client.user.avatarURL
                 },
-                "fields": [
+                'fields': [
                     {
-                        "name": "New:",
-                        "value": newPrefix,
-                        "inline": true
+                        'name': 'New:',
+                        'value': newPrefix,
+                        'inline': true
                     },
                     {
-                        "name": "Old:",
-                        "value": oldPrefix,
-                        "inline": true
+                        'name': 'Old:',
+                        'value': oldPrefix,
+                        'inline': true
                     },
                     {
-                        "name": "Reset command:",
-                        "value": Bot.database.settingsDB.cache.prefix + "prefix reset"
+                        'name': 'Reset command:',
+                        'value': Bot.database.settingsDB.cache.prefix + 'prefix reset'
                     }
                 ]
             }

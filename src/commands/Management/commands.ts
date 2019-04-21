@@ -1,10 +1,10 @@
-import { Message, RichEmbed, Guild } from "discord.js";
-import { commandInterface } from "../../commands";
-import { Bot } from "../..";
-import { sendError } from "../../utils/messages";
-import { permToString } from "../../utils/parsers";
-import { ADMIN } from "../../utils/permissions";
-import { commandsObject, LOG_TYPE_ADD, LOG_TYPE_REMOVE } from "../../database/schemas";
+import { Message, RichEmbed, Guild } from 'discord.js';
+import { commandInterface } from '../../commands';
+import { Bot } from '../..';
+import { sendError } from '../../utils/messages';
+import { permToString } from '../../utils/parsers';
+import { ADMIN } from '../../utils/permissions';
+import { commandsObject, LOG_TYPE_ADD, LOG_TYPE_REMOVE } from '../../database/schemas';
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
@@ -16,22 +16,22 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             Bot.mStats.logMessageSend();
             return;
         }
-        var argsArray = args.split(" ").filter(x => x.length != 0);
+        var argsArray = args.split(' ').filter(x => x.length != 0);
 
         switch (argsArray[argIndex]) {
             case 'list':
                 argIndex++;
 
-                if (argsArray[argIndex] == "disabled") {
+                if (argsArray[argIndex] == 'disabled') {
                     var commandsDoc = await Bot.database.findCommandsDoc(message.guild.id);
                     if (!commandsDoc) {
                         Bot.mStats.logResponseTime(command.name, requestTimestamp);
-                        message.channel.send("There aren't any disabled commands.");
+                        message.channel.send('There aren\'t any disabled commands.');
                         Bot.mStats.logMessageSend();
                     } else {
 
                         var output = new RichEmbed();
-                        output.setAuthor("Disabled Commands:", Bot.client.user.avatarURL);
+                        output.setAuthor('Disabled Commands:', Bot.client.user.avatarURL);
                         output.setColor(Bot.database.settingsDB.cache.helpEmbedColor);
 
                         var commandsObject: commandsObject = commandsDoc.toObject();
@@ -43,12 +43,12 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 
                         Bot.mStats.logResponseTime(command.name, requestTimestamp);
                         if (output.fields.length == 0) {
-                            message.channel.send("There aren't any disabled commands.");
+                            message.channel.send('There aren\'t any disabled commands.');
                         } else {
                             message.channel.send(output);
                         }
                     }
-                    Bot.mStats.logCommandUsage(command.name, "listDisabled");
+                    Bot.mStats.logCommandUsage(command.name, 'listDisabled');
                     Bot.mStats.logMessageSend();
                     return;
                 }
@@ -58,7 +58,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             case 'enable':
                 argIndex++;
                 if (!argsArray[argIndex]) {
-                    message.channel.send("Please input a command");
+                    message.channel.send('Please input a command');
                     Bot.mStats.logMessageSend();
                     return;
                 }
@@ -87,13 +87,13 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 Bot.mStats.logResponseTime(command.name, requestTimestamp);
                 message.channel.send(`Succesfully enabled the \`${cmd.name}\` command.`);
                 Bot.mStats.logMessageSend();
-                Bot.mStats.logCommandUsage(command.name, "enable");
+                Bot.mStats.logCommandUsage(command.name, 'enable');
                 Bot.logger.logCommand(message.guild, message.member, cmd, LOG_TYPE_ADD);
                 break;
             case 'disable':
                 argIndex++;
                 if (!argsArray[argIndex]) {
-                    message.channel.send("Please input a command");
+                    message.channel.send('Please input a command');
                     Bot.mStats.logMessageSend();
                     return;
                 }
@@ -126,11 +126,10 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 Bot.mStats.logResponseTime(command.name, requestTimestamp);
                 message.channel.send(`Succesfully disabled the \`${cmd.name}\` command.`);
                 Bot.mStats.logMessageSend();
-                Bot.mStats.logCommandUsage(command.name, "disable");
+                Bot.mStats.logCommandUsage(command.name, 'disable');
                 Bot.logger.logCommand(message.guild, message.member, cmd, LOG_TYPE_REMOVE);
                 break;
         }
-
 
     } catch (e) {
         sendError(message.channel, e);
@@ -138,47 +137,47 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
     }
 }
 
-command.name = "commands";
-command.path = "";
+command.name = 'commands';
+command.path = '';
 command.dm = false;
 command.permLevel = ADMIN;
 command.togglable = false;
-command.shortHelp = "Let's you toggle commands";
+command.shortHelp = 'Let\'s you toggle commands';
 command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
-        "embed": {
-            "color": Bot.database.settingsDB.cache.helpEmbedColor,
-            "author": {
-                "name": "Command: " + prefix + command.name
+        'embed': {
+            'color': Bot.database.settingsDB.cache.helpEmbedColor,
+            'author': {
+                'name': 'Command: ' + prefix + command.name
             },
-            "fields": [
+            'fields': [
                 {
-                    "name": "Description:",
-                    "value": "Let's you toggle commands"
+                    'name': 'Description:',
+                    'value': 'Let\'s you toggle commands'
                 },
                 {
-                    "name": "Need to be:",
-                    "value": permToString(command.permLevel),
-                    "inline": true
+                    'name': 'Need to be:',
+                    'value': permToString(command.permLevel),
+                    'inline': true
                 },
                 {
-                    "name": "DM capable:",
-                    "value": command.dm,
-                    "inline": true
+                    'name': 'DM capable:',
+                    'value': command.dm,
+                    'inline': true
                 },
                 {
-                    "name": "Togglable:",
-                    "value": command.togglable,
-                    "inline": true
+                    'name': 'Togglable:',
+                    'value': command.togglable,
+                    'inline': true
                 },
                 {
-                    "name": "Usage:",
-                    "value": "{command} list\n{command} list [command name/category]\nuse `category/subcategory` to get list from subcategory\n{command} list disabled\n{command} disable [command]\n{command} enable [command]".replace(/\{command\}/g, prefix + command.name)
+                    'name': 'Usage:',
+                    'value': '{command} list\n{command} list [command name/category]\nuse `category/subcategory` to get list from subcategory\n{command} list disabled\n{command} disable [command]\n{command} enable [command]'.replace(/\{command\}/g, prefix + command.name)
                 },
                 {
-                    "name": "Example:",
-                    "value": "{command} list\n{command} list Fun\n{command} list disabled\n{command} disable animal\n{command} enable animal".replace(/\{command\}/g, prefix + command.name)
+                    'name': 'Example:',
+                    'value': '{command} list\n{command} list Fun\n{command} list disabled\n{command} disable animal\n{command} enable animal'.replace(/\{command\}/g, prefix + command.name)
                 }
             ]
         }

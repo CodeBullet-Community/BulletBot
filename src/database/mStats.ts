@@ -23,8 +23,8 @@ export class MStats {
         this.connection.once('open', function () {
             console.log('connected to /mStats database');
         });
-        this.allTime = this.connection.model("allTime", mStatsAllTimeSchema, "allTime");
-        this.daily = this.connection.model("day", mStatsDaySchema, "daily");
+        this.allTime = this.connection.model('allTime', mStatsAllTimeSchema, 'allTime');
+        this.daily = this.connection.model('day', mStatsDaySchema, 'daily');
         this.init();
     }
 
@@ -34,7 +34,7 @@ export class MStats {
         var day = UTC - (UTC % MS_DAY);
         var hour = date.getUTCHours();
 
-        var model = this.connection.model<mStatsHourDoc>("hour", mStatsHourSchema, "hourly");
+        var model = this.connection.model<mStatsHourDoc>('hour', mStatsHourSchema, 'hourly');
         var doc = await model.findOne({ day: day, hour: hour }).exec();
         var pingTestCounter = 1;
         if (!doc) {
@@ -57,13 +57,13 @@ export class MStats {
                     cluster: 0
                 }
             });
-            doc.markModified("commands");
-            doc.markModified("filters");
-            doc.markModified("webhooks");
+            doc.markModified('commands');
+            doc.markModified('filters');
+            doc.markModified('webhooks');
             doc.save();
             pingTestCounter = 0;
         } else {
-            console.info("Using existing hour document");
+            console.info('Using existing hour document');
         }
 
         this.hourly = {
@@ -96,9 +96,9 @@ export class MStats {
         hourly.doc.guildsTotal = Bot.client.guilds.size;
         // TODO: webhook count
 
-        hourly.doc.markModified("commands");
-        hourly.doc.markModified("filters");
-        hourly.doc.markModified("webhooks");
+        hourly.doc.markModified('commands');
+        hourly.doc.markModified('filters');
+        hourly.doc.markModified('webhooks');
         return hourly.doc.save();
     }
 
@@ -159,9 +159,9 @@ export class MStats {
         var mergedObject: any = this.mergeStats(hourObjects);
         mergedObject.day = day;
         var dayDoc = new this.daily(mergedObject);
-        dayDoc.markModified("commands");
-        dayDoc.markModified("filters");
-        dayDoc.markModified("webhooks");
+        dayDoc.markModified('commands');
+        dayDoc.markModified('filters');
+        dayDoc.markModified('webhooks');
         await dayDoc.save();
 
         var allTimeDoc = await this.allTime.findOne();
@@ -169,18 +169,18 @@ export class MStats {
             mergedObject.from = day;
             mergedObject.to = day + MS_DAY;
             allTimeDoc = new this.allTime(mergedObject);
-            allTimeDoc.markModified("commands");
-            allTimeDoc.markModified("filters");
-            allTimeDoc.markModified("webhooks");
+            allTimeDoc.markModified('commands');
+            allTimeDoc.markModified('filters');
+            allTimeDoc.markModified('webhooks');
             allTimeDoc.save();
-            console.log("made new all time doc");
+            console.log('made new all time doc');
             return;
         }
         var allTimeObject = this.mergeStats([allTimeDoc.toObject(), dayDoc.toObject()]);
         allTimeDoc.set(allTimeObject);
         allTimeDoc.to = day + MS_DAY;
         await allTimeDoc.save();
-        console.log("updated all time");
+        console.log('updated all time');
     }
 
     mergeStats(docs: mStatsObject[]) {
@@ -291,7 +291,7 @@ export class MStats {
     logCommandUsage(command: string, subCommand?: string) {
         this.hourly.doc.commandTotal += 1;
         if (!subCommand) {
-            subCommand = "_main";
+            subCommand = '_main';
         }
         if (!this.hourly.doc.commands) {
             this.hourly.doc.commands = {};
@@ -318,7 +318,7 @@ export class MStats {
         var uses = 0;
         var commandStats = this.hourly.doc.toObject().commands[command];
         for (const subCommand in commandStats) {
-            if (subCommand == "_resp" || subCommand == "_errors") continue;
+            if (subCommand == '_resp' || subCommand == '_errors') continue;
             uses += commandStats[subCommand];
         }
         var resp = (commandStats._resp * uses) + timestamp - requestTimestamp;

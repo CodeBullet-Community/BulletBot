@@ -60,7 +60,7 @@ export class Database {
 
         this.settingsDB = {
             connection: settingsCon,
-            settings: settingsCon.model("globalSettings", globalSettingsSchema, "settings"),
+            settings: settingsCon.model('globalSettings', globalSettingsSchema, 'settings'),
             cache: undefined
         }
         this.updateGLobalSettings();
@@ -88,7 +88,7 @@ export class Database {
     async updateGLobalSettings() {
         var settingsDoc = await this.settingsDB.settings.findOne().exec();
         if (!settingsDoc) {
-            console.warn("global settings doc not found");
+            console.warn('global settings doc not found');
             return;
         }
         this.settingsDB.cache = settingsDoc.toObject();
@@ -142,7 +142,7 @@ export class Database {
         if (guildID) {
             var prefixDoc = await this.mainDB.prefix.findOne({ guild: guildID }).exec();
             if (prefixDoc) return prefixDoc.toObject().prefix;
-            if (!this.settingsDB.cache) return "!?";
+            if (!this.settingsDB.cache) return '!?';
         }
         return this.settingsDB.cache.prefix;
     }

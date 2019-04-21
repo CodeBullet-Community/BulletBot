@@ -9,7 +9,8 @@ import { Logger } from './database/logger';
 import { Database } from './database/database';
 import { MStats } from './database/mStats';
 import { botToken, DBURI } from './bot-config.json';
-import { MEMBER, getPermissionLevel } from './utils/permissions';
+import { MEMBER, getPermissionLevel, ADMIN, MOD, IMMUNE } from './utils/permissions';
+import { LOG_TYPE_REMOVE } from './database/schemas';
 
 export class Bot {
     static client: discord.Client;
@@ -38,7 +39,7 @@ var mStats = new MStats(DBURI, 'admin');
 var database = new Database(DBURI, 'admin');
 var logger = new Logger(DBURI, 'admin');
 var client = new discord.Client();
-var commands = new Commands(__dirname + "/commands/");
+var commands = new Commands(__dirname + '/commands/');
 var filters = new Filters();
 var youtube = new YTWebhookManager();
 var catcher = new Catcher();
@@ -63,7 +64,7 @@ client.on('message', async message => {
     }
 
     // if message is only a mention of the bot, he dms help
-    if (message.content == "<@" + Bot.client.user.id + ">") {
+    if (message.content == '<@' + Bot.client.user.id + '>') {
         message.author.createDM().then(dmChannel => {
             message.channel = dmChannel;
             Bot.commands.runCommand(message, '', 'help', MEMBER, true, requestTimestamp);
@@ -90,7 +91,7 @@ client.on('message', async message => {
         prefix = Bot.database.settingsDB.cache.prefix;
     }
 
-    var command = message.content.split(" ")[0].slice(prefix.length).toLowerCase();
+    var command = message.content.split(' ')[0].slice(prefix.length).toLowerCase();
     var args = message.content.slice(prefix.length + command.length + 1);
 
     Bot.commands.runCommand(message, args, command, permLevel, dm, requestTimestamp);

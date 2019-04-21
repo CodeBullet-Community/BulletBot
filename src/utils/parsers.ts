@@ -1,7 +1,7 @@
-import { Guild } from "discord.js";
-import { filterAction, FILTER_ACTION_NOTHING, FILTER_ACTION_DELETE, FILTER_ACTION_SEND } from "./filters";
-import { MEMBER, IMMUNE, MOD, ADMIN, BOTMASTER } from "./permissions";
-import { Bot } from "..";
+import { Guild } from 'discord.js';
+import { filterAction, FILTER_ACTION_NOTHING, FILTER_ACTION_DELETE, FILTER_ACTION_SEND } from './filters';
+import { MEMBER, IMMUNE, MOD, ADMIN, BOTMASTER } from './permissions';
+import { Bot } from '..';
 
 /*
 const REGEX = {
@@ -51,7 +51,7 @@ export function stringToMember(guild: Guild, text: string) {
 }
 
 /**
- * Parses a string into a Role object or a String for "everyone" or "here".
+ * Parses a string into a Role object or a String for 'everyone' or 'here'.
  * Can parse following input:
  * - here / everyone name
  * - @here / @everyone mention
@@ -66,11 +66,11 @@ export function stringToMember(guild: Guild, text: string) {
  */
 export function stringToRole(guild: Guild, text: string) {
 
-    if (text == "here" || text == "@here") {
-        return "@here";
+    if (text == 'here' || text == '@here') {
+        return '@here';
     }
-    if (text == "everyone" || text == "@everyone") {
-        return "@everyone";
+    if (text == 'everyone' || text == '@everyone') {
+        return '@everyone';
     }
 
     if (/<@&(\d*)>/g.test(text)) {
@@ -127,7 +127,7 @@ export function stringToChannel(guild: Guild, text: string) {
 export function stringToEmbed(text: string) {
     var embed: JSON = null;
     try {
-        text = text.replace(/(\r\n|\n|\r|\t| {2,})/gm, "");
+        text = text.replace(/(\r\n|\n|\r|\t| {2,})/gm, '');
         embed = JSON.parse(text);
     } catch (e) {
         return null;
@@ -145,19 +145,19 @@ export function stringToEmbed(text: string) {
 export function actionToString(action: filterAction) {
     switch (action.type) {
         case FILTER_ACTION_NOTHING:
-            return "nothing";
+            return 'nothing';
         case FILTER_ACTION_DELETE:
             if (action.delay == 0) {
-                return "deleted message";
+                return 'deleted message';
             }
             return `deleted message after ${action.delay}ms`;
         case FILTER_ACTION_SEND:
 
-            return `replied with "${action.message}" to message`;
+            return `replied with '${action.message}' to message`;
         default:
             // error will already be logged in executeAction()
-            console.warn("actionToString: unknown action");
-            return "unknown action";
+            console.warn('actionToString: unknown action');
+            return 'unknown action';
     }
 }
 
@@ -176,18 +176,18 @@ export function actionToString(action: filterAction) {
 export function permToString(permissionLevel: number) {
     switch (permissionLevel) {
         case MEMBER:
-            return "member";
+            return 'member';
         case IMMUNE:
-            return "immune member";
+            return 'immune member';
         case MOD:
-            return "mod";
+            return 'mod';
         case ADMIN:
-            return "admin";
+            return 'admin';
         case BOTMASTER:
-            return "my master";
+            return 'my master';
         default:
             Bot.mStats.logError();
-            console.warn("unknown permission level: " + permissionLevel);
-            return "Unknown PermissionLevel";
+            console.warn('unknown permission level: ' + permissionLevel);
+            return 'Unknown PermissionLevel';
     }
 }

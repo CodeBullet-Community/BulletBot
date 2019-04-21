@@ -1,6 +1,6 @@
-import { Guild, Role, TextChannel, DMChannel, GroupDMChannel } from "discord.js";
-import { stringToRole } from "./parsers";
-import { Bot } from "..";
+import { Guild, Role, TextChannel, DMChannel, GroupDMChannel } from 'discord.js';
+import { stringToRole } from './parsers';
+import { Bot } from '..';
 
 /**
  * Mentions any role and user in content. 
@@ -26,18 +26,18 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
         }
     }
     var changedRoles: Role[] = [];
-    var managePerm = guild.me.hasPermission("MANAGE_ROLES");
+    var managePerm = guild.me.hasPermission('MANAGE_ROLES');
     for (const obj of mentions) {
-        if (typeof (obj[1]) != "string" && !obj[1].mentionable && managePerm) {
-            await obj[1].setMentionable(true, "BulletBot mention");
+        if (typeof (obj[1]) != 'string' && !obj[1].mentionable && managePerm) {
+            await obj[1].setMentionable(true, 'BulletBot mention');
             changedRoles.push(obj[1]);
         }
         content = content.replace(obj[0], obj[1].toString());
     }
     await channel.send(content, embed);
     for (const role of changedRoles) {
-        role.setMentionable(false, "BulletBot mention revert").catch((reason) => {
-            console.error("error while reverting mentionable property:", reason);
+        role.setMentionable(false, 'BulletBot mention revert').catch((reason) => {
+            console.error('error while reverting mentionable property:', reason);
             Bot.mStats.logError();
         });
     }
@@ -46,5 +46,5 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
 export function sendError(channel: TextChannel | DMChannel | GroupDMChannel, error: any) {
     console.error(error);
     Bot.mStats.logMessageSend();
-    return channel.send("Oops something went wrong. #BlameEvan");
+    return channel.send('Oops something went wrong. #BlameEvan');
 }

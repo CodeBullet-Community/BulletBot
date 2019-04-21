@@ -1,6 +1,6 @@
-import { Message, Collection, Guild } from "discord.js";
-import * as fs from "fs";
-import { Bot } from ".";
+import { Message, Collection, Guild } from 'discord.js';
+import * as fs from 'fs';
+import { Bot } from '.';
 
 export interface commandInterface {
     name: string;
@@ -40,12 +40,12 @@ export class Commands {
             var folders = files.filter(f => fs.lstatSync(dir + f).isDirectory());
             folders.forEach((f, i) => {
                 structureObject[f] = {}
-                this.loadCommands(dir + f + "/", structureObject[f]);
+                this.loadCommands(dir + f + '/', structureObject[f]);
             });
 
-            var commands = files.filter(f => f.split(".").pop() == "js");
+            var commands = files.filter(f => f.split('.').pop() == 'js');
             if (commands.length <= 0) {
-                console.error("no commands to load in " + dir);
+                console.error('no commands to load in ' + dir);
                 return;
             }
             console.info(`loading ${commands.length} commands in ${dir}`);
@@ -55,8 +55,8 @@ export class Commands {
                 this.commands.set(props.name, props);
                 // puts command in structure
                 var strucObject = structureObject;
-                if (props.path != "") {
-                    var keys = props.path.split("/");
+                if (props.path != '') {
+                    var keys = props.path.split('/');
                     strucObject = this.structure;
                     for (var i = 0; i < keys.length; i++) {
                         if (!strucObject[keys[i]]) {

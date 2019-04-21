@@ -1,5 +1,5 @@
-import { Message } from "discord.js";
-import { Bot } from "..";
+import { Message } from 'discord.js';
+import { Bot } from '..';
 
 export const FILTER_ACTION_NOTHING = 0;
 export const FILTER_ACTION_DELETE = 1;
@@ -31,7 +31,7 @@ export async function executeAction(message: Message, action: filterAction) {
                 await message.reply(action.message);
                 return true;
             default:
-                console.warn("unknown action:" + action);
+                console.warn('unknown action:' + action);
                 Bot.mStats.logError();
                 return false;
         }

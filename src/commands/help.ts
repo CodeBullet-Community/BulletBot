@@ -1,25 +1,25 @@
-import { Message, RichEmbed, Guild } from "discord.js";
-import { commandInterface } from "../commands";
-import { MEMBER, BOTMASTER } from "../utils/permissions";
-import { Bot } from "..";
-import { sendError } from "../utils/messages";
-import { permToString } from "../utils/parsers";
+import { Message, RichEmbed, Guild } from 'discord.js';
+import { commandInterface } from '../commands';
+import { MEMBER, BOTMASTER } from '../utils/permissions';
+import { Bot } from '..';
+import { sendError } from '../utils/messages';
+import { permToString } from '../utils/parsers';
 
 async function sendCommandList(guild: Guild, message: Message, strucObject: any, path: string, requestTimestamp: number) {
     var output = new RichEmbed();
-    output.setAuthor("Command List:", Bot.client.user.avatarURL);
-    if (path) output.setFooter("Path: ~" + path);
+    output.setAuthor('Command List:', Bot.client.user.avatarURL);
+    if (path) output.setFooter('Path: ~' + path);
     output.setColor(Bot.database.settingsDB.cache.helpEmbedColor);
-    var categories = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) === "undefined");
+    var categories = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) === 'undefined');
     if (categories.length != 0) {
         var cat_text = categories[0];
         for (i = 1; i < categories.length; i++) {
-            cat_text += "\n" + categories[i]
+            cat_text += '\n' + categories[i]
         }
-        output.addField("Subcategories:", cat_text);
+        output.addField('Subcategories:', cat_text);
     }
 
-    var commands = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) != "undefined");
+    var commands = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) != 'undefined');
     for (var i = 0; i < commands.length; i++) {
         var f = Bot.commands.get(commands[i]);
         if (f.permLevel == BOTMASTER) continue;
@@ -28,7 +28,7 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
     Bot.mStats.logResponseTime(command.name, requestTimestamp);
     message.channel.send(output);
     Bot.mStats.logMessageSend();
-    Bot.mStats.logCommandUsage(command.name, "commandList");
+    Bot.mStats.logCommandUsage(command.name, 'commandList');
 }
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
@@ -41,12 +41,12 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         }
         var command = Bot.commands.get(args.toLowerCase());
         if (command == undefined) {
-            if (typeof (Bot.commands.structure[args.split("/")[0]]) != "undefined") {
+            if (typeof (Bot.commands.structure[args.split('/')[0]]) != 'undefined') {
                 var strucObject = Bot.commands.structure;
-                var keys = args.split("/");
+                var keys = args.split('/');
                 for (var i = 0; i < keys.length; i++) {
-                    if (typeof (strucObject[keys[i]]) === "undefined") {
-                        message.channel.send("Couldn't find '" + args + "' category");
+                    if (typeof (strucObject[keys[i]]) === 'undefined') {
+                        message.channel.send('Couldn\'t find ' + args + ' category');
                         Bot.mStats.logMessageSend();
                         return;
                     } else {
@@ -56,7 +56,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 sendCommandList(message.guild, message, strucObject, args, requestTimestamp);
                 return;
             } else {
-                message.channel.send("Couldn't find '" + args.toLowerCase() + "' command");
+                message.channel.send('Couldn\'t find ' + args.toLowerCase() + ' command');
                 Bot.mStats.logMessageSend();
                 return;
             }
@@ -64,54 +64,54 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         Bot.mStats.logResponseTime(command.name, requestTimestamp);
         message.channel.send(await command.embedHelp(message.guild));
         Bot.mStats.logMessageSend();
-        Bot.mStats.logCommandUsage("help", "commandHelp");
+        Bot.mStats.logCommandUsage('help', 'commandHelp');
     } catch (e) {
         sendError(message.channel, e);
         Bot.mStats.logError();
     }
 }
 
-command.name = "help";
-command.path = "";
+command.name = 'help';
+command.path = '';
 command.dm = true;
 command.permLevel = MEMBER;
 command.togglable = false;
-command.shortHelp = "gives a command list and help";
+command.shortHelp = 'gives a command list and help';
 command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
-        "embed": {
-            "color": Bot.database.settingsDB.cache.helpEmbedColor,
-            "author": {
-                "name": "Command: " + prefix + command.name
+        'embed': {
+            'color': Bot.database.settingsDB.cache.helpEmbedColor,
+            'author': {
+                'name': 'Command: ' + prefix + command.name
             },
-            "fields": [
+            'fields': [
                 {
-                    "name": "Description:",
-                    "value": "lists all commands/categories and can get detailed help for command"
+                    'name': 'Description:',
+                    'value': 'lists all commands/categories and can get detailed help for command'
                 },
                 {
-                    "name": "Need to be:",
-                    "value": permToString(command.permLevel),
-                    "inline": true
+                    'name': 'Need to be:',
+                    'value': permToString(command.permLevel),
+                    'inline': true
                 },
                 {
-                    "name": "DM capable:",
-                    "value": command.dm,
-                    "inline": true
+                    'name': 'DM capable:',
+                    'value': command.dm,
+                    'inline': true
                 },
                 {
-                    "name": "Togglable:",
-                    "value": command.togglable,
-                    "inline": true
+                    'name': 'Togglable:',
+                    'value': command.togglable,
+                    'inline': true
                 },
                 {
-                    "name": "Usage:",
-                    "value": "{command}\n{command} [command name/category]\nuse `category/subcategory` to get list from subcategory".replace(/\{command\}/g, prefix + command.name)
+                    'name': 'Usage:',
+                    'value': '{command}\n{command} [command name/category]\nuse `category/subcategory` to get list from subcategory'.replace(/\{command\}/g, prefix + command.name)
                 },
                 {
-                    "name": "Example:",
-                    "value": "{command}\n{command} mention".replace(/\{command\}/g, prefix + command.name)
+                    'name': 'Example:',
+                    'value': '{command}\n{command} mention'.replace(/\{command\}/g, prefix + command.name)
                 }
             ]
         }
