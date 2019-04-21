@@ -21,6 +21,6 @@ export interface completion {//a type that contains the actions that were taken 
 	actions:Set<symbol>,//should be a symbol from the FILTER_ACTION object which indicate what actions the bot took
 	details:any//contains the details of the completion of the filter note: a specific type should probably be used for this rather than any
 }
-export default class Filters {
+export class Filters {
 	
 }
