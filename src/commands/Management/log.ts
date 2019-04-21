@@ -13,6 +13,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         var argIndex = 0;
         if (args.length == 0) {
             message.channel.send(await command.embedHelp(message.guild));
+            Bot.mStats.logMessageSend();
             return;
         }
         var argsArray = args.split(" ").filter(x => x.length != 0);
@@ -23,6 +24,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             guildDoc.save();
             Bot.mStats.logResponseTime(command.name, requestTimestamp);
             message.channel.send("Successfully unassigned log channel");
+            Bot.mStats.logMessageSend();
             Bot.mStats.logCommandUsage(command.name, "remove");
             return;
         }
@@ -30,10 +32,12 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             var guildObject = guildDoc.toObject();
             if (!guildObject.logChannel) {
                 message.channel.send("Currently no channel is assigned as log channel");
+                Bot.mStats.logMessageSend();
                 return;
             }
             Bot.mStats.logResponseTime(command.name, requestTimestamp);
             message.channel.send("Current log channel is " + Bot.client.channels.get(guildObject.logChannel).toString());
+            Bot.mStats.logMessageSend();
             Bot.mStats.logCommandUsage(command.name, "list");
             return;
         }
@@ -41,12 +45,15 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         var channel = stringToChannel(message.guild, argsArray[argIndex]);
         if (!channel) {
             message.channel.send("Couldn't find '" + argsArray[argIndex] + "' channel");
+            Bot.mStats.logMessageSend();
+            return;
         }
         guildDoc.logChannel = channel.id;
         guildDoc.save();
 
         Bot.mStats.logResponseTime(command.name, requestTimestamp);
         message.channel.send("Successfully assigned log channel to " + channel.toString());
+        Bot.mStats.logMessageSend();
         Bot.mStats.logCommandUsage(command.name, "set");
     } catch (e) {
         sendError(message.channel, e);

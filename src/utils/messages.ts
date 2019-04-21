@@ -45,5 +45,6 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
 
 export function sendError(channel: TextChannel | DMChannel | GroupDMChannel, error: any) {
     console.error(error);
+    Bot.mStats.logMessageSend();
     return channel.send("Oops something went wrong. #BlameEvan");
 }

@@ -27,6 +27,7 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
     }
     Bot.mStats.logResponseTime(command.name, requestTimestamp);
     message.channel.send(output);
+    Bot.mStats.logMessageSend();
     Bot.mStats.logCommandUsage(command.name, "commandList");
 }
 
@@ -46,6 +47,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 for (var i = 0; i < keys.length; i++) {
                     if (typeof (strucObject[keys[i]]) === "undefined") {
                         message.channel.send("Couldn't find '" + args + "' category");
+                        Bot.mStats.logMessageSend();
                         return;
                     } else {
                         strucObject = strucObject[keys[i]];
@@ -55,11 +57,13 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 return;
             } else {
                 message.channel.send("Couldn't find '" + args.toLowerCase() + "' command");
+                Bot.mStats.logMessageSend();
                 return;
             }
         }
         Bot.mStats.logResponseTime(command.name, requestTimestamp);
         message.channel.send(await command.embedHelp(message.guild));
+        Bot.mStats.logMessageSend();
         Bot.mStats.logCommandUsage("help", "commandHelp");
     } catch (e) {
         sendError(message.channel, e);

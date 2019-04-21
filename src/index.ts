@@ -56,6 +56,7 @@ client.on('error', error => {
 client.on('message', async message => {
     if (message.author.bot) return;
     var requestTimestamp = new Date().getTime();
+    Bot.mStats.logMessageRecieved();
     var dm = false;
     if (!message.guild) {
         dm = true;

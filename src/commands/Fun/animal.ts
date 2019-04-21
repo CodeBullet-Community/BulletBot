@@ -22,6 +22,7 @@ async function sendRandomImage(message: Message, API: string, requestTimestamp: 
     embed.setColor(Bot.database.settingsDB.cache.defaultEmbedColor);
     Bot.mStats.logResponseTime(command.name, requestTimestamp);
     message.channel.send(embed);
+    Bot.mStats.logMessageSend();
 }
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
@@ -30,6 +31,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
     try {
         if (args.length == 0) {
             message.channel.send(await command.embedHelp(message.guild));
+            Bot.mStats.logMessageSend();
             return;
         }
         args = args.toLowerCase();
@@ -45,6 +47,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 Bot.mStats.logCommandUsage(command.name, args);
             } else {
                 message.channel.send(`\`${args}\` isn't a animal or isn't yet supported.`)
+                Bot.mStats.logMessageSend();
             }
         }
     } catch (e) {

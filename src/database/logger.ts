@@ -54,6 +54,7 @@ export class Logger {
         await logDoc.save();
         guildDoc.logs.push(logDoc.id);
         guildDoc.save();
+        Bot.mStats.logLog();
 
         var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
@@ -65,6 +66,7 @@ export class Logger {
             logMessage = `User ${user.toString()}`;
         }
         logMessage += ` was ${type ? 'removed' : 'added'} to the ${rank} rank`;
+        Bot.mStats.logMessageSend();
         logChannel.send(logMessage);
     }
 
@@ -98,9 +100,11 @@ export class Logger {
         await logDoc.save();
         guildDoc.logs.push(logDoc.id);
         guildDoc.save();
+        Bot.mStats.logLog();
 
         var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
+        Bot.mStats.logMessageSend();
         logChannel.send({
             "embed": {
                 "description": `Command \`${command.name}\` was  ${type ? 'disabled' : 'enabled'}`,
