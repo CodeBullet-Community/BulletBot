@@ -104,6 +104,39 @@ client.on('resume', missed => {
     console.info(`Successfully reconnected client. Missed ${missed} events.`)
 })
 
+client.on('guildMemberRemove', async member => {
+    var permLevel = await getPermissionLevel(member);
+    if (permLevel == ADMIN) {
+        Bot.database.removeFromRank(member.guild.id, 'admins', undefined, member.id);
+        Bot.logger.logStaff(member.guild, member.guild.me, LOG_TYPE_REMOVE, 'admins', undefined, member.user);
+    }
+    if (permLevel == MOD) {
+        Bot.database.removeFromRank(member.guild.id, 'mods', undefined, member.id);
+        Bot.logger.logStaff(member.guild, member.guild.me, LOG_TYPE_REMOVE, 'mods', undefined, member.user);
+    }
+    if (permLevel == IMMUNE) {
+        Bot.database.removeFromRank(member.guild.id, 'immune', undefined, member.id);
+        Bot.logger.logStaff(member.guild, member.guild.me, LOG_TYPE_REMOVE, 'immune', undefined, member.user);
+    }
+});
+
+client.on('roleDelete', async role => {
+    var staffDoc = await Bot.database.findStaffDoc(role.guild.id);
+    if (!staffDoc) return;
+    if (staffDoc.admins.roles.includes(role.id)) {
+        Bot.database.removeFromRank(role.guild.id, 'admins', role.id);
+        Bot.logger.logStaff(role.guild, role.guild.me, LOG_TYPE_REMOVE, 'admins', role);
+    }
+    if (staffDoc.mods.roles.includes(role.id)) {
+        Bot.database.removeFromRank(role.guild.id, 'mods', role.id);
+        Bot.logger.logStaff(role.guild, role.guild.me, LOG_TYPE_REMOVE, 'mods', role);
+    }
+    if (staffDoc.immune.roles.includes(role.id)) {
+        Bot.database.removeFromRank(role.guild.id, 'immune', role.id);
+        Bot.logger.logStaff(role.guild, role.guild.me, LOG_TYPE_REMOVE, 'immune', role);
+    }
+});
+
 client.on('debug', info => {
     //console.debug(info);
 });
