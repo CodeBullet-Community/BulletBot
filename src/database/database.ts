@@ -2,7 +2,7 @@ import mongoose = require('mongoose');
 import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval } from '../bot-config.json';
-import { Guild } from 'discord.js';
+import { Guild, Role } from 'discord.js';
 
 /**
  * Manages all connections to the main database.
@@ -277,6 +277,65 @@ export class Database {
      */
     findStaffDoc(guildID: string) {
         return this.mainDB.staff.findOne({ guild: guildID }).exec();
+    }
+
+    /**
+     * adds role/user to specific rank
+     * returns true if successfull
+     *
+     * @param {string} guildID
+     * @param {('admins' | 'mods' | 'immune')} rank
+     * @param {string} [roleID]
+     * @param {string} [userID]
+     * @returns
+     * @memberof Database
+     */
+    async addToRank(guildID: string, rank: 'admins' | 'mods' | 'immune', roleID?: string, userID?: string) {
+        if (!roleID && !userID) return true;
+        var staffDoc = await this.findStaffDoc(guildID);
+        if (!staffDoc) {
+            staffDoc = new this.mainDB.staff({
+                guild: guildID, admins: { roles: [], users: [] },
+                mods: { roles: [], users: [] },
+                immune: { roles: [], users: [] }
+            });
+            await staffDoc.save();
+        }
+        if (roleID && !staffDoc[rank].roles.includes(roleID)) {
+            staffDoc[rank].roles.push(roleID);
+        } else if (userID && !staffDoc[rank].users.includes(userID)) {
+            staffDoc[rank].users.push(userID);
+        } else {
+            return false;
+        }
+        staffDoc.save();
+        return true;
+    }
+
+    /**
+     * removes role/user from specific rank
+     * returns true if successfull
+     *
+     * @param {string} guildID
+     * @param {('admins' | 'mods' | 'immune')} rank
+     * @param {string} [roleID]
+     * @param {string} [userID]
+     * @returns
+     * @memberof Database
+     */
+    async removeFromRank(guildID: string, rank: 'admins' | 'mods' | 'immune', roleID?: string, userID?: string) {
+        if (!roleID && !userID) return true;
+        var staffDoc = await this.findStaffDoc(guildID);
+        if (!staffDoc) return;
+        if (roleID && staffDoc[rank].roles.includes(roleID)) {
+            staffDoc[rank].roles.splice(staffDoc[rank].roles.indexOf(roleID));
+        } else if (userID && staffDoc[rank].users.includes(userID)) {
+            staffDoc[rank].users.splice(staffDoc[rank].users.indexOf(userID));
+        } else {
+            return false;
+        }
+        staffDoc.save();
+        return true;
     }
 
     /**

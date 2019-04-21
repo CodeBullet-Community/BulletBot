@@ -46,8 +46,8 @@ export class Logger {
             info: {
                 type: type,
                 rank: rank,
-                role: role.id,
-                user: user.id
+                role: role ? role.id : undefined,
+                user: user ? user.id : undefined
             }
         }
         var logDoc = new this.logs(logObject);

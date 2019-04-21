@@ -26,16 +26,16 @@ export const guildSchema = new mongoose.Schema({
 export interface staffObject {
     guild: string;
     admins: {
-        roles: [string];
-        users: [string];
+        roles: string[];
+        users: string[];
     };
     mods: {
-        roles: [string];
-        users: [string];
+        roles: string[];
+        users: string[];
     };
     immune: {
-        roles: [string];
-        users: [string];
+        roles: string[];
+        users: string[];
     };
 }
 export interface staffDoc extends mongoose.Document, staffObject { }
