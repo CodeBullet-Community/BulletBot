@@ -20,9 +20,11 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         var prefixDoc = await Bot.database.mainDB.prefix.findOne({ guild: message.guild.id });
         if (args == "reset" || args == Bot.database.settingsDB.cache.prefix) {
             if (prefixDoc) {
+                var oldPrefix: string = prefixDoc.toObject().prefix;
                 prefixDoc.remove();
                 Bot.mStats.logResponseTime(command.name, requestTimestamp);
                 message.channel.send(`Successfully reset the prefix to \`${Bot.database.settingsDB.cache.prefix}\``);
+                Bot.logger.logPrefix(message.guild, message.member, oldPrefix, Bot.database.settingsDB.cache.prefix);
             } else {
                 Bot.mStats.logResponseTime(command.name, requestTimestamp);
                 message.channel.send(`This server doesn't have a custom prefix`);
@@ -37,14 +39,17 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             Bot.mStats.logMessageSend();
             return;
         }
+        var oldPrefix = Bot.database.settingsDB.cache.prefix;
         if (!prefixDoc) {
             prefixDoc = new Bot.database.mainDB.prefix({ guild: message.guild.id, prefix: args });
         } else {
+            oldPrefix = prefixDoc.toObject().prefix;
             prefixDoc.prefix = args;
         }
         prefixDoc.save();
         Bot.mStats.logResponseTime(command.name, requestTimestamp);
         message.channel.send(`Successfully set the prefix to \`${args}\``);
+        Bot.logger.logPrefix(message.guild, message.member, oldPrefix, args);
         Bot.mStats.logCommandUsage(command.name, "set");
         Bot.mStats.logMessageSend();
 

@@ -106,7 +106,7 @@ export interface logObject {
     action: number;
     mod: string;
     timestamp: number;
-    info?: logStaff | logWebhook | logFilter | logCommand;
+    info?: logStaff | logWebhook | logFilter | logCommand | logPrefix;
 }
 export interface logDoc extends mongoose.Document, logObject { }
 export const logSchema = new mongoose.Schema({
@@ -127,6 +127,7 @@ export const LOG_ACTION_STAFF = 0;
 export const LOG_ACTION_WEBHOOK = 1;
 export const LOG_ACTION_FILTER = 2; // filter catch won't get logged in logs
 export const LOG_ACTION_COMMAND = 3;
+export const LOG_ACTION_PREFIX = 4;
 
 export interface logStaff {
     type: 0 | 1; // add or remove
@@ -151,6 +152,11 @@ export interface logFilter {
 export interface logCommand {
     type: 0 | 1; // add, remove or change
     command: string; // command name
+}
+
+export interface logPrefix {
+    old: string,
+    new: string
 }
 
 // command cache

@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { logDoc, logSchema, guildDoc, guildSchema, logObject, LOG_ACTION_STAFF, LOG_ACTION_COMMAND } from './schemas';
+import { logDoc, logSchema, guildDoc, guildSchema, logObject, LOG_ACTION_STAFF, LOG_ACTION_COMMAND, LOG_ACTION_PREFIX } from './schemas';
 import { Guild, Role, User, GuildMember, } from 'discord.js';
 import { commandInterface } from '../commands';
 import { Bot } from '..';
@@ -122,6 +122,68 @@ export class Logger {
                     {
                         "name": `${type ? 'Re-enable' : 'Disable'} Command:`,
                         "value": `${await Bot.database.getPrefix(guild)}commands ${type ? 'enable' : 'disable'} ${command.name}` // TODO: make command
+                    }
+                ]
+            }
+        });
+    }
+
+    /**
+     * Logs prefix change
+     *
+     * @param {Guild} guild
+     * @param {GuildMember} mod
+     * @param {string} oldPrefix
+     * @param {string} newPrefix
+     * @returns
+     * @memberof Logger
+     */
+    async logPrefix(guild: Guild, mod: GuildMember, oldPrefix: string, newPrefix: string) {
+        var date = new Date();
+        var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
+        if (!guildDoc) return;
+
+        var logObject: logObject = {
+            guild: guild.id,
+            mod: mod.id,
+            action: LOG_ACTION_PREFIX,
+            timestamp: date.getTime(),
+            info: {
+                old: oldPrefix,
+                new: newPrefix
+            }
+        }
+        var logDoc = new this.logs(logObject);
+        await logDoc.save();
+        guildDoc.logs.push(logDoc.id);
+        guildDoc.save();
+        Bot.mStats.logLog();
+
+        var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
+        if (!logChannel) return;
+        Bot.mStats.logMessageSend();
+        logChannel.send({
+            "embed": {
+                "color": Bot.database.settingsDB.cache.defaultEmbedColor,
+                "timestamp": date.toISOString(),
+                "author": {
+                    "name": "Changed Prefix:",
+                    "icon_url": Bot.client.user.avatarURL
+                },
+                "fields": [
+                    {
+                        "name": "New:",
+                        "value": newPrefix,
+                        "inline": true
+                    },
+                    {
+                        "name": "Old:",
+                        "value": oldPrefix,
+                        "inline": true
+                    },
+                    {
+                        "name": "Reset command:",
+                        "value": Bot.database.settingsDB.cache.prefix + "prefix reset"
                     }
                 ]
             }
