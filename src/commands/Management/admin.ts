@@ -111,6 +111,10 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 Bot.mStats.logCommandUsage(command.name, 'list');
                 Bot.mStats.logMessageSend();
                 break;
+            default:
+                message.channel.send("Unkown action " + argsArray[argIndex]);
+                Bot.mStats.logMessageSend();
+                break;
         }
     } catch (e) {
         sendError(message.channel, e);
