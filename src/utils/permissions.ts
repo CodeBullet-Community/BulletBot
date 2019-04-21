@@ -55,5 +55,14 @@ export async function getPermissionLevel(member: GuildMember) {
             return MOD;
         }
     }
+
+    if (staffObject.immune.users.includes(member.user.id)) {
+        return IMMUNE;
+    }
+    for (var i = 0; i < staffObject.immune.roles.length; i++) {
+        if (member.roles.find(role => role.id == staffObject.immune.roles[i])) {
+            return IMMUNE;
+        }
+    }
     return MEMBER;
 }
