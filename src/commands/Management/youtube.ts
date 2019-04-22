@@ -196,12 +196,10 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                             Bot.mStats.logMessageSend();
                             return;
                         }
-                        console.debug(newYTChannelID);
                         var webhookDoc = await Bot.youtube.changeWebhook(message.guild.id, input.channel.id, input.YTChannelID, undefined, newYTChannelID);
                         Bot.mStats.logResponseTime(command.name, requestTimestamp);
                         Bot.mStats.logCommandUsage(command.name, 'changeFeed');
                         Bot.mStats.logMessageSend();
-                        console.debug('aa', webhookDoc);
                         if (webhookDoc && webhookDoc.feed == newYTChannelID) {
                             message.channel.send(`Successfully changed webhook feed from https://youtube.com/channel/${input.YTChannelID} to https://youtube.com/channel/${webhookDoc.feed}`);
                         } else {
