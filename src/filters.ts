@@ -20,7 +20,7 @@ export interface filter {
     cache: any,
 };
 
-export default class Filters {
+export class Filters {
     filters: Collection<string, filter>;
     structure: Object;
     constructor(dir: string) {
