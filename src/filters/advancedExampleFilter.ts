@@ -19,7 +19,7 @@ person is supposed to say the previous number +1) we'll be using the cache for b
 and use it with the Message api to make sure someone can't say a bunch of numbers to get a 
 really high count*/
 	name:"counting game",
-	path:null,
+	path:'',
 	active:(guild:Guild):Promise<boolean>=>{
 		return Promise.resolve(true);//same thing as the simple example and we're still not using the database because this is an example(also I don't know how to use it and I'm being stubborn right now)
 	},

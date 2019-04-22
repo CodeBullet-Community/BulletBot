@@ -5,7 +5,7 @@ import { filter } from "../filters";
 import { FILTER_ACTION, filterAction } from "../utils/filters";
 let filter: filterInterface = {//note this is not an example for creating a filter based from a path rather making a filter in the source code
 	name: "kappa filter",//the name of the filter goes here
-	path: null,//the path too the file the filter was gotten from assuming it was gotten from a file
+	path: '',//the path too the file the filter was gotten from assuming it was gotten from a file
 	active: (guild: Guild): Promise<boolean> => {
 		return Promise.resolve(true);//we'll just have the filter run no matter what even though we should reference the main database to check if we should bother with this filter in the server that the bot is in
 	},
