@@ -105,6 +105,15 @@ client.on('resume', missed => {
     console.info(`Successfully reconnected client. Missed ${missed} events.`)
 })
 
+client.on('channelDelete', async (channel: discord.TextChannel) => {
+    if (channel.type == 'text') {
+        var youtubeWebhookDocs = await Bot.youtube.webhooks.find({ guild: channel.guild.id, channel: channel.id });
+        for (const webhookDoc of youtubeWebhookDocs) {
+            Bot.youtube.deleteWebhook(channel.guild.id, channel.id, webhookDoc.toObject().feed);
+        }
+    }
+});
+
 client.on('guildMemberRemove', async member => {
     var permLevel = await getPermissionLevel(member);
     if (permLevel == ADMIN) {
