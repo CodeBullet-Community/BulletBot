@@ -1,15 +1,11 @@
 import { Message } from "discord.js";
 import { Bot } from "..";
 
-export const FILTER_ACTION = {
-    send:Symbol("send"),
-    delete:Symbol("delete"),
-    nothing:Symbol("nothing")
+export enum FILTER_ACTION {nothing,delete,send};
 
-}
 
 export interface filterAction {
-    type: symbol;
+    type: FILTER_ACTION;
     delay?: number;
     message?: any;
 };

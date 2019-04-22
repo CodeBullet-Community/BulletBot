@@ -10,12 +10,13 @@ export interface filterOutput {
 }
 
 export interface filter {
-    name: string;
-    path: string;
-    active: (bot: bot, guild: Guild) => Promise<boolean>;
-    shortHelp: string;
-    embedHelp: (bot: bot) => any;
-    run: (bot: bot, message: Message) => Promise<filterOutput>;
+    name: string,
+    path: string,
+    active: (bot: bot, guild: Guild) => Promise<boolean>,
+    shortHelp: string,
+    embedHelp: (bot: bot) => any,
+    run: (bot: bot, message: Message) => Promise<filterOutput>,
+    cache:any,
 };
 
 export default class Filters {

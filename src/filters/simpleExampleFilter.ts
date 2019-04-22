@@ -3,7 +3,7 @@ import { Bot } from "..";
 import { Message, Guild } from "discord.js";
 import {filter} from "../filters";
 import {FILTER_ACTION,filterAction} from "../utils/filters";
-export let filter:filterInterface = {//note this is not an example for creating a filter based from a path rather making a filter in the source code
+let filter:filterInterface = {//note this is not an example for creating a filter based from a path rather making a filter in the source code
 	name:null,//the name of the filter goes here
 	path:null,//the path too the file the filter was gotten from assuming it was gotten from a file
 	active:(bot: Bot, guild: Guild):Promise<boolean>=>{
