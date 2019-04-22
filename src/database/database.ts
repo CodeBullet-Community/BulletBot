@@ -3,6 +3,7 @@ import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc,
 import { setInterval } from 'timers';
 import { globalUpdateInterval } from '../bot-config.json';
 import { Guild, Role } from 'discord.js';
+import { Bot } from '..';
 
 /**
  * Manages all connections to the main database.
@@ -207,31 +208,36 @@ export class Database {
      * @memberof Database
      */
     async addGuild(guildID) {
-        var staffDoc = new this.mainDB.staff({
-            guild: guildID,
-            admins: {
-                roles: [],
-                users: []
-            },
-            mods: {
-                roles: [],
-                users: []
-            },
-            immune: {
-                roles: [],
-                users: []
-            }
-        });
-        await staffDoc.save();
-        var guildDoc = new this.mainDB.guilds({
-            guild: guildID,
-            logChannel: undefined,
-            logs: [],
-            staff: staffDoc.id,
-            webhooks: {
-                youtube: []
-            }
-        });
+        if (!(await this.findStaffDoc(guildID))) {
+            var staffDoc = new this.mainDB.staff({
+                guild: guildID,
+                admins: {
+                    roles: [],
+                    users: []
+                },
+                mods: {
+                    roles: [],
+                    users: []
+                },
+                immune: {
+                    roles: [],
+                    users: []
+                }
+            });
+            await staffDoc.save();
+        }
+        var guildDoc = await this.findGuildDoc(guildID)
+        if (!guildDoc) {
+            guildDoc = new this.mainDB.guilds({
+                guild: guildID,
+                logChannel: undefined,
+                logs: [],
+                staff: staffDoc.id,
+                webhooks: {
+                    youtube: []
+                }
+            });
+        }
         return await guildDoc.save();
     }
 
@@ -242,33 +248,21 @@ export class Database {
      * @memberof Database
      */
     async removeGuild(guildID: string) {
-        // TODO: webhooks
         var guildDoc = await this.findGuildDoc(guildID);
-        var logs: string[];
-        var webhooks: { [key: string]: string[] };
-        if (guildDoc) {
-            logs = guildDoc.toObject().logs;
-            webhooks = guildDoc.toObject().webhooks;
-            guildDoc.remove();
-        }
-
+        if (guildDoc) guildDoc.remove();
         var staffDoc = await this.mainDB.staff.findOne({ guild: guildID }).exec();
         if (staffDoc) staffDoc.remove();
-
         var prefixDoc = await this.mainDB.prefix.findOne({ guild: guildID }).exec();
         if (prefixDoc) prefixDoc.remove();
-
         var commandsDoc = await this.findCommandsDoc(guildID);
         if (commandsDoc) commandsDoc.remove();
-
         var filtersDoc = await this.findFiltersDoc(guildID);
         if (filtersDoc) filtersDoc.remove();
-
-        if (logs && !logs.length) {
-            for (const log of logs) {
-                var logDoc = this.mainDB.logs.findById(log);
-                if (logDoc) logDoc.remove();
-            }
+        for (const logDoc of await this.mainDB.logs.find({ guild: guildID })) {
+            logDoc.remove();
+        }
+        for (const webhookDoc of await Bot.youtube.webhooks.find({ guild: guildID })) {
+            Bot.youtube.deleteWebhook(guildID, webhookDoc.toObject().channel, webhookDoc.toObject().feed);
         }
     }
 
