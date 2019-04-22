@@ -114,6 +114,14 @@ client.on('channelDelete', async (channel: discord.TextChannel) => {
     }
 });
 
+client.on('guildCreate', guild => {
+    Bot.database.addGuild(guild.id);
+});
+
+client.on('guildDelete', guild => {
+    Bot.database.removeGuild(guild.id);
+});
+
 client.on('guildMemberRemove', async member => {
     var permLevel = await getPermissionLevel(member);
     if (permLevel == ADMIN) {
