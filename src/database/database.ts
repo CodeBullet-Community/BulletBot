@@ -63,8 +63,8 @@ export class Database {
             settings: settingsCon.model('globalSettings', globalSettingsSchema, 'settings'),
             cache: undefined
         }
-        this.updateGLobalSettings();
-        this._updateCacheAtInterval(globalUpdateInterval);
+        this.updateGLobalSettings(this.settingsDB);
+        this.updateCacheAtInterval(globalUpdateInterval);
     }
 
     /**
@@ -85,13 +85,17 @@ export class Database {
      * @returns
      * @memberof Database
      */
-    async updateGLobalSettings() {
-        var settingsDoc = await this.settingsDB.settings.findOne().exec();
+    async updateGLobalSettings(settingsDB: {
+        connection: mongoose.Connection;
+        settings: mongoose.Model<globalSettingsDoc>;
+        cache: globalSettingsObject;
+    }) {
+        var settingsDoc = await settingsDB.settings.findOne().exec();
         if (!settingsDoc) {
             console.warn('global settings doc not found');
             return;
         }
-        this.settingsDB.cache = settingsDoc.toObject();
+        settingsDB.cache = settingsDoc.toObject();
     }
 
     /**
@@ -100,9 +104,9 @@ export class Database {
      * @param {number} ms
      * @memberof Database
      */
-    _updateCacheAtInterval(ms: number) {
+    private updateCacheAtInterval(ms: number) {
         setInterval(() => {
-            this.updateGLobalSettings();
+            this.updateGLobalSettings(this.settingsDB);
         }, ms);
         console.info(`updating global cache every ${ms}ms`);
     }
@@ -328,9 +332,9 @@ export class Database {
         var staffDoc = await this.findStaffDoc(guildID);
         if (!staffDoc) return;
         if (roleID && staffDoc[rank].roles.includes(roleID)) {
-            staffDoc[rank].roles.splice(staffDoc[rank].roles.indexOf(roleID),1);
+            staffDoc[rank].roles.splice(staffDoc[rank].roles.indexOf(roleID), 1);
         } else if (userID && staffDoc[rank].users.includes(userID)) {
-            staffDoc[rank].users.splice(staffDoc[rank].users.indexOf(userID),1);
+            staffDoc[rank].users.splice(staffDoc[rank].users.indexOf(userID), 1);
         } else {
             return false;
         }
