@@ -4,10 +4,10 @@ import { Message, Guild } from "discord.js";
 import {filter} from "../filters";
 import {FILTER_ACTION,filterAction} from "../utils/filters";
 let filter:filterInterface = {//note this is not an example for creating a filter based from a path rather making a filter in the source code
-	name:null,//the name of the filter goes here
+	name:"kappa filter",//the name of the filter goes here
 	path:null,//the path too the file the filter was gotten from assuming it was gotten from a file
 	active:(bot: Bot, guild: Guild):Promise<boolean>=>{
-		return Promise.resolve(true);//we'll just have the filter run no matter what
+		return Promise.resolve(true);//we'll just have the filter run no matter what even though we should reference the main database to check if we should bother with this filter in the server that the bot is in
 	},
 	shortHelp: "This filter will just reply kappa to everything and delete any message which contains kappa",
 	embedHelp: null,//I don't know how embeded messages work so reference some other example for that
@@ -34,3 +34,4 @@ let filter:filterInterface = {//note this is not an example for creating a filte
 	},
 	cache:null//technically we don't need this line(as the cache field is optional in a filter) however I'm including it just so people looking at this example know the cache exists and can be used(an example of it's use is in advancedExampleFilter)
 };
+export default filter;//used to export the filter from the module

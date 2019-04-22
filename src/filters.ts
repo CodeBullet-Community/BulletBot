@@ -2,7 +2,7 @@ import { Collection, Message, Guild } from "discord.js";
 import * as fs from "fs";
 import { Bot } from ".";
 import { filterAction, FILTER_ACTION, executeAction, executeActions } from "./utils/filters";
-import { LOG_FILTER_CATCH, filterCatch } from "./Database";
+import { LOG_FILTER_CATCH, filterCatch } from "./database/database";
 
 export interface filterOutput {
     report: any;
@@ -12,10 +12,10 @@ export interface filterOutput {
 export interface filter {
     name: string,
     path: string,
-    active: (bot: bot, guild: Guild) => Promise<boolean>,
+    active: (bot: Bot, guild: Guild) => Promise<boolean>,
     shortHelp: string,
-    embedHelp: (bot: bot) => any,
-    run: (bot: bot, message: Message) => Promise<filterOutput>,
+    embedHelp: (bot: Bot) => any,
+    run: (bot: Bot, message: Message) => Promise<filterOutput>,
     cache:any,
 };
 
