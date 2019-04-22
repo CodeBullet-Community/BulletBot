@@ -13,7 +13,7 @@ import {FILTER_ACTION,filterAction} from "../utils/filters";
 class cacheData {//we don't need a cacheData object for the cache it can be any datatype but in this case given that we are keeping track of more than 1 variable of different types an object is useful
 	constructor(public num:Number, public user:User){}
 }
-let filter:filter = {
+let filter:filterInterface = {
 /*lets make a counting filter(if someone says 0 the bot will start a counting game where each 
 person is supposed to say the previous number +1) we'll be using the cache for both the counting
 and use it with the Message api to make sure someone can't say a bunch of numbers to get a 
@@ -24,7 +24,30 @@ really high count*/
 		return Promise.resolve(true);//same thing as the simple example and we're still not using the database because this is an example(also I don't know how to use it and I'm being stubborn right now)
 	},
 	shortHelp:"Allows for the beginning and playing of a simple counting game",
-	embedHelp:null,//TODO: add an embed help
+	embedHelp:()=>{
+		return {
+        'embed': {
+            'color': Bot.database.settingsDB.cache.helpEmbedColor,
+            'author': {
+                'name': 'Filter: counting game'
+            },
+            'fields': [
+                {
+                    'name': 'Description:',
+                    'value': 'this filter allows for a counting game to be played'
+                },
+                {
+                    'name': 'Usage:',
+                    'value': 'start with 0 and people can count up from there'
+                },
+                {
+                    'name': 'Example:',
+                    'value': '{command}'.replace(/\{command\}/g, prefix + command.name)
+                }
+            ]
+        }
+    }
+	},//TODO: add an embed help
 	run:(message:Message):Promise<filterOutput>=>{
 		let output:filterOutput = {report:null,actions:new Array<filterAction>()};
 		if(message.author.bot){//do nothing when the user is a bot
@@ -36,7 +59,13 @@ really high count*/
 				output.actions.push({type:FILTER_ACTION.send,message:"Game Started by "+message.author.username})
 				this.cache = new cacheData(0,message.author);
 			}
-			this.cache = new cacheData(this.cache.num+1,message.author);
+			if(this.cache.user!==message.author){
+				this.cache = new cacheData(this.cache.num+1,message.author);
+				output.actions.push({type:FILTER_ACTION.nothing});
+			}
+			else{
+				output.actions.push({type:FILTER_ACTION.send,message:"somebody else has to continue the count up"});
+			}
 		}
 		else if(this.cache===-1){
 			output.actions.push({type:FILTER_ACTION.nothing});
