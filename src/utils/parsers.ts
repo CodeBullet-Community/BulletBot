@@ -1,5 +1,5 @@
 import { Guild } from 'discord.js';
-import { filterAction, FILTER_ACTION_NOTHING, FILTER_ACTION_DELETE, FILTER_ACTION_SEND } from './filters';
+import { filterAction, FILTER_ACTION } from './filters';
 import { MEMBER, IMMUNE, MOD, ADMIN, BOTMASTER } from './permissions';
 import { Bot } from '..';
 
@@ -144,14 +144,14 @@ export function stringToEmbed(text: string) {
  */
 export function actionToString(action: filterAction) {
     switch (action.type) {
-        case FILTER_ACTION_NOTHING:
+        case FILTER_ACTION.nothing:
             return 'nothing';
-        case FILTER_ACTION_DELETE:
+        case FILTER_ACTION.delete:
             if (action.delay == 0) {
                 return 'deleted message';
             }
             return `deleted message after ${action.delay}ms`;
-        case FILTER_ACTION_SEND:
+        case FILTER_ACTION.send:
 
             return `replied with '${action.message}' to message`;
         default:

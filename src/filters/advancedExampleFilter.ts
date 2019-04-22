@@ -42,7 +42,7 @@ really high count*/
                 },
                 {
                     'name': 'Example:',
-                    'value': '{command}'.replace(/\{command\}/g, prefix + command.name)
+                    'value': '{command}'
                 }
             ]
         }
