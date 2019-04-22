@@ -121,7 +121,7 @@ export class Logger {
                     },
                     {
                         'name': `${type ? 'Re-enable' : 'Disable'} Command:`,
-                        'value': `${await Bot.database.getPrefix(guild)}commands ${type ? 'enable' : 'disable'} ${command.name}` // TODO: make command
+                        'value': `${await Bot.database.getPrefix(guild)}commands ${type ? 'enable' : 'disable'} ${command.name}`
                     }
                 ]
             }
