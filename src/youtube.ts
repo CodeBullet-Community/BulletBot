@@ -1,9 +1,14 @@
 import mongoose = require('mongoose');
-import { webhookDoc, webhookSchema } from './database/schemas';
+import { webhookDoc, webhookSchema, webhookObject } from './database/schemas';
 import { google } from "googleapis";
 import { Bot } from '.';
-import { googleAPIKey } from "./bot-config.json";
+import { googleAPIKey, callbackPath, callbackPort, callbackURL } from "./bot-config.json";
 import request = require("request");
+import express = require("express");
+import bodyParser = require("body-parser");
+import xml2js = require('xml2js')
+import { sendMentionMessage } from './utils/messages';
+const xmlParser = new xml2js.Parser({ explicitArray: false });
 
 export async function getYTChannelID(input: string) {
     if (input.includes("channel/")) {
@@ -32,6 +37,54 @@ export async function YTChannelExists(YTChannelID: string) {
     return false;
 }
 
+export function addYoutubeCatcher(app: express.Application) {
+    app.use(callbackPath + '/youtube', bodyParser.text({ type: 'application/atom+xml' }));
+    app.get(callbackPath + '/youtube', (req, res) => {
+        res.status(200).send(req.query['hub.challenge']);
+    });
+    app.post(callbackPath + '/youtube', function (req, res) {
+        xmlParser.parseString(req.body, async (error, result) => {
+            if (error) {
+                res.status(422).json({ code: 'xml_parse_error', details: "Something went wrong while parsing the XML", error });
+            } else {
+                var video = result.feed.entry
+                var publishUpdateDifference = Date.parse(video.updated) - Date.parse(video.published)
+                const type = (publishUpdateDifference > 300000) ? 'updated' : 'published'
+                if (type != "published") {
+                    res.sendStatus(200);
+                    return;
+                }
+                var webhooks = await Bot.youtube.webhooks.find({ feed: video["yt:channelId"] }).exec();
+                if (webhooks.length == 0) {
+                    res.sendStatus(404);
+                    return;
+                }
+
+                const link = "https://youtu.be/" + video["yt:videoId"];
+                for (const webhook of webhooks) {
+                    const webhookObject: webhookObject = webhook.toObject();
+                    var guild = Bot.client.guilds.get(webhookObject.guild);
+                    if (!guild) {
+                        console.warn("in youtube webhookcatcher guild " + webhookObject.guild + " wasn't found");
+                        webhook.remove();
+                    }
+                    var channel: any = guild.channels.get(webhookObject.channel);
+                    if (!channel) webhook.remove();
+                    var message: string = webhookObject.message;
+                    message = message.replace("{{link}}", link).replace("{{title}}", video.title).replace("{{channelName}}", video.author.name).replace("{{channelLink}}", video.author.uri);
+                    if (message.includes("{{role:")) {
+                        sendMentionMessage(guild, channel, message);
+                    } else {
+                        channel.send(message);
+                    }
+                    Bot.mStats.logMessageSend();
+                }
+                res.sendStatus(200);
+            }
+        });
+    });
+}
+
 export class YTWebhookManager {
     connection: mongoose.Connection;
     webhooks: mongoose.Model<webhookDoc>;
@@ -54,7 +107,7 @@ export class YTWebhookManager {
             request.post('https://pubsubhubbub.appspot.com/subscribe', {
                 form: {
                     'hub.mode': subscribe ? 'subscribe' : 'unsubscribe',
-                    'hub.callback': `https://${Bot.database.settingsDB.cache.callbackURL}:${Bot.database.settingsDB.cache.callbackPort}/youtube`,
+                    'hub.callback': `https://${callbackURL}:${callbackPort}${callbackPath}/youtube`,
                     'hub.topic': 'https://www.youtube.com/xml/feeds/videos.xml?channel_id=' + YTChannelID
                 }
             }, (error, response, body) => {

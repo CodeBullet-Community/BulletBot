@@ -281,8 +281,6 @@ export interface globalSettingsObject {
     prefix: string;
     defaultEmbedColor: number;
     helpEmbedColor: number;
-    callbackURL: string;
-    callbackPort: number;
     botMasters: [string];
     commands: {
         // key is command name
@@ -302,8 +300,6 @@ export const globalSettingsSchema = new mongoose.Schema({
     prefix: String,
     defaultEmbedColor: Number,
     helpEmbedColor: Number,
-    callbackURL: String,
-    callbackPort: Number,
     botMasters: [String],
     commands: mongoose.Schema.Types.Mixed,
     filters: mongoose.Schema.Types.Mixed
