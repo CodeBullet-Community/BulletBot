@@ -4,20 +4,19 @@ import { Bot } from ".";
 import { filterAction, executeActions } from "./utils/filters";
 
 import { sendError } from "./utils/messages";
+import { filtersObject } from "./database/schemas";
 
 export interface filterOutput {
-    report: any;
+    reason: string;
     actions: filterAction[];
 }
 
 export interface filter {
     name: string,
     path: string,
-    active: (guild: Guild) => Promise<boolean>,
     shortHelp: string,
     embedHelp: (guild: Guild) => any,
     run: (message: Message) => Promise<filterOutput>,
-    cache: any,
 };
 
 export class Filters {
@@ -68,12 +67,14 @@ export class Filters {
 
     async filterMessage(message: Message) {
         try {
-            var filterArray = this.filters.array();
-            for (var i = 0; i < filterArray.length; i++) {
-                if (!(await filterArray[i].active(message.guild))) continue;
-                var output = await filterArray[i].run(message);
+            var filtersDoc = await Bot.database.findFiltersDoc(message.guild.id);
+            if (!filtersDoc) return;
+            var filterObject: filtersObject = filtersDoc.toObject();
+            for (const filter of this.filters.array()) {
+                if (!filterObject.filters[filter.name] || !filterObject.filters[filter.name]._enabled) continue;
+                var output = await filter.run(message);
                 if (output) {
-                    Bot.mStats.logFilterCatch(filterArray[i].name);
+                    Bot.mStats.logFilterCatch(filter.name);
                     // TODO logger log
                     executeActions(message, output.actions);
                     return;

@@ -27,6 +27,7 @@ export async function executeAction(message: Message, action: filterAction) {
                 return true;
             case FILTER_ACTION.SEND:
                 await message.reply(action.message);
+                Bot.mStats.logMessageSend();
                 return true;
             default:
                 console.warn('unknown action:' + action);
