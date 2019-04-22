@@ -4,11 +4,11 @@ import mongoose = require('mongoose');
 export interface guildObject {
     guild: string;
     logChannel: string;
-    logs: [mongoose.Schema.Types.ObjectId];
+    logs: mongoose.Schema.Types.ObjectId[];
     staff: mongoose.Schema.Types.ObjectId;
     webhooks: {
         // key is service name
-        [key: string]: [mongoose.Schema.Types.ObjectId];
+        [key: string]: mongoose.Schema.Types.ObjectId[];
     }
 }
 export interface guildDoc extends mongoose.Document, guildObject { }
@@ -262,14 +262,14 @@ mStatsHourSchemaStruc.hour = Number;
 export const mStatsHourSchema = new mongoose.Schema(mStatsHourSchemaStruc);
 
 // youtube webhook
-export interface youtubeWebhookObject {
+export interface webhookObject {
     feed: string;
     guild: string;
     channel: string;
     message: string;
 }
-export interface youtubeWebhookDoc extends mongoose.Document, youtubeWebhookObject { }
-export const youtubeWebhookSchema = new mongoose.Schema({
+export interface webhookDoc extends mongoose.Document, webhookObject { }
+export const webhookSchema = new mongoose.Schema({
     feed: String,
     guild: String,
     channel: String,

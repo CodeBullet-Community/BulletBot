@@ -340,7 +340,7 @@ export class MStats {
         if (!this.hourly.doc.webhooks) {
             this.hourly.doc.webhooks = {};
         }
-        if (!this.hourly.doc.webhooks[service].created) {
+        if (!this.hourly.doc.webhooks[service] || !this.hourly.doc.webhooks[service].created) {
             this.hourly.doc.webhooks[service] = { total: 0, created: 0, changed: 0, deleted: 0 };
         }
         this.hourly.doc.webhooks[service][action] += 1;
