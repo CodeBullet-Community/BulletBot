@@ -328,9 +328,9 @@ export class Database {
         var staffDoc = await this.findStaffDoc(guildID);
         if (!staffDoc) return;
         if (roleID && staffDoc[rank].roles.includes(roleID)) {
-            staffDoc[rank].roles.splice(staffDoc[rank].roles.indexOf(roleID));
+            staffDoc[rank].roles.splice(staffDoc[rank].roles.indexOf(roleID),1);
         } else if (userID && staffDoc[rank].users.includes(userID)) {
-            staffDoc[rank].users.splice(staffDoc[rank].users.indexOf(userID));
+            staffDoc[rank].users.splice(staffDoc[rank].users.indexOf(userID),1);
         } else {
             return false;
         }
