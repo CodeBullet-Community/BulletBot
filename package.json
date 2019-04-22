@@ -30,8 +30,5 @@
     "mongoose": "^5.5.2",
     "request": "^2.88.0",
     "xml2js": "^0.4.19"
-  },
-  "devDependencies": {
-    "typedoc": "^0.14.2"
   }
 }
