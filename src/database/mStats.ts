@@ -94,7 +94,11 @@ export class MStats {
         hourly.pingTestCounter++;
 
         hourly.doc.guildsTotal = Bot.client.guilds.size;
-        // TODO: webhook count
+        if (!hourly.doc.webhooks) hourly.doc.webhooks = {};
+        if (!hourly.doc.webhooks.youtube) {
+            hourly.doc.webhooks.youtube = { total: 0, created: 0, deleted: 0, changed: 0 };
+        }
+        hourly.doc.webhooks.youtube.total = await Bot.youtube.webhooks.countDocuments().exec();
 
         hourly.doc.markModified('commands');
         hourly.doc.markModified('filters');
