@@ -20,13 +20,12 @@
     "@types/mongodb": "^3.1.23",
     "@types/mongoose": "^5.3.26",
     "@types/node": "^11.13.5",
-    "@types/snekfetch": "^4.0.2",
+    "@types/request": "^2.48.1",
     "console-stamp": "^0.2.7",
     "discord.js": "^11.4.2",
     "exit-hook": "^2.2.0",
     "googleapis": "^39.2.0",
     "mongoose": "^5.5.2",
-    "request": "^2.88.0",
-    "snekfetch": "^4.0.4"
+    "request": "^2.88.0"
   }
 }

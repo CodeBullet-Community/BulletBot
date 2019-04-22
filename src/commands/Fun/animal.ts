@@ -4,25 +4,34 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
 import { MEMBER } from '../../utils/permissions';
-import { get } from 'snekfetch';
+import request = require("request");
 
 function selectRandom(array: any[]) {
     return array[Math.floor(Math.random() * Math.floor(array.length))];
 }
 
-async function sendRandomImage(message: Message, API: string, requestTimestamp: number) {
-    var res: any = await get(API);
-    var setname = message.author.username;
-    if (message.member.nickname != null) {
-        setname = message.member.nickname;
-    }
-    var embed = new RichEmbed();
-    embed.setAuthor('requested by: ' + setname + ' (' + message.author.tag + ')', message.author.avatarURL);
-    embed.setImage(res.body.link);
-    embed.setColor(Bot.database.settingsDB.cache.defaultEmbedColor);
-    Bot.mStats.logResponseTime(command.name, requestTimestamp);
-    message.channel.send(embed);
-    Bot.mStats.logMessageSend();
+function sendRandomImage(message: Message, API: string, requestTimestamp: number) {
+    new Promise<RichEmbed>((resolve, reject) => {
+        request.get(API, (error, response, body) => {
+            if (error) reject(error);
+            if (response.statusCode != 200) {
+                reject('Invalid status code <' + response.statusCode + '>');
+            }
+            var setname = message.author.username;
+            if (message.member.nickname != null) {
+                setname = message.member.nickname;
+            }
+            var embed = new RichEmbed();
+            embed.setAuthor('requested by: ' + setname + ' (' + message.author.tag + ')', message.author.avatarURL);
+            embed.setImage(JSON.parse(body).link);
+            embed.setColor(Bot.database.settingsDB.cache.defaultEmbedColor);
+            Bot.mStats.logResponseTime(command.name, requestTimestamp);
+            message.channel.send(embed);
+            Bot.mStats.logMessageSend();
+            resolve(embed);
+        })
+
+    });
 }
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
