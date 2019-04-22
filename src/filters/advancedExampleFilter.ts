@@ -1,4 +1,4 @@
-import Filters, { filter as filterInterface, filterOutput } from "../filters";
+import {Filters, filter as filterInterface, filterOutput } from "../filters";
 import { Bot } from "..";
 import { Message, Guild,User } from "discord.js";
 import {filter} from "../filters";
@@ -20,12 +20,12 @@ and use it with the Message api to make sure someone can't say a bunch of number
 really high count*/
 	name:"counting game",
 	path:null,
-	active:(bot:Bot,guild:Guild):Promise<boolean>=>{
+	active:(guild:Guild):Promise<boolean>=>{
 		return Promise.resolve(true);//same thing as the simple example and we're still not using the database because this is an example(also I don't know how to use it and I'm being stubborn right now)
 	},
 	shortHelp:"Allows for the beginning and playing of a simple counting game",
 	embedHelp:null,//TODO: add an embed help
-	run:(bot:Bot,message:Message):Promise<filterOutput>=>{
+	run:(message:Message):Promise<filterOutput>=>{
 		let output:filterOutput = {report:null,actions:new Array<filterAction>()};
 		if(message.author.bot){//do nothing when the user is a bot
 			output.report = "user sending the message is a bot ignoring";

@@ -40,7 +40,7 @@ var database = new Database(DBURI, 'admin');
 var logger = new Logger(DBURI, 'admin');
 var client = new discord.Client();
 var commands = new Commands(__dirname + '/commands/');
-var filters = new Filters();
+var filters = new Filters(__dirname + '/filters/');
 var youtube = new YTWebhookManager(DBURI, 'admin');
 var catcher = new Catcher();
 Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger);
