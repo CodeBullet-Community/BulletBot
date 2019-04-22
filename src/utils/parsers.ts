@@ -144,14 +144,14 @@ export function stringToEmbed(text: string) {
  */
 export function actionToString(action: filterAction) {
     switch (action.type) {
-        case FILTER_ACTION.nothing:
+        case FILTER_ACTION.NOTHING:
             return 'nothing';
-        case FILTER_ACTION.delete:
+        case FILTER_ACTION.DELETE:
             if (action.delay == 0) {
                 return 'deleted message';
             }
             return `deleted message after ${action.delay}ms`;
-        case FILTER_ACTION.send:
+        case FILTER_ACTION.SEND:
 
             return `replied with '${action.message}' to message`;
         default:

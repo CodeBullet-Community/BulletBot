@@ -4,7 +4,32 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
 import { ADMIN } from '../../utils/permissions';
-import { commandsObject, LOG_TYPE_ADD, LOG_TYPE_REMOVE } from '../../database/schemas';
+import { commandsObject, LOG_TYPE_ADD, LOG_TYPE_REMOVE, filtersObject } from '../../database/schemas';
+
+async function sendFilterList(guild: Guild, message: Message, strucObject: any, path: string, requestTimestamp: number) {
+    var output = new RichEmbed();
+    output.setAuthor('Filter List:', Bot.client.user.avatarURL);
+    if (path) output.setFooter('Path: ~' + path);
+    output.setColor(Bot.database.settingsDB.cache.helpEmbedColor);
+    var categories = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) === 'undefined');
+    if (categories.length != 0) {
+        var cat_text = categories[0];
+        for (i = 1; i < categories.length; i++) {
+            cat_text += '\n' + categories[i]
+        }
+        output.addField('Subcategories:', cat_text);
+    }
+
+    var filters = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) != 'undefined');
+    for (var i = 0; i < filters.length; i++) {
+        var f = Bot.filters.get(filters[i]);
+        output.addField((await Bot.database.getPrefix(guild)) + f.name, f.shortHelp);
+    }
+    Bot.mStats.logResponseTime(command.name, requestTimestamp);
+    message.channel.send(output);
+    Bot.mStats.logMessageSend();
+    Bot.mStats.logCommandUsage(command.name, 'list');
+}
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
@@ -21,114 +46,134 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         switch (argsArray[argIndex]) {
             case 'list':
                 argIndex++;
-
-                if (argsArray[argIndex] == 'disabled') {
-                    var commandsDoc = await Bot.database.findCommandsDoc(message.guild.id);
-                    if (!commandsDoc) {
+                if (argsArray[argIndex] == 'enabled') {
+                    var filtersDoc = await Bot.database.findFiltersDoc(message.guild.id);
+                    if (!filtersDoc) {
                         Bot.mStats.logResponseTime(command.name, requestTimestamp);
-                        message.channel.send('There aren\'t any disabled commands.');
+                        message.channel.send('There aren\'t any enabled filters.');
                         Bot.mStats.logMessageSend();
                     } else {
-
                         var output = new RichEmbed();
-                        output.setAuthor('Disabled Commands:', Bot.client.user.avatarURL);
+                        output.setAuthor('Enabled Filters:', Bot.client.user.avatarURL);
                         output.setColor(Bot.database.settingsDB.cache.helpEmbedColor);
 
-                        var commandsObject: commandsObject = commandsDoc.toObject();
-                        for (const cmdName in commandsObject.commands) {
-                            if (commandsObject.commands[cmdName]._enabled) continue;
-                            var cmd = Bot.commands.get(cmdName);
-                            output.addField((await Bot.database.getPrefix(message.guild)) + cmd.name, cmd.shortHelp);
+                        var filtersObject: filtersObject = filtersDoc.toObject();
+                        for (const filterName in filtersObject.filters) {
+                            if (!filtersObject.filters[filterName]._enabled) continue;
+                            var cmd = Bot.filters.get(filterName);
+                            output.addField(cmd.name, cmd.shortHelp);
                         }
 
                         Bot.mStats.logResponseTime(command.name, requestTimestamp);
                         if (output.fields.length == 0) {
-                            message.channel.send('There aren\'t any disabled commands.');
+                            message.channel.send('There aren\'t any enabled filters.');
                         } else {
                             message.channel.send(output);
                         }
+                        Bot.mStats.logCommandUsage(command.name, 'listEnabled');
+                        Bot.mStats.logMessageSend();
+                        return
                     }
-                    Bot.mStats.logCommandUsage(command.name, 'listDisabled');
-                    Bot.mStats.logMessageSend();
-                    return;
                 }
 
-                Bot.commands.get('help').run(message, argsArray[argIndex] ? argsArray[argIndex] : '', permLevel, dm, requestTimestamp);
+                var strucObject = Bot.filters.structure;
+                if (argsArray[argIndex]) {
+                    var keys = args.split('/');
+                    for (var i = 0; i < keys.length; i++) {
+                        if (typeof (strucObject[keys[i]]) === 'undefined') {
+                            message.channel.send('Couldn\'t find ' + args + ' category');
+                            Bot.mStats.logMessageSend();
+                            return;
+                        } else {
+                            strucObject = strucObject[keys[i]];
+                        }
+                    }
+                }
+                sendFilterList(message.guild, message, strucObject, args.slice(4), requestTimestamp);
                 break;
             case 'enable':
                 argIndex++;
                 if (!argsArray[argIndex]) {
-                    message.channel.send('Please input a command');
+                    message.channel.send('Please input a filter');
                     Bot.mStats.logMessageSend();
                     return;
                 }
-                var cmd = Bot.commands.get(argsArray[argIndex].toLowerCase());
-                if (!cmd) {
-                    message.channel.send(`\`${argsArray[argIndex].toLowerCase()}\` isn't a command.`);
-                    Bot.mStats.logMessageSend();
-                    return;
-                }
-                if (!cmd.togglable) {
-                    message.channel.send(`The \`${cmd.name}\` command isn't togglable.`);
-                    Bot.mStats.logMessageSend();
-                    return;
-                }
-                var commandsDoc = await Bot.database.findCommandsDoc(message.guild.id);
-                var commandSettings = await Bot.database.getCommandSettings(message.guild.id, cmd.name, commandsDoc);
-                if (!commandSettings || commandSettings._enabled) {
-                    Bot.mStats.logResponseTime(command.name, requestTimestamp);
-                    message.channel.send(`The \`${cmd.name}\` command is already enabled.`);
+                var filter = Bot.filters.get(argsArray[argIndex].toLowerCase());
+                if (!filter) {
+                    message.channel.send(`\`${argsArray[argIndex].toLowerCase()}\` isn't a filter.`);
                     Bot.mStats.logMessageSend();
                     return;
                 }
 
-                commandSettings._enabled = true;
-                Bot.database.setCommandSettings(message.guild.id, cmd.name, commandSettings, commandsDoc);
+                var filtersDoc = await Bot.database.findFiltersDoc(message.guild.id);
+                var filterSettings = await Bot.database.getFilterSettings(message.guild.id, filter.name, filtersDoc);
+                if (filterSettings) {
+                    if (filterSettings._enabled) {
+                        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                        message.channel.send(`The \`${filter.name}\` filter is already enabled.`);
+                        Bot.mStats.logMessageSend();
+                        return;
+                    }
+                } else {
+                    filterSettings = {};
+                }
+
+                filterSettings._enabled = true;
+                Bot.database.setFilterSettings(message.guild.id, filter.name, filterSettings, filtersDoc);
                 Bot.mStats.logResponseTime(command.name, requestTimestamp);
-                message.channel.send(`Succesfully enabled the \`${cmd.name}\` command.`);
+                message.channel.send(`Succesfully enabled the \`${filter.name}\` filter.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'enable');
-                Bot.logger.logCommand(message.guild, message.member, cmd, LOG_TYPE_ADD);
+                // TODO: logger log
                 break;
             case 'disable':
                 argIndex++;
                 if (!argsArray[argIndex]) {
-                    message.channel.send('Please input a command');
+                    message.channel.send('Please input a filter');
                     Bot.mStats.logMessageSend();
                     return;
                 }
-                var cmd = Bot.commands.get(argsArray[argIndex].toLowerCase());
-                if (!cmd) {
-                    message.channel.send(`\`${argsArray[argIndex].toLowerCase()}\` isn't a command.`);
-                    Bot.mStats.logMessageSend();
-                    return;
-                }
-                if (!cmd.togglable) {
-                    message.channel.send(`The \`${cmd.name}\` command isn't togglable.`);
+                var filter = Bot.filters.get(argsArray[argIndex].toLowerCase());
+                if (!filter) {
+                    message.channel.send(`\`${argsArray[argIndex].toLowerCase()}\` isn't a filter.`);
                     Bot.mStats.logMessageSend();
                     return;
                 }
 
-                var commandsDoc = await Bot.database.findCommandsDoc(message.guild.id);
-                var commandSettings = await Bot.database.getCommandSettings(message.guild.id, cmd.name, commandsDoc);
-                if (!commandSettings) {
-                    commandSettings = {};
-                }
-                if (commandSettings._enabled === false) {
-                    Bot.mStats.logResponseTime(command.name, requestTimestamp);
-                    message.channel.send(`The \`${cmd.name}\` command is already disabled.`);
+                var filtersDoc = await Bot.database.findFiltersDoc(message.guild.id);
+                var filterSettings = await Bot.database.getFilterSettings(message.guild.id, filter.name, filtersDoc);
+                if (!filterSettings || !filterSettings._enabled) {
+                    Bot.mStats.logResponseTime(filter.name, requestTimestamp);
+                    message.channel.send(`The \`${filter.name}\` filter is already disabled.`);
                     Bot.mStats.logMessageSend();
                     return;
                 }
 
-                commandSettings._enabled = false;
-                Bot.database.setCommandSettings(message.guild.id, cmd.name, commandSettings, commandsDoc);
+                filterSettings._enabled = false;
+                Bot.database.setFilterSettings(message.guild.id, filter.name, filterSettings, filtersDoc);
                 Bot.mStats.logResponseTime(command.name, requestTimestamp);
-                message.channel.send(`Succesfully disabled the \`${cmd.name}\` command.`);
+                message.channel.send(`Succesfully disabled the \`${filter.name}\` filter.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'disable');
-                Bot.logger.logCommand(message.guild, message.member, cmd, LOG_TYPE_REMOVE);
+                // TODO: logger log
                 break;
+            default:
+                if (!argsArray[argIndex]) {
+                    message.channel.send('Filter name isn\'t given');
+                    Bot.mStats.logMessageSend();
+                    return;
+                }
+                var filter = Bot.filters.get(argsArray[argIndex]);
+                if (!filter) {
+                    message.channel.send(argsArray[argIndex] + ' isn\'t a filter');
+                    Bot.mStats.logMessageSend();
+                    return;
+                }
+
+                Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                message.channel.send(await filter.embedHelp(message.guild));
+                Bot.mStats.logCommandUsage(command.name, 'help');
+                Bot.mStats.logMessageSend();
         }
 
     } catch (e) {
@@ -154,7 +199,7 @@ command.embedHelp = async function (guild: Guild) {
             'fields': [
                 {
                     'name': 'Description:',
-                    'value': 'Let\'s you toggle commands'
+                    'value': 'Let\'s you toggle filters'
                 },
                 {
                     'name': 'Need to be:',
@@ -173,11 +218,11 @@ command.embedHelp = async function (guild: Guild) {
                 },
                 {
                     'name': 'Usage:',
-                    'value': '{command} list\n{command} list [command name/category]\nuse `category/subcategory` to get list from subcategory\n{command} list disabled\n{command} disable [command]\n{command} enable [command]'.replace(/\{command\}/g, prefix + command.name)
+                    'value': '{command} list\n{command} list [command name/category]\nuse `category/subcategory` to get list from subcategory\n{command} list enabled\n{command} disable [command]\n{command} enable [command]'.replace(/\{command\}/g, prefix + command.name)
                 },
                 {
                     'name': 'Example:',
-                    'value': '{command} list\n{command} list Fun\n{command} list disabled\n{command} disable animal\n{command} enable animal'.replace(/\{command\}/g, prefix + command.name)
+                    'value': '{command} list\n{command} list Fun\n{command} list enabled\n{command} disable animal\n{command} enable animal'.replace(/\{command\}/g, prefix + command.name)
                 }
             ]
         }

@@ -1,8 +1,7 @@
 import { Message } from 'discord.js';
 import { Bot } from '..';
 
-export enum FILTER_ACTION {nothing,delete,send};
-
+export enum FILTER_ACTION { NOTHING, DELETE, SEND };
 
 export interface filterAction {
     type: FILTER_ACTION;
@@ -21,13 +20,14 @@ export interface filterAction {
 export async function executeAction(message: Message, action: filterAction) {
     try {
         switch (action.type) {
-            case FILTER_ACTION.nothing:
+            case FILTER_ACTION.NOTHING:
                 return true;
-            case FILTER_ACTION.delete:
+            case FILTER_ACTION.DELETE:
                 await message.delete(action.delay);
                 return true;
-            case FILTER_ACTION.send:
+            case FILTER_ACTION.SEND:
                 await message.reply(action.message);
+                Bot.mStats.logMessageSend();
                 return true;
             default:
                 console.warn('unknown action:' + action);

@@ -79,9 +79,9 @@ client.on('message', async message => {
     }
     var prefix = await Bot.database.getPrefix(message.guild);
     if (!message.content.startsWith(prefix)) {
-        if (!message.content.toLowerCase().startsWith(Bot.database.settingsDB.cache.prefix + 'prefix')) {
+        if (permLevel == MEMBER && !message.content.toLowerCase().startsWith(Bot.database.settingsDB.cache.prefix + 'prefix')) {
             if (!dm) {
-                // TODO: filter message
+                Bot.filters.filterMessage(message);
             }
             return;
         }
