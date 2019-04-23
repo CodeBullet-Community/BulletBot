@@ -109,7 +109,10 @@ export function stringToMember(guild: Guild, text: string) {
         // closest matching username
         member = guild.members.reduce(function (prev, curr) {
             return (stringSimilarity(curr.user.username, text) > stringSimilarity(prev.user.username, text) ? curr : prev);
-        });;
+        });
+        if (stringSimilarity(member.user.username, text) < 0.4) {
+            member = undefined;
+        }
     }
     return member;
 }
@@ -153,7 +156,10 @@ export function stringToRole(guild: Guild, text: string) {
         // closest matching name
         role = guild.roles.reduce(function (prev, curr) {
             return (stringSimilarity(curr.name, text) > stringSimilarity(prev.name, text) ? curr : prev);
-        });;
+        });
+        if (stringSimilarity(role.name, text) < 0.4) {
+            role = undefined;
+        }
     }
     return role;
 }
@@ -187,7 +193,10 @@ export function stringToChannel(guild: Guild, text: string) {
         // closest matching name
         channel = guild.channels.reduce(function (prev, curr) {
             return (stringSimilarity(curr.name, text) > stringSimilarity(prev.name, text) ? curr : prev);
-        });;
+        });
+        if (stringSimilarity(channel.name, text) < 0.4) {
+            channel = undefined;
+        }
     }
     return channel;
 }
