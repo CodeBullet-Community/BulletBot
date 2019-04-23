@@ -279,7 +279,7 @@ export class MStats {
     }
 
     logError(command?: string) {
-        this.hourly.doc.errors += 1;
+        this.hourly.doc.errorsTotal += 1;
         if (command) {
             if (!this.hourly.doc.commands) {
                 this.hourly.doc.commands = {};
