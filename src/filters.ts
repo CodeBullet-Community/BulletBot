@@ -75,7 +75,7 @@ export class Filters {
                 var output = await filter.run(message);
                 if (output) {
                     Bot.mStats.logFilterCatch(filter.name);
-                    // TODO logger log
+                    Bot.logger.logFilterCatch(message, filter, output.reason, output.actions);
                     executeActions(message, output.actions);
                     return;
                 }

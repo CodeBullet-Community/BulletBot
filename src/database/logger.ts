@@ -1,9 +1,11 @@
 import mongoose = require('mongoose');
 import { logDoc, logSchema, guildDoc, guildSchema, logObject, LOG_ACTION_STAFF, LOG_ACTION_COMMAND, LOG_ACTION_PREFIX, LOG_ACTION_FILTER } from './schemas';
-import { Guild, Role, User, GuildMember, } from 'discord.js';
+import { Guild, Role, User, GuildMember, Message, } from 'discord.js';
 import { commandInterface } from '../commands';
 import { Bot } from '..';
 import { filterInterface } from '../filters';
+import { filterAction, FILTER_ACTION } from '../utils/filters';
+import { actionToString } from '../utils/parsers';
 
 export class Logger {
 
@@ -69,6 +71,70 @@ export class Logger {
         logMessage += ` was ${type ? 'removed' : 'added'} to the ${rank} rank`;
         Bot.mStats.logMessageSend();
         logChannel.send(logMessage);
+    }
+
+    /**
+     * send a log message for the catch, but doesn't save it in the database
+     *
+     * @param {Message} message
+     * @param {filterInterface} filter
+     * @param {string} reason
+     * @param {filterAction[]} actions
+     * @returns
+     * @memberof Logger
+     */
+    async logFilterCatch(message: Message, filter: filterInterface, reason: string, actions: filterAction[]) {
+        var date = new Date();
+        var guildDoc = await this.guilds.findOne({ guild: message.guild.id }).exec();
+        if (!guildDoc) return;
+
+        var logChannel: any = message.guild.channels.get(guildDoc.toObject().logChannel);
+        if (!logChannel) return;
+        Bot.mStats.logMessageSend();
+
+        var actionsString = actionToString(actions[0]);
+        var deleted = false;
+        if (actions[0].type == FILTER_ACTION.DELETE) deleted = true;
+        for (var i = 1; i < actions.length; i++) {
+            if (actions[i].type == FILTER_ACTION.DELETE) deleted = true;
+            actionsString += "\n" + actionToString(actions[i]);
+        }
+        var content = message.content;
+        if (!deleted) {
+            content = `[Jump to Message](${message.url})\n` + content;
+        }
+
+        logChannel.send({
+            "embed": {
+                "description": filter.shortHelp,
+                "color": Bot.database.settingsDB.cache.defaultEmbedColor,
+                "timestamp": message.createdAt.toISOString(),
+                "author": {
+                    "name": "Filter: " + filter.name,
+                    "icon_url": Bot.client.user.avatarURL
+                },
+                "fields": [
+                    {
+                        "name": "From:",
+                        "value": message.author.toString() + " (" + message.author.id + ")",
+                        "inline": true
+                    },
+                    {
+                        "name": "Reason:",
+                        "value": reason,
+                        "inline": true
+                    },
+                    {
+                        "name": "Message:",
+                        "value": content
+                    },
+                    {
+                        "name": "Actions",
+                        "value": actionsString
+                    }
+                ]
+            }
+        });
     }
 
     /**
