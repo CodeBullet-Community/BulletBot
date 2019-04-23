@@ -1,6 +1,6 @@
 import { Message, RichEmbed, Guild } from 'discord.js';
 import { commandInterface } from '../commands';
-import { MEMBER, BOTMASTER } from '../utils/permissions';
+import { permLevels} from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
 import { permToString } from '../utils/parsers';
@@ -54,7 +54,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 command.name = 'status';
 command.path = '';
 command.dm = true;
-command.permLevel = BOTMASTER;
+command.permLevel = permLevels.botMaster;
 command.togglable = false;
 command.shortHelp = 'gives bot status';
 command.embedHelp = async function (guild: Guild) {

@@ -3,7 +3,7 @@ import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToChannel } from '../../utils/parsers';
-import { ADMIN } from '../../utils/permissions';
+import { permLevels } from '../../utils/permissions';
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
@@ -64,7 +64,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 command.name = 'log';
 command.path = '';
 command.dm = false;
-command.permLevel = ADMIN;
+command.permLevel = permLevels.admin;
 command.togglable = false;
 command.shortHelp = 'let\'s you set the log channel';
 command.embedHelp = async function (guild: Guild) {

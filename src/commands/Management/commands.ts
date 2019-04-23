@@ -3,7 +3,7 @@ import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
-import { ADMIN } from '../../utils/permissions';
+import { permLevels } from '../../utils/permissions';
 import { commandsObject, LOG_TYPE_ADD, LOG_TYPE_REMOVE } from '../../database/schemas';
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
@@ -140,7 +140,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 command.name = 'commands';
 command.path = '';
 command.dm = false;
-command.permLevel = ADMIN;
+command.permLevel = permLevels.admin;
 command.togglable = false;
 command.shortHelp = 'Let\'s you toggle commands';
 command.embedHelp = async function (guild: Guild) {

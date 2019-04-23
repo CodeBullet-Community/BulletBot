@@ -1,6 +1,6 @@
 import { Message, RichEmbed, Guild } from 'discord.js';
 import { commandInterface } from '../commands';
-import { MEMBER, BOTMASTER } from '../utils/permissions';
+import { permLevels} from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
 import { permToString } from '../utils/parsers';
@@ -22,7 +22,7 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
     var commands = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) != 'undefined');
     for (var i = 0; i < commands.length; i++) {
         var f = Bot.commands.get(commands[i]);
-        if (f.permLevel == BOTMASTER) continue;
+        if (f.permLevel == permLevels.botMaster) continue;
         output.addField((await Bot.database.getPrefix(guild)) + f.name, f.shortHelp);
     }
     Bot.mStats.logResponseTime(command.name, requestTimestamp);
@@ -74,7 +74,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 command.name = 'help';
 command.path = '';
 command.dm = true;
-command.permLevel = MEMBER;
+command.permLevel = permLevels.member;
 command.togglable = false;
 command.shortHelp = 'gives a command list and help';
 command.embedHelp = async function (guild: Guild) {

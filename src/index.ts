@@ -9,7 +9,7 @@ import { Logger } from './database/logger';
 import { Database } from './database/database';
 import { MStats } from './database/mStats';
 import { botToken, DBURI, callbackPort } from './bot-config.json';
-import { MEMBER, getPermissionLevel, ADMIN, MOD, IMMUNE } from './utils/permissions';
+import { permLevels, getPermLevel } from './utils/permissions';
 import { LOG_TYPE_REMOVE } from './database/schemas';
 
 /**
@@ -87,20 +87,20 @@ client.on('message', async message => {
     if (message.content == '<@' + Bot.client.user.id + '>') {
         message.author.createDM().then(dmChannel => {
             message.channel = dmChannel;
-            Bot.commands.runCommand(message, '', 'help', MEMBER, true, requestTimestamp);
-            Bot.commands.runCommand(message, 'help', 'help', MEMBER, true, requestTimestamp);
+            Bot.commands.runCommand(message, '', 'help', permLevel.member, true, requestTimestamp);
+            Bot.commands.runCommand(message, 'help', 'help', permLevel.member, true, requestTimestamp);
         });
         return;
     }
 
-    var permLevel = MEMBER;
+    var permLevel = permLevel.member;
     if (!dm) {// gets perm level of member if message isn't from dms
-        permLevel = await getPermissionLevel(message.member);
+        permLevel = await getPermLevel(message.member);
     }
 
     var prefix = await Bot.database.getPrefix(message.guild);
     if (!message.content.startsWith(prefix)) {
-        if (!dm && permLevel == MEMBER && !message.content.toLowerCase().startsWith(Bot.database.settingsDB.cache.prefix + 'prefix')) { // also checks if it contains ?!prefix
+        if (!dm && permLevel == permLevel.member && !message.content.toLowerCase().startsWith(Bot.database.settingsDB.cache.prefix + 'prefix')) { // also checks if it contains ?!prefix
             Bot.filters.filterMessage(message); // filters message if from guild and if a member send it
             return;
         }
@@ -142,16 +142,16 @@ client.on('guildDelete', guild => {
 });
 
 client.on('guildMemberRemove', async member => { 
-    var permLevel = await getPermissionLevel(member); // removes guild member from ranks if he/She was assigned any
-    if (permLevel == ADMIN) {
+    var permLevel = await getPermLevel(member); // removes guild member from ranks if he/She was assigned any
+    if (permLevel == permLevels.admin) {
         Bot.database.removeFromRank(member.guild.id, 'admins', undefined, member.id);
         Bot.logger.logStaff(member.guild, member.guild.me, LOG_TYPE_REMOVE, 'admins', undefined, member.user);
     }
-    if (permLevel == MOD) {
+    if (permLevel == permLevels.mod) {
         Bot.database.removeFromRank(member.guild.id, 'mods', undefined, member.id);
         Bot.logger.logStaff(member.guild, member.guild.me, LOG_TYPE_REMOVE, 'mods', undefined, member.user);
     }
-    if (permLevel == IMMUNE) {
+    if (permLevel == permLevels.immune) {
         Bot.database.removeFromRank(member.guild.id, 'immune', undefined, member.id);
         Bot.logger.logStaff(member.guild, member.guild.me, LOG_TYPE_REMOVE, 'immune', undefined, member.user);
     }

@@ -1,6 +1,6 @@
 import { Guild } from 'discord.js';
 import { filterAction, FILTER_ACTION } from './filters';
-import { MEMBER, IMMUNE, MOD, ADMIN, BOTMASTER } from './permissions';
+import { permLevels } from './permissions';
 import { Bot } from '..';
 
 /*
@@ -259,15 +259,15 @@ export function actionToString(action: filterAction) {
  */
 export function permToString(permissionLevel: number) {
     switch (permissionLevel) {
-        case MEMBER:
+        case permLevels.member:
             return 'member';
-        case IMMUNE:
+        case permLevels.immune:
             return 'immune member';
-        case MOD:
+        case permLevels.mod:
             return 'mod';
-        case ADMIN:
+        case permLevels.admin:
             return 'admin';
-        case BOTMASTER:
+        case permLevels.botMaster:
             return 'my master';
         default:
             Bot.mStats.logError();

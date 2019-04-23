@@ -3,7 +3,7 @@ import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToChannel, stringToRole, stringToMember } from '../../utils/parsers';
-import { MOD, ADMIN } from '../../utils/permissions';
+import { permLevels } from '../../utils/permissions';
 import { LOG_TYPE_ADD, LOG_TYPE_REMOVE, staffObject } from '../../database/schemas';
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
@@ -125,7 +125,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 command.name = 'mod';
 command.path = '';
 command.dm = false;
-command.permLevel = ADMIN;
+command.permLevel = permLevels.admin;
 command.togglable = false;
 command.shortHelp = 'for managing the mod rank';
 command.embedHelp = async function (guild: Guild) {

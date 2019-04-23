@@ -3,7 +3,7 @@ import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToChannel } from '../../utils/parsers';
-import { ADMIN } from '../../utils/permissions';
+import { permLevels } from '../../utils/permissions';
 import { webhookObject, LOG_TYPE_ADD, LOG_TYPE_REMOVE, LOG_TYPE_CHANGE } from '../../database/schemas';
 import { googleAPIKey, youtube } from '../../bot-config.json';
 import { google } from 'googleapis';
@@ -253,7 +253,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 command.name = 'youtube';
 command.path = '';
 command.dm = true;
-command.permLevel = ADMIN;
+command.permLevel = permLevels.admin;
 command.togglable = false;
 command.shortHelp = 'create/delete/change YouTube webhooks';
 command.embedHelp = async function (guild: Guild) {

@@ -3,7 +3,7 @@ import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
-import { MEMBER } from '../../utils/permissions';
+import { permLevels } from '../../utils/permissions';
 import request = require("request");
 
 function selectRandom(array: any[]) {
@@ -68,7 +68,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 command.name = 'animal';
 command.path = '';
 command.dm = true;
-command.permLevel = MEMBER;
+command.permLevel = permLevels.member;
 command.togglable = true;
 command.shortHelp = 'returns cute animal images';
 command.embedHelp = async function (guild: Guild) {

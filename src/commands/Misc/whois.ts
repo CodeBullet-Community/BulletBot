@@ -1,6 +1,6 @@
 import { Message, RichEmbed, Guild, GuildMember } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { MEMBER, getPermissionLevel } from '../../utils/permissions';
+import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToMember } from '../../utils/parsers';
@@ -143,7 +143,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             Bot.mStats.logMessageSend();
             return;
         }
-        sendMemberInfo(message, member, await getPermissionLevel(member), requestTimestamp);
+        sendMemberInfo(message, member, await getPermLevel(member), requestTimestamp);
     } catch (e) {
         sendError(message.channel, e);
         Bot.mStats.logError();
@@ -153,7 +153,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 command.name = 'whois';
 command.path = '';
 command.dm = false;
-command.permLevel = MEMBER;
+command.permLevel = permLevels.member;
 command.togglable = false;
 command.shortHelp = 'gives a description of a user';
 command.embedHelp = async function (guild: Guild) {

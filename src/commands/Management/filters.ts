@@ -3,7 +3,7 @@ import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
-import { ADMIN } from '../../utils/permissions';
+import { permLevels } from '../../utils/permissions';
 import { commandsObject, LOG_TYPE_ADD, LOG_TYPE_REMOVE, filtersObject } from '../../database/schemas';
 
 async function sendFilterList(guild: Guild, message: Message, strucObject: any, path: string, requestTimestamp: number) {
@@ -185,7 +185,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 command.name = 'filters';
 command.path = '';
 command.dm = false;
-command.permLevel = ADMIN;
+command.permLevel = permLevels.admin;
 command.togglable = false;
 command.shortHelp = 'Let\'s you toggle filters';
 command.embedHelp = async function (guild: Guild) {

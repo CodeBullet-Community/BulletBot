@@ -1,6 +1,6 @@
 import { Message, RichEmbed, Guild } from 'discord.js';
 import { commandInterface } from '../commands';
-import { MEMBER } from '../utils/permissions';
+import { permLevels } from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
 import { permToString } from '../utils/parsers';
@@ -23,7 +23,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 command.name = 'ping';
 command.path = '';
 command.dm = true;
-command.permLevel = MEMBER;
+command.permLevel = permLevels.member;
 command.togglable = false;
 command.shortHelp = 'check bots responsiveness';
 command.embedHelp = async function (guild: Guild) {

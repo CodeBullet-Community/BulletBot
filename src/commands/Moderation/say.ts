@@ -1,5 +1,5 @@
 import { Message, RichEmbed, Guild } from 'discord.js';
-import { MOD } from '../../utils/permissions';
+import { permLevels } from '../../utils/permissions';
 import { stringToChannel, stringToEmbed, permToString } from '../../utils/parsers';
 import { sendMentionMessage, sendError } from '../../utils/messages';
 import { commandInterface } from '../../commands';
@@ -83,7 +83,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 command.name = 'say';
 command.path = '';
 command.dm = true;
-command.permLevel = MOD;
+command.permLevel = permLevels.mod;
 command.togglable = false;
 command.shortHelp = 'let\'s the bot speak for you';
 command.embedHelp = async function (guild: Guild) {

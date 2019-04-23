@@ -2,67 +2,78 @@ import { GuildMember, GuildChannel } from 'discord.js';
 import { Bot } from '..';
 import { staffObject } from '../database/schemas';
 
-export const MEMBER = 0;
-export const IMMUNE = 1;
-export const MOD = 2;
-export const ADMIN = 3;
-export const BOTMASTER = 4;
-
-/**  */
 /**
- *  returns permission level of member
- *  - MEMBER: 0
- *  - IMMUNE: 1
- *  - MOD: 2
- *  - ADMIN: 3 
- *  - BOTMASTER: 4
+ * constants for every existing perm level
  *
  * @export
- * @param {GuildMember} member
- * @returns
+ * @enum {number}
  */
-export async function getPermissionLevel(member: GuildMember) {
+export enum permLevels {
+    member = 0,
+    immune = 1,
+    mod = 2,
+    admin = 3,
+    botMaster = 4,
+}
+
+/**
+ *  returns perm level of member
+ *  - member: 0
+ *  - immune: 1
+ *  - mod: 2
+ *  - admin: 3 
+ *  - botMaster: 4
+ *
+ * @export
+ * @param {GuildMember} member member to get perm level from
+ * @returns perm level
+ */
+export async function getPermLevel(member: GuildMember){
     if (member == null) {
-        return MEMBER;
+        return permLevels.member;
     }
-    if (Bot.database.getBotMasters().includes(member.user.id)) {
-        return BOTMASTER;
+    if (Bot.database.getBotMasters().includes(member.user.id)) { // bot masters
+        return permLevels.botMaster;
     }
-    if (member.hasPermission('ADMINISTRATOR')) {
-        return ADMIN;
+    if (member.hasPermission('ADMINISTRATOR')) { // if a user has admin rights he's automatically a admin
+        return permLevels.admin;
     }
 
+    // get staff doc
     var staffDoc = await Bot.database.findStaffDoc(member.guild.id);
     if (!staffDoc) {
-        return MEMBER;
+        return permLevels.member;
     }
     var staffObject: staffObject = staffDoc.toObject();
 
+    // admins
     if (staffObject.admins.users.includes(member.user.id)) {
-        return ADMIN;
+        return permLevels.admin;
     }
     for (var i = 0; i < staffObject.admins.roles.length; i++) {
         if (member.roles.find(role => role.id == staffObject.admins.roles[i])) {
-            return ADMIN;
+            return permLevels.admin;
         }
     }
-
+ 
+    // mods
     if (staffObject.mods.users.includes(member.user.id)) {
-        return MOD;
+        return permLevels.mod;
     }
     for (var i = 0; i < staffObject.mods.roles.length; i++) {
         if (member.roles.find(role => role.id == staffObject.mods.roles[i])) {
-            return MOD;
+            return permLevels.mod;
         }
     }
 
+    // immune 
     if (staffObject.immune.users.includes(member.user.id)) {
-        return IMMUNE;
+        return permLevels.immune;
     }
     for (var i = 0; i < staffObject.immune.roles.length; i++) {
         if (member.roles.find(role => role.id == staffObject.immune.roles[i])) {
-            return IMMUNE;
+            return permLevels.immune;
         }
     }
-    return MEMBER;
+    return permLevels.member;
 }
