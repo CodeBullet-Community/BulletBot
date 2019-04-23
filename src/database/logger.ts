@@ -1,11 +1,12 @@
 import mongoose = require('mongoose');
-import { logDoc, logSchema, guildDoc, guildSchema, logObject, LOG_ACTION_STAFF, LOG_ACTION_COMMAND, LOG_ACTION_PREFIX, LOG_ACTION_FILTER } from './schemas';
+import { logDoc, logSchema, guildDoc, guildSchema, logObject, LOG_ACTION_STAFF, LOG_ACTION_COMMAND, LOG_ACTION_PREFIX, LOG_ACTION_FILTER, webhookDoc, LOG_ACTION_WEBHOOK, LOG_TYPE_ADD, LOG_TYPE_REMOVE, LOG_TYPE_CHANGE } from './schemas';
 import { Guild, Role, User, GuildMember, Message, } from 'discord.js';
 import { commandInterface } from '../commands';
 import { Bot } from '..';
 import { filterInterface } from '../filters';
 import { filterAction, FILTER_ACTION } from '../utils/filters';
 import { actionToString } from '../utils/parsers';
+import { youtube } from '../bot-config.json';
 
 export class Logger {
 
@@ -71,6 +72,97 @@ export class Logger {
         logMessage += ` was ${type ? 'removed' : 'added'} to the ${rank} rank`;
         Bot.mStats.logMessageSend();
         logChannel.send(logMessage);
+    }
+
+    /**
+     * logs webhook create/remove/change in database and log channel
+     *
+     * @param {Guild} guild
+     * @param {GuildMember} mod
+     * @param {string} service
+     * @param {webhookDoc} webhookDoc
+     * @param {(0 | 1 | 2)} type
+     * @param {boolean} [changedChannel]
+     * @param {boolean} [changedMessage]
+     * @returns
+     * @memberof Logger
+     */
+    async logWebhook(guild: Guild, mod: GuildMember, service: string, webhookDoc: webhookDoc, type: 0 | 1 | 2, changedChannel?: boolean, changedMessage?: boolean) {
+        var date = new Date();
+        var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
+        if (!guildDoc) return;
+
+        var logObject: logObject = {
+            guild: guild.id,
+            mod: mod.id,
+            action: LOG_ACTION_WEBHOOK,
+            timestamp: date.getTime(),
+            info: {
+                type: type,
+                service: service,
+                webhookID: webhookDoc.id,
+                changedChannel: changedChannel,
+                changedMessage: changedMessage
+            }
+        }
+        var logDoc = new this.logs(logObject);
+        await logDoc.save();
+        guildDoc.logs.push(logDoc.id);
+        guildDoc.save();
+        Bot.mStats.logLog();
+
+        var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
+        if (!logChannel) return;
+        Bot.mStats.logMessageSend();
+        var color = 0;
+        var logo = '';
+        var name = '';
+        switch (service) {
+            case 'youtube':
+                color = youtube.color;
+                logo = youtube.logo;
+                name = youtube.name;
+                break;
+        }
+        var action = '';
+        switch (type) {
+            case LOG_TYPE_ADD:
+                action = 'Created';
+                break;
+            case LOG_TYPE_REMOVE:
+                action = 'Deleted';
+                break;
+            case LOG_TYPE_CHANGE:
+                action = 'Changed';
+                break;
+        }
+        logChannel.send({
+            "embed": {
+                "description": `${mod.toString()} ${action.toLowerCase()} a webhook`,
+                "color": color,
+                "timestamp": date.toISOString(),
+                "author": {
+                    "name": `${name} Webhook ${action}`,
+                    "icon_url": logo
+                },
+                "fields": [
+                    {
+                        "name": "Feed",
+                        "value": 'https://youtube.com/channel/' + webhookDoc.toObject().feed
+                    },
+                    {
+                        "name": (changedChannel ? 'New ' : '') + "Channel",
+                        "value": guild.channels.get(webhookDoc.toObject().channel).toString(),
+                        "inline": true
+                    },
+                    {
+                        "name": (changedMessage ? 'New ' : '') + "Message:",
+                        "value": webhookDoc.toObject().message,
+                        "inline": true
+                    }
+                ]
+            }
+        });
     }
 
     /**

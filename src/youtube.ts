@@ -145,7 +145,6 @@ export class YTWebhookManager {
         guildDoc.webhooks.youtube.push(webhhookDoc.id);
         await guildDoc.save()
         Bot.mStats.logWebhookAction('youtube', 'created');
-        // TODO: logger log
         return webhhookDoc;
     }
 
@@ -167,7 +166,6 @@ export class YTWebhookManager {
             }
         }
         Bot.mStats.logWebhookAction('youtube', 'deleted')
-        // TODO: logger log
         return await webhhookDoc.remove();
     }
 
@@ -180,7 +178,6 @@ export class YTWebhookManager {
                 newYTChannelID, (newMessage ? newMessage : webhhookDoc.toObject().message));
             if (!newWebhookDoc) return undefined;
             await this.deleteWebhook(guildID, channelID, YTChannelID)
-            // TODO logger log
             return newWebhookDoc;
         }
         if (newChannelID) {
@@ -190,7 +187,6 @@ export class YTWebhookManager {
             webhhookDoc.message = newMessage;
         }
         webhhookDoc.save();
-        // TODO: logger log
         return webhhookDoc;
     }
 }

@@ -4,7 +4,7 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToChannel } from '../../utils/parsers';
 import { ADMIN } from '../../utils/permissions';
-import { webhookObject } from '../../database/schemas';
+import { webhookObject, LOG_TYPE_ADD, LOG_TYPE_REMOVE, LOG_TYPE_CHANGE } from '../../database/schemas';
 import { googleAPIKey, youtube } from '../../bot-config.json';
 import { google } from 'googleapis';
 import { getYTChannelID } from '../../youtube';
@@ -135,6 +135,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     return;
                 } else {
                     message.channel.send(`Successfully added webhook to ${input.channel} for https://youtube.com/channel/${input.YTChannelID}`);
+                    Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LOG_TYPE_ADD);
                 }
                 break;
             case 'rem':
@@ -151,6 +152,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 
                 } else {
                     message.channel.send(`Successfully removed webhook to ${input.channel} for https://youtube.com/channel/${input.YTChannelID}`);
+                    Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LOG_TYPE_REMOVE);
                 }
                 Bot.mStats.logMessageSend();
                 break;
@@ -179,6 +181,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         Bot.mStats.logMessageSend();
                         if (webhookDoc && webhookDoc.channel == newChannel.id) {
                             message.channel.send(`Successfully changed webhook channel from ${input.channel} to ${newChannel}`);
+                            Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LOG_TYPE_CHANGE, true);
                         } else {
                             message.channel.send(`change was unsuccessful`);
                         }
@@ -201,6 +204,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         Bot.mStats.logMessageSend();
                         if (webhookDoc && webhookDoc.feed == newYTChannelID) {
                             message.channel.send(`Successfully changed webhook feed from https://youtube.com/channel/${input.YTChannelID} to https://youtube.com/channel/${webhookDoc.feed}`);
+                            Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LOG_TYPE_ADD);
                         } else {
                             message.channel.send(`change was unsuccessful`);
                         }
@@ -228,6 +232,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         Bot.mStats.logMessageSend();
                         if (webhookDoc && webhookDoc.message == newText) {
                             message.channel.send(`Successfully changed webhook message to \`${newText}\``);
+                            Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LOG_TYPE_CHANGE, undefined, true);
                         } else {
                             message.channel.send(`change was unsuccessful`);
                         }
