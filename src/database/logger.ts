@@ -8,12 +8,26 @@ import { filterAction, FILTER_ACTION } from '../utils/filters';
 import { actionToString } from '../utils/parsers';
 import { youtube } from '../bot-config.json';
 
+/**
+ * Manages connection to main database with the logs collection. It logs actions into the the database and if a log channel was define also into discord.
+ * The Messages are auto generated with the given input. All actions that need to be logged run through this class.
+ *
+ * @export
+ * @class Logger
+ */
 export class Logger {
 
     mainDB: mongoose.Connection;
     guilds: mongoose.Model<guildDoc>;
     logs: mongoose.Model<logDoc>;
 
+    /**
+     * Creates an instance of Logger.
+     * 
+     * @param {string} URI
+     * @param {string} authDB
+     * @memberof Logger
+     */
     constructor(URI: string, authDB: string) {
         var mainCon = mongoose.createConnection(URI + '/main' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true });
         mainCon.on('error', console.error.bind(console, 'connection error:'));
@@ -26,14 +40,14 @@ export class Logger {
     }
 
     /**
-     * logs staff change in channel and saves log in database
+     * Logs staff change for all ranks in database and log channel
      *
-     * @param {Guild} guild
-     * @param {GuildMember} mod
-     * @param {(0 | 1)} type
-     * @param {('admins' | 'mods' | 'immune')} rank
-     * @param {Role} [role]
-     * @param {User} [user]
+     * @param {Guild} guild guild where it actually was changed
+     * @param {GuildMember} mod the member that made the change request
+     * @param {(0 | 1)} type add or remove
+     * @param {('admins' | 'mods' | 'immune')} rank admins/mods/immune
+     * @param {Role} [role] the added/removed role
+     * @param {User} [user] the added/removed user
      * @returns
      * @memberof Logger
      */
@@ -83,13 +97,13 @@ export class Logger {
     /**
      * logs webhook create/remove/change in database and log channel
      *
-     * @param {Guild} guild
-     * @param {GuildMember} mod
-     * @param {string} service
-     * @param {webhookDoc} webhookDoc
-     * @param {(0 | 1 | 2)} type
-     * @param {boolean} [changedChannel]
-     * @param {boolean} [changedMessage]
+     * @param {Guild} guild guild where action was made
+     * @param {GuildMember} mod member that made the action request
+     * @param {string} service name of service
+     * @param {webhookDoc} webhookDoc the final state of the webhook doc
+     * @param {(0 | 1 | 2)} type added/removed/changed
+     * @param {boolean} [changedChannel] if channel was changed
+     * @param {boolean} [changedMessage] if message was changed
      * @returns
      * @memberof Logger
      */
@@ -173,11 +187,12 @@ export class Logger {
 
     /**
      * send a log message for the catch, but doesn't save it in the database
+     * it will get saved in the database in the next version when we implement the case system
      *
-     * @param {Message} message
-     * @param {filterInterface} filter
-     * @param {string} reason
-     * @param {filterAction[]} actions
+     * @param {Message} message message that was caught 
+     * @param {filterInterface} filter filter that triggered
+     * @param {string} reason reason why filter triggered
+     * @param {filterAction[]} actions actions that filter requested
      * @returns
      * @memberof Logger
      */
@@ -238,12 +253,12 @@ export class Logger {
     }
 
     /**
-     * logs the toggling of a filter
+     * logs a filter toggle in database and log channel
      *
-     * @param {Guild} guild
-     * @param {GuildMember} mod
-     * @param {commandInterface} command
-     * @param {(0 | 1)} type
+     * @param {Guild} guild guild where filter was toggled
+     * @param {GuildMember} mod member that requested the toggle
+     * @param {filterInterface} filter filter that was toggled
+     * @param {(0 | 1)} type enabled or disabled
      * @returns
      * @memberof Logger
      */
@@ -294,12 +309,12 @@ export class Logger {
     }
 
     /**
-     * logs the toggling of a command
+     * logs the toggling of a command in database and log channel
      *
-     * @param {Guild} guild
-     * @param {GuildMember} mod
-     * @param {commandInterface} command
-     * @param {(0 | 1)} type
+     * @param {Guild} guild guild where command was toggled
+     * @param {GuildMember} mod member that requested the toggle
+     * @param {commandInterface} command command that was actually toggled
+     * @param {(0 | 1)} type enabled or disabled
      * @returns
      * @memberof Logger
      */
@@ -351,12 +366,12 @@ export class Logger {
     }
 
     /**
-     * Logs prefix change
+     * Logs prefix change in database and log channel
      *
-     * @param {Guild} guild
-     * @param {GuildMember} mod
-     * @param {string} oldPrefix
-     * @param {string} newPrefix
+     * @param {Guild} guild guild where prefix was actually changed
+     * @param {GuildMember} mod member that requested the prefix change
+     * @param {string} oldPrefix the old prefix
+     * @param {string} newPrefix the new prefix
      * @returns
      * @memberof Logger
      */
