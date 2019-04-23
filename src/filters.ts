@@ -80,6 +80,12 @@ export class Filters {
      * @memberof Filters
      */
     structure: Object;
+    /**
+     * Creates an instance of Filters.
+     * 
+     * @param {string} dir directory where filters are in
+     * @memberof Filters
+     */
     constructor(dir: string) {
         this.filters = new Collection();
         this.structure = {};
