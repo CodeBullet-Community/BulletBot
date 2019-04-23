@@ -12,7 +12,7 @@ import { Bot } from '..';
  * @param {string} content message content
  * @param {*} [embed] optional embed object
  */
-export async function sendMentionMessage(guild: Guild, channel: TextChannel, content: string, embed?: any) {
+export async function sendMentionMessage(guild: Guild, channel: TextChannel, content: string, embed?: any, requestTimestamp?: number, commandName?: string) {
     var regex: RegExpExecArray;
     const roleRegex = /{{role:(\w*)}}/gm;
     var mentions: [string, Role | string][] = [];
@@ -34,6 +34,7 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
         }
         content = content.replace(obj[0], obj[1].toString());
     }
+    if (requestTimestamp) Bot.mStats.logResponseTime(commandName, requestTimestamp);
     await channel.send(content, embed);
     for (const role of changedRoles) {
         role.setMentionable(false, 'BulletBot mention revert').catch((reason) => {
