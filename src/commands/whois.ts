@@ -17,8 +17,15 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 			4) if a name that doesn't exactly match any user is used then the user with the closest name should be chosen
 			5) if no info is provided it should whois the caller
 	*/
+	//A lot of methods used below don't exist yet and need to implemented
     try {
-        //Code here
+        if(args.length === 0){
+        	message.reply(Bot.database.fetchUserInfo(message.author).toEmbed());
+        	return;
+        }
+        if(RegExp('<@([0-9])+>').test(args[0])){//will look for a string that has <@(some numbers)>
+        	
+        }
     } catch (e) {
         sendError(message.channel, e);
         Bot.mStats.logError();
@@ -65,7 +72,7 @@ command.embedHelp = async function (guild: Guild) {
                 },
                 {
                     'name': 'Example:',
-                    'value':`${prefix+command.name}\n${prefix+command.name} <@${}>`
+                    'value':`${prefix+command.name}\n${prefix+command.name} @Bullet Bot`
                 }
             ]
         }
