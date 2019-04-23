@@ -1,6 +1,5 @@
-import { Filters, filter as filterInterface, filterOutput } from "../filters";
+import { Filters,  filterInterface, filterOutput } from "../filters";
 import { Message, Guild } from "discord.js";
-import { filter } from "../filters";
 import { FILTER_ACTION, filterAction } from "../utils/filters";
 import { Bot } from "..";
 

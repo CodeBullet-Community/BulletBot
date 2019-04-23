@@ -11,7 +11,7 @@ export interface filterOutput {
     actions: filterAction[];
 }
 
-export interface filter {
+export interface filterInterface {
     name: string,
     path: string,
     shortHelp: string,
@@ -20,7 +20,7 @@ export interface filter {
 };
 
 export class Filters {
-    filters: Collection<string, filter>;
+    filters: Collection<string, filterInterface>;
     structure: Object;
     constructor(dir: string) {
         this.filters = new Collection();

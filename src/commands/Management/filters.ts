@@ -124,7 +124,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 message.channel.send(`Succesfully enabled the \`${filter.name}\` filter.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'enable');
-                // TODO: logger log
+                Bot.logger.logFilter(message.guild, message.member, filter, LOG_TYPE_ADD);
                 break;
             case 'disable':
                 argIndex++;
@@ -155,7 +155,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 message.channel.send(`Succesfully disabled the \`${filter.name}\` filter.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'disable');
-                // TODO: logger log
+                Bot.logger.logFilter(message.guild, message.member, filter, LOG_TYPE_REMOVE);
                 break;
             default:
                 if (!argsArray[argIndex]) {

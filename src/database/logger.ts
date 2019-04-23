@@ -1,8 +1,9 @@
 import mongoose = require('mongoose');
-import { logDoc, logSchema, guildDoc, guildSchema, logObject, LOG_ACTION_STAFF, LOG_ACTION_COMMAND, LOG_ACTION_PREFIX } from './schemas';
+import { logDoc, logSchema, guildDoc, guildSchema, logObject, LOG_ACTION_STAFF, LOG_ACTION_COMMAND, LOG_ACTION_PREFIX, LOG_ACTION_FILTER } from './schemas';
 import { Guild, Role, User, GuildMember, } from 'discord.js';
 import { commandInterface } from '../commands';
 import { Bot } from '..';
+import { filterInterface } from '../filters';
 
 export class Logger {
 
@@ -70,6 +71,62 @@ export class Logger {
         logChannel.send(logMessage);
     }
 
+    /**
+     * logs the toggling of a filter
+     *
+     * @param {Guild} guild
+     * @param {GuildMember} mod
+     * @param {commandInterface} command
+     * @param {(0 | 1)} type
+     * @returns
+     * @memberof Logger
+     */
+    async logFilter(guild: Guild, mod: GuildMember, filter: filterInterface, type: 0 | 1) {
+        var date = new Date();
+        var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
+        if (!guildDoc) return;
+
+        var logObject: logObject = {
+            guild: guild.id,
+            mod: mod.id,
+            action: LOG_ACTION_FILTER,
+            timestamp: date.getTime(),
+            info: {
+                type: type,
+                filter: filter.name
+            }
+        }
+        var logDoc = new this.logs(logObject);
+        await logDoc.save();
+        guildDoc.logs.push(logDoc.id);
+        guildDoc.save();
+        Bot.mStats.logLog();
+
+        var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
+        if (!logChannel) return;
+        Bot.mStats.logMessageSend();
+        logChannel.send({
+            'embed': {
+                'description': `Filter \`${filter.name}\` was  ${type ? 'disabled' : 'enabled'}`,
+                'color': Bot.database.settingsDB.cache.defaultEmbedColor,
+                'timestamp': date.toISOString(),
+                'author': {
+                    'name': 'Filter Change:',
+                    'icon_url': Bot.client.user.avatarURL
+                },
+                'fields': [
+                    {
+                        'name': 'Description:',
+                        'value': filter.shortHelp
+                    },
+                    {
+                        'name': `${type ? 'Enable' : 'Disable'} Filter:`,
+                        'value': `${await Bot.database.getPrefix(guild)}filters ${type ? 'enable' : 'disable'} ${filter.name}`
+                    }
+                ]
+            }
+        });
+    }
 
     /**
      * logs the toggling of a command

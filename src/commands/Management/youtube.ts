@@ -134,7 +134,6 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     message.channel.send('Adding Webhook was unsuccessful. Most likely a webhook with the same feed is already assigned to ' + input.channel + '.');
                     return;
                 } else {
-                    // TODO logger log
                     message.channel.send(`Successfully added webhook to ${input.channel} for https://youtube.com/channel/${input.YTChannelID}`);
                 }
                 break;
