@@ -16,6 +16,61 @@ const REGEX = {
 */
 
 /**
+ * returns similarity value based on Levenshtein distance
+ *
+ * @param {string} s1
+ * @param {string} s2
+ * @returns
+ */
+function stringSimilarity(s1: string, s2: string) {
+    var longer = s1;
+    var shorter = s2;
+    if (s1.length < s2.length) {
+        longer = s2;
+        shorter = s1;
+    }
+    var longerLength = longer.length;
+    if (longerLength == 0) {
+        return 1.0;
+    }
+    return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength.toString());
+}
+
+/**
+ * helper function for stringSimilarity
+ *
+ * @param {*} s1
+ * @param {*} s2
+ * @returns
+ */
+function editDistance(s1: string, s2: string) {
+    s1 = s1.toLowerCase();
+    s2 = s2.toLowerCase();
+
+    var costs = new Array();
+    for (var i = 0; i <= s1.length; i++) {
+        var lastValue = i;
+        for (var j = 0; j <= s2.length; j++) {
+            if (i == 0)
+                costs[j] = j;
+            else {
+                if (j > 0) {
+                    var newValue = costs[j - 1];
+                    if (s1.charAt(i - 1) != s2.charAt(j - 1))
+                        newValue = Math.min(Math.min(newValue, lastValue),
+                            costs[j]) + 1;
+                    costs[j - 1] = lastValue;
+                    lastValue = newValue;
+                }
+            }
+        }
+        if (i > 0)
+            costs[s2.length] = lastValue;
+    }
+    return costs[s2.length];
+}
+
+/**
  * Parses string into GuildMember object.
  * Can parse following inputs:
  * - user mention
@@ -28,7 +83,6 @@ const REGEX = {
  * @returns
  */
 export function stringToMember(guild: Guild, text: string) {
-
     if (/<@(\d*)>/g.test(text)) {
         var result = /<@(\d*)>/g.exec(text);
         if (result != null) {
@@ -41,13 +95,23 @@ export function stringToMember(guild: Guild, text: string) {
             text = result[1];
         }
     }
-    if (isNaN(Number(text))) {
-        //search by name
-        return guild.members.find(x => x.user.username == text);
-    } else {
-        //search by ID
-        return guild.members.get(text);
+    // by id
+    var member = guild.members.get(text);
+    if (!member) {
+        // by username
+        member = guild.members.find(x => x.user.username == text);
     }
+    if (!member) {
+        // by nickname
+        member = guild.members.find(x => x.nickname == text);
+    }
+    if (!member) {
+        // closest matching username
+        member = guild.members.reduce(function (prev, curr) {
+            return (stringSimilarity(curr.user.username, text) > stringSimilarity(prev.user.username, text) ? curr : prev);
+        });;
+    }
+    return member;
 }
 
 /**
@@ -79,13 +143,19 @@ export function stringToRole(guild: Guild, text: string) {
             text = result[1];
         }
     }
-    if (isNaN(Number(text))) {
-        //search by name
-        return guild.roles.find(x => x.name == text);
-    } else {
-        //search by ID
-        return guild.roles.get(text);
+    // by id
+    var role = guild.roles.get(text);
+    if (!role) {
+        // by name
+        role = guild.roles.find(x => x.name == text);
     }
+    if (!role) {
+        // closest matching name
+        role = guild.roles.reduce(function (prev, curr) {
+            return (stringSimilarity(curr.name, text) > stringSimilarity(prev.name, text) ? curr : prev);
+        });;
+    }
+    return role;
 }
 
 /**
@@ -107,13 +177,19 @@ export function stringToChannel(guild: Guild, text: string) {
             text = result[1];
         }
     }
-    if (isNaN(Number(text))) {
-        //search by name
-        return guild.channels.find(x => x.name == text);
-    } else {
-        //search by ID
-        return guild.channels.get(text);
+    // by id
+    var channel = guild.channels.get(text);
+    if (!channel) {
+        // by name
+        channel = guild.channels.find(x => x.name == text);
     }
+    if (!channel) {
+        // closest matching name
+        channel = guild.channels.reduce(function (prev, curr) {
+            return (stringSimilarity(curr.name, text) > stringSimilarity(prev.name, text) ? curr : prev);
+        });;
+    }
+    return channel;
 }
 
 /**
