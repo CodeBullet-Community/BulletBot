@@ -62,16 +62,22 @@ export class Logger {
 
         var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
-        var logMessage: string;
-        if (role) {
-            logMessage = `Role \`${role.name}\``;
+        var rankName = rank.charAt(0).toUpperCase() + rank.slice(1);
+        var embed: any = {
+            "embed": {
+                "description": `${role ? 'Role ' + role.toString() : 'User' + user.toString()} was ${type ? 'removed' : 'added'} to ${rank} rank by ${mod.toString()}`,
+                "color": Bot.database.settingsDB.cache.defaultEmbedColor,
+                "timestamp": date.toISOString(),
+                "author": {
+                    "name": rankName + " Rank:"
+                }
+            }
         }
         if (user) {
-            logMessage = `User ${user.toString()}`;
+            embed.embed.thumbnail = { url: user.avatarURL };
         }
-        logMessage += ` was ${type ? 'removed' : 'added'} to the ${rank} rank`;
         Bot.mStats.logMessageSend();
-        logChannel.send(logMessage);
+        logChannel.send(embed);
     }
 
     /**
@@ -201,9 +207,11 @@ export class Logger {
                 "description": filter.shortHelp,
                 "color": Bot.database.settingsDB.cache.defaultEmbedColor,
                 "timestamp": message.createdAt.toISOString(),
+                "thumbnail": {
+                    "url": message.member.user.avatarURL
+                },
                 "author": {
-                    "name": "Filter: " + filter.name,
-                    "icon_url": Bot.client.user.avatarURL
+                    "name": "Filter: " + filter.name
                 },
                 "fields": [
                     {
@@ -265,12 +273,11 @@ export class Logger {
         Bot.mStats.logMessageSend();
         logChannel.send({
             'embed': {
-                'description': `Filter \`${filter.name}\` was  ${type ? 'disabled' : 'enabled'}`,
+                'description': `Filter \`${filter.name}\` was  ${type ? 'disabled' : 'enabled'} by ${mod.toString()}`,
                 'color': Bot.database.settingsDB.cache.defaultEmbedColor,
                 'timestamp': date.toISOString(),
                 'author': {
-                    'name': 'Filter Change:',
-                    'icon_url': Bot.client.user.avatarURL
+                    'name': 'Filter Change:'
                 },
                 'fields': [
                     {
@@ -322,7 +329,7 @@ export class Logger {
         Bot.mStats.logMessageSend();
         logChannel.send({
             'embed': {
-                'description': `Command \`${command.name}\` was  ${type ? 'disabled' : 'enabled'}`,
+                'description': `Command \`${command.name}\` was  ${type ? 'disabled' : 'enabled'} by ${mod.toString()}`,
                 'color': Bot.database.settingsDB.cache.defaultEmbedColor,
                 'timestamp': date.toISOString(),
                 'author': {
@@ -379,11 +386,11 @@ export class Logger {
         Bot.mStats.logMessageSend();
         logChannel.send({
             'embed': {
+                'description': `The prefix was changed by ${mod.toString()}`,
                 'color': Bot.database.settingsDB.cache.defaultEmbedColor,
                 'timestamp': date.toISOString(),
                 'author': {
-                    'name': 'Changed Prefix:',
-                    'icon_url': Bot.client.user.avatarURL
+                    'name': 'Changed Prefix:'
                 },
                 'fields': [
                     {
