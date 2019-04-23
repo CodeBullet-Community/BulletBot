@@ -203,7 +203,6 @@ export function stringToChannel(guild: Guild, text: string) {
 
 /**
  * Parses a string into a JSON object for Embed. 
- * Removes all unneeded spaces.
  *
  * @export
  * @param {string} text
@@ -212,7 +211,7 @@ export function stringToChannel(guild: Guild, text: string) {
 export function stringToEmbed(text: string) {
     var embed: JSON = null;
     try {
-        text = text.replace(/(\r\n|\n|\r|\t| {2,})/gm, '');
+        //text = text.replace(/(\r\n|\n|\r|\t| {2,})/gm, '');
         embed = JSON.parse(text);
     } catch (e) {
         return null;
