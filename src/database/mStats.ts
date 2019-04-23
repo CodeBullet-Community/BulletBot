@@ -258,7 +258,7 @@ export class MStats {
         return merged;
     }
 
-    logMessageRecieved() {
+    logMessageReceived() {
         this.hourly.doc.messagesRecieved += 1;
     }
 

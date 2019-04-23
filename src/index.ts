@@ -12,6 +12,12 @@ import { botToken, DBURI, callbackPort } from './bot-config.json';
 import { MEMBER, getPermissionLevel, ADMIN, MOD, IMMUNE } from './utils/permissions';
 import { LOG_TYPE_REMOVE } from './database/schemas';
 
+/**
+ * static class that holds objects. This is made so you can call everything from everywhere
+ *
+ * @export
+ * @class Bot
+ */
 export class Bot {
     static client: discord.Client;
     static commands: Commands;
@@ -22,6 +28,20 @@ export class Bot {
     static catcher: Catcher;
     static logger: Logger;
 
+    /**
+     * the static version of a constructor
+     *
+     * @static
+     * @param {discord.Client} client
+     * @param {Commands} commands
+     * @param {Filters} filters
+     * @param {YTWebhookManager} youtube
+     * @param {Database} database
+     * @param {MStats} mStats
+     * @param {Catcher} catcher
+     * @param {Logger} logger
+     * @memberof Bot
+     */
     static init(client: discord.Client, commands: Commands, filters: Filters, youtube: YTWebhookManager,
         database: Database, mStats: MStats, catcher: Catcher, logger: Logger) {
         this.client = client;
@@ -56,9 +76,9 @@ client.on('error', error => {
 
 client.on('message', async message => {
     if (message.author.bot) return;
-    var requestTimestamp = new Date().getTime();
-    Bot.mStats.logMessageRecieved();
-    var dm = false;
+    var requestTimestamp = new Date().getTime(); //  gets timestamp to calculate the response time 
+    Bot.mStats.logMessageReceived();
+    var dm = false; // checks if it's from a dm
     if (!message.guild) {
         dm = true;
     }
@@ -74,27 +94,26 @@ client.on('message', async message => {
     }
 
     var permLevel = MEMBER;
-    if (!dm) {
+    if (!dm) {// gets perm level of member if message isn't from dms
         permLevel = await getPermissionLevel(message.member);
     }
+
     var prefix = await Bot.database.getPrefix(message.guild);
     if (!message.content.startsWith(prefix)) {
-        if (permLevel == MEMBER && !message.content.toLowerCase().startsWith(Bot.database.settingsDB.cache.prefix + 'prefix')) {
-            if (!dm) {
-                Bot.filters.filterMessage(message);
-            }
+        if (!dm && permLevel == MEMBER && !message.content.toLowerCase().startsWith(Bot.database.settingsDB.cache.prefix + 'prefix')) { // also checks if it contains ?!prefix
+            Bot.filters.filterMessage(message); // filters message if from guild and if a member send it
             return;
         }
     }
     // if the command is ?!prefix isn't ?!
     if (prefix != Bot.database.settingsDB.cache.prefix && message.content.startsWith(Bot.database.settingsDB.cache.prefix)) {
-        prefix = Bot.database.settingsDB.cache.prefix;
+        prefix = Bot.database.settingsDB.cache.prefix; // sets prefix if message starts with ?!prefix
     }
 
-    var command = message.content.split(' ')[0].slice(prefix.length).toLowerCase();
-    var args = message.content.slice(prefix.length + command.length + 1);
+    var command = message.content.split(' ')[0].slice(prefix.length).toLowerCase(); // gets command name
+    var args = message.content.slice(prefix.length + command.length + 1); // gets arguments
 
-    Bot.commands.runCommand(message, args, command, permLevel, dm, requestTimestamp);
+    Bot.commands.runCommand(message, args, command, permLevel, dm, requestTimestamp); // runs command
 });
 
 client.on('reconnecting', () => {
@@ -106,7 +125,7 @@ client.on('resume', missed => {
 })
 
 client.on('channelDelete', async (channel: discord.TextChannel) => {
-    if (channel.type == 'text') {
+    if (channel.type == 'text') { // looks if webhooks for the deleted channel exist if it's a text channel
         var youtubeWebhookDocs = await Bot.youtube.webhooks.find({ guild: channel.guild.id, channel: channel.id });
         for (const webhookDoc of youtubeWebhookDocs) {
             Bot.youtube.deleteWebhook(channel.guild.id, channel.id, webhookDoc.toObject().feed);
@@ -115,15 +134,15 @@ client.on('channelDelete', async (channel: discord.TextChannel) => {
 });
 
 client.on('guildCreate', guild => {
-    Bot.database.addGuild(guild.id);
+    Bot.database.addGuild(guild.id); // creates guild in database when bot joins a new guild
 });
 
 client.on('guildDelete', guild => {
-    Bot.database.removeGuild(guild.id);
+    Bot.database.removeGuild(guild.id); // removes all guild related things in database if the bot leaves a guild
 });
 
-client.on('guildMemberRemove', async member => {
-    var permLevel = await getPermissionLevel(member);
+client.on('guildMemberRemove', async member => { 
+    var permLevel = await getPermissionLevel(member); // removes guild member from ranks if he/She was assigned any
     if (permLevel == ADMIN) {
         Bot.database.removeFromRank(member.guild.id, 'admins', undefined, member.id);
         Bot.logger.logStaff(member.guild, member.guild.me, LOG_TYPE_REMOVE, 'admins', undefined, member.user);
@@ -139,7 +158,7 @@ client.on('guildMemberRemove', async member => {
 });
 
 client.on('roleDelete', async role => {
-    var staffDoc = await Bot.database.findStaffDoc(role.guild.id);
+    var staffDoc = await Bot.database.findStaffDoc(role.guild.id); // removes role from ranks if it was assigned to any
     if (!staffDoc) return;
     if (staffDoc.admins.roles.includes(role.id)) {
         Bot.database.removeFromRank(role.guild.id, 'admins', role.id);
@@ -164,5 +183,5 @@ client.on('warn', info => {
 })
 
 setTimeout(() => {
-    client.login(botToken);
+    client.login(botToken); // logs into discord after 2 seconds
 }, 2000);
