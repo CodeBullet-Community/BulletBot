@@ -87,20 +87,20 @@ client.on('message', async message => {
     if (message.content == '<@' + Bot.client.user.id + '>') {
         message.author.createDM().then(dmChannel => {
             message.channel = dmChannel;
-            Bot.commands.runCommand(message, '', 'help', permLevel.member, true, requestTimestamp);
-            Bot.commands.runCommand(message, 'help', 'help', permLevel.member, true, requestTimestamp);
+            Bot.commands.runCommand(message, '', 'help', permLevels.member, true, requestTimestamp);
+            Bot.commands.runCommand(message, 'help', 'help', permLevels.member, true, requestTimestamp);
         });
         return;
     }
 
-    var permLevel = permLevel.member;
+    var permLevel = permLevels.member;
     if (!dm) {// gets perm level of member if message isn't from dms
         permLevel = await getPermLevel(message.member);
     }
 
     var prefix = await Bot.database.getPrefix(message.guild);
     if (!message.content.startsWith(prefix)) {
-        if (!dm && permLevel == permLevel.member && !message.content.toLowerCase().startsWith(Bot.database.settingsDB.cache.prefix + 'prefix')) { // also checks if it contains ?!prefix
+        if (!dm && permLevel == permLevels.member && !message.content.toLowerCase().startsWith(Bot.database.settingsDB.cache.prefix + 'prefix')) { // also checks if it contains ?!prefix
             Bot.filters.filterMessage(message); // filters message if from guild and if a member send it
             return;
         }
