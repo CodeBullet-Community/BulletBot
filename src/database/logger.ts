@@ -17,12 +17,30 @@ import { youtube } from '../bot-config.json';
  */
 export class Logger {
 
-    mainDB: mongoose.Connection;
+    /**
+     * connection to main database
+     *
+     * @type {mongoose.Connection}
+     * @memberof Logger
+     */
+    connection: mongoose.Connection;
+    /**
+     * model for guilds collection
+     *
+     * @type {mongoose.Model<guildDoc>}
+     * @memberof Logger
+     */
     guilds: mongoose.Model<guildDoc>;
+    /**
+     * model for logs collection
+     *
+     * @type {mongoose.Model<logDoc>}
+     * @memberof Logger
+     */
     logs: mongoose.Model<logDoc>;
 
     /**
-     * Creates an instance of Logger.
+     * Creates an instance of Logger, connections to main database and inits all models.
      * 
      * @param {string} URI
      * @param {string} authDB
@@ -34,7 +52,7 @@ export class Logger {
         mainCon.once('open', function () {
             console.log('logger connected to /main database');
         });
-        this.mainDB = mainCon;
+        this.connection = mainCon;
         this.guilds = mainCon.model('guild', guildSchema, 'guilds');
         this.logs = mainCon.model('log', logSchema, 'logs');
     }
@@ -55,6 +73,7 @@ export class Logger {
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
 
+        // logs logs in database
         var date = new Date();
         var logObject: logObject = {
             guild: guild.id,
@@ -74,6 +93,7 @@ export class Logger {
         guildDoc.save();
         Bot.mStats.logLog();
 
+        // sends log into log channel if one is specified
         var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
         var rankName = rank.charAt(0).toUpperCase() + rank.slice(1);
@@ -112,6 +132,7 @@ export class Logger {
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
 
+        // logs log in database
         var logObject: logObject = {
             guild: guild.id,
             mod: mod.id,
@@ -131,6 +152,7 @@ export class Logger {
         guildDoc.save();
         Bot.mStats.logLog();
 
+        // logs log in log channel if one is specified
         var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
@@ -201,6 +223,7 @@ export class Logger {
         var guildDoc = await this.guilds.findOne({ guild: message.guild.id }).exec();
         if (!guildDoc) return;
 
+        // logs log in log channel if one is specified
         var logChannel: any = message.guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
@@ -267,6 +290,7 @@ export class Logger {
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
 
+        // logs log in database
         var logObject: logObject = {
             guild: guild.id,
             mod: mod.id,
@@ -283,6 +307,7 @@ export class Logger {
         guildDoc.save();
         Bot.mStats.logLog();
 
+        // logs log in log channel if one is specified
         var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
@@ -323,6 +348,7 @@ export class Logger {
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
 
+        // logs log in database
         var logObject: logObject = {
             guild: guild.id,
             mod: mod.id,
@@ -339,6 +365,7 @@ export class Logger {
         guildDoc.save();
         Bot.mStats.logLog();
 
+        // logs log in log channel if one is specified
         var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
@@ -380,6 +407,7 @@ export class Logger {
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
 
+        // logs log in database
         var logObject: logObject = {
             guild: guild.id,
             mod: mod.id,
@@ -396,6 +424,7 @@ export class Logger {
         guildDoc.save();
         Bot.mStats.logLog();
 
+        // logs log in log channel if on is specified
         var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
