@@ -11,6 +11,7 @@ import { MStats } from './database/mStats';
 import { botToken, DBURI, callbackPort } from './bot-config.json';
 import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
+import { durations } from './utils/time';
 
 /**
  * static class that holds objects. This is made so you can call everything from everywhere
@@ -64,6 +65,14 @@ var filters = new Filters(__dirname + '/filters/');
 var youtube = new YTWebhookManager(DBURI, 'admin');
 var catcher = new Catcher(callbackPort);
 Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger);
+
+exitHook(() => {
+    console.log('Saving cached data...');
+    Bot.mStats.saveHour(Bot.mStats.hourly);
+    var until = new Date().getTime() + durations.second;
+    while (until > new Date().getTime()) { }
+    console.log("cached data saved");
+});
 
 client.on('ready', () => {
     console.info('Bot is ready');
