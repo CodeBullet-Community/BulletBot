@@ -24,5 +24,5 @@ All arguments in utils functions and database functions (so all functions define
 
 The logo/PFP was a fanart from @Aster#4205.
 
-![unscaled logo](BulletBot-logo.png "Unscaled Logo")
-![10x scaled logo](BulletBot-logo%20scaled.png "10x scaled Logo")
+![unscaled logo](https://prod-files.lcvn.eu/file/data/cmyr752k3r4ac4rtgdzy/PHID-FILE-tjza3yq5aroigh2rhrys/BulletBot-logo.png "Unscaled Logo")
+![10x scaled logo](https://prod-files.lcvn.eu/file/data/u4mdl3lmhrnzivublrdn/PHID-FILE-ih5lrrgpxlm535ofnykz/BulletBot-logo_scaled.png "10x scaled Logo")
