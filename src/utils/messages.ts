@@ -7,16 +7,19 @@ import { Bot } from '..';
  * {{role:[role]}} will be parsed to a mention.
  *
  * @export
- * @param {Guild} guild
- * @param {TextChannel} channel
+ * @param {Guild} guild guild where message should be send
+ * @param {TextChannel} channel channel where message should be send
  * @param {string} content message content
  * @param {*} [embed] optional embed object
+ * @param {number} [requestTimestamp] if call comes from a command the request timestamp should be passed
+ * @param {string} [commandName] if call comes from a command the name of the command should be passed
  */
 export async function sendMentionMessage(guild: Guild, channel: TextChannel, content: string, embed?: any, requestTimestamp?: number, commandName?: string) {
     var regex: RegExpExecArray;
     const roleRegex = /{{role:(\w*)}}/gm;
+    // [ '{{role:[role]}}' , [role object] ]
     var mentions: [string, Role | string][] = [];
-    while ((regex = roleRegex.exec(content)) !== null) {
+    while ((regex = roleRegex.exec(content)) !== null) { // extract all {{role:[role]}} and safe the role and the actual string in array
         if (regex.index === roleRegex.lastIndex) roleRegex.lastIndex++;
 
         var wholeMatch = regex[0].toString();
@@ -27,7 +30,7 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
     }
     var changedRoles: Role[] = [];
     var managePerm = guild.me.hasPermission('MANAGE_ROLES');
-    for (const obj of mentions) {
+    for (const obj of mentions) { // makes all roles mentionable
         if (typeof (obj[1]) != 'string' && !obj[1].mentionable && managePerm) {
             await obj[1].setMentionable(true, 'BulletBot mention');
             changedRoles.push(obj[1]);
@@ -36,7 +39,7 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
     }
     if (requestTimestamp) Bot.mStats.logResponseTime(commandName, requestTimestamp);
     await channel.send(content, embed);
-    for (const role of changedRoles) {
+    for (const role of changedRoles) { // resets all mentionable properties
         role.setMentionable(false, 'BulletBot mention revert').catch((reason) => {
             console.error('error while reverting mentionable property:', reason);
             Bot.mStats.logError();
@@ -44,6 +47,14 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
     }
 }
 
+/**
+ * Sends 'Oops something went wrong. #BlameEvan' into channel and prints error. It DOESN'T log it
+ *
+ * @export
+ * @param {(TextChannel | DMChannel | GroupDMChannel)} channel channel where the error should be send
+ * @param {*} error the actual error
+ * @returns
+ */
 export function sendError(channel: TextChannel | DMChannel | GroupDMChannel, error: any) {
     console.error(error);
     Bot.mStats.logMessageSend();
