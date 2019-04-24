@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { logDoc, logSchema, guildDoc, guildSchema, logObject, LOG_ACTION_STAFF, LOG_ACTION_COMMAND, LOG_ACTION_PREFIX, LOG_ACTION_FILTER, webhookDoc, LOG_ACTION_WEBHOOK, LOG_TYPE_ADD, LOG_TYPE_REMOVE, LOG_TYPE_CHANGE } from './schemas';
+import { logDoc, logSchema, guildDoc, guildSchema, logObject, logActions, webhookDoc, logTypes } from './schemas';
 import { Guild, Role, User, GuildMember, Message, } from 'discord.js';
 import { commandInterface } from '../commands';
 import { Bot } from '..';
@@ -77,7 +77,7 @@ export class Logger {
         var date = new Date();
         var logObject: logObject = {
             guild: guild.id,
-            action: LOG_ACTION_STAFF,
+            action: logActions.staff,
             mod: mod.id,
             timestamp: date.getTime(),
             info: {
@@ -136,7 +136,7 @@ export class Logger {
         var logObject: logObject = {
             guild: guild.id,
             mod: mod.id,
-            action: LOG_ACTION_WEBHOOK,
+            action: logActions.webhook,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -168,13 +168,13 @@ export class Logger {
         }
         var action = '';
         switch (type) {
-            case LOG_TYPE_ADD:
+            case logTypes.add:
                 action = 'Created';
                 break;
-            case LOG_TYPE_REMOVE:
+            case logTypes.remove:
                 action = 'Deleted';
                 break;
-            case LOG_TYPE_CHANGE:
+            case logTypes.change:
                 action = 'Changed';
                 break;
         }
@@ -294,7 +294,7 @@ export class Logger {
         var logObject: logObject = {
             guild: guild.id,
             mod: mod.id,
-            action: LOG_ACTION_FILTER,
+            action: logActions.filter,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -352,7 +352,7 @@ export class Logger {
         var logObject: logObject = {
             guild: guild.id,
             mod: mod.id,
-            action: LOG_ACTION_COMMAND,
+            action: logActions.command,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -411,7 +411,7 @@ export class Logger {
         var logObject: logObject = {
             guild: guild.id,
             mod: mod.id,
-            action: LOG_ACTION_PREFIX,
+            action: logActions.prefix,
             timestamp: date.getTime(),
             info: {
                 old: oldPrefix,

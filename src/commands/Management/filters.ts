@@ -4,7 +4,7 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
 import { permLevels } from '../../utils/permissions';
-import { commandsObject, LOG_TYPE_ADD, LOG_TYPE_REMOVE, filtersObject } from '../../database/schemas';
+import { commandsObject, logTypes, filtersObject } from '../../database/schemas';
 
 async function sendFilterList(guild: Guild, message: Message, strucObject: any, path: string, requestTimestamp: number) {
     var output = new RichEmbed();
@@ -124,7 +124,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 message.channel.send(`Succesfully enabled the \`${filter.name}\` filter.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'enable');
-                Bot.logger.logFilter(message.guild, message.member, filter, LOG_TYPE_ADD);
+                Bot.logger.logFilter(message.guild, message.member, filter, logTypes.add);
                 break;
             case 'disable':
                 argIndex++;
@@ -155,7 +155,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 message.channel.send(`Succesfully disabled the \`${filter.name}\` filter.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'disable');
-                Bot.logger.logFilter(message.guild, message.member, filter, LOG_TYPE_REMOVE);
+                Bot.logger.logFilter(message.guild, message.member, filter, logTypes.remove);
                 break;
             default:
                 if (!argsArray[argIndex]) {

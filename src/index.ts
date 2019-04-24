@@ -10,7 +10,7 @@ import { Database } from './database/database';
 import { MStats } from './database/mStats';
 import { botToken, DBURI, callbackPort } from './bot-config.json';
 import { permLevels, getPermLevel } from './utils/permissions';
-import { LOG_TYPE_REMOVE } from './database/schemas';
+import { logTypes } from './database/schemas';
 
 /**
  * static class that holds objects. This is made so you can call everything from everywhere
@@ -145,15 +145,15 @@ client.on('guildMemberRemove', async member => {
     var permLevel = await getPermLevel(member); // removes guild member from ranks if he/She was assigned any
     if (permLevel == permLevels.admin) {
         Bot.database.removeFromRank(member.guild.id, 'admins', undefined, member.id);
-        Bot.logger.logStaff(member.guild, member.guild.me, LOG_TYPE_REMOVE, 'admins', undefined, member.user);
+        Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, 'admins', undefined, member.user);
     }
     if (permLevel == permLevels.mod) {
         Bot.database.removeFromRank(member.guild.id, 'mods', undefined, member.id);
-        Bot.logger.logStaff(member.guild, member.guild.me, LOG_TYPE_REMOVE, 'mods', undefined, member.user);
+        Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, 'mods', undefined, member.user);
     }
     if (permLevel == permLevels.immune) {
         Bot.database.removeFromRank(member.guild.id, 'immune', undefined, member.id);
-        Bot.logger.logStaff(member.guild, member.guild.me, LOG_TYPE_REMOVE, 'immune', undefined, member.user);
+        Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, 'immune', undefined, member.user);
     }
 });
 
@@ -162,15 +162,15 @@ client.on('roleDelete', async role => {
     if (!staffDoc) return;
     if (staffDoc.admins.roles.includes(role.id)) {
         Bot.database.removeFromRank(role.guild.id, 'admins', role.id);
-        Bot.logger.logStaff(role.guild, role.guild.me, LOG_TYPE_REMOVE, 'admins', role);
+        Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, 'admins', role);
     }
     if (staffDoc.mods.roles.includes(role.id)) {
         Bot.database.removeFromRank(role.guild.id, 'mods', role.id);
-        Bot.logger.logStaff(role.guild, role.guild.me, LOG_TYPE_REMOVE, 'mods', role);
+        Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, 'mods', role);
     }
     if (staffDoc.immune.roles.includes(role.id)) {
         Bot.database.removeFromRank(role.guild.id, 'immune', role.id);
-        Bot.logger.logStaff(role.guild, role.guild.me, LOG_TYPE_REMOVE, 'immune', role);
+        Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, 'immune', role);
     }
 });
 

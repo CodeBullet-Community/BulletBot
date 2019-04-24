@@ -4,7 +4,7 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
 import { permLevels } from '../../utils/permissions';
-import { commandsObject, LOG_TYPE_ADD, LOG_TYPE_REMOVE } from '../../database/schemas';
+import { commandsObject, logTypes } from '../../database/schemas';
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
@@ -88,7 +88,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 message.channel.send(`Succesfully enabled the \`${cmd.name}\` command.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'enable');
-                Bot.logger.logCommand(message.guild, message.member, cmd, LOG_TYPE_ADD);
+                Bot.logger.logCommand(message.guild, message.member, cmd, logTypes.add);
                 break;
             case 'disable':
                 argIndex++;
@@ -127,7 +127,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 message.channel.send(`Succesfully disabled the \`${cmd.name}\` command.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'disable');
-                Bot.logger.logCommand(message.guild, message.member, cmd, LOG_TYPE_REMOVE);
+                Bot.logger.logCommand(message.guild, message.member, cmd, logTypes.remove);
                 break;
         }
 

@@ -4,7 +4,7 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToChannel, stringToRole, stringToMember } from '../../utils/parsers';
 import { permLevels } from '../../utils/permissions';
-import { LOG_TYPE_ADD, LOG_TYPE_REMOVE, staffObject } from '../../database/schemas';
+import { logTypes, staffObject } from '../../database/schemas';
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
@@ -45,7 +45,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     if (await Bot.database.addToRank(message.guild.id, 'admins', (role ? role.id : undefined), (user ? user.id : undefined))) {
                         Bot.mStats.logResponseTime(command.name, requestTimestamp);
                         message.channel.send(`Successfully added ${role ? role.name : user.toString()} to admins`);
-                        Bot.logger.logStaff(message.guild, message.member, LOG_TYPE_ADD, 'admins', role, (user ? user.user : undefined));
+                        Bot.logger.logStaff(message.guild, message.member, logTypes.add, 'admins', role, (user ? user.user : undefined));
                     } else {
                         Bot.mStats.logResponseTime(command.name, requestTimestamp);
                         message.channel.send(`${role ? role.name : user.toString()} is already a admin`);
@@ -55,7 +55,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     if (await Bot.database.removeFromRank(message.guild.id, 'admins', (role ? role.id : undefined), (user ? user.id : undefined))) {
                         Bot.mStats.logResponseTime(command.name, requestTimestamp);
                         message.channel.send(`Successfully removed ${role ? role.name : user.toString()} from admins`);
-                        Bot.logger.logStaff(message.guild, message.member, LOG_TYPE_REMOVE, 'admins', role, (user ? user.user : undefined));
+                        Bot.logger.logStaff(message.guild, message.member, logTypes.remove, 'admins', role, (user ? user.user : undefined));
                     } else {
                         Bot.mStats.logResponseTime(command.name, requestTimestamp);
                         message.channel.send(`${role ? role.name : user.toString()} isn't in rank admins`);

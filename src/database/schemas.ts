@@ -117,17 +117,31 @@ export const logSchema = new mongoose.Schema({
     info: mongoose.Schema.Types.Mixed
 });
 
-// types
-export const LOG_TYPE_ADD = 0;
-export const LOG_TYPE_REMOVE = 1;
-export const LOG_TYPE_CHANGE = 2;
+/**
+ * unified way of saying if something was added, removed or changed
+ *
+ * @export
+ * @enum {number}
+ */
+export enum logTypes {
+    add = 0,
+    remove = 1,
+    change = 2
+}
 
-// actions
-export const LOG_ACTION_STAFF = 0;
-export const LOG_ACTION_WEBHOOK = 1;
-export const LOG_ACTION_FILTER = 2; // filter catch won't get logged in logs
-export const LOG_ACTION_COMMAND = 3;
-export const LOG_ACTION_PREFIX = 4;
+/**
+ * defines what was specifically changed
+ *
+ * @export
+ * @enum {number}
+ */
+export enum logActions {
+    staff = 0,
+    webhook = 1,
+    filter = 2,
+    command = 3,
+    prefix = 4
+}
 
 export interface logStaff {
     type: 0 | 1; // add or remove
