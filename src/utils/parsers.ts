@@ -3,23 +3,12 @@ import { filterAction, FILTER_ACTION } from './filters';
 import { permLevels } from './permissions';
 import { Bot } from '..';
 
-/*
-const REGEX = {
-    user: {
-        id: /<@(\d*)>/g,
-        name: /([^#@:]{2,32})#\d{4}/g
-    },
-    role: /<@&(\d*)>/g,
-    channel: /<#(\d*)>/g,
-    embed: /(\r\n|\n|\r|\t| {2,})/gm
-}
-*/
-
 /**
- * returns similarity value based on Levenshtein distance
+ * Returns similarity value based on Levenshtein distance.
+ * The value is between 0 and 1
  *
- * @param {string} s1
- * @param {string} s2
+ * @param {string} s1 first string
+ * @param {string} s2 second string
  * @returns
  */
 function stringSimilarity(s1: string, s2: string) {
@@ -72,14 +61,16 @@ function editDistance(s1: string, s2: string) {
 
 /**
  * Parses string into GuildMember object.
+ * If the username isn't accurate the function will use the stringSimilarity method.
  * Can parse following inputs:
  * - user mention
  * - username
+ * - nickname
  * - user id
  *
  * @export
- * @param {Guild} guild
- * @param {string} text
+ * @param {Guild} guild guild where the member is in
+ * @param {string} text string to parse
  * @returns
  */
 export function stringToMember(guild: Guild, text: string) {
@@ -119,6 +110,7 @@ export function stringToMember(guild: Guild, text: string) {
 
 /**
  * Parses a string into a Role object or a String for 'everyone' or 'here'.
+ * If the role name isn't accurate the function will use the stringSimilarity method.
  * Can parse following input:
  * - here / everyone name
  * - @here / @everyone mention
@@ -127,8 +119,8 @@ export function stringToMember(guild: Guild, text: string) {
  * - role id
  *
  * @export
- * @param {Guild} guild
- * @param {string} text
+ * @param {Guild} guild guild where the role is in
+ * @param {string} text string to parse
  * @returns
  */
 export function stringToRole(guild: Guild, text: string) {
@@ -166,13 +158,15 @@ export function stringToRole(guild: Guild, text: string) {
 
 /**
  * Parses a string into a Channel object.
+ * If the channel name isn't accurate the function will use the stringSimilarity method.
  * Can parse following input:
  * - channel mention
  * - channel name
+ * - channel id
  *
  * @export
- * @param {Guild} guild
- * @param {string} text
+ * @param {Guild} guild guild where channel is in
+ * @param {string} text string to parse
  * @returns
  */
 export function stringToChannel(guild: Guild, text: string) {
@@ -202,10 +196,10 @@ export function stringToChannel(guild: Guild, text: string) {
 }
 
 /**
- * Parses a string into a JSON object for Embed. 
+ * Parses a string into a JSON object for Embed.
  *
  * @export
- * @param {string} text
+ * @param {string} text string to parse
  * @returns
  */
 export function stringToEmbed(text: string) {
@@ -220,10 +214,10 @@ export function stringToEmbed(text: string) {
 }
 
 /**
- * converts filter action into words
+ * Converts filter action into words. This function creates partial sentences about what the bot did.
  *
  * @export
- * @param {filterAction} action
+ * @param {filterAction} action action to stringify
  * @returns
  */
 export function actionToString(action: filterAction) {
@@ -254,11 +248,11 @@ export function actionToString(action: filterAction) {
  * - 4: my master
  *
  * @export
- * @param {number} permissionLevel
+ * @param {number} permLevel permLevel to stringify
  * @returns
  */
-export function permToString(permissionLevel: number) {
-    switch (permissionLevel) {
+export function permToString(permLevel: number) {
+    switch (permLevel) {
         case permLevels.member:
             return 'member';
         case permLevels.immune:
@@ -271,7 +265,7 @@ export function permToString(permissionLevel: number) {
             return 'my master';
         default:
             Bot.mStats.logError();
-            console.warn('unknown permission level: ' + permissionLevel);
+            console.warn('unknown permission level: ' + permLevel);
             return 'Unknown PermissionLevel';
     }
 }
