@@ -6,7 +6,7 @@ This is a bot for the [Code Bullet and Co](https://discord.gg/7Z5d4HF) discord s
 
 ### General guide
 
-As a style guide we use [this](https://github.com/basarat/typescript-book/blob/master/docs/styleguide/styleguide.md) guid from basarat and his typescript book.
+As a style guide we use [this](https://github.com/basarat/typescript-book/blob/master/docs/styleguide/styleguide.md) guide from basarat and his typescript book.
 
 ### Arguments in Utils and Database
 
