@@ -1,6 +1,6 @@
 import { Filters,  filterInterface, filterOutput } from "../filters";
 import { Message, Guild } from "discord.js";
-import { FILTER_ACTION, filterAction } from "../utils/filters";
+import { filterActions, filterAction } from "../utils/filters";
 import { Bot } from "..";
 
 let filter: filterInterface = { name: undefined, path: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };// note this is not an example for creating a filter based from a path rather making a filter in the source code
@@ -26,12 +26,12 @@ filter.embedHelp = async (guild: Guild) => {
 filter.run = (message: Message): Promise<filterOutput> => {
 	let actions: Array<filterAction> = new Array();
 	let unconditionalAction: filterAction = {
-		type: FILTER_ACTION.SEND,// sets the type of the message so it is sent
+		type: filterActions.send,// sets the type of the message so it is sent
 		message: "kappa"
 	};
 	actions[0] = unconditionalAction;
 	let conditionalAction: filterAction = {
-		type: FILTER_ACTION.DELETE,
+		type: filterActions.delete,
 		delay: 1000,
 	}
 	if (message.content.includes("kappa")) {// the filter action of deleting them message isn't added unless it contains kappa because honestly we only delete messages that include kappa(saying kappa is our thing)

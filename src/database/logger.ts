@@ -4,7 +4,7 @@ import { Guild, Role, User, GuildMember, Message, } from 'discord.js';
 import { commandInterface } from '../commands';
 import { Bot } from '..';
 import { filterInterface } from '../filters';
-import { filterAction, FILTER_ACTION } from '../utils/filters';
+import { filterAction, filterActions } from '../utils/filters';
 import { actionToString } from '../utils/parsers';
 import { youtube } from '../bot-config.json';
 
@@ -207,9 +207,9 @@ export class Logger {
 
         var actionsString = actionToString(actions[0]);
         var deleted = false;
-        if (actions[0].type == FILTER_ACTION.DELETE) deleted = true;
+        if (actions[0].type == filterActions.delete) deleted = true;
         for (var i = 1; i < actions.length; i++) {
-            if (actions[i].type == FILTER_ACTION.DELETE) deleted = true;
+            if (actions[i].type == filterActions.delete) deleted = true;
             actionsString += "\n" + actionToString(actions[i]);
         }
         var content = message.content;
