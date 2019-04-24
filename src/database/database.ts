@@ -6,12 +6,18 @@ import { Guild, Role } from 'discord.js';
 import { Bot } from '..';
 
 /**
- * Manages all connections to the main database.
+ * Manages all connections to the main database and settings database
  *
  * @export
  * @class Database
  */
 export class Database {
+    /**
+     * represents the main database with all collections and the actual connection
+     *
+     * @type {{connection: mongoose.Connection;guilds: mongoose.Model<guildDoc>;staff: mongoose.Model<staffDoc>;prefix: mongoose.Model<prefixDoc>;commands: mongoose.Model<commandsDoc>;filters: mongoose.Model<filtersDoc>;logs: mongoose.Model<logDoc>;commandCache: mongoose.Model<commandCacheDoc>;}}
+     * @memberof Database
+     */
     mainDB: {
         connection: mongoose.Connection;
         guilds: mongoose.Model<guildDoc>;
@@ -22,6 +28,12 @@ export class Database {
         logs: mongoose.Model<logDoc>;
         commandCache: mongoose.Model<commandCacheDoc>;
     };
+    /**
+     * represents the settings database with the settings collection and the connection. There is also a cache of the settings doc.
+     *
+     * @type {{connection: mongoose.Connection;settings: mongoose.Model<globalSettingsDoc>;cache: globalSettingsObject;}}
+     * @memberof Database
+     */
     settingsDB: {
         connection: mongoose.Connection;
         settings: mongoose.Model<globalSettingsDoc>;
@@ -29,7 +41,7 @@ export class Database {
     };
 
     /**
-     * Creates an instance of Database.
+     * Creates an instance of Database and connections to the main and settings database.
      * 
      * @param {string} URI URL to cluster with login credentials when needed
      * @param {string} authDB authentication database name
@@ -83,6 +95,7 @@ export class Database {
     /**
      * updates cache of global settings
      *
+     * @param {{connection: mongoose.Connection;settings: mongoose.Model<globalSettingsDoc>;cache: globalSettingsObject;}} settingsDB settings property of class, so this function can also access it in a interval
      * @returns
      * @memberof Database
      */
@@ -100,9 +113,9 @@ export class Database {
     }
 
     /**
-     * calls updateGLobalSettings() at specified interval
+     * calls updateGlobalSettings() at specified interval
      *
-     * @param {number} ms
+     * @param {number} ms interval in which to update the cache
      * @memberof Database
      */
     private updateCacheAtInterval(ms: number) {
@@ -116,8 +129,8 @@ export class Database {
      * sets prefix of specific guild
      * resets it, when prefix is undefined
      *
-     * @param {string} guildID
-     * @param {string} [prefix]
+     * @param {string} guildID id of guild where to set the prefix
+     * @param {string} [prefix] the custom prefix. If it's undefined the prefix will be reset
      * @returns
      * @memberof Database
      */
@@ -140,6 +153,15 @@ export class Database {
      *
      * @param {string} guildID
      * @returns
+     * @memberof Database
+     */
+    /**
+     * returns prefix of specific guild
+     * returns default prefix if there isn't a custom one defined
+     *
+     * @param {Guild} [guild] guild of which to get the prefix
+     * @param {string} [guildID] guild id if you only have the id
+     * @returns {Promise<string>} the prefix
      * @memberof Database
      */
     async getPrefix(guild?: Guild, guildID?: string): Promise<string> {
@@ -166,33 +188,33 @@ export class Database {
     /**
      * return global command settings of specific command
      *
-     * @param {string} name
+     * @param {string} command command name
      * @returns
      * @memberof Database
      */
-    getGlobalCommandSettings(name: string) {
-        if (!this.settingsDB.cache || !this.settingsDB.cache.commands[name])
+    getGlobalCommandSettings(command: string) {
+        if (!this.settingsDB.cache || !this.settingsDB.cache.commands[command])
             return undefined;
-        return this.settingsDB.cache.commands[name];
+        return this.settingsDB.cache.commands[command];
     }
 
     /**
      * return global filter settings of specific filter
      *
-     * @param {string} name
+     * @param {string} filter filter name
      * @returns
      * @memberof Database
      */
-    getGlobalFilterSettings(name: string) {
-        if (!this.settingsDB.cache || !this.settingsDB.cache.filters[name])
+    getGlobalFilterSettings(filter: string) {
+        if (!this.settingsDB.cache || !this.settingsDB.cache.filters[filter])
             return undefined;
-        return this.settingsDB.cache.filters[name];
+        return this.settingsDB.cache.filters[filter];
     }
 
     /**
      * return guild search query
      *
-     * @param {string} guildID
+     * @param {string} guildID id of guild of which t find the doc
      * @returns
      * @memberof Database
      */
@@ -203,7 +225,7 @@ export class Database {
     /**
      * adds guild to guild and staff collections
      *
-     * @param {*} guildID
+     * @param {*} guildID id of guild that should be added
      * @returns
      * @memberof Database
      */
@@ -244,10 +266,13 @@ export class Database {
     /**
      * removes all docs related to specified guild in database
      *
-     * @param {string} guildID
+     * @param {string} guildID id of guild that should be removed
      * @memberof Database
      */
     async removeGuild(guildID: string) {
+        for (const webhookDoc of await Bot.youtube.webhooks.find({ guild: guildID })) {
+            Bot.youtube.deleteWebhook(guildID, webhookDoc.toObject().channel, webhookDoc.toObject().feed);
+        }
         var guildDoc = await this.findGuildDoc(guildID);
         if (guildDoc) guildDoc.remove();
         var staffDoc = await this.mainDB.staff.findOne({ guild: guildID }).exec();
@@ -261,15 +286,12 @@ export class Database {
         for (const logDoc of await this.mainDB.logs.find({ guild: guildID })) {
             logDoc.remove();
         }
-        for (const webhookDoc of await Bot.youtube.webhooks.find({ guild: guildID })) {
-            Bot.youtube.deleteWebhook(guildID, webhookDoc.toObject().channel, webhookDoc.toObject().feed);
-        }
     }
 
     /**
      * finds staff doc of specified guild
      *
-     * @param {string} guildID
+     * @param {string} guildID id of guild of which to get the staff doc
      * @returns
      * @memberof Database
      */
@@ -279,12 +301,12 @@ export class Database {
 
     /**
      * adds role/user to specific rank
-     * returns true if successfull
+     * returns true if successful
      *
-     * @param {string} guildID
-     * @param {('admins' | 'mods' | 'immune')} rank
-     * @param {string} [roleID]
-     * @param {string} [userID]
+     * @param {string} guildID id of guild where to add the role/user
+     * @param {('admins' | 'mods' | 'immune')} rank in which rank the role/user should be added
+     * @param {string} [roleID] id of role (can be undefined)
+     * @param {string} [userID] if of user (can be undefined)
      * @returns
      * @memberof Database
      */
@@ -312,12 +334,12 @@ export class Database {
 
     /**
      * removes role/user from specific rank
-     * returns true if successfull
+     * returns true if successful
      *
-     * @param {string} guildID
-     * @param {('admins' | 'mods' | 'immune')} rank
-     * @param {string} [roleID]
-     * @param {string} [userID]
+     * @param {string} guildID id of guild where to remove the role/user
+     * @param {('admins' | 'mods' | 'immune')} rank in which rank the user/role is
+     * @param {string} [roleID] id of role (can be undefined)
+     * @param {string} [userID] id of user (can be undefined)
      * @returns
      * @memberof Database
      */
@@ -339,7 +361,7 @@ export class Database {
     /**
      * find command settings doc of specified guild
      *
-     * @param {string} guildID
+     * @param {string} guildID id of guild of which to find the commands doc
      * @returns
      * @memberof Database
      */
@@ -351,9 +373,9 @@ export class Database {
      * gets guild specific command settings of certain command
      * if doc isn't undefined but it got deleted in the database, it will return null
      *
-     * @param {string} guildID
-     * @param {string} command
-     * @param {commandsDoc} [doc] 
+     * @param {string} guildID id of guild where settings should be taken
+     * @param {string} command command name
+     * @param {commandsDoc} [doc] existing commands doc where the settings should be extracted
      * @returns command settings
      * @memberof Database
      */
@@ -371,10 +393,10 @@ export class Database {
      * sets settings of specific command in a guild
      * if doc isn't undefined but it got deleted in the database, it won't change anything
      *
-     * @param {string} guildID
-     * @param {string} command
-     * @param {*} settings
-     * @param {commandsDoc} [doc]
+     * @param {string} guildID id of guild where settings should be set
+     * @param {string} command command name
+     * @param {*} settings settings that should be set
+     * @param {commandsDoc} [doc] existing commands doc where the settings should inserted
      * @returns whole command doc
      * @memberof Database
      */
@@ -396,7 +418,7 @@ export class Database {
     /**
      * find filter settings doc of specified guild
      *
-     * @param {string} guildID
+     * @param {string} guildID if of guild of which to find the filters doc
      * @returns
      * @memberof Database
      */
@@ -408,9 +430,9 @@ export class Database {
      * gets guild specific filter settings of certain filter
      * if doc isn't undefined but it got deleted in the database, it will return null
      *
-     * @param {string} guildID
-     * @param {string} filter
-     * @param {filtersDoc} [doc] 
+     * @param {string} guildID id of guild where the settings should be taken
+     * @param {string} filter filter name
+     * @param {filtersDoc} [doc] existing filters doc where the settings should be extracted
      * @returns filter settings
      * @memberof Database
      */
@@ -428,10 +450,10 @@ export class Database {
      * sets settings of specific filter in a guild
      * if doc isn't undefined but it got deleted in the database, it won't change anything
      *
-     * @param {string} guildID
-     * @param {string} filter
-     * @param {*} settings settings of command
-     * @param {filtersDoc} [doc]
+     * @param {string} guildID id of guild where the settings should be set
+     * @param {string} filter filter name
+     * @param {*} settings settings that should be set
+     * @param {filtersDoc} [doc] existing filters doc where the settings should be inserted
      * @returns whole filter doc
      * @memberof Database
      */
