@@ -4,6 +4,7 @@ import { setInterval } from 'timers';
 import { globalUpdateInterval } from '../bot-config.json';
 import { Guild, Role } from 'discord.js';
 import { Bot } from '..';
+import { toNano } from '../utils/time';
 
 /**
  * Manages all connections to the main database and settings database
@@ -76,7 +77,7 @@ export class Database {
             settings: settingsCon.model('globalSettings', globalSettingsSchema, 'settings'),
             cache: undefined
         }
-        this.updateGLobalSettings(this.settingsDB);
+        this.updateGlobalSettings(this.settingsDB);
         this.updateCacheAtInterval(globalUpdateInterval);
     }
 
@@ -87,9 +88,9 @@ export class Database {
      * @memberof Database
      */
     async ping() {
-        var ping = new Date().getTime();
+        var currentNano = process.hrtime();
         await this.mainDB.connection.db.command({ ping: 1 });
-        return new Date().getTime() - ping;
+        return toNano(process.hrtime(currentNano));
     }
 
     /**
@@ -99,7 +100,7 @@ export class Database {
      * @returns
      * @memberof Database
      */
-    async updateGLobalSettings(settingsDB: {
+    async updateGlobalSettings(settingsDB: {
         connection: mongoose.Connection;
         settings: mongoose.Model<globalSettingsDoc>;
         cache: globalSettingsObject;
@@ -120,7 +121,7 @@ export class Database {
      */
     private updateCacheAtInterval(ms: number) {
         setInterval(() => {
-            this.updateGLobalSettings(this.settingsDB);
+            this.updateGlobalSettings(this.settingsDB);
         }, ms);
         console.info(`updating global cache every ${ms}ms`);
     }

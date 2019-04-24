@@ -8,7 +8,7 @@ import { commandsObject, logTypes } from '../../database/schemas';
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
     try {
         var argIndex = 0;
         if (args.length == 0) {
@@ -25,7 +25,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 if (argsArray[argIndex] == 'disabled') {
                     var commandsDoc = await Bot.database.findCommandsDoc(message.guild.id);
                     if (!commandsDoc) {
-                        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send('There aren\'t any disabled commands.');
                         Bot.mStats.logMessageSend();
                     } else {
@@ -41,7 +41,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                             output.addField((await Bot.database.getPrefix(message.guild)) + cmd.name, cmd.shortHelp);
                         }
 
-                        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
                         if (output.fields.length == 0) {
                             message.channel.send('There aren\'t any disabled commands.');
                         } else {
@@ -53,7 +53,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     return;
                 }
 
-                Bot.commands.get('help').run(message, argsArray[argIndex] ? argsArray[argIndex] : '', permLevel, dm, requestTimestamp);
+                Bot.commands.get('help').run(message, argsArray[argIndex] ? argsArray[argIndex] : '', permLevel, dm, requestTime);
                 break;
             case 'enable':
                 argIndex++;
@@ -76,7 +76,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 var commandsDoc = await Bot.database.findCommandsDoc(message.guild.id);
                 var commandSettings = await Bot.database.getCommandSettings(message.guild.id, cmd.name, commandsDoc);
                 if (!commandSettings || commandSettings._enabled) {
-                    Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                    Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send(`The \`${cmd.name}\` command is already enabled.`);
                     Bot.mStats.logMessageSend();
                     return;
@@ -84,7 +84,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 
                 commandSettings._enabled = true;
                 Bot.database.setCommandSettings(message.guild.id, cmd.name, commandSettings, commandsDoc);
-                Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(`Succesfully enabled the \`${cmd.name}\` command.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'enable');
@@ -115,7 +115,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     commandSettings = {};
                 }
                 if (commandSettings._enabled === false) {
-                    Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                    Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send(`The \`${cmd.name}\` command is already disabled.`);
                     Bot.mStats.logMessageSend();
                     return;
@@ -123,7 +123,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 
                 commandSettings._enabled = false;
                 Bot.database.setCommandSettings(message.guild.id, cmd.name, commandSettings, commandsDoc);
-                Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(`Succesfully disabled the \`${cmd.name}\` command.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'disable');

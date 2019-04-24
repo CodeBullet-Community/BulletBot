@@ -7,10 +7,10 @@ import { permLevels } from '../../utils/permissions';
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
     try {
         if (args.length == 0) {
-            Bot.mStats.logResponseTime(command.name, requestTimestamp);
+            Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send(`My prefix is \`${await Bot.database.getPrefix(message.guild)}\``);
             Bot.mStats.logCommandUsage(command.name, 'list');
             Bot.mStats.logMessageSend();
@@ -22,11 +22,11 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             if (prefixDoc) {
                 var oldPrefix: string = prefixDoc.toObject().prefix;
                 prefixDoc.remove();
-                Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(`Successfully reset the prefix to \`${Bot.database.settingsDB.cache.prefix}\``);
                 Bot.logger.logPrefix(message.guild, message.member, oldPrefix, Bot.database.settingsDB.cache.prefix);
             } else {
-                Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(`This server doesn't have a custom prefix`);
             }
             Bot.mStats.logCommandUsage(command.name, 'reset');
@@ -47,7 +47,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             prefixDoc.prefix = args;
         }
         prefixDoc.save();
-        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+        Bot.mStats.logResponseTime(command.name, requestTime);
         message.channel.send(`Successfully set the prefix to \`${args}\``);
         Bot.logger.logPrefix(message.guild, message.member, oldPrefix, args);
         Bot.mStats.logCommandUsage(command.name, 'set');

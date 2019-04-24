@@ -8,7 +8,7 @@ import { Bot } from '../..';
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
     try {
         var argIndex = 0;
         if (args.length == 0) {
@@ -67,9 +67,9 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         }
 
         if (content && content.includes("{{role:")) {
-            sendMentionMessage(message.guild, channel, content, embedObject, requestTimestamp, command.name);
+            sendMentionMessage(message.guild, channel, content, embedObject, requestTime, command.name);
         } else {
-            Bot.mStats.logResponseTime(command.name, requestTimestamp);
+            Bot.mStats.logResponseTime(command.name, requestTime);
             channel.send(content, embedObject);
         }
         Bot.mStats.logMessageSend();

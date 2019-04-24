@@ -8,7 +8,7 @@ import { permLevels } from '../../utils/permissions';
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
     try {
         var argIndex = 0;
         if (args.length == 0) {
@@ -22,7 +22,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         if (argsArray[argIndex] == 'rem') {
             guildDoc.logChannel = null;
             guildDoc.save();
-            Bot.mStats.logResponseTime(command.name, requestTimestamp);
+            Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send('Successfully unassigned log channel');
             Bot.mStats.logMessageSend();
             Bot.mStats.logCommandUsage(command.name, 'remove');
@@ -35,7 +35,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 Bot.mStats.logMessageSend();
                 return;
             }
-            Bot.mStats.logResponseTime(command.name, requestTimestamp);
+            Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send('Current log channel is ' + Bot.client.channels.get(guildObject.logChannel).toString());
             Bot.mStats.logMessageSend();
             Bot.mStats.logCommandUsage(command.name, 'list');
@@ -51,7 +51,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         guildDoc.logChannel = channel.id;
         guildDoc.save();
 
-        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+        Bot.mStats.logResponseTime(command.name, requestTime);
         message.channel.send('Successfully assigned log channel to ' + channel.toString());
         Bot.mStats.logMessageSend();
         Bot.mStats.logCommandUsage(command.name, 'set');

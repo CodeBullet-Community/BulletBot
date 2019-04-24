@@ -67,7 +67,7 @@ export interface commandInterface {
      *
      * @memberof commandInterface
      */
-    run: (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => Promise<void>;
+    run: (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => Promise<void>;
 }
 
 /**
@@ -162,7 +162,7 @@ export class Commands {
      * @returns
      * @memberof Commands
      */
-    async runCommand(message: Message, args: string, command: string, permLevel: number, dm: boolean, requestTimestamp: number) {
+    async runCommand(message: Message, args: string, command: string, permLevel: number, dm: boolean, requestTime: [number, number]) {
         var cmd = this.commands.get(command);
         if (!cmd) return; // returns if it can't find the command
         if (!cmd.dm && dm) { // sends the embed help if the request is from a dm and the command doesn't support dms
@@ -174,7 +174,7 @@ export class Commands {
             var commandSettings = await Bot.database.getCommandSettings(message.guild.id, command);
             if (commandSettings && !commandSettings._enabled) return;
         }
-        cmd.run(message, args, permLevel, dm, requestTimestamp); // run command
+        cmd.run(message, args, permLevel, dm, requestTime); // run command
     }
 
     /**

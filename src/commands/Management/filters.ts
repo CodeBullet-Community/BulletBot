@@ -6,7 +6,7 @@ import { permToString } from '../../utils/parsers';
 import { permLevels } from '../../utils/permissions';
 import { commandsObject, logTypes, filtersObject } from '../../database/schemas';
 
-async function sendFilterList(guild: Guild, message: Message, strucObject: any, path: string, requestTimestamp: number) {
+async function sendFilterList(guild: Guild, message: Message, strucObject: any, path: string, requestTime: [number,number]) {
     var output = new RichEmbed();
     output.setAuthor('Filter List:', Bot.client.user.avatarURL);
     if (path) output.setFooter('Path: ~' + path);
@@ -25,7 +25,7 @@ async function sendFilterList(guild: Guild, message: Message, strucObject: any, 
         var f = Bot.filters.get(filters[i]);
         output.addField((await Bot.database.getPrefix(guild)) + f.name, f.shortHelp);
     }
-    Bot.mStats.logResponseTime(command.name, requestTimestamp);
+    Bot.mStats.logResponseTime(command.name, requestTime);
     message.channel.send(output);
     Bot.mStats.logMessageSend();
     Bot.mStats.logCommandUsage(command.name, 'list');
@@ -33,7 +33,7 @@ async function sendFilterList(guild: Guild, message: Message, strucObject: any, 
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
     try {
         var argIndex = 0;
         if (args.length == 0) {
@@ -49,7 +49,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 if (argsArray[argIndex] == 'enabled') {
                     var filtersDoc = await Bot.database.findFiltersDoc(message.guild.id);
                     if (!filtersDoc) {
-                        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send('There aren\'t any enabled filters.');
                         Bot.mStats.logMessageSend();
                     } else {
@@ -64,7 +64,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                             output.addField(cmd.name, cmd.shortHelp);
                         }
 
-                        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
                         if (output.fields.length == 0) {
                             message.channel.send('There aren\'t any enabled filters.');
                         } else {
@@ -89,7 +89,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         }
                     }
                 }
-                sendFilterList(message.guild, message, strucObject, args.slice(4), requestTimestamp);
+                sendFilterList(message.guild, message, strucObject, args.slice(4), requestTime);
                 break;
             case 'enable':
                 argIndex++;
@@ -109,7 +109,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 var filterSettings = await Bot.database.getFilterSettings(message.guild.id, filter.name, filtersDoc);
                 if (filterSettings) {
                     if (filterSettings._enabled) {
-                        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send(`The \`${filter.name}\` filter is already enabled.`);
                         Bot.mStats.logMessageSend();
                         return;
@@ -120,7 +120,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 
                 filterSettings._enabled = true;
                 Bot.database.setFilterSettings(message.guild.id, filter.name, filterSettings, filtersDoc);
-                Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(`Succesfully enabled the \`${filter.name}\` filter.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'enable');
@@ -143,7 +143,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 var filtersDoc = await Bot.database.findFiltersDoc(message.guild.id);
                 var filterSettings = await Bot.database.getFilterSettings(message.guild.id, filter.name, filtersDoc);
                 if (!filterSettings || !filterSettings._enabled) {
-                    Bot.mStats.logResponseTime(filter.name, requestTimestamp);
+                    Bot.mStats.logResponseTime(filter.name, requestTime);
                     message.channel.send(`The \`${filter.name}\` filter is already disabled.`);
                     Bot.mStats.logMessageSend();
                     return;
@@ -151,7 +151,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 
                 filterSettings._enabled = false;
                 Bot.database.setFilterSettings(message.guild.id, filter.name, filterSettings, filtersDoc);
-                Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(`Succesfully disabled the \`${filter.name}\` filter.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'disable');
@@ -170,7 +170,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     return;
                 }
 
-                Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(await filter.embedHelp(message.guild));
                 Bot.mStats.logCommandUsage(command.name, 'help');
                 Bot.mStats.logMessageSend();

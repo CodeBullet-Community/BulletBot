@@ -70,11 +70,11 @@ export class Logger {
      * @memberof Logger
      */
     async logStaff(guild: Guild, mod: GuildMember, type: 0 | 1, rank: 'admins' | 'mods' | 'immune', role?: Role, user?: User) {
+        var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
 
         // logs logs in database
-        var date = new Date();
         var logObject: logObject = {
             guild: guild.id,
             action: logActions.staff,

@@ -5,7 +5,7 @@ import { Bot } from '..';
 import { sendError } from '../utils/messages';
 import { permToString } from '../utils/parsers';
 
-async function sendCommandList(guild: Guild, message: Message, strucObject: any, path: string, requestTimestamp: number) {
+async function sendCommandList(guild: Guild, message: Message, strucObject: any, path: string, requestTime: [number,number]) {
     var output = new RichEmbed();
     output.setAuthor('Command List:', Bot.client.user.avatarURL);
     if (path) output.setFooter('Path: ~' + path);
@@ -25,7 +25,7 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
         if (f.permLevel == permLevels.botMaster) continue;
         output.addField((await Bot.database.getPrefix(guild)) + f.name, f.shortHelp);
     }
-    Bot.mStats.logResponseTime(command.name, requestTimestamp);
+    Bot.mStats.logResponseTime(command.name, requestTime);
     message.channel.send(output);
     Bot.mStats.logMessageSend();
     Bot.mStats.logCommandUsage(command.name, 'commandList');
@@ -33,10 +33,10 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
     try {
         if (args.length == 0) {
-            sendCommandList(message.guild, message, Bot.commands.structure, undefined, requestTimestamp);
+            sendCommandList(message.guild, message, Bot.commands.structure, undefined, requestTime);
             return;
         }
         var command = Bot.commands.get(args.toLowerCase());
@@ -53,7 +53,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         strucObject = strucObject[keys[i]];
                     }
                 }
-                sendCommandList(message.guild, message, strucObject, args, requestTimestamp);
+                sendCommandList(message.guild, message, strucObject, args, requestTime);
                 return;
             } else {
                 message.channel.send('Couldn\'t find ' + args.toLowerCase() + ' command');
@@ -61,7 +61,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 return;
             }
         }
-        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+        Bot.mStats.logResponseTime(command.name, requestTime);
         message.channel.send(await command.embedHelp(message.guild));
         Bot.mStats.logMessageSend();
         Bot.mStats.logCommandUsage('help', 'commandHelp');

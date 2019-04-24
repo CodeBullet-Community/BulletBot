@@ -8,9 +8,9 @@ import { permToString } from '../utils/parsers';
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
     try {
-        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+        Bot.mStats.logResponseTime(command.name, requestTime);
         const m: any = await message.channel.send('Ping?');
         m.edit(`Pong! \`${m.createdTimestamp - message.createdTimestamp}ms\``);
         Bot.mStats.logCommandUsage(command.name);

@@ -4,26 +4,12 @@ import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
-
-const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-function pad(n: any, width: number, padding?: string) {
-    padding = padding || '0';
-    n = n + '';
-    return n.length >= width ? n : new Array(width - n.length + 1).join(padding) + n;
-}
-
-function formatDate(date: Date) {
-    return `${days[date.getUTCDay()]} ${pad(date.getUTCDate(), 2)}/${pad(date.getUTCMonth() + 1, 2)}/${pad(date.getUTCFullYear(), 4)} ${pad(date.getUTCHours(), 2)}:${pad(date.getUTCMinutes(), 2)}:${pad(date.getUTCSeconds(), 2)}:${pad(date.getUTCMilliseconds(), 3)}`;
-}
-
-function getDayDiff(timestamp0: number, timestamp1: number) {
-    return Math.round(Math.abs(timestamp0 - timestamp1) / (1000 * 60 * 60 * 24));
-}
+import { getDayDiff, timeFormat } from '../../utils/time';
+import dateFormat = require('dateformat');
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
     try {
         var date = new Date();
         var age = getDayDiff(message.guild.createdTimestamp, date.getTime());
@@ -85,7 +71,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     },
                     {
                         "name": "Created",
-                        "value": `${formatDate(message.guild.createdAt)}\n(${age} days ago)`,
+                        "value": `${dateFormat(message.guild.createdAt, timeFormat)}\n(${age} days ago)`,
                         "inline": true
                     },
                     {
@@ -96,7 +82,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 ]
             }
         };
-        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+        Bot.mStats.logResponseTime(command.name, requestTime);
         message.channel.send(embed);
         Bot.mStats.logCommandUsage(command.name);
         Bot.mStats.logMessageSend();

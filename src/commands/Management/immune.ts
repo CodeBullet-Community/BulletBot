@@ -8,7 +8,7 @@ import { logTypes, staffObject } from '../../database/schemas';
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
     try {
         var argIndex = 0;
         if (args.length == 0) {
@@ -43,21 +43,21 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 }
                 if (argsArray[0] == 'add') {
                     if (await Bot.database.addToRank(message.guild.id, 'immune', (role ? role.id : undefined), (user ? user.id : undefined))) {
-                        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send(`Successfully added immunity to ${role ? role.name : user.toString()}`);
                         Bot.logger.logStaff(message.guild, message.member, logTypes.add, 'immune', role, (user ? user.user : undefined));
                     } else {
-                        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send(`${role ? role.name : user.toString()} is already immune`);
                     }
                     Bot.mStats.logCommandUsage(command.name, 'add');
                 } else {
                     if (await Bot.database.removeFromRank(message.guild.id, 'immune', (role ? role.id : undefined), (user ? user.id : undefined))) {
-                        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send(`Successfully removed immunity from ${role ? role.name : user.toString()}`);
                         Bot.logger.logStaff(message.guild, message.member, logTypes.remove, 'immune', role, (user ? user.user : undefined));
                     } else {
-                        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send(`${role ? role.name : user.toString()} isn't immune`);
                     }
                     Bot.mStats.logCommandUsage(command.name, 'remove');
@@ -85,7 +85,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         }
                     }
                 }
-                Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send({
                     'embed': {
                         'color': Bot.database.settingsDB.cache.defaultEmbedColor,

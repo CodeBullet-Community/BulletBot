@@ -1,10 +1,7 @@
 import mongoose = require('mongoose');
 import { mStatsAllTimeDoc, mStatsDayDoc, mStatsHourDoc, mStatsAllTimeSchema, mStatsDaySchema, mStatsHourSchema, mStatsHourObject, mStatsObject } from './schemas';
 import { Bot } from '..';
-
-const MS_DAY = 86400000;
-const MS_HOUR = MS_DAY / 24;
-const MS_MINUTE = MS_HOUR / 60;
+import { durations, toNano } from '../utils/time';
 
 /**
  * Manages all connections and documents in the mStats database. It's a very independent class with only minimal actual input (besides the action logging) required.
@@ -70,7 +67,7 @@ export class MStats {
     private async init() {
         var date = new Date();
         var UTC = date.getTime();
-        var day = UTC - (UTC % MS_DAY);
+        var day = UTC - (UTC % durations.day);
         var hour = date.getUTCHours();
 
         var model = this.connection.model<mStatsHourDoc>('hour', mStatsHourSchema, 'hourly');
@@ -111,14 +108,14 @@ export class MStats {
             pingTestCounter: pingTestCounter,
             interval: null
         };
-        this.hourly.interval = this.createHourInterval(MS_MINUTE, MS_HOUR - (UTC % MS_HOUR) - MS_MINUTE);
+        this.hourly.interval = this.createHourInterval(durations.minute, durations.hour - (UTC % durations.hour) - durations.minute);
 
         setTimeout(() => { // timeout and interval for the next hour and all hours after that
             this.changeHour();
             setInterval(() => {
                 this.changeHour();
-            }, MS_HOUR);
-        }, MS_HOUR - (UTC % MS_HOUR) + 1000);
+            }, durations.hour);
+        }, durations.hour - (UTC % durations.hour) + 1000);
     }
 
     /**
@@ -161,11 +158,11 @@ export class MStats {
      *
      * @private
      * @param {number} timeout interval in which to call saveHour
-     * @param {number} [clearTimeout=MS_HOUR - MS_MINUTE] when to clear interval (default 59min)
+     * @param {number} [clearTimeout=durations.day - durations.minute] when to clear interval (default 59min)
      * @returns
      * @memberof MStats
      */
-    private createHourInterval(timeout: number, clearTimeout: number = MS_HOUR - MS_MINUTE) {
+    private createHourInterval(timeout: number, clearTimeout: number = durations.day - durations.minute) {
         var interval = setInterval(this.saveHour, timeout, this.hourly);
         setTimeout(() => {
             clearInterval(interval);
@@ -182,7 +179,7 @@ export class MStats {
     private async changeHour() {
         var date = new Date();
         var UTC = date.getTime();
-        var day = UTC - (UTC % MS_DAY);
+        var day = UTC - (UTC % durations.day);
         var hour = date.getUTCHours();
 
         await this.saveHour(this.hourly);
@@ -213,7 +210,7 @@ export class MStats {
         this.hourly.doc = new this.hourly.model(hourObject);
         await this.saveHour(this.hourly);
         this.hourly.pingTestCounter = 0; // resets ping test counter because there weren't any ping test save into this document
-        this.hourly.interval = this.createHourInterval(MS_MINUTE); // creates another hour save interval because the other one was cleared
+        this.hourly.interval = this.createHourInterval(durations.minute); // creates another hour save interval because the other one was cleared
         console.log(`MStats hour from ${oldHourObject.hour} to ${hour}`);
     }
 
@@ -244,7 +241,7 @@ export class MStats {
         var allTimeDoc = await this.allTime.findOne();
         if (!allTimeDoc) { // make a new all time doc if no one was found
             mergedObject.from = day;
-            mergedObject.to = day + MS_DAY;
+            mergedObject.to = day + durations.day;
             allTimeDoc = new this.allTime(mergedObject);
             allTimeDoc.markModified('commands');
             allTimeDoc.markModified('filters');
@@ -255,7 +252,7 @@ export class MStats {
         }
         var allTimeObject = this.mergeStats([allTimeDoc.toObject(), dayDoc.toObject()]); // merges day doc with existing all time
         allTimeDoc.set(allTimeObject);
-        allTimeDoc.to = day + MS_DAY; // updates the to timestamp
+        allTimeDoc.to = day + durations.day; // updates the to timestamp
         await allTimeDoc.save();
         console.log('updated all time');
     }
@@ -432,17 +429,17 @@ export class MStats {
      * logs responds time of a command. This doesn't include the ping, but only the time between receiving the message and sending the first response.
      *
      * @param {string} command command name
-     * @param {number} requestTimestamp timestamp when the bot received the message
+     * @param {number} requestTime timestamp when the bot received the message
      * @returns
      * @memberof MStats
      */
-    logResponseTime(command: string, requestTimestamp: number) {
-        var timestamp = new Date().getTime();
+    logResponseTime(command: string, requestTime: [number, number]) {
+        var latency = toNano(process.hrtime(requestTime));
         if (!this.hourly.doc.commands) {
             this.hourly.doc.commands = {};
         }
         if (!this.hourly.doc.commands[command]) {
-            this.hourly.doc.commands[command] = { _errors: 0, _resp: timestamp - requestTimestamp };
+            this.hourly.doc.commands[command] = { _errors: 0, _resp: latency };
             return;
         }
         var uses = 0;
@@ -451,7 +448,7 @@ export class MStats {
             if (subCommand == '_resp' || subCommand == '_errors') continue;
             uses += commandStats[subCommand];
         }
-        var resp = (commandStats._resp * uses) + timestamp - requestTimestamp;
+        var resp = (commandStats._resp * uses) + latency;
         this.hourly.doc.commands[command]._resp = resp / (uses + 1);
     }
 

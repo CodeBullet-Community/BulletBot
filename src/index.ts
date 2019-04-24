@@ -76,7 +76,7 @@ client.on('error', error => {
 
 client.on('message', async message => {
     if (message.author.bot) return;
-    var requestTimestamp = new Date().getTime(); //  gets timestamp to calculate the response time 
+    var requestTime = process.hrtime(); //  gets timestamp to calculate the response time 
     Bot.mStats.logMessageReceived();
     var dm = false; // checks if it's from a dm
     if (!message.guild) {
@@ -87,8 +87,8 @@ client.on('message', async message => {
     if (message.content == '<@' + Bot.client.user.id + '>') {
         message.author.createDM().then(dmChannel => {
             message.channel = dmChannel;
-            Bot.commands.runCommand(message, '', 'help', permLevels.member, true, requestTimestamp);
-            Bot.commands.runCommand(message, 'help', 'help', permLevels.member, true, requestTimestamp);
+            Bot.commands.runCommand(message, '', 'help', permLevels.member, true, requestTime);
+            Bot.commands.runCommand(message, 'help', 'help', permLevels.member, true, requestTime);
         });
         return;
     }
@@ -100,8 +100,10 @@ client.on('message', async message => {
 
     var prefix = await Bot.database.getPrefix(message.guild);
     if (!message.content.startsWith(prefix)) {
-        if (!dm && permLevel == permLevels.member && !message.content.toLowerCase().startsWith(Bot.database.settingsDB.cache.prefix + 'prefix')) { // also checks if it contains ?!prefix
-            Bot.filters.filterMessage(message); // filters message if from guild and if a member send it
+        if (!message.content.toLowerCase().startsWith(Bot.database.settingsDB.cache.prefix + 'prefix')) { // also checks if it contains ?!prefix
+            if (!dm && permLevel == permLevels.member) {
+                Bot.filters.filterMessage(message); // filters message if from guild and if a member send it
+            }
             return;
         }
     }
@@ -113,7 +115,7 @@ client.on('message', async message => {
     var command = message.content.split(' ')[0].slice(prefix.length).toLowerCase(); // gets command name
     var args = message.content.slice(prefix.length + command.length + 1); // gets arguments
 
-    Bot.commands.runCommand(message, args, command, permLevel, dm, requestTimestamp); // runs command
+    Bot.commands.runCommand(message, args, command, permLevel, dm, requestTime); // runs command
 });
 
 client.on('reconnecting', () => {
@@ -141,7 +143,7 @@ client.on('guildDelete', guild => {
     Bot.database.removeGuild(guild.id); // removes all guild related things in database if the bot leaves a guild
 });
 
-client.on('guildMemberRemove', async member => { 
+client.on('guildMemberRemove', async member => {
     var permLevel = await getPermLevel(member); // removes guild member from ranks if he/She was assigned any
     if (permLevel == permLevels.admin) {
         Bot.database.removeFromRank(member.guild.id, 'admins', undefined, member.id);

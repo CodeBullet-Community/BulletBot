@@ -75,7 +75,7 @@ async function createWebhookEmbed(webhookObject: webhookObject) {
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
     try {
         var argIndex = 0;
         if (args.length == 0) {
@@ -90,7 +90,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 var guildDoc = await Bot.database.findGuildDoc(message.guild.id);
                 if (!guildDoc) throw new Error(`Couldn't find guild doc of guild ${message.guild.id} in youtube list command`);
                 if (!guildDoc.webhooks || !guildDoc.webhooks.youtube || !guildDoc.webhooks.youtube.length) {
-                    Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                    Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send('There aren\'t any YouTube webhooks');
                     Bot.mStats.logMessageSend();
                     return;
@@ -98,7 +98,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     for (const webhookID of guildDoc.toObject().webhooks.youtube) {
                         var embed = await createWebhookEmbed((await Bot.youtube.get(webhookID)).toObject());
                         if (webhookID == guildDoc.webhooks.youtube[0])
-                            Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                            Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send(embed);
                         Bot.mStats.logMessageSend();
                     }
@@ -127,7 +127,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 
 
                 var webhookDoc = await Bot.youtube.createWebhook(message.guild.id, input.channel.id, input.YTChannelID, text);
-                Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                Bot.mStats.logResponseTime(command.name, requestTime);
                 Bot.mStats.logCommandUsage(command.name, "add");
                 Bot.mStats.logMessageSend();
                 if (!webhookDoc) {
@@ -145,7 +145,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 
 
                 var webhookDoc = await Bot.youtube.deleteWebhook(message.guild.id, input.channel.id, input.YTChannelID);
-                Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                Bot.mStats.logResponseTime(command.name, requestTime);
                 Bot.mStats.logCommandUsage(command.name, "remove");
                 if (!webhookDoc) {
                     message.channel.send(`Removing webhook was unsuccessful. A webhook to ${input.channel} for https://youtube.com/channel/${input.YTChannelID} doesn't exist.`);
@@ -176,7 +176,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         }
 
                         var webhookDoc = await Bot.youtube.changeWebhook(message.guild.id, input.channel.id, input.YTChannelID, newChannel.id);
-                        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
                         Bot.mStats.logCommandUsage(command.name, 'changeChannel');
                         Bot.mStats.logMessageSend();
                         if (webhookDoc && webhookDoc.channel == newChannel.id) {
@@ -199,7 +199,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                             return;
                         }
                         var webhookDoc = await Bot.youtube.changeWebhook(message.guild.id, input.channel.id, input.YTChannelID, undefined, newYTChannelID);
-                        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
                         Bot.mStats.logCommandUsage(command.name, 'changeFeed');
                         Bot.mStats.logMessageSend();
                         if (webhookDoc && webhookDoc.feed == newYTChannelID) {
@@ -227,7 +227,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         }
 
                         var webhookDoc = await Bot.youtube.changeWebhook(message.guild.id, input.channel.id, input.YTChannelID, undefined, undefined, newText);
-                        Bot.mStats.logResponseTime(command.name, requestTimestamp);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
                         Bot.mStats.logCommandUsage(command.name, 'changeMessage');
                         Bot.mStats.logMessageSend();
                         if (webhookDoc && webhookDoc.message == newText) {

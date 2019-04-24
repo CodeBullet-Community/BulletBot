@@ -4,6 +4,8 @@ import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToMember } from '../../utils/parsers';
+import { getDayDiff, timeFormat } from '../../utils/time';
+import dateFormat = require('dateformat');
 
 function getJoinRank(ID: string, guild: Guild) { // Call it with the ID of the user and the guild
     if (!guild.member(ID)) return; // It will return undefined if the ID is not valid
@@ -29,22 +31,6 @@ function ordinalSuffixOf(i: number) {
         return i + "rd";
     }
     return i + "th";
-}
-
-const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-function pad(n: any, width: number, padding?: string) {
-    padding = padding || '0';
-    n = n + '';
-    return n.length >= width ? n : new Array(width - n.length + 1).join(padding) + n;
-}
-
-function formatDate(date: Date) {
-    return `${days[date.getUTCDay()]} ${pad(date.getUTCDate(), 2)}/${pad(date.getUTCMonth() + 1, 2)}/${pad(date.getUTCFullYear(), 4)} ${pad(date.getUTCHours(), 2)}:${pad(date.getUTCMinutes(), 2)}:${pad(date.getUTCSeconds(), 2)}:${pad(date.getUTCMilliseconds(), 3)}`;
-}
-
-function getDayDiff(timestamp0: number, timestamp1: number) {
-    return Math.round(Math.abs(timestamp0 - timestamp1) / (1000 * 60 * 60 * 24));
 }
 
 function createMemberEmbed(member: GuildMember, permLevel: number) {
@@ -93,12 +79,12 @@ function createMemberEmbed(member: GuildMember, permLevel: number) {
                 },
                 {
                     "name": "Joined",
-                    "value": formatDate(member.joinedAt) + `\n (${getDayDiff(member.joinedTimestamp, date.getTime())} days ago)`,
+                    "value": dateFormat(member.joinedAt, timeFormat) + `\n (${getDayDiff(member.joinedTimestamp, date.getTime())} days ago)`,
                     "inline": true
                 },
                 {
                     "name": "Registered",
-                    "value": formatDate(member.user.createdAt) + `\n (${getDayDiff(member.user.createdTimestamp, date.getTime())} days ago)`,
+                    "value": dateFormat(member.user.createdAt, timeFormat) + `\n (${getDayDiff(member.user.createdTimestamp, date.getTime())} days ago)`,
                     "inline": true
                 },
                 {
@@ -120,9 +106,9 @@ function createMemberEmbed(member: GuildMember, permLevel: number) {
     };
 }
 
-function sendMemberInfo(message: Message, member: GuildMember, permLevel: number, requestTimestamp: number) {
+function sendMemberInfo(message: Message, member: GuildMember, permLevel: number, requestTime: [number,number]) {
     var embed = createMemberEmbed(member, permLevel)
-    Bot.mStats.logResponseTime(command.name, requestTimestamp);
+    Bot.mStats.logResponseTime(command.name, requestTime);
     message.channel.send(embed);
     Bot.mStats.logCommandUsage(command.name, 'self');
     Bot.mStats.logMessageSend();
@@ -130,10 +116,10 @@ function sendMemberInfo(message: Message, member: GuildMember, permLevel: number
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTimestamp: number) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
     try {
         if (args.length === 0) {
-            sendMemberInfo(message, message.member, permLevel, requestTimestamp);
+            sendMemberInfo(message, message.member, permLevel, requestTime);
             return;
         }
 
@@ -143,7 +129,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             Bot.mStats.logMessageSend();
             return;
         }
-        sendMemberInfo(message, member, await getPermLevel(member), requestTimestamp);
+        sendMemberInfo(message, member, await getPermLevel(member), requestTime);
     } catch (e) {
         sendError(message.channel, e);
         Bot.mStats.logError();
