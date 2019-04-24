@@ -176,7 +176,7 @@ export const commandCacheSchema = new mongoose.Schema({
 
 
 export interface mStatsObject {
-    messagesRecieved: number; // all messages recieved
+    messagesReceived: number; // all messages recieved
     messagesSend: number; // all messages send
     logs: number; // total logs created
     guildsJoined: number;
@@ -213,7 +213,7 @@ export interface mStatsObject {
     };
 }
 const mStatsSchemaStruc = {
-    messagesRecieved: Number,
+    messagesReceived: Number,
     messagesSend: Number,
     logs: Number,
     guildsJoined: Number,
