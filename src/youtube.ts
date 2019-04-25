@@ -188,11 +188,10 @@ export class YTWebhookManager {
                     'hub.mode': subscribe ? 'subscribe' : 'unsubscribe',
                     'hub.callback': `http://${callbackURL}:${callbackPort}${callbackPath}/youtube`, // uses in bot-config specified callback URL
                     'hub.topic': 'https://www.youtube.com/xml/feeds/videos.xml?channel_id=' + YTChannelID,
-                    'hub.lease_seconds': 60 * 60 * 24 * 365 * 20 //  20 years
                 }
             }, (error, response, body) => {
                 if (error) reject(error);
-                if (response.statusCode != 204) {
+                if (response.statusCode != 202) {
                     reject('Invalid status code <' + response.statusCode + '>');
                 }
                 resolve(body);

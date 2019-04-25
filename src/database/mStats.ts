@@ -341,7 +341,11 @@ export class MStats {
      * @memberof MStats
      */
     logMessageReceived() {
-        this.hourly.doc.messagesReceived += 1;
+        if (this.hourly.doc.messagesReceived) {
+            this.hourly.doc.messagesReceived += 1;
+        } else {
+            this.hourly.doc.messagesReceived = 1;
+        }
     }
 
     /**
