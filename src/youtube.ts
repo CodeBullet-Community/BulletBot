@@ -81,6 +81,10 @@ export function addYoutubeCatcher(app: express.Application) {
                 res.status(422).json({ code: 'xml_parse_error', details: "Something went wrong while parsing the XML", error });
             } else {
                 var video = result.feed.entry
+                if (!video || !video.updated || !video.published || !video["yt:videoId"] || !video.author || !video["yt:channelId"]) {
+                    res.sendStatus(400);
+                    return;
+                }
                 // checks if a new video was published or a old one was updated
                 var publishUpdateDifference = Date.parse(video.updated) - Date.parse(video.published)
                 const type = (publishUpdateDifference > 300000) ? 'updated' : 'published'
