@@ -14,9 +14,9 @@ import { Bot } from '..';
  * @param {number} [requestTime] if call comes from a command the request timestamp should be passed
  * @param {string} [commandName] if call comes from a command the name of the command should be passed
  */
-export async function sendMentionMessage(guild: Guild, channel: TextChannel, content: string, embed?: any, requestTime?: [number,number], commandName?: string) {
+export async function sendMentionMessage(guild: Guild, channel: TextChannel, content: string, embed?: any, requestTime?: [number, number], commandName?: string) {
     var regex: RegExpExecArray;
-    const roleRegex = /{{role:(\w*)}}/gm;
+    const roleRegex = /{{role:(.*)}}/gm;
     // [ '{{role:[role]}}' , [role object] ]
     var mentions: [string, Role | string][] = [];
     while ((regex = roleRegex.exec(content)) !== null) { // extract all {{role:[role]}} and safe the role and the actual string in array
@@ -38,7 +38,9 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
         content = content.replace(obj[0], obj[1].toString());
     }
     if (requestTime) Bot.mStats.logResponseTime(commandName, requestTime);
-    await channel.send(content, embed);
+    if (!/^\s*$/.test(content)) {
+        await channel.send(content, embed);
+    }
     for (const role of changedRoles) { // resets all mentionable properties
         role.setMentionable(false, 'BulletBot mention revert').catch((reason) => {
             console.error('error while reverting mentionable property:', reason);

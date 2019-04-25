@@ -8,11 +8,11 @@ import { Bot } from '../..';
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
     try {
         var argIndex = 0;
         if (args.length == 0) {
-            message.channel.send(command.embedHelp(message.guild));
+            message.channel.send(await command.embedHelp(message.guild));
             Bot.mStats.logMessageSend();
             return;
         }
