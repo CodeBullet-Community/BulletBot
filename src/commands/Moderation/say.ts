@@ -1,4 +1,4 @@
-import { Message, RichEmbed, Guild } from 'discord.js';
+import { Message, RichEmbed, Guild, TextChannel, GuildChannel, DMChannel, Channel } from 'discord.js';
 import { permLevels } from '../../utils/permissions';
 import { stringToChannel, stringToEmbed, permToString } from '../../utils/parsers';
 import { sendMentionMessage, sendError } from '../../utils/messages';
@@ -23,12 +23,12 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             channel = message.channel;
         } else {
             if (!dm) {
-                if (!channel.permissionsFor(message.member).hasPermission("SEND_MESSAGES")) {
+                if (!channel.permissionsFor(message.member).has("SEND_MESSAGES")) {
                     message.channel.send("You don't have permission to write in " + channel);
                     Bot.mStats.logMessageSend();
                     return;
                 }
-                if (!channel.permissionsFor(message.guild.me).hasPermission("SEND_MESSAGES")) {
+                if (!channel.permissionsFor(message.guild.me).has("SEND_MESSAGES")) {
                     message.channel.send("I don't have permission to write in " + channel);
                     Bot.mStats.logMessageSend();
                     return
