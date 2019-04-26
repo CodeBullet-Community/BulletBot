@@ -158,10 +158,8 @@ export function stringToRole(guild: Guild, text: string) {
 
 /**
  * Parses a string into a Channel object.
- * If the channel name isn't accurate the function will use the stringSimilarity method.
  * Can parse following input:
  * - channel mention
- * - channel name
  * - channel id
  *
  * @export
@@ -177,22 +175,7 @@ export function stringToChannel(guild: Guild, text: string) {
             text = result[1];
         }
     }
-    // by id
-    var channel = guild.channels.get(text);
-    if (!channel) {
-        // by name
-        channel = guild.channels.find(x => x.name == text);
-    }
-    if (!channel) {
-        // closest matching name
-        channel = guild.channels.reduce(function (prev, curr) {
-            return (stringSimilarity(curr.name, text) > stringSimilarity(prev.name, text) ? curr : prev);
-        });
-        if (stringSimilarity(channel.name, text) < 0.4) {
-            channel = undefined;
-        }
-    }
-    return channel;
+    return guild.channels.get(text);
 }
 
 /**
