@@ -132,7 +132,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         sendMemberInfo(message, member, await getPermLevel(member), requestTime);
     } catch (e) {
         sendError(message.channel, e);
-        Bot.mStats.logError();
+        Bot.mStats.logError(e, command.name);
     }
 }
 

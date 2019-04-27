@@ -78,14 +78,14 @@ var command: commandInterface = {
                 // every time the command was successfully executed the logCommandUsage should be called. 
                 //The first argument is always the command name, but the second one is OPTIONAL and is for specifying the sub command usage like 'list' or 'remove'
                 Bot.mStats.logCommandUsage(command.name, 'hello');
-            }else{
+            } else {
                 message.channel.send("bye");
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'bye');
             }
         } catch (e) {
             sendError(message.channel, e);
-            Bot.mStats.logError();
+            Bot.mStats.logError(e, command.name);
         }
     }
 };

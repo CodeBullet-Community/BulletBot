@@ -247,7 +247,7 @@ export function permToString(permLevel: number) {
         case permLevels.botMaster:
             return 'my master';
         default:
-            Bot.mStats.logError();
+            Bot.mStats.logError(new Error('unknown permission level: ' + permLevel));
             console.warn('unknown permission level: ' + permLevel);
             return 'Unknown PermissionLevel';
     }

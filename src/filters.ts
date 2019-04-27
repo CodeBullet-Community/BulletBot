@@ -160,7 +160,7 @@ export class Filters {
             }
         } catch (e) {
             sendError(message.channel, { error: "Error occurred at filterMessage", e });
-            Bot.mStats.logError();
+            Bot.mStats.logError(e);
         }
     }
 

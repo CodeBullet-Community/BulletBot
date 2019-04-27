@@ -1,7 +1,8 @@
 import mongoose = require('mongoose');
-import { mStatsAllTimeDoc, mStatsDayDoc, mStatsHourDoc, mStatsAllTimeSchema, mStatsDaySchema, mStatsHourSchema, mStatsHourObject, mStatsObject } from './schemas';
+import { mStatsAllTimeDoc, mStatsDayDoc, mStatsHourDoc, mStatsAllTimeSchema, mStatsDaySchema, mStatsHourSchema, mStatsHourObject, mStatsObject, errorDoc, errorSchema } from './schemas';
 import { Bot } from '..';
 import { durations, toNano } from '../utils/time';
+import crypto = require('crypto');
 
 /**
  * Manages all connections and documents in the mStats database. It's a very independent class with only minimal actual input (besides the action logging) required.
@@ -39,6 +40,13 @@ export class MStats {
         pingTestCounter: number;
         interval: NodeJS.Timeout;
     }
+    /**
+     * model for errors collection
+     *
+     * @type {mongoose.Model<errorDoc>}
+     * @memberof MStats
+     */
+    errors: mongoose.Model<errorDoc>;
 
     /**
      * Creates an instance of MStats, connects to the database and starts all timers. It calls the private async init function.
@@ -55,6 +63,7 @@ export class MStats {
         });
         this.allTime = this.connection.model('allTime', mStatsAllTimeSchema, 'allTime');
         this.daily = this.connection.model('day', mStatsDaySchema, 'daily');
+        this.errors = this.connection.model('error', errorSchema, 'errors');
         this.init();
     }
 
@@ -129,27 +138,31 @@ export class MStats {
         model: mongoose.Model<mStatsHourDoc>; doc: mStatsHourDoc;
         pingTestCounter: number; interval: NodeJS.Timeout;
     }) {
-        // ping stats
-        var ping = hourly.doc.toObject().ping;
-        var clientAPI = Math.round(Bot.client.ping);
-        var cluster = await Bot.database.ping();
-        hourly.doc.ping.clientAPI = ((ping.clientAPI * hourly.pingTestCounter) + clientAPI) / (hourly.pingTestCounter + 1);
-        hourly.doc.ping.cluster = ((ping.cluster * hourly.pingTestCounter) + cluster) / (hourly.pingTestCounter + 1);
-        hourly.pingTestCounter++;
+        try {
+            // ping stats
+            var ping = hourly.doc.toObject().ping;
+            var clientAPI = Math.round(Bot.client.ping);
+            var cluster = await Bot.database.ping();
+            hourly.doc.ping.clientAPI = ((ping.clientAPI * hourly.pingTestCounter) + clientAPI) / (hourly.pingTestCounter + 1);
+            hourly.doc.ping.cluster = ((ping.cluster * hourly.pingTestCounter) + cluster) / (hourly.pingTestCounter + 1);
+            hourly.pingTestCounter++;
 
-        // total stats
-        hourly.doc.guildsTotal = Bot.client.guilds.size;
-        if (!hourly.doc.webhooks) hourly.doc.webhooks = {};
-        if (!hourly.doc.webhooks.youtube) {
-            hourly.doc.webhooks.youtube = { total: 0, created: 0, deleted: 0, changed: 0 };
+            // total stats
+            hourly.doc.guildsTotal = Bot.client.guilds.size;
+            if (!hourly.doc.webhooks) hourly.doc.webhooks = {};
+            if (!hourly.doc.webhooks.youtube) {
+                hourly.doc.webhooks.youtube = { total: 0, created: 0, deleted: 0, changed: 0 };
+            }
+            hourly.doc.webhooks.youtube.total = await Bot.youtube.webhooks.countDocuments().exec();
+
+            // marks nested objects as modified so they also get saved
+            hourly.doc.markModified('commands');
+            hourly.doc.markModified('filters');
+            hourly.doc.markModified('webhooks');
+            return await hourly.doc.save();
+        } catch (e) {
+            console.error("from saveHour():", e, hourly);
         }
-        hourly.doc.webhooks.youtube.total = await Bot.youtube.webhooks.countDocuments().exec();
-
-        // marks nested objects as modified so they also get saved
-        hourly.doc.markModified('commands');
-        hourly.doc.markModified('filters');
-        hourly.doc.markModified('webhooks');
-        return hourly.doc.save();
     }
 
     /**
@@ -158,11 +171,11 @@ export class MStats {
      *
      * @private
      * @param {number} timeout interval in which to call saveHour
-     * @param {number} [clearTimeout=durations.day - durations.minute] when to clear interval (default 59min)
+     * @param {number} [clearTimeout=durations.hour - durations.minute] when to clear interval (default 59min)
      * @returns
      * @memberof MStats
      */
-    private createHourInterval(timeout: number, clearTimeout: number = durations.day - durations.minute) {
+    private createHourInterval(timeout: number, clearTimeout: number = durations.hour - durations.minute) {
         var interval = setInterval(this.saveHour, timeout, this.hourly);
         setTimeout(() => {
             clearInterval(interval);
@@ -254,7 +267,7 @@ export class MStats {
         allTimeDoc.set(allTimeObject);
         allTimeDoc.to = day + durations.day; // updates the to timestamp
         await allTimeDoc.save();
-        console.log('updated all time');
+        console.log(`updated all time. ${hourObjects.length} hours recorded for day ${day}`);
     }
 
     /**
@@ -385,12 +398,15 @@ export class MStats {
     }
 
     /**
-     * logs an error and also and error in a specific command when specified
-     *
+     * logs an error and also and error in a specific command when specified.
+     * Groups same errors together.
+     *  
+     * @param {Error} error the actual error
      * @param {string} [command] command name
+     * @returns the updated/created error doc
      * @memberof MStats
      */
-    logError(command?: string) {
+    async logError(error: Error, command?: string) {
         this.hourly.doc.errorsTotal += 1;
         if (command) {
             if (!this.hourly.doc.commands) {
@@ -402,6 +418,24 @@ export class MStats {
                 this.hourly.doc.commands[command]._errors += 1;
             }
         }
+
+        let date = new Date();
+        var stringifiedError = JSON.stringify(error, Object.getOwnPropertyNames(error));
+        var md5 = crypto.createHash('md5').update(stringifiedError).digest('hex');
+        let errorDoc = await this.errors.findOne({ md5: md5 }).exec();
+        if (!errorDoc) {
+            errorDoc = new this.errors({
+                first: date.getTime(),
+                last: date.getTime(),
+                md5: md5,
+                count: 1,
+                error: JSON.parse(stringifiedError)
+            });
+        } else {
+            errorDoc.last = date.getTime();
+            errorDoc.count += 1;
+        }
+        return await errorDoc.save();
     }
 
     /**

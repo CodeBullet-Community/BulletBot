@@ -49,7 +49,7 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
     for (const role of changedRoles) { // resets all mentionable properties
         role.setMentionable(false, 'BulletBot mention revert').catch((reason) => {
             console.error('error while reverting mentionable property:', reason);
-            Bot.mStats.logError();
+            Bot.mStats.logError(new Error('error while reverting mentionable property:'+ reason));
         });
     }
 }

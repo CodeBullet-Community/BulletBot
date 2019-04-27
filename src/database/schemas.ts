@@ -270,10 +270,27 @@ export interface mStatsHourObject extends mStatsObject {
     hour: number;
 }
 export interface mStatsHourDoc extends mongoose.Document, mStatsDayObject { }
-export var mStatsHourSchemaStruc: any = mStatsSchemaStruc;
+var mStatsHourSchemaStruc: any = mStatsSchemaStruc;
 mStatsHourSchemaStruc.day = Number;
 mStatsHourSchemaStruc.hour = Number;
 export const mStatsHourSchema = new mongoose.Schema(mStatsHourSchemaStruc);
+
+// error
+export interface errorObject {
+    first: number;
+    last: number;
+    md5: string;
+    count: number;
+    error: any;
+}
+export interface errorDoc extends mongoose.Document, errorObject { }
+export const errorSchema = new mongoose.Schema({
+    first: Number,
+    last: Number,
+    md5: String,
+    count: Number,
+    error: mongoose.Schema.Types.Mixed
+})
 
 // youtube webhook
 export interface webhookObject {

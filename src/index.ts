@@ -31,11 +31,17 @@ require('console-stamp')(console, {
     pattern: 'dd/mm/yyyy HH:MM:ss.l'
 });
 
-// log uncaught exceptions
-process.on('uncaughtException', function (err) {
+process.on('uncaughtException', (error) => {
     if (Bot.mStats)
-        Bot.mStats.logError();
-    console.error(err);
+        Bot.mStats.logError(error);
+    console.error(error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    var error = new Error('Unhandled Rejection. Reason: ' + reason);
+    if (Bot.mStats)
+        Bot.mStats.logError(error);
+    console.error(error);
 });
 
 /**
@@ -104,7 +110,7 @@ client.on('ready', () => {
 });
 
 client.on('error', error => {
-    Bot.mStats.logError();
+    Bot.mStats.logError(error);
     console.error('from client.on():', error);
 });
 

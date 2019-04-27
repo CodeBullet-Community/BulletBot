@@ -114,7 +114,7 @@ export class Commands {
     loadCommands(dir: string, structureObject: any) {
         fs.readdir(dir, (err, files) => {
             if (err) {
-                Bot.mStats.logError();
+                Bot.mStats.logError(err);
                 console.error(err);
             }
 

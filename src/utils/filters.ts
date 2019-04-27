@@ -55,11 +55,11 @@ export async function executeAction(message: Message, action: filterAction) {
                 return true;
             default:
                 console.warn('unknown action:' + action);
-                Bot.mStats.logError();
+                Bot.mStats.logError(new Error('unknown action:' + action));
                 return false;
         }
     } catch (e) {
-        Bot.mStats.logError();
+        Bot.mStats.logError(e);
         return false;
     }
 }

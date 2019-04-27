@@ -16,7 +16,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         Bot.mStats.logCommandUsage(command.name);
     } catch (e) {
         sendError(message.channel, e);
-        Bot.mStats.logError();
+        Bot.mStats.logError(e, command.name);
     }
 }
 
