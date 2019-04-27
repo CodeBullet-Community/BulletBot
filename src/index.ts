@@ -1,5 +1,4 @@
 import * as discord from 'discord.js';
-require('console-stamp')(console, { pattern: 'dd/mm/yyyy HH:MM:ss.l' });
 import exitHook = require('exit-hook');
 import { Commands } from './commands';
 import { Filters } from './filters';
@@ -12,6 +11,32 @@ import { botToken, DBURI, callbackPort } from './bot-config.json';
 import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
+
+// add console logging info
+require('console-stamp')(console, {
+    metadata: function () {
+        var orig = Error.prepareStackTrace;
+        Error.prepareStackTrace = function (_, stack) {
+            return stack;
+        };
+        var err = new Error;
+        Error.captureStackTrace(err, arguments.callee);
+        var stack: any = err.stack;
+        Error.prepareStackTrace = orig;
+
+        var output = `[${stack[1].getFileName().split("\\").pop()}:${stack[1].getFunctionName()}:${stack[1].getLineNumber()}]   `;
+        for (; output.length < 25; output += ' ') { }
+        return output;
+    },
+    pattern: 'dd/mm/yyyy HH:MM:ss.l'
+});
+
+// log uncaught exceptions
+process.on('uncaughtException', function (err) {
+    if (Bot.mStats)
+        Bot.mStats.logError();
+    console.error(err);
+});
 
 /**
  * static class that holds objects. This is made so you can call everything from everywhere
