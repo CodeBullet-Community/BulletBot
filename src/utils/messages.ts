@@ -1,4 +1,4 @@
-import { Guild, Role, TextChannel, DMChannel, GroupDMChannel } from 'discord.js';
+import { Guild, Role, TextChannel, DMChannel, GroupDMChannel, Message } from 'discord.js';
 import { stringToRole } from './parsers';
 import { Bot } from '..';
 
@@ -11,10 +11,11 @@ import { Bot } from '..';
  * @param {TextChannel} channel channel where message should be send
  * @param {string} content message content
  * @param {*} [embed] optional embed object
+ * @param {Message} [editMessage] message to edit
  * @param {number} [requestTime] if call comes from a command the request timestamp should be passed
  * @param {string} [commandName] if call comes from a command the name of the command should be passed
  */
-export async function sendMentionMessage(guild: Guild, channel: TextChannel, content: string, embed?: any, requestTime?: [number, number], commandName?: string) {
+export async function sendMentionMessage(guild: Guild, channel: TextChannel, content: string, embed?: any, editMessage?: Message, requestTime?: [number, number], commandName?: string) {
     var regex: RegExpExecArray;
     const roleRegex = /{{role:(.*)}}/gm;
     // [ '{{role:[role]}}' , [role object] ]
@@ -39,7 +40,11 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
     }
     if (requestTime) Bot.mStats.logResponseTime(commandName, requestTime);
     if (!/^\s*$/.test(content)) {
-        await channel.send(content, embed);
+        if (editMessage) {
+            await editMessage.edit(content, embed ? embed : { embed: {} });
+        } else {
+            await channel.send(content, embed);
+        }
     }
     for (const role of changedRoles) { // resets all mentionable properties
         role.setMentionable(false, 'BulletBot mention revert').catch((reason) => {

@@ -1,4 +1,4 @@
-import { Message, RichEmbed, Guild, TextChannel, GuildChannel, DMChannel, Channel } from 'discord.js';
+import { Message, RichEmbed, Guild, TextChannel, GuildChannel, DMChannel, Channel, GroupDMChannel } from 'discord.js';
 import { permLevels } from '../../utils/permissions';
 import { stringToChannel, stringToEmbed, permToString } from '../../utils/parsers';
 import { sendMentionMessage, sendError } from '../../utils/messages';
@@ -22,24 +22,45 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         if (!channel) {
             channel = message.channel;
         } else {
-            if (!dm) {
-                if (!channel.permissionsFor(message.member).has("SEND_MESSAGES")) {
-                    message.channel.send("You don't have permission to write in " + channel);
-                    Bot.mStats.logMessageSend();
-                    return;
-                }
-                if (!channel.permissionsFor(message.guild.me).has("SEND_MESSAGES")) {
-                    message.channel.send("I don't have permission to write in " + channel);
-                    Bot.mStats.logMessageSend();
-                    return
-                }
+            if (!channel.permissionsFor(message.member).has("SEND_MESSAGES")) {
+                message.channel.send("You don't have permission to write in " + channel);
+                Bot.mStats.logMessageSend();
+                return;
             }
             if (!channel.send) {
                 message.channel.send("I can't write in a voice channel");
                 Bot.mStats.logMessageSend();
-                return
+                return;
             }
             argIndex++;
+        }
+        if (!channel.permissionsFor(message.guild.me).has("SEND_MESSAGES")) {
+            message.channel.send("I don't have permission to write in " + channel);
+            Bot.mStats.logMessageSend();
+            return;
+        }
+
+        let editMessage: Message;
+        if (argsArray[argIndex] == 'edit') {
+            if (isNaN(Number(argsArray[argIndex + 1]))) {
+                message.channel.send(`Couldn't parse the message id`);
+                Bot.mStats.logMessageSend();
+                return;
+            } else {
+                try {
+                    editMessage = await channel.fetchMessage(argsArray[argIndex + 1]);
+                } catch (e) {
+                    message.channel.send(`Couldn't find message with ${argsArray[argIndex + 1]} as ID`);
+                    Bot.mStats.logMessageSend();
+                    return;
+                }
+                if (editMessage.author.id != Bot.client.user.id) {
+                    message.channel.send(`The specified message isn't my message`);
+                    Bot.mStats.logMessageSend();
+                    return;
+                }
+                argIndex += 2;
+            }
         }
 
         var embed = false;
@@ -67,13 +88,21 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         }
 
         if (content && content.includes("{{role:")) {
-            sendMentionMessage(message.guild, channel, content, embedObject, requestTime, command.name);
+            sendMentionMessage(message.guild, channel, content, embedObject, editMessage, requestTime, command.name);
         } else {
             Bot.mStats.logResponseTime(command.name, requestTime);
-            channel.send(content, embedObject);
+            if (editMessage) {
+                editMessage.edit(content, embedObject ? embedObject : { embed: {} });
+            } else {
+                channel.send(content, embedObject);
+            }
         }
         Bot.mStats.logMessageSend();
-        Bot.mStats.logCommandUsage(command.name, embed ? "embed" : "normal");
+        if (editMessage) {
+            Bot.mStats.logCommandUsage(command.name, embed ? "editEmbed" : "editNormal");
+        } else {
+            Bot.mStats.logCommandUsage(command.name, embed ? "embed" : "normal");
+        }
     } catch (e) {
         sendError(message.channel, e);
         Bot.mStats.logError();
@@ -116,11 +145,11 @@ command.embedHelp = async function (guild: Guild) {
                 },
                 {
                     'name': 'Usage:',
-                    'value': '{command} [channel] [message]\n{command} [channel] embed [embed json]'.replace(/\{command\}/g, prefix + command.name)
+                    'value': '{command} [channel] [message]\n{command} [channel] embed [embed json]\n{command} [channel] edit [message id] [new message]\n{command} [channel] edit [message id] embed [new embed json]'.replace(/\{command\}/g, prefix + command.name)
                 },
                 {
                     'name': 'Example:',
-                    'value': '{command} Hey I\'m BulletBot\n{command} #general Hey I\'m BulletBot\n{command} #announcement embed [some embed json text]'.replace(/\{command\}/g, prefix + command.name)
+                    'value': '{command} Hey I\'m BulletBot\n{command} #general Hey I\'m BulletBot\n{command} #announcement embed [some embed json text]\n{command} #announcement edit 571607771657535490 I\m not BulletBot'.replace(/\{command\}/g, prefix + command.name)
                 }
             ]
         }
