@@ -9,7 +9,7 @@ import dateFormat = require('dateformat');
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
     try {
         var date = new Date();
         var age = getDayDiff(message.guild.createdTimestamp, date.getTime());
@@ -76,7 +76,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     },
                     {
                         "name": "Super Average Join Rate",
-                        "value": `${(memberCount / age).toFixed(2)} a day\n${(memberCount / age * 7).toFixed(2)} a week\n${(memberCount / age * 30).toFixed(2)} a month`,
+                        "value": `${(memberCount / (1 || age)).toFixed(2)} a day\n${(memberCount / (1 || age) * 7).toFixed(2)} a week\n${(memberCount / (1 || age) * 30).toFixed(2)} a month`,
                         "inline": true
                     }
                 ]
