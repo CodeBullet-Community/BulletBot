@@ -109,9 +109,15 @@ client.on('ready', () => {
     console.info('Bot is ready');
 });
 
-client.on('error', error => {
+client.on('error', (error: any) => {
     Bot.mStats.logError(error);
     console.error('from client.on():', error);
+    if (error.target)
+        console.log(error.target);
+    if (error.target.WebSocket)
+        console.log(error.target.WebSocket);
+    if (error.target._events)
+        console.log(error.target.WebSocket._events);
 });
 
 client.on('message', async message => {
