@@ -7,10 +7,10 @@ import { permToString, stringToMember } from '../../utils/parsers';
 import { getDayDiff, timeFormat } from '../../utils/time';
 import dateFormat = require('dateformat');
 
-function getJoinRank(ID: string, guild: Guild) { // Call it with the ID of the user and the guild
+async function getJoinRank(ID: string, guild: Guild) { // Call it with the ID of the user and the guild
     if (!guild.member(ID)) return; // It will return undefined if the ID is not valid
 
-    let arr = guild.members.array(); // Create an array with every member
+    let arr = (await guild.fetchMembers()).members.array(); // Create an array with every member
     arr.sort((a, b) => a.joinedTimestamp - b.joinedTimestamp); // Sort them by join date
 
     for (let i = 0; i < arr.length; i++) { // Loop though every element
@@ -33,7 +33,7 @@ function ordinalSuffixOf(i: number) {
     return i + "th";
 }
 
-function createMemberEmbed(member: GuildMember, permLevel: number) {
+async function createMemberEmbed(member: GuildMember, permLevel: number) {
     var date = new Date();
     var roles = '';
     var roleArray = member.roles.array();
@@ -45,7 +45,7 @@ function createMemberEmbed(member: GuildMember, permLevel: number) {
         roles = 'member has no roles';
     }
 
-    var joinRank: any = getJoinRank(member.id, member.guild) + 1;
+    var joinRank: any = (await getJoinRank(member.id, member.guild)) + 1;
     if (joinRank == 1) {
         joinRank = 'oldest member';
     } else {
@@ -106,8 +106,8 @@ function createMemberEmbed(member: GuildMember, permLevel: number) {
     };
 }
 
-function sendMemberInfo(message: Message, member: GuildMember, permLevel: number, requestTime: [number,number]) {
-    var embed = createMemberEmbed(member, permLevel)
+async function sendMemberInfo(message: Message, member: GuildMember, permLevel: number, requestTime: [number, number]) {
+    var embed = await createMemberEmbed(member, permLevel)
     Bot.mStats.logResponseTime(command.name, requestTime);
     message.channel.send(embed);
     Bot.mStats.logCommandUsage(command.name, 'self');
@@ -116,10 +116,10 @@ function sendMemberInfo(message: Message, member: GuildMember, permLevel: number
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
     try {
         if (args.length === 0) {
-            sendMemberInfo(message, message.member, permLevel, requestTime);
+            await sendMemberInfo(message, message.member, permLevel, requestTime);
             return;
         }
 
@@ -129,7 +129,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             Bot.mStats.logMessageSend();
             return;
         }
-        sendMemberInfo(message, member, await getPermLevel(member), requestTime);
+        await sendMemberInfo(message, member, await getPermLevel(member), requestTime);
     } catch (e) {
         sendError(message.channel, e);
         Bot.mStats.logError(e, command.name);
