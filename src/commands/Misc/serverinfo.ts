@@ -13,7 +13,8 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
     try {
         var date = new Date();
         var age = getDayDiff(message.guild.createdTimestamp, date.getTime());
-        var memberCount = message.guild.members.size;
+        var memberCount = message.guild.memberCount;
+        var botCount = message.guild.members.filter(member => member.user.bot).size;
         var embed = {
             "embed": {
                 "color": Bot.database.settingsDB.cache.defaultEmbedColor,
@@ -51,12 +52,12 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     },
                     {
                         "name": "Members",
-                        "value": `${memberCount}\n(${message.guild.members.filter(member => !member.user.bot).size} humans)`,
+                        "value": `${memberCount}\n(${memberCount - botCount} humans)`,
                         "inline": true
                     },
                     {
                         "name": "Bots",
-                        "value": message.guild.members.filter(member => member.user.bot).size,
+                        "value": botCount,
                         "inline": true
                     },
                     {
