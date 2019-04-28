@@ -293,6 +293,7 @@ export const webhookSchema = new mongoose.Schema({
 // global settings
 export interface globalSettingsObject {
     prefix: string;
+    status: string;
     defaultEmbedColor: number;
     helpEmbedColor: number;
     botMasters: [string];
@@ -312,6 +313,7 @@ export interface globalSettingsObject {
 export interface globalSettingsDoc extends mongoose.Document, globalSettingsObject { }
 export const globalSettingsSchema = new mongoose.Schema({
     prefix: String,
+    status: String,
     defaultEmbedColor: Number,
     helpEmbedColor: Number,
     botMasters: [String],

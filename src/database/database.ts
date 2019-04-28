@@ -2,7 +2,7 @@ import mongoose = require('mongoose');
 import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval } from '../bot-config.json';
-import { Guild, Role } from 'discord.js';
+import { Guild, Role, ClientUser } from 'discord.js';
 import { Bot } from '..';
 import { toNano } from '../utils/time';
 
@@ -110,6 +110,16 @@ export class Database {
             console.warn('global settings doc not found');
             return;
         }
+
+        if(settingsDB.cache) {
+            if(Bot.client) {
+                Bot.client.user.setActivity(settingsDoc.toObject().status)
+            }
+            else {
+                Bot.client.user.setActivity("I'm ready!")
+            }
+        }
+
         settingsDB.cache = settingsDoc.toObject();
     }
 
