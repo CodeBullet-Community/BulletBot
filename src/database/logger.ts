@@ -48,7 +48,10 @@ export class Logger {
      */
     constructor(URI: string, authDB: string) {
         var mainCon = mongoose.createConnection(URI + '/main' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true });
-        mainCon.on('error', console.error.bind(console, 'connection error:'));
+        mainCon.on('error', error => {
+            console.error('connection error:', error);
+            Bot.mStats.logError(error);
+        });
         mainCon.once('open', function () {
             console.log('logger connected to /main database');
         });

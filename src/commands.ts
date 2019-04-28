@@ -113,10 +113,7 @@ export class Commands {
      */
     loadCommands(dir: string, structureObject: any) {
         fs.readdir(dir, (err, files) => {
-            if (err) {
-                Bot.mStats.logError(err);
-                console.error(err);
-            }
+            if (err) console.error(err);
 
             var folders = files.filter(f => fs.lstatSync(dir + f).isDirectory()); // filters out all non folder paths and calls it self for all remaining paths
             folders.forEach((f, i) => {

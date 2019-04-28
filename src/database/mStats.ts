@@ -57,7 +57,10 @@ export class MStats {
      */
     constructor(URI: string, authDB: string) {
         this.connection = mongoose.createConnection(URI + '/mStats' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true });
-        this.connection.on('error', console.error.bind(console, 'connection error:'));
+        this.connection.on('error', error => {
+            console.error('connection error:', error);
+            Bot.mStats.logError(error);
+        });
         this.connection.once('open', function () {
             console.log('connected to /mStats database');
         });
@@ -162,6 +165,7 @@ export class MStats {
             return await hourly.doc.save();
         } catch (e) {
             console.error("from saveHour():", e, hourly);
+            Bot.mStats.logError(e);
         }
     }
 

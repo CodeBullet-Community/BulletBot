@@ -158,7 +158,10 @@ export class YTWebhookManager {
      */
     constructor(URI: string, authDB: string) {
         this.connection = mongoose.createConnection(URI + '/webhooks' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true });
-        this.connection.on('error', console.error.bind(console, 'connection error:'));
+        this.connection.on('error', error => {
+            console.error('connection error:', error);
+            Bot.mStats.logError(error);
+        });
         this.connection.once('open', function () {
             console.log('connected to /webhooks database');
         });
@@ -221,6 +224,7 @@ export class YTWebhookManager {
                 this.subToChannel(YTChannelID, true);
             } catch (e) {
                 console.error('error while subscribing to youtube webhook:', e);
+                Bot.mStats.logError(e);
                 return null;
             }
         }
@@ -264,6 +268,7 @@ export class YTWebhookManager {
                 this.subToChannel(YTChannelID, false);
             } catch (e) {
                 console.error('error while unsubscribing to youtube webhook:', e);
+                Bot.mStats.logError(e);
                 return null;
             }
         }
