@@ -4,6 +4,8 @@ This is a bot for the [Code Bullet and Co](https://discord.gg/7Z5d4HF) discord s
 
 ## Coding style
 
+When planning a feature, keep in mind, that the bot should be stateless. AKA all data should be stored in the database, so the bot can crash or shutdown at any time and resume it's work later like before.
+
 ### General guide
 
 As a style guide we use [this](https://github.com/basarat/typescript-book/blob/master/docs/styleguide/styleguide.md) guide from basarat and his typescript book.
