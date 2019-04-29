@@ -106,7 +106,7 @@ exitHook(() => {
 });
 
 client.on('ready', () => {
-    console.info('Bot is ready');
+    Bot.client.user.setActivity("I'm ready!")
 });
 
 client.on('error', (error: any) => {
