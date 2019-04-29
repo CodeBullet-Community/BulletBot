@@ -1,4 +1,5 @@
 import mongoose = require('mongoose');
+import { PresenceData } from 'discord.js';
 
 // guild
 export interface guildObject {
@@ -310,7 +311,7 @@ export const webhookSchema = new mongoose.Schema({
 // global settings
 export interface globalSettingsObject {
     prefix: string;
-    status: string;
+    presence: PresenceData;
     defaultEmbedColor: number;
     helpEmbedColor: number;
     botMasters: [string];
@@ -330,7 +331,15 @@ export interface globalSettingsObject {
 export interface globalSettingsDoc extends mongoose.Document, globalSettingsObject { }
 export const globalSettingsSchema = new mongoose.Schema({
     prefix: String,
-    status: String,
+    presence: {
+        status: { type: String, required: false },
+        afk: { type: Boolean, required: false },
+        game: {
+            name: { type: String, required: false },
+            url: { type: String, required: false },
+            type: { type: String, required: false }
+        }
+    },
     defaultEmbedColor: Number,
     helpEmbedColor: Number,
     botMasters: [String],

@@ -117,16 +117,17 @@ export class Database {
             return;
         }
 
-        if(settingsDB.cache) {
-            if(Bot.client) {
-                Bot.client.user.setActivity(settingsDoc.toObject().status)
-            }
-            else {
-                Bot.client.user.setActivity("I'm ready!")
+        var settingsObject: globalSettingsObject = settingsDoc.toObject()
+        if (settingsDB.cache && (settingsObject.presence != settingsDB.cache.presence || !settingsObject.presence)) {
+            if (settingsObject.presence && (settingsObject.presence.status || settingsObject.presence.game || settingsObject.presence.afk)) {
+                Bot.client.user.setPresence(settingsObject.presence);
+            } else {
+                Bot.client.user.setActivity(undefined);
+                Bot.client.user.setStatus('online');
             }
         }
 
-        settingsDB.cache = settingsDoc.toObject();
+        settingsDB.cache = settingsObject;
     }
 
     /**
