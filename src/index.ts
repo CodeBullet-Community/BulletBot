@@ -7,10 +7,11 @@ import { Catcher } from './catcher';
 import { Logger } from './database/logger';
 import { Database } from './database/database';
 import { MStats } from './database/mStats';
-import { botToken, DBURI, callbackPort } from './bot-config.json';
+import { botToken, DBURI, callbackPort, crashProof } from './bot-config.json';
 import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
+import fs = require('fs');
 
 // add console logging info
 require('console-stamp')(console, {
@@ -104,6 +105,10 @@ exitHook(() => {
     while (until > new Date().getTime()) { }
     console.log("cached data saved");
 });
+
+setInterval(() => {
+    fs.writeFileSync(crashProof.file, Date.now());
+}, crashProof.interval);
 
 client.on('ready', () => {
     Bot.client.user.setActivity('I\'m ready!');
