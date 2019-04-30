@@ -7,7 +7,7 @@ import { Catcher } from './catcher';
 import { Logger } from './database/logger';
 import { Database } from './database/database';
 import { MStats } from './database/mStats';
-import { botToken, DBURI, callbackPort, crashProof } from './bot-config.json';
+import { botToken, DBURI, callback, crashProof } from './bot-config.json';
 import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
@@ -95,7 +95,7 @@ var client = new discord.Client();
 var commands = new Commands(__dirname + '/commands/');
 var filters = new Filters(__dirname + '/filters/');
 var youtube = new YTWebhookManager(DBURI, 'admin');
-var catcher = new Catcher(callbackPort);
+var catcher = new Catcher(callback.port);
 Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger);
 
 exitHook(() => {

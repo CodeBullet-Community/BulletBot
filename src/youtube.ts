@@ -2,7 +2,7 @@ import mongoose = require('mongoose');
 import { webhookDoc, webhookSchema, webhookObject } from './database/schemas';
 import { google } from "googleapis";
 import { Bot } from '.';
-import { googleAPIKey, callbackPath, callbackPort, callbackURL } from "./bot-config.json";
+import { googleAPIKey, callback } from "./bot-config.json";
 import request = require("request");
 import express = require("express");
 import bodyParser = require("body-parser");
@@ -67,13 +67,13 @@ export async function YTChannelExists(YTChannelID: string) {
  */
 export function addYoutubeCatcher(app: express.Application) {
     // middelware parser
-    app.use(callbackPath + '/youtube', bodyParser.text({ type: 'application/atom+xml' }));
+    app.use(callback.path + '/youtube', bodyParser.text({ type: 'application/atom+xml' }));
     // get layer
-    app.get(callbackPath + '/youtube', (req, res) => {
+    app.get(callback.path + '/youtube', (req, res) => {
         res.status(200).send(req.query['hub.challenge']);
     });
     // post layer
-    app.post(callbackPath + '/youtube', function (req, res) {
+    app.post(callback.path + '/youtube', function (req, res) {
         // parse xml body
         xmlParser.parseString(req.body, async (error, result) => {
             // checks if error occurred and if so return a 422 code 
@@ -193,7 +193,7 @@ export class YTWebhookManager {
             request.post('https://pubsubhubbub.appspot.com/subscribe', {
                 form: {
                     'hub.mode': subscribe ? 'subscribe' : 'unsubscribe',
-                    'hub.callback': `http://${callbackURL}:${callbackPort}${callbackPath}/youtube`, // uses in bot-config specified callback URL
+                    'hub.callback': `http://${callback.URL}:${callback.port}${callback.path}/youtube`, // uses in bot-config specified callback URL
                     'hub.topic': 'https://www.youtube.com/xml/feeds/videos.xml?channel_id=' + YTChannelID,
                 }
             }, (error, response, body) => {

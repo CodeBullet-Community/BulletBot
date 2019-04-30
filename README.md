@@ -32,10 +32,16 @@ Jet is using Typescript 3.4.1 but any version will probably work if you use the 
     "botToken": "[bot token here]",
     "DBURI": "mongodb://localhost", // URI to mongodb cluster
     "googleAPIKey": "[google api key for youtube_v3]",
-    "globalUpdateInterval": 60000,
-    "callbackURL": "[callback ip address for webhook]",
-    "callbackPort": 8020, // port in callback ip
-    "callbackPath": "/webhooks", // results in http://[ip]:[port]/webhooks/[service]
+    "globalUpdateInterval": 10000,
+    "crashProof": {
+        "file": "BulletBot\\crashProof.time", // the bot will write the current timestamp to this file
+        "interval": 10000
+    },
+    "callback": {
+        "URL": "[callback ip address for webhook]",
+        "port": 8080, // port in callback ip
+        "path": "/webhooks", // results in http://[ip]:[port]/webhooks/[service]
+    },
     "youtube": {
         "logo": "https://www.android-user.de/wp-content/uploads/2018/07/icon-youtobe.png",
         "color": 16711680,
