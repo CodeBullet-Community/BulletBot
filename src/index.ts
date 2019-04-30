@@ -25,7 +25,7 @@ require('console-stamp')(console, {
         var stack: any = err.stack;
         Error.prepareStackTrace = orig;
 
-        var output = `[${stack[1].getFileName().split("\\").pop()}:${stack[1].getFunctionName()}:${stack[1].getLineNumber()}]   `;
+        var output = `[${stack[1].getFileName().split(/[\\\/]/).pop()}:${stack[1].getFunctionName()}:${stack[1].getLineNumber()}]   `;
         for (; output.length < 25; output += ' ') { }
         return output;
     },
