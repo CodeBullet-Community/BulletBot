@@ -22,6 +22,13 @@ All arguments in utils functions and database functions (so all functions define
  6. message / messageID
  7. others
 
+## Build Docs
+
+install typedoc with `npm install --global typedoc` and then run 
+```
+typedoc --out [path to output folder] .\src\ --tsconfig .\tsconfig.json --mode file --name BulletBot --readme .\README.md --media .\media\
+```
+
 ## How to run the bot
 
 Jet is using Typescript 3.4.1 but any version will probably work if you use the `tsconfig.json`. The bot also needs a `bot-config.json` file in `src\` and respectively `out/`. The json structure is the following:
