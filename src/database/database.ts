@@ -1,10 +1,11 @@
 import mongoose = require('mongoose');
-import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject } from './schemas';
+import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject, CommandCache } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval } from '../bot-config.json';
-import { Guild, Role, ClientUser } from 'discord.js';
+import { Guild, Role, ClientUser, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
 import { Bot } from '..';
 import { toNano } from '../utils/time';
+import { identitytoolkit } from 'googleapis/build/src/apis/identitytoolkit';
 
 /**
  * Manages all connections to the main database and settings database
@@ -490,4 +491,37 @@ export class Database {
         return await doc.save();
     }
 
+    /**
+     * will try to find a specific commandCache
+     *
+     * @param {string} channelID channel ID
+     * @param {string} userID user ID
+     * @returns
+     * @memberof Database
+     */
+    findCommandCacheDoc(channelID: string, userID: string, timestamp: Number = Date.now()) {
+        return this.mainDB.commandCache.findOne({ channel: channelID, user: userID, delete: { $gt: timestamp } }).exec();
+    }
+
+    /**
+     * searches for commandCache and will wrap in a CommandCache class. If cacheTime is specified it will create one if not found. 
+     * This WON'T update the delete property of a found doc.
+     *
+     * @param {(DMChannel | GroupDMChannel | TextChannel)} channel channel for commandCache
+     * @param {User} user user for commandCache
+     * @param {number} [cacheTime] cache time for new commandCache
+     * @param {*} [cache] optional cache to set in new commandCache
+     * @returns commandCache wrapped in a CommandCache class
+     * @memberof Database
+     */
+    async getCommandCache(channel: DMChannel | GroupDMChannel | TextChannel, user: User, cacheTime?: number, cache?: any) {
+        let commandCacheDoc = await this.findCommandCacheDoc(channel.id, user.id);
+
+        if (!commandCacheDoc) {
+            if (cacheTime)
+                return new CommandCache(undefined, channel, user, cacheTime, cache);
+            return undefined;
+        }
+        return new CommandCache(commandCacheDoc);
+    }
 }

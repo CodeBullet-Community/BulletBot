@@ -1,5 +1,6 @@
 import mongoose = require('mongoose');
-import { PresenceData } from 'discord.js';
+import { PresenceData, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
+import { Bot } from '..';
 
 // guild
 export interface guildObject {
@@ -176,18 +177,92 @@ export interface logPrefix {
 
 // command cache
 export interface commandCacheObject {
-    guild: string;
-    member: string;
+    channel: string;
+    user: string;
     cache: any;
     delete: number;
 }
 export interface commandCacheDoc extends mongoose.Document, commandCacheObject { }
 export const commandCacheSchema = new mongoose.Schema({
-    guild: String,
-    member: String,
+    channel: String,
+    user: String,
     cache: mongoose.Schema.Types.Mixed,
     delete: Number
 });
+/**
+ * Wrapper from command cache. Is a mix between doc and object
+ *
+ * @export
+ * @class CommandCache
+ * @implements {commandCacheObject}
+ */
+export class CommandCache {
+    channel: DMChannel | GroupDMChannel | TextChannel;
+    user: User;
+    cache: any;
+    delete: number;
+    doc: commandCacheDoc;
+    /**
+     * Creates an instance of CommandCache with either a new commandCache or with a existing commandCache. When creating a new commandCache, it won't check if one already exists
+     * @param {commandCacheDoc} commandCacheDoc existing command cache doc
+     * @param {string} [channel] channel for new command cache
+     * @param {string} [user] user for new command cache
+     * @param {number} [cacheTime] time until it gets deleted in ms
+     * @param {*} [cache={}] optional cache that should be set
+     * @memberof CommandCache
+     */
+    constructor(commandCacheDoc: commandCacheDoc, channel?: DMChannel | GroupDMChannel | TextChannel, user?: User, cacheTime?: number, cache: any = {}) {
+        if (commandCacheDoc) {
+            this.doc = commandCacheDoc;
+            var commandCacheObject: commandCacheObject = commandCacheDoc.toObject();
+            
+            //@ts-ignore
+            this.channel = Bot.client.channels.get(commandCacheObject.channel);
+            Bot.client.fetchUser(commandCacheObject.user).then(user => this.user);
+            this.cache = commandCacheObject.cache;
+            this.delete = commandCacheObject.delete;
+        } else {
+            this.delete = Date.now() + cacheTime
+            this.channel = channel;
+            this.user = user;
+            this.cache = cache;
+
+            this.doc = new Bot.database.mainDB.commandCache({
+                channel: channel.id,
+                user: user.id,
+                cache: cache,
+                delete: this.delete
+            });
+            this.doc.save();
+        }
+    }
+
+    /**
+     * saves cache to new 
+     *
+     * @param {number} [newCacheTime] if set, will reset the delete timestamp to a new date
+     * @returns
+     * @memberof CommandCache
+     */
+    save(newCacheTime?: number) {
+        this.doc.cache = this.cache;
+        this.doc.markModified('cache');
+        if (newCacheTime)
+            this.doc.delete = Date.now() + newCacheTime;
+        return this.doc.save()
+    }
+
+    /**
+     * deletes doc from database
+     *
+     * @returns
+     * @memberof CommandCache
+     */
+    remove() {
+        return this.doc.remove()
+    }
+
+}
 
 
 export interface mStatsObject {
