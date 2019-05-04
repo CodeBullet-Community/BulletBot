@@ -135,8 +135,10 @@ client.on('message', async message => {
         dm = true;
     }
 
+    let commandCache = await Bot.database.getCommandCache(message.channel, message.author);
+
     // if message is only a mention of the bot, he dms help
-    if (message.content == '<@' + Bot.client.user.id + '>') {
+    if (message.content == '<@' + Bot.client.user.id + '>' && !commandCache) {
         message.author.createDM().then(dmChannel => {
             message.channel = dmChannel;
             Bot.commands.runCommand(message, '', 'help', permLevels.member, true, requestTime);
@@ -148,6 +150,11 @@ client.on('message', async message => {
     var permLevel = permLevels.member;
     if (!dm) {// gets perm level of member if message isn't from dms
         permLevel = await getPermLevel(message.member);
+    }
+
+    if (commandCache) {
+        Bot.commands.runCachedCommand(message, commandCache, permLevel, dm, requestTime);
+        return;
     }
 
     var prefix = await Bot.database.getPrefix(message.guild);

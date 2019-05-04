@@ -504,22 +504,23 @@ export class Database {
     }
 
     /**
-     * searches for commandCache and will wrap in a CommandCache class. If cacheTime is specified it will create one if not found. 
+     * searches for commandCache and will wrap in a CommandCache class. If cacheTime and command is specified it will create one if not found. 
      * This WON'T update the delete property of a found doc.
      *
      * @param {(DMChannel | GroupDMChannel | TextChannel)} channel channel for commandCache
      * @param {User} user user for commandCache
+     * @param {string} [command] command name for new commandCache
      * @param {number} [cacheTime] cache time for new commandCache
      * @param {*} [cache] optional cache to set in new commandCache
      * @returns commandCache wrapped in a CommandCache class
      * @memberof Database
      */
-    async getCommandCache(channel: DMChannel | GroupDMChannel | TextChannel, user: User, cacheTime?: number, cache?: any) {
+    async getCommandCache(channel: DMChannel | GroupDMChannel | TextChannel, user: User, command?: string, cacheTime?: number, cache?: any) {
         let commandCacheDoc = await this.findCommandCacheDoc(channel.id, user.id);
 
         if (!commandCacheDoc) {
-            if (cacheTime)
-                return new CommandCache(undefined, channel, user, cacheTime, cache);
+            if (cacheTime && command)
+                return new CommandCache(undefined, channel, user, command, cacheTime, cache);
             return undefined;
         }
         return new CommandCache(commandCacheDoc);

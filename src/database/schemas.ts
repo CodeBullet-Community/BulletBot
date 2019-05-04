@@ -179,6 +179,7 @@ export interface logPrefix {
 export interface commandCacheObject {
     channel: string;
     user: string;
+    command: string;
     cache: any;
     delete: number;
 }
@@ -186,6 +187,7 @@ export interface commandCacheDoc extends mongoose.Document, commandCacheObject {
 export const commandCacheSchema = new mongoose.Schema({
     channel: String,
     user: String,
+    command: String,
     cache: mongoose.Schema.Types.Mixed,
     delete: Number
 });
@@ -199,6 +201,7 @@ export const commandCacheSchema = new mongoose.Schema({
 export class CommandCache {
     channel: DMChannel | GroupDMChannel | TextChannel;
     user: User;
+    command: string;
     cache: any;
     delete: number;
     doc: commandCacheDoc;
@@ -207,29 +210,33 @@ export class CommandCache {
      * @param {commandCacheDoc} commandCacheDoc existing command cache doc
      * @param {string} [channel] channel for new command cache
      * @param {string} [user] user for new command cache
+     * @param {string} [command] name of command
      * @param {number} [cacheTime] time until it gets deleted in ms
      * @param {*} [cache={}] optional cache that should be set
      * @memberof CommandCache
      */
-    constructor(commandCacheDoc: commandCacheDoc, channel?: DMChannel | GroupDMChannel | TextChannel, user?: User, cacheTime?: number, cache: any = {}) {
+    constructor(commandCacheDoc: commandCacheDoc, channel?: DMChannel | GroupDMChannel | TextChannel, user?: User, command?: string, cacheTime?: number, cache: any = {}) {
         if (commandCacheDoc) {
             this.doc = commandCacheDoc;
             var commandCacheObject: commandCacheObject = commandCacheDoc.toObject();
-            
+
             //@ts-ignore
             this.channel = Bot.client.channels.get(commandCacheObject.channel);
             Bot.client.fetchUser(commandCacheObject.user).then(user => this.user);
+            this.command = commandCacheObject.command;
             this.cache = commandCacheObject.cache;
             this.delete = commandCacheObject.delete;
         } else {
             this.delete = Date.now() + cacheTime
             this.channel = channel;
             this.user = user;
+            this.command = command;
             this.cache = cache;
 
             this.doc = new Bot.database.mainDB.commandCache({
                 channel: channel.id,
                 user: user.id,
+                command: command,
                 cache: cache,
                 delete: this.delete
             });

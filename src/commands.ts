@@ -1,6 +1,8 @@
 import { Message, Collection, Guild } from 'discord.js';
 import * as fs from 'fs';
 import { Bot } from '.';
+import { CommandCache } from './database/schemas';
+import { permLevels } from './utils/permissions';
 
 /**
  * definition of a command with all it's properties and functions
@@ -59,15 +61,24 @@ export interface commandInterface {
     /**
      * embed and long desc of what the command does and how to use it
      *
+     * @param {Guild} [guild] guild to change the prefix if needed
+     * @returns {Promise<any>}
      * @memberof commandInterface
      */
-    embedHelp: (guild?: Guild) => Promise<any>;
+    embedHelp(guild?: Guild): Promise<any>;
     /**
      * function that called if someone uses the command
      *
+     * @param {Message} message message that requested the command
+     * @param {string} args arguments
+     * @param {number} permLevel permLevel of the user that requested the command
+     * @param {boolean} dm if message came from dms
+     * @param {[number, number]} requestTime var for performance tracking
+     * @param {CommandCache} [commandCache] optional parameter, if command was called with cache
+     * @returns
      * @memberof commandInterface
      */
-    run: (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => Promise<void>;
+    run(message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number], commandCache?: CommandCache);
 }
 
 /**
@@ -156,10 +167,11 @@ export class Commands {
      * @param {string} command command name
      * @param {number} permLevel perm level or member that send the message
      * @param {boolean} dm if message is from a dm
+     * @param {[number, number]} requestTime var for performance tracking
      * @returns
      * @memberof Commands
      */
-    async runCommand(message: Message, args: string, command: string, permLevel: number, dm: boolean, requestTime: [number, number]) {
+    async runCommand(message: Message, args: string, command: string, permLevel: permLevels, dm: boolean, requestTime: [number, number]) {
         var cmd = this.commands.get(command);
         if (!cmd) return; // returns if it can't find the command
         if (!cmd.dm && dm) { // sends the embed help if the request is from a dm and the command doesn't support dms
@@ -172,6 +184,31 @@ export class Commands {
             if (commandSettings && !commandSettings._enabled) return;
         }
         cmd.run(message, args, permLevel, dm, requestTime); // run command
+    }
+
+    /**
+     * runs command with cache
+     *
+     * @param {Message} message message from where the request came from
+     * @param {CommandCache} commandCache command cache
+     * @param {permLevels} permLevel perm level or member that send the message
+     * @param {boolean} dm if message is from a dm
+     * @param {[number, number]} requestTime var for performance tracking
+     * @returns
+     * @memberof Commands
+     */
+    async runCachedCommand(message: Message, commandCache: CommandCache, permLevel: permLevels, dm: boolean, requestTime: [number, number]) {
+        var cmd = this.commands.get(commandCache.command);
+        if (!cmd) {
+            commandCache.remove();
+            return;
+        } // returns if it can't find the command
+        if (!cmd.dm && dm) { // sends the embed help if the request is from a dm and the command doesn't support dms
+            message.channel.send('This command can\'t be used in dms. The action was canceled.');
+            commandCache.remove();
+            return;
+        }
+        cmd.run(message, message.content, permLevel, dm, requestTime, commandCache); // run command
     }
 
     /**
