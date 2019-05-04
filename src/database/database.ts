@@ -1,11 +1,10 @@
 import mongoose = require('mongoose');
 import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject, CommandCache } from './schemas';
 import { setInterval } from 'timers';
-import { globalUpdateInterval } from '../bot-config.json';
-import { Guild, Role, ClientUser, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
+import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
+import { Guild, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
 import { Bot } from '..';
 import { toNano } from '../utils/time';
-import { identitytoolkit } from 'googleapis/build/src/apis/identitytoolkit';
 
 /**
  * Manages all connections to the main database and settings database
@@ -85,7 +84,11 @@ export class Database {
             cache: undefined
         }
         this.updateGlobalSettings(this.settingsDB);
-        this.updateCacheAtInterval(globalUpdateInterval);
+
+        setInterval(() => this.updateGlobalSettings(this.settingsDB), globalUpdateInterval);
+        console.info(`updating global cache every ${globalUpdateInterval}ms`);
+        setInterval(() => this.cleanCommandCaches(), cleanInterval);
+        console.info(`cleaning command caches every ${cleanInterval}ms`);
     }
 
     /**
@@ -129,19 +132,6 @@ export class Database {
         }
 
         settingsDB.cache = settingsObject;
-    }
-
-    /**
-     * calls updateGlobalSettings() at specified interval
-     *
-     * @param {number} ms interval in which to update the cache
-     * @memberof Database
-     */
-    private updateCacheAtInterval(ms: number) {
-        setInterval(() => {
-            this.updateGlobalSettings(this.settingsDB);
-        }, ms);
-        console.info(`updating global cache every ${ms}ms`);
     }
 
     /**
@@ -524,5 +514,9 @@ export class Database {
             return undefined;
         }
         return new CommandCache(commandCacheDoc);
+    }
+
+    cleanCommandCaches() {
+        return this.mainDB.commandCache.deleteMany({ delete: { $lt: Date.now() } }).exec();
     }
 }
