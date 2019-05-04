@@ -73,7 +73,7 @@ var command: commandInterface = {
                         Bot.mStats.logMessageSend();
                         commandCache.save(10000);
                     } else {
-                        message.channel.send('alphabet finished was finished');
+                        message.channel.send('alphabet was finished');
                         Bot.mStats.logMessageSend();
                         commandCache.remove();
                     }
