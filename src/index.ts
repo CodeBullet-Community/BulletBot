@@ -39,7 +39,7 @@ process.on('uncaughtException', (error) => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    var error = new Error('Unhandled Rejection. Reason: ' + reason);
+    var error = new Error('Unhandled Rejection. Reason: ' + reason + " Promise" + promise);
     if (Bot.mStats)
         Bot.mStats.logError(error);
     console.error(error);
@@ -107,7 +107,9 @@ exitHook(() => {
 });
 
 setInterval(() => {
-    fs.writeFileSync(crashProof.file, Date.now());
+    if (client.status === 0) {
+        fs.writeFileSync(crashProof.file, Date.now());
+    }
 }, crashProof.interval);
 
 client.on('ready', () => {
