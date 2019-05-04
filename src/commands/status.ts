@@ -4,14 +4,19 @@ import { permLevels } from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
 import { permToString } from '../utils/parsers';
+import { getDurationDiff, timeFormat, durations, getDayDiff } from '../utils/time';
+import dateFormat = require('dateformat');
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
     try {
         Bot.mStats.logResponseTime(command.name, requestTime);
         const m: any = await message.channel.send("Pong");
+        var days: number = Math.floor(Bot.client.uptime / durations.day);
+        var hours: number = Math.round((Bot.client.uptime % durations.day) / durations.hour);
+        var minutes: number = Math.round((Bot.client.uptime % durations.hour) / durations.minute);
         m.edit({
             "embed": {
                 "color": Bot.database.settingsDB.cache.defaultEmbedColor,
@@ -39,6 +44,11 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     {
                         "name": "Errors Current Hour:",
                         "value": Bot.mStats.hourly.doc.toObject().errorsTotal,
+                        "inline": true
+                    },
+                    {
+                        "name": "Online Since:",
+                        "value": dateFormat(Bot.client.readyAt, timeFormat) + `\n(${days}d ${hours}h ${minutes}m)`,
                         "inline": true
                     }
                 ]
