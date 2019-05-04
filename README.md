@@ -84,5 +84,4 @@ There also needs to be a mongoDB cluster running. The minimal data in the cluste
 
 The logo/PFP was a fanart from @Aster#4205.
 
-![unscaled logo](https://prod-files.lcvn.eu/file/data/ildljchl4c6jnwye44v2/PHID-FILE-quru5ggzl7xnpz3tzbn4/BulletBot-logo.png "Unscaled Logo")
-![10x scaled logo](https://prod-files.lcvn.eu/file/data/4gayr3sk67l3jfvgkewk/PHID-FILE-7vasoju424ax4luexojr/BulletBot-logo_scaled.png "10x scaled Logo")
+![vector avatar](BulletBot%20Centered.png "Unscaled Logo")
