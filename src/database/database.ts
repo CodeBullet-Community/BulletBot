@@ -282,19 +282,12 @@ export class Database {
         for (const webhookDoc of await Bot.youtube.webhooks.find({ guild: guildID })) {
             Bot.youtube.deleteWebhook(guildID, webhookDoc.toObject().channel, webhookDoc.toObject().feed);
         }
-        var guildDoc = await this.findGuildDoc(guildID);
-        if (guildDoc) guildDoc.remove();
-        var staffDoc = await this.mainDB.staff.findOne({ guild: guildID }).exec();
-        if (staffDoc) staffDoc.remove();
-        var prefixDoc = await this.mainDB.prefix.findOne({ guild: guildID }).exec();
-        if (prefixDoc) prefixDoc.remove();
-        var commandsDoc = await this.findCommandsDoc(guildID);
-        if (commandsDoc) commandsDoc.remove();
-        var filtersDoc = await this.findFiltersDoc(guildID);
-        if (filtersDoc) filtersDoc.remove();
-        for (const logDoc of await this.mainDB.logs.find({ guild: guildID })) {
-            logDoc.remove();
-        }
+        this.mainDB.guilds.deleteOne({ guild: guildID }).exec();
+        this.mainDB.staff.deleteOne({ guild: guildID }).exec();
+        this.mainDB.prefix.deleteOne({ guild: guildID }).exec();
+        this.mainDB.commands.deleteOne({ guild: guildID }).exec();
+        this.mainDB.filters.deleteOne({ guild: guildID }).exec();
+        this.mainDB.logs.deleteMany({ guild: guildID }).exec();
     }
 
     /**
