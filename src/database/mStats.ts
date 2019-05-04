@@ -358,6 +358,7 @@ export class MStats {
      * @memberof MStats
      */
     logMessageReceived() {
+        if(!this.hourly) return;
         if (this.hourly.doc.messagesReceived) {
             this.hourly.doc.messagesReceived += 1;
         } else {
@@ -371,6 +372,7 @@ export class MStats {
      * @memberof MStats
      */
     logMessageSend() {
+        if(!this.hourly) return;
         this.hourly.doc.messagesSend += 1;
     }
 
@@ -380,6 +382,7 @@ export class MStats {
      * @memberof MStats
      */
     logLog() {
+        if(!this.hourly) return;
         this.hourly.doc.logs += 1;
     }
 
@@ -389,6 +392,7 @@ export class MStats {
      * @memberof MStats
      */
     logGuildJoin() {
+        if(!this.hourly) return;
         this.hourly.doc.guildsJoined += 1;
     }
 
@@ -398,6 +402,7 @@ export class MStats {
      * @memberof MStats
      */
     logGuildLeave() {
+        if(!this.hourly) return;
         this.hourly.doc.guildsLeft += 1;
     }
 
@@ -411,6 +416,7 @@ export class MStats {
      * @memberof MStats
      */
     async logError(error: Error, command?: string) {
+        if(!this.hourly) return;
         this.hourly.doc.errorsTotal += 1;
         if (command) {
             if (!this.hourly.doc.commands) {
@@ -450,6 +456,7 @@ export class MStats {
      * @memberof MStats
      */
     logCommandUsage(command: string, subCommand?: string) {
+        if(!this.hourly) return;
         this.hourly.doc.commandTotal += 1;
         if (!subCommand) {
             subCommand = '_main';
@@ -476,6 +483,7 @@ export class MStats {
      * @memberof MStats
      */
     logResponseTime(command: string, requestTime: [number, number]) {
+        if(!this.hourly) return;
         var latency = toNano(process.hrtime(requestTime));
         if (!this.hourly.doc.commands) {
             this.hourly.doc.commands = {};
@@ -501,6 +509,7 @@ export class MStats {
      * @memberof MStats
      */
     logFilterCatch(filter: string) {
+        if(!this.hourly) return;
         if (!this.hourly.doc.filters) {
             this.hourly.doc.filters = {};
         }
@@ -519,6 +528,7 @@ export class MStats {
      * @memberof MStats
      */
     logWebhookAction(service: string, action: 'created' | 'changed' | 'deleted') {
+        if(!this.hourly) return;
         if (!this.hourly.doc.webhooks) {
             this.hourly.doc.webhooks = {};
         }
