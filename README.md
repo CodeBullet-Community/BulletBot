@@ -33,6 +33,7 @@ Jet is using Typescript 3.4.1 but any version will probably work if you use the 
     "DBURI": "mongodb://localhost", // URI to mongodb cluster
     "googleAPIKey": "[google api key for youtube_v3]",
     "globalUpdateInterval": 10000,
+    "cleanInterval": 60000,
     "crashProof": {
         "file": "BulletBot\\crashProof.time", // the bot will write the current timestamp to this file
         "interval": 10000
