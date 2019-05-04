@@ -34,7 +34,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 }
                 var user: GuildMember;
                 if (!role) {
-                    user = stringToMember(message.guild, argsArray[argIndex]);
+                    user = await stringToMember(message.guild, argsArray[argIndex]);
                     if (!user) {
                         message.channel.send('There isn\'t a role or user called ' + argsArray[argIndex]);
                         Bot.mStats.logMessageSend();

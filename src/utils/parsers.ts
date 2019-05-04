@@ -73,7 +73,7 @@ function editDistance(s1: string, s2: string) {
  * @param {string} text string to parse
  * @returns
  */
-export function stringToMember(guild: Guild, text: string) {
+export async function stringToMember(guild: Guild, text: string, bySimilar: boolean = true) {
     if (/<@(\d*)>/g.test(text)) {
         var result = /<@(\d*)>/g.exec(text);
         if (result != null) {
@@ -86,17 +86,18 @@ export function stringToMember(guild: Guild, text: string) {
             text = result[1];
         }
     }
+    guild = await guild.fetchMembers()
+
     // by id
     var member = guild.members.get(text);
-    if (!member) {
+    if (!member)
         // by username
         member = guild.members.find(x => x.user.username == text);
-    }
-    if (!member) {
+    if (!member)
         // by nickname
         member = guild.members.find(x => x.nickname == text);
-    }
-    if (!member) {
+
+    if (!member && bySimilar) {
         // closest matching username
         member = guild.members.reduce(function (prev, curr) {
             return (stringSimilarity(curr.user.username, text) > stringSimilarity(prev.user.username, text) ? curr : prev);

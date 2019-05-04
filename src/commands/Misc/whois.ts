@@ -123,7 +123,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             return;
         }
 
-        var member = stringToMember(message.guild, args);
+        var member = await stringToMember(message.guild, args);
         if (!member) {
             message.channel.send('Couldn\'t member with name ' + args);
             Bot.mStats.logMessageSend();
