@@ -122,7 +122,7 @@ client.on('error', (error: any) => {
         console.log(error.target);
         if (error.target.WebSocket) {
             console.log(error.target.WebSocket);
-            if (error.target._events) {
+            if (error.target.WebSocket._events) {
                 console.log(error.target.WebSocket._events);
             }
         }
