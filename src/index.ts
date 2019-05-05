@@ -224,6 +224,12 @@ client.on('guildMemberRemove', async member => {
         Bot.database.removeFromRank(member.guild.id, 'immune', undefined, member.id);
         Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, 'immune', undefined, member.user);
     }
+    var userDoc = await Bot.database.findUserDoc(member.id);
+    if (userDoc && userDoc.commandCooldown && userDoc.commandCooldown[member.guild.id]) {
+        delete userDoc.commandCooldown[member.guild.id];
+        userDoc.markModified('commandCooldown.' + member.guild.id);
+        userDoc.save();
+    }
 });
 
 client.on('roleDelete', async role => {
