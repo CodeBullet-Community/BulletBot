@@ -121,11 +121,14 @@ client.on('error', (error: any) => {
     Bot.mStats.logError(error);
     console.error('from client.on():', error);
     if (error.target) {
-        console.log(error.target);
+        console.log('error.target', error.target);
+        if (error.target._events) {
+            console.log('error.target._events', error.target._events);
+        }
         if (error.target.WebSocket) {
-            console.log(error.target.WebSocket);
+            console.log('error.target.WebSocket', error.target.WebSocket);
             if (error.target.WebSocket._events) {
-                console.log(error.target.WebSocket._events);
+                console.log('error.target.WebSocket._events', error.target.WebSocket._events);
             }
         }
     }
