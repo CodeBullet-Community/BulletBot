@@ -87,6 +87,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         message.channel.send(embed);
         Bot.mStats.logCommandUsage(command.name);
         Bot.mStats.logMessageSend();
+        return true;
     } catch (e) {
         sendError(message.channel, e);
         Bot.mStats.logError(e, command.name);

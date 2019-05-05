@@ -14,7 +14,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         if (args.length == 0) {
             message.channel.send(await command.embedHelp(message.guild));
             Bot.mStats.logMessageSend();
-            return;
+            return false;
         }
         var argsArray = args.split(' ').filter(x => x.length != 0);
         switch (argsArray[argIndex]) {
@@ -24,13 +24,13 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 if (!argsArray[argIndex]) {
                     message.channel.send('Please enter a user or role.');
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
                 var role = stringToRole(message.guild, argsArray[argIndex]);
                 if (typeof (role) == 'string') {
                     message.channel.send('You can\'t add everyone or here to a rank.');
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
                 var user: GuildMember;
                 if (!role) {
@@ -38,7 +38,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     if (!user) {
                         message.channel.send('There isn\'t a role or user called ' + argsArray[argIndex]);
                         Bot.mStats.logMessageSend();
-                        return;
+                        return false;
                     }
                 }
                 if (argsArray[0] == 'add') {

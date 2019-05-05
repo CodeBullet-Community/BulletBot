@@ -13,7 +13,9 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         Bot.mStats.logResponseTime(command.name, requestTime);
         const m: any = await message.channel.send('Ping?');
         m.edit(`Pong! \`${m.createdTimestamp - message.createdTimestamp}ms\``);
+        Bot.mStats.logMessageSend();
         Bot.mStats.logCommandUsage(command.name);
+        return true;
     } catch (e) {
         sendError(message.channel, e);
         Bot.mStats.logError(e, command.name);

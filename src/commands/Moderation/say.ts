@@ -25,19 +25,19 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             if (!channel.permissionsFor(message.member).has("SEND_MESSAGES")) {
                 message.channel.send("You don't have permission to write in " + channel);
                 Bot.mStats.logMessageSend();
-                return;
+                return false;
             }
             if (!channel.send) {
                 message.channel.send("I can't write in a voice channel");
                 Bot.mStats.logMessageSend();
-                return;
+                return false;
             }
             argIndex++;
         }
         if (!channel.permissionsFor(message.guild.me).has("SEND_MESSAGES")) {
             message.channel.send("I don't have permission to write in " + channel);
             Bot.mStats.logMessageSend();
-            return;
+            return false;
         }
 
         let editMessage: Message;
@@ -45,19 +45,19 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             if (isNaN(Number(argsArray[argIndex + 1]))) {
                 message.channel.send(`Couldn't parse the message id`);
                 Bot.mStats.logMessageSend();
-                return;
+                return false;
             } else {
                 try {
                     editMessage = await channel.fetchMessage(argsArray[argIndex + 1]);
                 } catch (e) {
                     message.channel.send(`Couldn't find message with ${argsArray[argIndex + 1]} as ID`);
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
                 if (editMessage.author.id != Bot.client.user.id) {
                     message.channel.send(`The specified message isn't my message`);
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
                 argIndex += 2;
             }
@@ -82,7 +82,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             if (!embedObject) {
                 message.channel.send("couldn't parse embed json");
                 Bot.mStats.logMessageSend();
-                return;
+                return false;
             }
             content = embedObject.content;
         }

@@ -60,18 +60,18 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 if (!argsArray[argIndex]) {
                     message.channel.send('Please input a command');
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
                 var cmd = Bot.commands.get(argsArray[argIndex].toLowerCase());
                 if (!cmd) {
                     message.channel.send(`\`${argsArray[argIndex].toLowerCase()}\` isn't a command.`);
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
                 if (!cmd.togglable) {
                     message.channel.send(`The \`${cmd.name}\` command isn't togglable.`);
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
                 var commandsDoc = await Bot.database.findCommandsDoc(message.guild.id);
                 var commandSettings = await Bot.database.getCommandSettings(message.guild.id, cmd.name, commandsDoc);
@@ -79,7 +79,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send(`The \`${cmd.name}\` command is already enabled.`);
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
 
                 commandSettings._enabled = true;
@@ -95,18 +95,18 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 if (!argsArray[argIndex]) {
                     message.channel.send('Please input a command');
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
                 var cmd = Bot.commands.get(argsArray[argIndex].toLowerCase());
                 if (!cmd) {
                     message.channel.send(`\`${argsArray[argIndex].toLowerCase()}\` isn't a command.`);
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
                 if (!cmd.togglable) {
                     message.channel.send(`The \`${cmd.name}\` command isn't togglable.`);
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
 
                 var commandsDoc = await Bot.database.findCommandsDoc(message.guild.id);
@@ -118,7 +118,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send(`The \`${cmd.name}\` command is already disabled.`);
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
 
                 commandSettings._enabled = false;

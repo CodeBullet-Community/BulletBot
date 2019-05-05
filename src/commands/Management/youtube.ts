@@ -81,7 +81,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         if (args.length == 0) {
             message.channel.send(await command.embedHelp(message.guild));
             Bot.mStats.logMessageSend();
-            return;
+            return false;
         }
         var argsArray = args.split(' ').filter(x => x.length != 0);
 
@@ -107,7 +107,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 break;
             case 'add':
                 var input = await parseWebhookInput(message, argsArray, argIndex);
-                if (!input) return;
+                if (!input) return false;
                 argIndex = input.argIndex + 1;
                 var text = "";
                 while (argIndex < argsArray.length) {
@@ -117,12 +117,12 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 if (text.length == 0) {
                     message.channel.send("message isn't given");
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
                 if (text.length > 500) {
                     message.channel.send('The message should\'t be longer then 500 characters');
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
 
 
@@ -140,7 +140,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 break;
             case 'rem':
                 var input = await parseWebhookInput(message, argsArray, argIndex);
-                if (!input) return;
+                if (!input) return false;
                 argIndex = input.argIndex;
 
 
@@ -162,7 +162,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 if (property != 'channel' && property != 'feed' && property != 'message') {
                     message.channel.send('you can\'t change the property `' + property + '`\nfollowing properties are modifiable:\n **-** \`channel\`\n **-** \`feed\`\n **-** \`message\`');
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
 
                 var input = await parseWebhookInput(message, argsArray, argIndex);
@@ -172,7 +172,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         var newChannel = stringToChannel(message.guild, argsArray[argIndex]);
                         if (!newChannel) {
                             message.channel.send("new channel isn't given");
-                            return;
+                            return false;
                         }
 
                         var webhookDoc = await Bot.youtube.changeWebhook(message.guild.id, input.channel.id, input.YTChannelID, newChannel.id);
@@ -190,13 +190,13 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         if (!argsArray[argIndex]) {
                             message.channel.send("new feed isn't given");
                             Bot.mStats.logMessageSend();
-                            return;
+                            return false;
                         }
                         var newYTChannelID = await getYTChannelID(argsArray[argIndex]);
                         if (!newYTChannelID) {
                             message.channel.send("new feed couldn't be parsed");
                             Bot.mStats.logMessageSend();
-                            return;
+                            return false;
                         }
                         var webhookDoc = await Bot.youtube.changeWebhook(message.guild.id, input.channel.id, input.YTChannelID, undefined, newYTChannelID);
                         Bot.mStats.logResponseTime(command.name, requestTime);
@@ -218,12 +218,12 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         if (newText.length == 0) {
                             message.channel.send("new message isn't given");
                             Bot.mStats.logMessageSend();
-                            return;
+                            return false;
                         }
                         if (newText.length > 500) {
                             message.channel.send('The new message should\'t be longer then 500 characters');
                             Bot.mStats.logMessageSend();
-                            return;
+                            return false;
                         }
 
                         var webhookDoc = await Bot.youtube.changeWebhook(message.guild.id, input.channel.id, input.YTChannelID, undefined, undefined, newText);

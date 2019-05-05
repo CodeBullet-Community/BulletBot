@@ -83,6 +83,7 @@ var command: commandInterface = {
                     commandCache.remove();
                 }
             }
+            return true;
         } catch (e) {
             sendError(message.channel, e);
             Bot.mStats.logError(e, command.name);

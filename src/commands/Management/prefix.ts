@@ -14,7 +14,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             message.channel.send(`My prefix is \`${await Bot.database.getPrefix(message.guild)}\``);
             Bot.mStats.logCommandUsage(command.name, 'list');
             Bot.mStats.logMessageSend();
-            return;
+            return false;
         }
 
         var prefixDoc = await Bot.database.mainDB.prefix.findOne({ guild: message.guild.id });
@@ -37,7 +37,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         if (args.length > 10) {
             message.channel.send('The custom prefix shouldn\'t be longer then 10 characters.');
             Bot.mStats.logMessageSend();
-            return;
+            return false;
         }
         var oldPrefix = Bot.database.settingsDB.cache.prefix;
         if (!prefixDoc) {

@@ -6,7 +6,7 @@ import { permToString } from '../../utils/parsers';
 import { permLevels } from '../../utils/permissions';
 import { commandsObject, logTypes, filtersObject } from '../../database/schemas';
 
-async function sendFilterList(guild: Guild, message: Message, strucObject: any, path: string, requestTime: [number,number]) {
+async function sendFilterList(guild: Guild, message: Message, strucObject: any, path: string, requestTime: [number, number]) {
     var output = new RichEmbed();
     output.setAuthor('Filter List:', Bot.client.user.avatarURL);
     if (path) output.setFooter('Path: ~' + path);
@@ -33,13 +33,13 @@ async function sendFilterList(guild: Guild, message: Message, strucObject: any, 
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
     try {
         var argIndex = 0;
         if (args.length == 0) {
             message.channel.send(await command.embedHelp(message.guild));
             Bot.mStats.logMessageSend();
-            return;
+            return false;
         }
         var argsArray = args.split(' ').filter(x => x.length != 0);
 
@@ -72,7 +72,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         }
                         Bot.mStats.logCommandUsage(command.name, 'listEnabled');
                         Bot.mStats.logMessageSend();
-                        return
+                        return;
                     }
                 }
 
@@ -83,7 +83,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         if (typeof (strucObject[keys[i]]) === 'undefined') {
                             message.channel.send('Couldn\'t find ' + args + ' category');
                             Bot.mStats.logMessageSend();
-                            return;
+                            return false;
                         } else {
                             strucObject = strucObject[keys[i]];
                         }
@@ -96,13 +96,13 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 if (!argsArray[argIndex]) {
                     message.channel.send('Please input a filter');
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
                 var filter = Bot.filters.get(argsArray[argIndex].toLowerCase());
                 if (!filter) {
                     message.channel.send(`\`${argsArray[argIndex].toLowerCase()}\` isn't a filter.`);
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
 
                 var filtersDoc = await Bot.database.findFiltersDoc(message.guild.id);
@@ -112,7 +112,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send(`The \`${filter.name}\` filter is already enabled.`);
                         Bot.mStats.logMessageSend();
-                        return;
+                        return false;
                     }
                 } else {
                     filterSettings = {};
@@ -131,13 +131,13 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 if (!argsArray[argIndex]) {
                     message.channel.send('Please input a filter');
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
                 var filter = Bot.filters.get(argsArray[argIndex].toLowerCase());
                 if (!filter) {
                     message.channel.send(`\`${argsArray[argIndex].toLowerCase()}\` isn't a filter.`);
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
 
                 var filtersDoc = await Bot.database.findFiltersDoc(message.guild.id);
@@ -146,7 +146,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     Bot.mStats.logResponseTime(filter.name, requestTime);
                     message.channel.send(`The \`${filter.name}\` filter is already disabled.`);
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
 
                 filterSettings._enabled = false;
@@ -161,13 +161,13 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 if (!argsArray[argIndex]) {
                     message.channel.send('Filter name isn\'t given');
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
                 var filter = Bot.filters.get(argsArray[argIndex]);
                 if (!filter) {
                     message.channel.send(argsArray[argIndex] + ' isn\'t a filter');
                     Bot.mStats.logMessageSend();
-                    return;
+                    return false;
                 }
 
                 Bot.mStats.logResponseTime(command.name, requestTime);

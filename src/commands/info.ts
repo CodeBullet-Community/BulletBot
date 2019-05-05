@@ -8,7 +8,7 @@ import { version } from '../bot-config.json';
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
     try {
         Bot.mStats.logResponseTime(command.name, requestTime);
         message.channel.send({
@@ -43,6 +43,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         });
         Bot.mStats.logCommandUsage(command.name);
         Bot.mStats.logMessageSend();
+        return true;
     } catch (e) {
         sendError(message.channel, e);
         Bot.mStats.logError(e, command.name);

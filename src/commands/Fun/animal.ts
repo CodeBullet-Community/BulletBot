@@ -41,7 +41,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         if (args.length == 0) {
             message.channel.send(await command.embedHelp(message.guild));
             Bot.mStats.logMessageSend();
-            return;
+            return false;
         }
         args = args.toLowerCase();
 

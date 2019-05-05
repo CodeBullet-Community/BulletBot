@@ -37,7 +37,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
     try {
         if (args.length == 0) {
             sendCommandList(message.guild, message, Bot.commands.structure, undefined, requestTime);
-            return;
+            return false;
         }
         var command = Bot.commands.get(args.toLowerCase());
         if (command == undefined) {
@@ -48,17 +48,17 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     if (typeof (strucObject[keys[i]]) === 'undefined') {
                         message.channel.send('Couldn\'t find ' + args + ' category');
                         Bot.mStats.logMessageSend();
-                        return;
+                        return false;
                     } else {
                         strucObject = strucObject[keys[i]];
                     }
                 }
                 sendCommandList(message.guild, message, strucObject, args, requestTime);
-                return;
+                return false;
             } else {
                 message.channel.send('Couldn\'t find ' + args.toLowerCase() + ' command');
                 Bot.mStats.logMessageSend();
-                return;
+                return false;
             }
         }
         Bot.mStats.logResponseTime(command.name, requestTime);

@@ -14,7 +14,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         if (args.length == 0) {
             message.channel.send(await command.embedHelp(message.guild));
             Bot.mStats.logMessageSend();
-            return;
+            return false;
         }
         var argsArray = args.split(' ').filter(x => x.length != 0);
         var guildDoc = await Bot.database.findGuildDoc(message.guild.id);
@@ -33,7 +33,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             if (!guildObject.logChannel) {
                 message.channel.send('Currently no channel is assigned as log channel');
                 Bot.mStats.logMessageSend();
-                return;
+                return false;
             }
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send('Current log channel is ' + Bot.client.channels.get(guildObject.logChannel).toString());
@@ -46,7 +46,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         if (!channel) {
             message.channel.send('Couldn\'t find ' + argsArray[argIndex] + ' channel');
             Bot.mStats.logMessageSend();
-            return;
+            return false;
         }
         guildDoc.logChannel = channel.id;
         guildDoc.save();

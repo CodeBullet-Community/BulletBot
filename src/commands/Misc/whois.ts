@@ -127,7 +127,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         if (!member) {
             message.channel.send('Couldn\'t member with name ' + args);
             Bot.mStats.logMessageSend();
-            return;
+            return false;
         }
         await sendMemberInfo(message, member, await getPermLevel(member), requestTime);
     } catch (e) {
