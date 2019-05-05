@@ -89,7 +89,10 @@ export class Database {
 
         setInterval(() => this.updateGlobalSettings(this.settingsDB), globalUpdateInterval);
         console.info(`updating global cache every ${globalUpdateInterval}ms`);
-        setInterval(() => this.cleanCommandCaches(), cleanInterval);
+        setInterval(() => {
+            this.cleanCommandCaches();
+            this.cleanUsers();
+        }, cleanInterval);
         console.info(`cleaning command caches every ${cleanInterval}ms`);
     }
 
@@ -547,5 +550,39 @@ export class Database {
             return new UserWrapper(userDoc, user);
         } else if (create)
             return new UserWrapper(undefined, user);
+    }
+
+    async cleanUsers() {
+        await this.mainDB.users.deleteMany({
+            $or: [
+                { commandCooldown: null },
+                { commandCooldown: {} }
+            ]
+        }).exec();
+        let userDocs = await this.mainDB.users.find().exec();
+        let now = Date.now();
+        for (const userDoc of userDocs) {
+            let useless = true;
+            let changed = false;
+            for (const scopes in userDoc.commandCooldown) {
+                for (const commands in userDoc.commandCooldown[scopes]) {
+                    if (userDoc.commandCooldown[scopes][commands] < now) {
+                        delete userDoc.commandCooldown[scopes][commands];
+                        changed = true;
+                    } else {
+                        useless = false;
+                    }
+                }
+            }
+            if (useless || !await Bot.client.fetchUser(userDoc.toObject().user)) {
+                userDoc.remove();
+                continue;
+            }
+            if (changed) {
+                userDoc.markModified('commandCooldown');
+                userDoc.save();
+            }
+        }
+
     }
 }
