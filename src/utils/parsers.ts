@@ -80,6 +80,12 @@ export async function stringToMember(guild: Guild, text: string, bySimilar: bool
             text = result[1];
         }
     }
+    if (/<@!(\d*)>/g.test(text)) {
+        var result = /<@!(\d*)>/g.exec(text);
+        if (result != null) {
+            text = result[1];
+        }
+    }
     if (/([^#@:]{2,32})#\d{4}/g.test(text)) {
         var result = /([^#@:]{2,32})#\d{4}/g.exec(text);
         if (result != null) {
