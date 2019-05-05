@@ -6,6 +6,7 @@ import { permLevels } from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
 import { permToString } from '../utils/parsers';
+import { durations } from '../utils/time';
 
 var command: commandInterface = {
     name: '[command name]', // command name must be lowercase letters with no spaces
@@ -13,6 +14,8 @@ var command: commandInterface = {
     dm: false, // if this command can be used in dms
     permLevel: permLevels.mod,  // what minimum perm level is required
     togglable: false, // if the command can be disabled by the commands command
+    cooldownLocal: durations.second*10, // local cooldown in ms, if the command shouldn't have any local cooldown, remove the property
+    cooldownGlobal: durations.second*10, // global cooldown in ms, if the command shouldn't have any global cooldown, remove the property
     shortHelp: '[short desc]', // very short desc of what the command does
     embedHelp: async function (guild: Guild) {
         var prefix = await Bot.database.getPrefix(guild);
@@ -40,6 +43,16 @@ var command: commandInterface = {
                     {
                         'name': 'Togglable:',
                         'value': command.togglable,
+                        'inline': true
+                    },
+                    { // remove this if the command doesn't have local cooldown
+                        'name': 'Local Cooldown:',
+                        'value': command.cooldownLocal + 'ms',
+                        'inline': true
+                    },
+                    { // remove this if the command doesn't have global cooldown
+                        'name': 'Global Cooldown:',
+                        'value': command.cooldownGlobal + 'ms',
                         'inline': true
                     },
                     {

@@ -5,7 +5,7 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
 import request = require('request');
-import { durations } from '../../utils/time';
+import { durations, getDurationDiff } from '../../utils/time';
 
 var command: commandInterface = {
     name: 'bug',
@@ -41,6 +41,11 @@ var command: commandInterface = {
                     {
                         'name': 'Togglable:',
                         'value': command.togglable,
+                        'inline': true
+                    },
+                    {
+                        'name': 'Global Cooldown:',
+                        'value': getDurationDiff(command.cooldownGlobal, 0, durations.second) + 'sec',
                         'inline': true
                     },
                     {
