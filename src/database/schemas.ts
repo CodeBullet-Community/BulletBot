@@ -287,6 +287,12 @@ export const userSchema = new mongoose.Schema({
     user: String,
     commandCooldown: mongoose.Schema.Types.Mixed
 });
+/**
+ * Wrapper for user doc/object. Provides additional functions and easier data handling
+ *
+ * @export
+ * @class UserWrapper
+ */
 export class UserWrapper {
     user: User;
     commandCooldown: {

@@ -552,18 +552,24 @@ export class Database {
             return new UserWrapper(undefined, user);
     }
 
+    /**
+     * cleans database from redundant data in users collection
+     *
+     * @memberof Database
+     */
     async cleanUsers() {
         await this.mainDB.users.deleteMany({
             $or: [
                 { commandCooldown: null },
                 { commandCooldown: {} }
             ]
-        }).exec();
+        }).exec(); // delete obvious redundant docs
+
         let userDocs = await this.mainDB.users.find().exec();
         let now = Date.now();
         for (const userDoc of userDocs) {
-            let useless = true;
-            let changed = false;
+            let useless = true; // if doc is useless
+            let changed = false; // if some data was deleted
             for (const scopes in userDoc.commandCooldown) {
                 for (const commands in userDoc.commandCooldown[scopes]) {
                     if (userDoc.commandCooldown[scopes][commands] < now) {
@@ -574,7 +580,7 @@ export class Database {
                     }
                 }
             }
-            if (useless || !await Bot.client.fetchUser(userDoc.toObject().user)) {
+            if (useless || !await Bot.client.fetchUser(userDoc.toObject().user)) { // if doc is useless or the bot no longer has a relationship with the user
                 userDoc.remove();
                 continue;
             }
