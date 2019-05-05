@@ -208,7 +208,7 @@ export class Commands {
             if (commandSettings && !commandSettings._enabled) return;
         }
         let output = await cmd.run(message, args, permLevel, dm, requestTime); // run command
-        if (output !== false) {
+        if ((cmd.cooldownGlobal || cmd.cooldownLocal) && output !== false) {
             if (!user)
                 user = new UserWrapper(undefined, message.author);
             if (cmd.cooldownGlobal)
