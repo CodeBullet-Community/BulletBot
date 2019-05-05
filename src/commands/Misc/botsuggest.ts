@@ -6,6 +6,7 @@ import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
 import request = require('request');
 import { durations, getDurationDiff } from '../../utils/time';
+import { suggestionForm } from '../../bot-config.json';
 
 var command: commandInterface = {
     name: 'botsuggest',
@@ -67,16 +68,16 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
+            let form = {};
+            form['entry.' + suggestionForm.serverID] = (!dm ? message.guild.id : undefined);
+            form['entry.' + suggestionForm.serverName] = (!dm ? message.guild.name : undefined);
+            form['entry.' + suggestionForm.userID] = message.author.id;
+            form['entry.' + suggestionForm.userName] = message.author.username;
+            form['entry.' + suggestionForm.messageID] = message.id;
+            form['entry.' + suggestionForm.channelID] = message.channel.id;
+            form['entry.' + suggestionForm.suggestion] = args;
             request.post('https://docs.google.com/forms/d/e/1FAIpQLSee3V4--MxBJqPjoDgfUIw2u22NG-4GBlT92Bbj10-R1ScuHA/formResponse', {
-                form: {
-                    'entry.668269162': (!dm ? message.guild.id : undefined),
-                    'entry.1681307100': (!dm ? message.guild.name : undefined),
-                    'entry.939179046': message.author.id,
-                    'entry.1772634886': message.author.username,
-                    'entry.2084912430': message.id,
-                    'entry.1743035358': message.channel.id,
-                    'entry.110649897': args
-                }
+                form: form
             });
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send('Suggestion was logged. Thanks for making one.');

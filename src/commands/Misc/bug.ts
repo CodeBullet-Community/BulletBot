@@ -6,6 +6,7 @@ import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
 import request = require('request');
 import { durations, getDurationDiff } from '../../utils/time';
+import { bugForm } from '../../bot-config.json';
 
 var command: commandInterface = {
     name: 'bug',
@@ -67,16 +68,16 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
+            let form = {};
+            form['entry.' + bugForm.serverID] = (!dm ? message.guild.id : undefined);
+            form['entry.' + bugForm.serverName] = (!dm ? message.guild.name : undefined);
+            form['entry.' + bugForm.userID] = message.author.id;
+            form['entry.' + bugForm.userName] = message.author.username;
+            form['entry.' + bugForm.messageID] = message.id;
+            form['entry.' + bugForm.channelID] = message.channel.id;
+            form['entry.' + bugForm.bug] = args;
             request.post('https://docs.google.com/forms/d/e/1FAIpQLScWsqLDncKzqSgmZuFhuwenqexzmKSr0K_B4GSOgoF6fEBcMA/formResponse', {
-                form: {
-                    'entry.668269162': (!dm ? message.guild.id : undefined),
-                    'entry.1681307100': (!dm ? message.guild.name : undefined),
-                    'entry.939179046': message.author.id,
-                    'entry.1772634886': message.author.username,
-                    'entry.2084912430': message.id,
-                    'entry.1743035358': message.channel.id,
-                    'entry.110649897': args
-                }
+                form: form
             });
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send('Bug was logged. Thanks for reporting it.');
