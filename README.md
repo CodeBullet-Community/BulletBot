@@ -39,6 +39,26 @@ Jet is using Typescript 3.4.1 but any version will probably work if you use the 
     "botToken": "[bot token here]",
     "DBURI": "mongodb://localhost", // URI to mongodb cluster
     "googleAPIKey": "[google api key for youtube_v3]",
+    "bugForm": { // google form for suggestions
+        "url": "https://docs.google.com/forms/d/e/1FAIpQLScWsqLDncKzqSgmZuFhuwenqexzmKSr0K_B4GSOgoF6fEBcMA/formResponse",
+        "serverID": 668269162,
+        "serverName": 1681307100,
+        "userID": 939179046,
+        "userName": 1772634886,
+        "messageID": 2084912430,
+        "channelID": 1743035358,
+        "bug": 110649897
+    },
+    "suggestionForm": { // google form for suggestions
+        "url": "https://docs.google.com/forms/d/e/1FAIpQLSee3V4--MxBJqPjoDgfUIw2u22NG-4GBlT92Bbj10-R1ScuHA/formResponse",
+        "serverID": 668269162,
+        "serverName": 1681307100,
+        "userID": 939179046,
+        "userName": 1772634886,
+        "messageID": 2084912430,
+        "channelID": 1743035358,
+        "suggestion": 110649897
+    },
     "globalUpdateInterval": 10000,
     "cleanInterval": 60000,
     "crashProof": {
