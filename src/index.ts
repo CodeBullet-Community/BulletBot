@@ -38,11 +38,11 @@ process.on('uncaughtException', (error) => {
     console.error(error);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-    var error = new Error('Unhandled Rejection. Reason: ' + reason + " Promise" + promise);
+process.on('unhandledRejection', async (reason, promise) => {
+    var error = new Error('Unhandled Rejection. Reason: ' + reason);
     if (Bot.mStats)
         Bot.mStats.logError(error);
-    console.error(error);
+    console.error(error, "Promise:", promise);
 });
 
 /**
