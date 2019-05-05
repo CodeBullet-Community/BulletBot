@@ -89,10 +89,10 @@ export interface commandInterface {
      * @param {boolean} dm if message came from dms
      * @param {[number, number]} requestTime var for performance tracking
      * @param {CommandCache} [commandCache] optional parameter, if command was called with cache
-     * @returns
+     * @returns if command was successful. True and undefined means yes. If it yes, the cooldown gets set if a time is specified
      * @memberof commandInterface
      */
-    run(message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number], commandCache?: CommandCache);
+    run(message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number], commandCache?: CommandCache): Promise<boolean>;
 }
 
 /**
@@ -193,15 +193,22 @@ export class Commands {
             return;
         }
         if (permLevel < cmd.permLevel && !dm) return; //  returns if the member doesn't have enough perms
+        let user: UserWrapper;
         if (cmd.cooldownGlobal || cmd.cooldownLocal) {
-            var user = await Bot.database.getUser(message.author);
+            user = await Bot.database.getUser(message.author);
             if (user) {
                 if (cmd.cooldownLocal && Date.now() < user.getCooldown((dm ? 'dm' : message.guild.id), command))
                     return;
                 if (cmd.cooldownGlobal && Date.now() < user.getCooldown('global', command))
                     return;
             }
-
+        }
+        if (!dm && cmd.togglable) { // check if command is disabled if request is from a guild and the command is togglable
+            var commandSettings = await Bot.database.getCommandSettings(message.guild.id, command);
+            if (commandSettings && !commandSettings._enabled) return;
+        }
+        let output = await cmd.run(message, args, permLevel, dm, requestTime); // run command
+        if (output !== false) {
             if (!user)
                 user = new UserWrapper(undefined, message.author);
             if (cmd.cooldownGlobal)
@@ -210,11 +217,6 @@ export class Commands {
                 user.setCooldown((dm ? 'dm' : message.guild.id), command, Date.now() + cmd.cooldownLocal, false);
             user.save();
         }
-        if (!dm && cmd.togglable) { // check if command is disabled if request is from a guild and the command is togglable
-            var commandSettings = await Bot.database.getCommandSettings(message.guild.id, command);
-            if (commandSettings && !commandSettings._enabled) return;
-        }
-        cmd.run(message, args, permLevel, dm, requestTime); // run command
     }
 
     /**

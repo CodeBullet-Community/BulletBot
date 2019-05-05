@@ -65,7 +65,7 @@ var command: commandInterface = {
             if (args.length == 0) {
                 message.channel.send(await command.embedHelp(message.guild));
                 Bot.mStats.logMessageSend();
-                return;
+                return false;
             }
             request.post('https://docs.google.com/forms/d/e/1FAIpQLScWsqLDncKzqSgmZuFhuwenqexzmKSr0K_B4GSOgoF6fEBcMA/formResponse', {
                 form: {
