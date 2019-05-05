@@ -284,6 +284,7 @@ export interface userObject {
 }
 export interface userDoc extends mongoose.Document, userObject { }
 export const userSchema = new mongoose.Schema({
+    user: String,
     commandCooldown: mongoose.Schema.Types.Mixed
 });
 export class UserWrapper {
@@ -319,7 +320,6 @@ export class UserWrapper {
 
             this.commandCooldown = {};
             this.doc = new Bot.database.mainDB.users({ user: user.id, commandCooldown: {} });
-            this.doc.save();
         }
     }
 

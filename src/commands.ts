@@ -1,7 +1,7 @@
 import { Message, Collection, Guild } from 'discord.js';
 import * as fs from 'fs';
 import { Bot } from '.';
-import { CommandCache } from './database/schemas';
+import { CommandCache, UserWrapper } from './database/schemas';
 import { permLevels } from './utils/permissions';
 
 /**
@@ -52,12 +52,19 @@ export interface commandInterface {
      */
     togglable: boolean;
     /**
-     * time in ms, until a command can be used again
+     * time in ms, until a command can be used again in a guild / dm
      *
      * @type {number}
      * @memberof commandInterface
      */
-    cooldown?: number;
+    cooldownLocal?: number;
+    /**
+     * time in ms, until a command can be used again by a user globally
+     *
+     * @type {number}
+     * @memberof commandInterface
+     */
+    cooldownGlobal?: number;
     /**
      * short desc of what command does
      *
@@ -146,10 +153,7 @@ export class Commands {
             }
             console.info(`loading ${commands.length} commands in ${dir}`);
             commands.forEach((f, i) => {
-                var props:commandInterface = require(dir + f).default;
-                if(!props.cooldown){ // for older commands, that don't have that property
-                    props.cooldown == 0;
-                }
+                var props: commandInterface = require(dir + f).default;
                 console.info(`${i + 1}: ${f} loaded!`);
                 this.commands.set(props.name, props);
                 // puts command in structure
@@ -189,6 +193,23 @@ export class Commands {
             return;
         }
         if (permLevel < cmd.permLevel && !dm) return; //  returns if the member doesn't have enough perms
+        if (cmd.cooldownGlobal || cmd.cooldownLocal) {
+            var user = await Bot.database.getUser(message.author);
+            if (user) {
+                if (cmd.cooldownLocal && Date.now() < user.getCooldown((dm ? 'dm' : message.guild.id), command))
+                    return;
+                if (cmd.cooldownGlobal && Date.now() < user.getCooldown('global', command))
+                    return;
+            }
+
+            if (!user)
+                user = new UserWrapper(undefined, message.author);
+            if (cmd.cooldownGlobal)
+                user.setCooldown('global', command, message.createdTimestamp + cmd.cooldownGlobal, false);
+            if (cmd.cooldownLocal)
+                user.setCooldown((dm ? 'dm' : message.guild.id), command, Date.now() + cmd.cooldownLocal, false);
+            user.save();
+        }
         if (!dm && cmd.togglable) { // check if command is disabled if request is from a guild and the command is togglable
             var commandSettings = await Bot.database.getCommandSettings(message.guild.id, command);
             if (commandSettings && !commandSettings._enabled) return;

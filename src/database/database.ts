@@ -537,7 +537,7 @@ export class Database {
      * If create is true and it didn't find a user doc, it will create a new one.
      *
      * @param {User} user user for which to find/create a wrapper/doc
-     * @param {boolean} [create=false] if it should create a new doc if there isn't already one
+     * @param {boolean} [create=false] if it should create a new doc if there isn't already one. (default false)
      * @returns user doc wrapped in a UserWrapper
      * @memberof Database
      */
