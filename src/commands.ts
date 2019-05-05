@@ -207,8 +207,10 @@ export class Commands {
             var commandSettings = await Bot.database.getCommandSettings(message.guild.id, command);
             if (commandSettings && !commandSettings._enabled) return;
         }
+
         let output = await cmd.run(message, args, permLevel, dm, requestTime); // run command
-        if ((cmd.cooldownGlobal || cmd.cooldownLocal) && output !== false) {
+
+        if ((cmd.cooldownGlobal || cmd.cooldownLocal) && output !== false) { // set cooldown if cooldown is defined and command was successful
             if (!user)
                 user = new UserWrapper(undefined, message.author);
             if (cmd.cooldownGlobal)
