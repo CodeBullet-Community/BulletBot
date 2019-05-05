@@ -52,6 +52,13 @@ export interface commandInterface {
      */
     togglable: boolean;
     /**
+     * time in ms, until a command can be used again
+     *
+     * @type {number}
+     * @memberof commandInterface
+     */
+    cooldown?: number;
+    /**
      * short desc of what command does
      *
      * @type {string}
@@ -139,7 +146,10 @@ export class Commands {
             }
             console.info(`loading ${commands.length} commands in ${dir}`);
             commands.forEach((f, i) => {
-                var props = require(dir + f).default;
+                var props:commandInterface = require(dir + f).default;
+                if(!props.cooldown){ // for older commands, that don't have that property
+                    props.cooldown == 0;
+                }
                 console.info(`${i + 1}: ${f} loaded!`);
                 this.commands.set(props.name, props);
                 // puts command in structure

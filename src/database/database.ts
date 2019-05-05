@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject, CommandCache } from './schemas';
+import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject, CommandCache, userDoc, userSchema, UserWrapper } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
 import { Guild, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
@@ -28,6 +28,7 @@ export class Database {
         filters: mongoose.Model<filtersDoc>;
         logs: mongoose.Model<logDoc>;
         commandCache: mongoose.Model<commandCacheDoc>;
+        users: mongoose.Model<userDoc>;
     };
     /**
      * represents the settings database with the settings collection and the connection. There is also a cache of the settings doc.
@@ -66,7 +67,8 @@ export class Database {
             commands: mainCon.model('commands', commandsSchema, 'commands'),
             filters: mainCon.model('filters', filtersSchema, 'filters'),
             logs: mainCon.model('log', logSchema, 'logs'),
-            commandCache: mainCon.model('commandCache', commandCacheSchema, 'commandCaches')
+            commandCache: mainCon.model('commandCache', commandCacheSchema, 'commandCaches'),
+            users: mainCon.model('user', userSchema, 'users')
         }
 
         var settingsCon = mongoose.createConnection(URI + '/settings' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true })
@@ -509,7 +511,41 @@ export class Database {
         return new CommandCache(commandCacheDoc);
     }
 
+    /**
+     * deletes all old command caches
+     *
+     * @returns
+     * @memberof Database
+     */
     cleanCommandCaches() {
         return this.mainDB.commandCache.deleteMany({ delete: { $lt: Date.now() } }).exec();
+    }
+
+    /**
+     * makes a query to find a doc of a specific user
+     *
+     * @param {string} userID user id
+     * @returns user doc if one was found
+     * @memberof Database
+     */
+    findUserDoc(userID: string) {
+        return this.mainDB.users.findOne({ user: userID }).exec();
+    }
+
+    /**
+     * will search for a user doc and wrap it in a UserWrapper. 
+     * If create is true and it didn't find a user doc, it will create a new one.
+     *
+     * @param {User} user user for which to find/create a wrapper/doc
+     * @param {boolean} [create=false] if it should create a new doc if there isn't already one
+     * @returns user doc wrapped in a UserWrapper
+     * @memberof Database
+     */
+    async getUser(user: User, create: boolean = false) {
+        var userDoc = await this.findUserDoc(user.id);
+        if (userDoc) {
+            return new UserWrapper(userDoc, user);
+        } else if (create)
+            return new UserWrapper(undefined, user);
     }
 }
