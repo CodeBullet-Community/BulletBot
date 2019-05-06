@@ -14,8 +14,8 @@ var command: commandInterface = {
     dm: false, // if this command can be used in dms
     permLevel: permLevels.mod,  // what minimum perm level is required
     togglable: false, // if the command can be disabled by the commands command
-    cooldownLocal: durations.second*10, // local cooldown in ms, if the command shouldn't have any local cooldown, remove the property
-    cooldownGlobal: durations.second*10, // global cooldown in ms, if the command shouldn't have any global cooldown, remove the property
+    cooldownLocal: durations.second * 10, // local cooldown in ms, if the command shouldn't have any local cooldown, remove the property
+    cooldownGlobal: durations.second * 10, // global cooldown in ms, if the command shouldn't have any global cooldown, remove the property
     shortHelp: '[short desc]', // very short desc of what the command does
     embedHelp: async function (guild: Guild) {
         var prefix = await Bot.database.getPrefix(guild);
@@ -69,12 +69,15 @@ var command: commandInterface = {
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
+            // REMEMBER: return true if the command was successfully executed (meaning the users intention where fulfilled)
+            //           return false if the command execution was unsuccessful (then the cooldown doesn't get started)
+
             // only put this here when the command always requires arguments
             // if no argument is given then it will send the embed help
             if (args.length == 0) {
                 message.channel.send(await command.embedHelp(message.guild));
                 Bot.mStats.logMessageSend();
-                return;
+                return false; // was unsuccessful
             }
             // if the command has several arguments use argIndex, as it's easier to implement optional arguments and new arguments
             var argIndex = 0;
@@ -96,9 +99,11 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'bye');
             }
+            return true; // was successful
         } catch (e) {
             sendError(message.channel, e);
             Bot.mStats.logError(e, command.name);
+            return false; // was unsuccessful
         }
     }
 };
