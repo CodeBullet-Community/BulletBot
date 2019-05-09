@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject, CommandCache, userDoc, userSchema, UserWrapper } from './schemas';
+import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject, CommandCache, userDoc, userSchema, UserWrapper, megalogDoc } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
 import { Guild, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
@@ -29,6 +29,7 @@ export class Database {
         logs: mongoose.Model<logDoc>;
         commandCache: mongoose.Model<commandCacheDoc>;
         users: mongoose.Model<userDoc>;
+        megalogs: mongoose.Model<megalogDoc>;
     };
     /**
      * represents the settings database with the settings collection and the connection. There is also a cache of the settings doc.
@@ -68,7 +69,8 @@ export class Database {
             filters: mainCon.model('filters', filtersSchema, 'filters'),
             logs: mainCon.model('log', logSchema, 'logs'),
             commandCache: mainCon.model('commandCache', commandCacheSchema, 'commandCaches'),
-            users: mainCon.model('user', userSchema, 'users')
+            users: mainCon.model('user', userSchema, 'users'),
+            megalogs: mainCon.model('megalogSettings', userSchema, 'megalogs'),
         }
 
         var settingsCon = mongoose.createConnection(URI + '/settings' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true })
@@ -590,5 +592,34 @@ export class Database {
             }
         }
 
+    }
+
+    /**
+     * makes query to find megalog doc of a guild
+     *
+     * @param {string} guildID guild id
+     * @returns
+     * @memberof Database
+     */
+    findMegalogDoc(guildID: string) {
+        return this.mainDB.megalogs.findOne({ guild: guildID }).exec();
+    }
+
+    /**
+     * will try to find the megalog doc of a guild and if non was found, it will create one
+     *
+     * @param {string} guildID guild id
+     * @returns
+     * @memberof Database
+     */
+    async getMegalogDoc(guildID: string) {
+        let megalogDoc = await this.findMegalogDoc(guildID);
+        if (!megalogDoc) {
+            megalogDoc = new this.mainDB.megalogs({
+                guild: guildID
+            });
+            await megalogDoc.save();
+        }
+        return megalogDoc;
     }
 }

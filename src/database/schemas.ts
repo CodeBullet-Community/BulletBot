@@ -414,6 +414,58 @@ export class UserWrapper {
     }
 }
 
+// megalog settings
+export interface megalogObject {
+    guild: string; // guild id
+    channelCreate: string;
+    channelDelete: string;
+    channelUpdate: string;
+    ban: string;
+    unban: string;
+    memberJoin: string;
+    memberLeave: string;
+    nicknameChange: string;
+    memberRolesChange: string;
+    guildNameChange: string;
+    messageDelete: string;
+    attachmentCache: string;
+    messageEdit: string;
+    reactionAdd: string;
+    reactionRemove: string;
+    roleCreate: string;
+    roleDelete: string;
+    roleUpdate: string;
+    usernameChanged: string;
+    voiceJoin: string;
+    voiceLeave: string;
+    voiceMute: string;
+}
+export interface megalogDoc extends mongoose.Document, megalogObject { }
+export const megalogSchema = new mongoose.Schema({
+    guild: String,
+    channelCreate: String,
+    channelDelete: String,
+    channelUpdate: String,
+    ban: String,
+    unban: String,
+    memberJoin: String,
+    memberLeave: String,
+    nicknameChange: String,
+    memberRolesChange: String,
+    guildNameChange: String,
+    messageDelete: String,
+    attachmentCache: String,
+    messageEdit: String,
+    reactionAdd: String,
+    reactionRemove: String,
+    roleCreate: String,
+    roleDelete: String,
+    roleUpdate: String,
+    usernameChanged: String,
+    voiceJoin: String,
+    voiceLeave: String,
+    voiceMute: String
+});
 
 export interface mStatsObject {
     messagesReceived: number; // all messages recieved
