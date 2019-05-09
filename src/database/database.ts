@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject, CommandCache, userDoc, userSchema, UserWrapper, megalogDoc } from './schemas';
+import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject, CommandCache, userDoc, userSchema, UserWrapper, megalogDoc, megalogSchema } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
 import { Guild, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
@@ -70,7 +70,7 @@ export class Database {
             logs: mainCon.model('log', logSchema, 'logs'),
             commandCache: mainCon.model('commandCache', commandCacheSchema, 'commandCaches'),
             users: mainCon.model('user', userSchema, 'users'),
-            megalogs: mainCon.model('megalogSettings', userSchema, 'megalogs'),
+            megalogs: mainCon.model('megalogSettings', megalogSchema, 'megalogs'),
         }
 
         var settingsCon = mongoose.createConnection(URI + '/settings' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true })

@@ -12,6 +12,7 @@ import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
+import { logChannelToggle } from './megalogger';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -187,13 +188,20 @@ client.on('message', async message => {
 
 client.on('reconnecting', () => {
     console.warn('Lost client connection. Reconnecting...');
-})
+});
 
 client.on('resume', missed => {
     console.info(`Successfully reconnected client. Missed ${missed} events.`)
-})
+});
+
+client.on('channelCreate', channel => {
+    if (channel instanceof discord.GuildChannel)
+        logChannelToggle(channel, true);
+});
 
 client.on('channelDelete', async (channel: discord.TextChannel) => {
+    if (channel instanceof discord.GuildChannel)
+        logChannelToggle(channel, false);
     if (channel.type == 'text') { // looks if webhooks for the deleted channel exist if it's a text channel
         var youtubeWebhookDocs = await Bot.youtube.webhooks.find({ guild: channel.guild.id, channel: channel.id });
         for (const webhookDoc of youtubeWebhookDocs) {
