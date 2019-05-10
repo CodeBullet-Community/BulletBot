@@ -10,7 +10,7 @@ async function sendFilterList(guild: Guild, message: Message, strucObject: any, 
     var output = new RichEmbed();
     output.setAuthor('Filter List:', Bot.client.user.avatarURL);
     if (path) output.setFooter('Path: ~' + path);
-    output.setColor(Bot.database.settingsDB.cache.helpEmbedColor);
+    output.setColor(Bot.database.settingsDB.cache.embedColor.help);
     var categories = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) === 'undefined');
     if (categories.length != 0) {
         var cat_text = categories[0];
@@ -55,7 +55,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     } else {
                         var output = new RichEmbed();
                         output.setAuthor('Enabled Filters:', Bot.client.user.avatarURL);
-                        output.setColor(Bot.database.settingsDB.cache.helpEmbedColor);
+                        output.setColor(Bot.database.settingsDB.cache.embedColor.help);
 
                         var filtersObject: filtersObject = filtersDoc.toObject();
                         for (const filterName in filtersObject.filters) {
@@ -192,7 +192,7 @@ command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
         'embed': {
-            'color': Bot.database.settingsDB.cache.helpEmbedColor,
+            'color': Bot.database.settingsDB.cache.embedColor.help,
             'author': {
                 'name': 'Command: ' + prefix + command.name
             },

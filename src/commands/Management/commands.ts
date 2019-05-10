@@ -32,7 +32,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 
                         var output = new RichEmbed();
                         output.setAuthor('Disabled Commands:', Bot.client.user.avatarURL);
-                        output.setColor(Bot.database.settingsDB.cache.helpEmbedColor);
+                        output.setColor(Bot.database.settingsDB.cache.embedColor.help);
 
                         var commandsObject: commandsObject = commandsDoc.toObject();
                         for (const cmdName in commandsObject.commands) {
@@ -147,7 +147,7 @@ command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
         'embed': {
-            'color': Bot.database.settingsDB.cache.helpEmbedColor,
+            'color': Bot.database.settingsDB.cache.embedColor.help,
             'author': {
                 'name': 'Command: ' + prefix + command.name
             },

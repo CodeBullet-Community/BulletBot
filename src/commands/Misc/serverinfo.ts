@@ -17,7 +17,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         var botCount = message.guild.members.filter(member => member.user.bot).size;
         var embed = {
             "embed": {
-                "color": Bot.database.settingsDB.cache.defaultEmbedColor,
+                "color": Bot.database.settingsDB.cache.embedColor.default,
                 "timestamp": date.toISOString(),
                 "footer": {
                     "text": "ID: " + message.guild.id + ' | Region: ' + message.guild.region
@@ -104,7 +104,7 @@ command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
         'embed': {
-            'color': Bot.database.settingsDB.cache.helpEmbedColor,
+            'color': Bot.database.settingsDB.cache.embedColor.help,
             'author': {
                 'name': 'Command: ' + prefix + command.name
             },

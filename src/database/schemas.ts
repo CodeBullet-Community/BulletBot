@@ -589,8 +589,13 @@ export const webhookSchema = new mongoose.Schema({
 export interface globalSettingsObject {
     prefix: string;
     presence: PresenceData;
-    defaultEmbedColor: number;
-    helpEmbedColor: number;
+    embedColor: {
+        default: number;
+        help: number;
+        bad: number;
+        warn: number;
+        positive: number;
+    };
     botMasters: [string];
     commands: {
         // key is command name
@@ -617,8 +622,13 @@ export const globalSettingsSchema = new mongoose.Schema({
             type: { type: String, required: false }
         }
     },
-    defaultEmbedColor: Number,
-    helpEmbedColor: Number,
+    embedColor: {
+        default: Number,
+        help: Number,
+        bad: Number,
+        warn: Number,
+        positive: Number
+    },
     botMasters: [String],
     commands: mongoose.Schema.Types.Mixed,
     filters: mongoose.Schema.Types.Mixed
