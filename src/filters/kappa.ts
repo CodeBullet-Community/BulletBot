@@ -10,7 +10,7 @@ filter.shortHelp = "replies with kappa and deletes it messages with kappa";
 filter.embedHelp = async (guild: Guild) => {
 	return {
 		"embed": {
-			"color": Bot.database.settingsDB.cache.embedColor.help,
+			"color": Bot.database.settingsDB.cache.embedColors.help,
 			"author": {
 				"name": "Filter: " + filter.name
 			},

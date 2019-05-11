@@ -54,7 +54,7 @@ async function createMemberEmbed(member: GuildMember, permLevel: number) {
     return {
         "embed": {
             "description": member.toString(),
-            "color": Bot.database.settingsDB.cache.embedColor.default,
+            "color": Bot.database.settingsDB.cache.embedColors.default,
             "timestamp": date.toISOString(),
             "footer": {
                 "text": "ID: " + member.id
@@ -146,7 +146,7 @@ command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
         'embed': {
-            'color': Bot.database.settingsDB.cache.embedColor.help,
+            'color': Bot.database.settingsDB.cache.embedColors.help,
             'author': {
                 'name': 'Command: ' + prefix + command.name
             },

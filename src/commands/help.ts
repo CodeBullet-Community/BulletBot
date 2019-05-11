@@ -9,7 +9,7 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
     var output = new RichEmbed();
     output.setAuthor('Command List:', Bot.client.user.avatarURL);
     if (path) output.setFooter('Path: ~' + path);
-    output.setColor(Bot.database.settingsDB.cache.embedColor.help);
+    output.setColor(Bot.database.settingsDB.cache.embedColors.help);
     var categories = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) === 'undefined');
     if (categories.length != 0) {
         var cat_text = categories[0];
@@ -81,7 +81,7 @@ command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
         'embed': {
-            'color': Bot.database.settingsDB.cache.embedColor.help,
+            'color': Bot.database.settingsDB.cache.embedColors.help,
             'author': {
                 'name': 'Command: ' + prefix + command.name
             },

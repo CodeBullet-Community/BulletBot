@@ -589,9 +589,10 @@ export const webhookSchema = new mongoose.Schema({
 export interface globalSettingsObject {
     prefix: string;
     presence: PresenceData;
-    embedColor: {
+    embedColors: {
         default: number;
         help: number;
+        neutral: number;
         bad: number;
         warn: number;
         positive: number;
@@ -625,6 +626,7 @@ export const globalSettingsSchema = new mongoose.Schema({
     embedColor: {
         default: Number,
         help: Number,
+        neutral: Number,
         bad: Number,
         warn: Number,
         positive: Number

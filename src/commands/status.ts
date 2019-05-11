@@ -19,7 +19,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         var minutes: number = Math.round((Bot.client.uptime % durations.hour) / durations.minute);
         m.edit({
             "embed": {
-                "color": Bot.database.settingsDB.cache.embedColor.default,
+                "color": Bot.database.settingsDB.cache.embedColors.default,
                 "timestamp": new Date().toISOString(),
                 "author": {
                     "name": "BulletBot Status",
@@ -73,7 +73,7 @@ command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
         'embed': {
-            'color': Bot.database.settingsDB.cache.embedColor.help,
+            'color': Bot.database.settingsDB.cache.embedColors.help,
             'author': {
                 'name': 'Command: ' + prefix + command.name
             },
