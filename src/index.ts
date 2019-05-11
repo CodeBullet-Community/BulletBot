@@ -12,7 +12,7 @@ import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
-import { logChannelToggle } from './megalogger';
+import { logChannelToggle, logChannelUpdate } from './megalogger';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -209,6 +209,11 @@ client.on('channelDelete', async (channel: discord.TextChannel) => {
         }
     }
 });
+
+client.on('channelUpdate', (oldChannel: discord.Channel, newChannel: discord.Channel) => {
+    if (oldChannel instanceof discord.GuildChannel && newChannel instanceof discord.GuildChannel)
+        logChannelUpdate(oldChannel, newChannel);
+})
 
 client.on('guildCreate', guild => {
     Bot.database.addGuild(guild.id); // creates guild in database when bot joins a new guild

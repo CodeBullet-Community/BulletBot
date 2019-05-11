@@ -593,7 +593,7 @@ export interface globalSettingsObject {
         default: number;
         help: number;
         neutral: number;
-        bad: number;
+        negative: number;
         warn: number;
         positive: number;
     };

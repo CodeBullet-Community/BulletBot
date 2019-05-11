@@ -28,7 +28,7 @@ export enum permLevels {
  * @param {GuildMember} member member to get perm level from
  * @returns perm level
  */
-export async function getPermLevel(member: GuildMember){
+export async function getPermLevel(member: GuildMember) {
     if (member == null) {
         return permLevels.member;
     }
@@ -55,7 +55,7 @@ export async function getPermLevel(member: GuildMember){
             return permLevels.admin;
         }
     }
- 
+
     // mods
     if (staffObject.mods.users.includes(member.user.id)) {
         return permLevels.mod;
