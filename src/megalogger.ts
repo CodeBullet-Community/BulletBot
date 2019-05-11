@@ -1,7 +1,14 @@
-import { Channel, GuildChannel, TextChannel, Role, GuildMember } from "discord.js";
+import { Channel, GuildChannel, TextChannel, Role, GuildMember, Guild, User } from "discord.js";
 import { Bot } from ".";
-import { channelPermFlags } from "./utils/permissions";
 
+/**
+ * megalogger function for logging channel create and channel delete
+ *
+ * @export
+ * @param {GuildChannel} channel deleted/created channel
+ * @param {boolean} created true if it was created, false if it was deleted
+ * @returns
+ */
 export async function logChannelToggle(channel: GuildChannel, created: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(channel.guild.id);
     if (!megalogDoc) return;
@@ -26,6 +33,18 @@ export async function logChannelToggle(channel: GuildChannel, created: boolean) 
     Bot.mStats.logMessageSend();
 }
 
+/**
+ * megalogger function for logging a channel update
+ * currently logs following actions:
+ *  - name change
+ *  - topic change
+ *  - permissions change
+ *
+ * @export
+ * @param {GuildChannel} oldChannel channel before update
+ * @param {GuildChannel} newChannel channel after update
+ * @returns
+ */
 export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: GuildChannel) {
     let megalogDoc = await Bot.database.findMegalogDoc(newChannel.guild.id);
     if (!megalogDoc) return;
@@ -153,3 +172,30 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
     }
 
 }
+
+
+export async function logBan(guild: Guild, user: User, banned: boolean) {
+    let megalogDoc = await Bot.database.findMegalogDoc(guild.id);
+    if (!megalogDoc) return;
+    if ((!megalogDoc.ban && banned) || (!megalogDoc.unban && !banned)) return;
+    let logChannel = guild.channels.get(banned ? megalogDoc.toObject().ban : megalogDoc.toObject().unban);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    logChannel.send({
+        "embed": {
+            "description": `${user.toString()}\n${user.tag}`,
+            "color": Bot.database.settingsDB.cache.embedColors[banned ? 'negative' : 'positive'],
+            "timestamp": new Date().toISOString(),
+            "footer": {
+                "text": "ID: " + user.id
+            },
+            "thumbnail": {
+                "url": user.avatarURL
+            },
+            "author": {
+                "name": "User " + (banned ? 'Banned' : 'Unbanned'),
+                "icon_url": user.avatarURL
+            }
+        }
+    });
+    Bot.mStats.logMessageReceived();
+}  

@@ -12,7 +12,7 @@ import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
-import { logChannelToggle, logChannelUpdate } from './megalogger';
+import { logChannelToggle, logChannelUpdate, logBan } from './megalogger';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -221,6 +221,14 @@ client.on('guildCreate', guild => {
 
 client.on('guildDelete', guild => {
     Bot.database.removeGuild(guild.id); // removes all guild related things in database if the bot leaves a guild
+});
+
+client.on('guildBanAdd', (guild: discord.Guild, user: discord.User) => {
+    logBan(guild, user, true);
+});
+
+client.on('guildBanRemove', (guild: discord.Guild, user: discord.User) => {
+    logBan(guild, user, false);
 });
 
 client.on('guildMemberRemove', async member => {
