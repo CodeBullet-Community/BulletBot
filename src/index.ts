@@ -12,7 +12,7 @@ import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
-import { logChannelToggle, logChannelUpdate, logBan } from './megalogger';
+import { logChannelToggle, logChannelUpdate, logBan, logMember } from './megalogger';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -231,7 +231,12 @@ client.on('guildBanRemove', (guild: discord.Guild, user: discord.User) => {
     logBan(guild, user, false);
 });
 
+client.on('guildMemberAdd', member => {
+    logMember(member, true);
+});
+
 client.on('guildMemberRemove', async member => {
+    logMember(member, false);
     var permLevel = await getPermLevel(member); // removes guild member from ranks if he/She was assigned any
     if (permLevel == permLevels.admin) {
         Bot.database.removeFromRank(member.guild.id, 'admins', undefined, member.id);

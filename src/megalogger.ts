@@ -1,5 +1,7 @@
 import { Channel, GuildChannel, TextChannel, Role, GuildMember, Guild, User } from "discord.js";
 import { Bot } from ".";
+import { timeFormat, getDurationDiff, getDayDiff } from "./utils/time";
+import dateFormat = require('dateformat');
 
 /**
  * megalogger function for logging channel create and channel delete
@@ -174,6 +176,15 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
 }
 
 
+/**
+ * megalogger function that logs a ban or unban
+ *
+ * @export
+ * @param {Guild} guild guild in which someone was un-/banned
+ * @param {User} user user that got un-/banned
+ * @param {boolean} banned true if someone was banned, false if someone was unbanned
+ * @returns
+ */
 export async function logBan(guild: Guild, user: User, banned: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(guild.id);
     if (!megalogDoc) return;
@@ -198,4 +209,45 @@ export async function logBan(guild: Guild, user: User, banned: boolean) {
         }
     });
     Bot.mStats.logMessageReceived();
-}  
+}
+
+/**
+ * megalogger function that logs a member join or leave
+ *
+ * @export
+ * @param {GuildMember} member member that joined or left
+ * @param {boolean} joined true if member joined, false if member left
+ * @returns
+ */
+export async function logMember(member: GuildMember, joined: boolean) {
+    let megalogDoc = await Bot.database.findMegalogDoc(member.guild.id);
+    if (!megalogDoc) return;
+    if ((!megalogDoc.memberJoin && joined) || (!megalogDoc.memberLeave && !joined)) return;
+    let logChannel = member.guild.channels.get(joined ? megalogDoc.toObject().memberJoin : megalogDoc.toObject().memberLeave);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let embed: any = {
+        "embed": {
+            "description": member.toString() + "\n" + member.user.tag,
+            "color": Bot.database.settingsDB.cache.embedColors[joined ? 'positive' : 'negative'],
+            "timestamp": joined ? member.joinedAt.toISOString() : new Date().toISOString(),
+            "footer": {
+                "text": "ID: " + member.id
+            },
+            "thumbnail": {
+                "url": member.user.avatarURL
+            },
+            "author": {
+                "name": "User " + (joined ? 'Joined' : 'Left'),
+                "icon_url": member.user.avatarURL
+            }
+        }
+    };
+    if (!joined) {
+        embed.embed.fields = [{
+            "name": "Joined At",
+            "value": dateFormat(member.joinedAt, timeFormat) + ` (${getDayDiff(member.joinedTimestamp, Date.now())} days ago)`
+        }];
+    }
+    logChannel.send(embed);
+    Bot.mStats.logMessageReceived();
+}
