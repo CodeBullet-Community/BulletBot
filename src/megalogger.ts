@@ -251,3 +251,47 @@ export async function logMember(member: GuildMember, joined: boolean) {
     logChannel.send(embed);
     Bot.mStats.logMessageReceived();
 }
+
+/**
+ * megalogger function that logs a nickname change. It checks if the nickname has changed, so you don't have to
+ *
+ * @export
+ * @param {GuildMember} oldMember member before change
+ * @param {GuildMember} newMember member after change
+ * @returns
+ */
+export async function logNickname(oldMember: GuildMember, newMember: GuildMember) {
+    if (oldMember.nickname == newMember.nickname) return;
+    let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
+    if (!megalogDoc) return;
+    if (!megalogDoc.nicknameChange) return;
+    let logChannel = newMember.guild.channels.get(megalogDoc.nicknameChange);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    logChannel.send({
+        "embed": {
+            "description": `**${newMember.toString()} nickname changed**`,
+            "color": Bot.database.settingsDB.cache.embedColors.default,
+            "timestamp": new Date().toISOString(),
+            "footer": {
+                "text": "ID: " + newMember.id
+            },
+            "author": {
+                "name": newMember.user.tag,
+                "icon_url": newMember.user.avatarURL
+            },
+            "fields": [
+                {
+                    "name": "Before",
+                    "value": oldMember.nickname ? oldMember.nickname : '*None*',
+                    "inline": true
+                },
+                {
+                    "name": "After",
+                    "value": newMember.nickname ? newMember.nickname : '*None*',
+                    "inline": true
+                }
+            ]
+        }
+    });
+    Bot.mStats.logMessageReceived();
+}

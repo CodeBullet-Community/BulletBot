@@ -12,7 +12,7 @@ import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
-import { logChannelToggle, logChannelUpdate, logBan, logMember } from './megalogger';
+import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname } from './megalogger';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -257,6 +257,10 @@ client.on('guildMemberRemove', async member => {
         userDoc.save();
     }
 });
+
+client.on('guildMemberUpdate', (oldMember: discord.GuildMember, newMember: discord.GuildMember) => {
+    logNickname(oldMember, newMember);
+})
 
 client.on('roleDelete', async role => {
     var staffDoc = await Bot.database.findStaffDoc(role.guild.id); // removes role from ranks if it was assigned to any
