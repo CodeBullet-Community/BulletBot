@@ -295,3 +295,57 @@ export async function logNickname(oldMember: GuildMember, newMember: GuildMember
     });
     Bot.mStats.logMessageReceived();
 }
+
+/**
+ * megalogger function that logs role changes. It checks if the roles have changed, so you don't have to
+ *
+ * @export
+ * @param {GuildMember} oldMember member before change
+ * @param {GuildMember} newMember member after change
+ * @returns
+ */
+export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMember) {
+    let rolesAdded = newMember.roles.filter(x => !oldMember.roles.get(x.id));
+    let rolesRemoved = oldMember.roles.filter(x => !newMember.roles.get(x.id));
+    if (rolesAdded.size == 0 && rolesRemoved.size == 0) return;
+    let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
+    if (!megalogDoc) return;
+    if (!megalogDoc.nicknameChange) return;
+    let logChannel = newMember.guild.channels.get(megalogDoc.nicknameChange);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let roleAddedString = '';
+    for (const role of rolesAdded.array()) {
+        roleAddedString += role.toString();
+    }
+    let roleRemovedString = '';
+    for (const role of rolesRemoved.array()) {
+        roleRemovedString += role.toString();
+    }
+    logChannel.send({
+        "embed": {
+            "description": `**${newMember.toString()} roles changed**`,
+            "color": Bot.database.settingsDB.cache.embedColors.default,
+            "timestamp": new Date().toISOString(),
+            "footer": {
+                "text": "ID: " + newMember.id
+            },
+            "author": {
+                "name": newMember.user.tag,
+                "icon_url": newMember.user.avatarURL
+            },
+            "fields": [
+                {
+                    "name": `Added Roles [${rolesAdded.size}]`,
+                    "value": roleAddedString.length == 0 ? '*None*' : roleAddedString,
+                    "inline": true
+                },
+                {
+                    "name": `Removed Roles [${rolesRemoved.size}]`,
+                    "value": roleRemovedString.length == 0 ? '*None*' : roleRemovedString,
+                    "inline": true
+                }
+            ]
+        }
+    });
+    Bot.mStats.logMessageReceived();
+}
