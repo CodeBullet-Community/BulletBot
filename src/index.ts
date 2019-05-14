@@ -12,7 +12,7 @@ import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
-import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName } from './megalogger';
+import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment } from './megalogger';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -136,6 +136,7 @@ client.on('error', (error: any) => {
 });
 
 client.on('message', async message => {
+    if (message.author.id == client.user.id) cacheAttachment(message);
     if (message.author.bot) return;
     var requestTime = process.hrtime(); //  gets timestamp to calculate the response time 
     Bot.mStats.logMessageReceived();

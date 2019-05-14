@@ -1,4 +1,4 @@
-import { Channel, GuildChannel, TextChannel, Role, GuildMember, Guild, User } from "discord.js";
+import { Channel, GuildChannel, TextChannel, Role, GuildMember, Guild, User, Message, Attachment } from "discord.js";
 import { Bot } from ".";
 import { timeFormat, getDurationDiff, getDayDiff } from "./utils/time";
 import dateFormat = require('dateformat');
@@ -208,7 +208,7 @@ export async function logBan(guild: Guild, user: User, banned: boolean) {
             }
         }
     });
-    Bot.mStats.logMessageReceived();
+    Bot.mStats.logMessageSend();
 }
 
 /**
@@ -249,7 +249,7 @@ export async function logMember(member: GuildMember, joined: boolean) {
         }];
     }
     logChannel.send(embed);
-    Bot.mStats.logMessageReceived();
+    Bot.mStats.logMessageSend();
 }
 
 /**
@@ -293,7 +293,7 @@ export async function logNickname(oldMember: GuildMember, newMember: GuildMember
             ]
         }
     });
-    Bot.mStats.logMessageReceived();
+    Bot.mStats.logMessageSend();
 }
 
 /**
@@ -310,8 +310,8 @@ export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMem
     if (rolesAdded.size == 0 && rolesRemoved.size == 0) return;
     let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
     if (!megalogDoc) return;
-    if (!megalogDoc.nicknameChange) return;
-    let logChannel = newMember.guild.channels.get(megalogDoc.nicknameChange);
+    if (!megalogDoc.memberRolesChange) return;
+    let logChannel = newMember.guild.channels.get(megalogDoc.memberRolesChange);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     let roleAddedString = '';
     for (const role of rolesAdded.array()) {
@@ -347,7 +347,7 @@ export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMem
             ]
         }
     });
-    Bot.mStats.logMessageReceived();
+    Bot.mStats.logMessageSend();
 }
 
 /**
@@ -362,8 +362,8 @@ export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
     if (oldGuild.name == newGuild.name) return;
     let megalogDoc = await Bot.database.findMegalogDoc(newGuild.id);
     if (!megalogDoc) return;
-    if (!megalogDoc.nicknameChange) return;
-    let logChannel = newGuild.channels.get(megalogDoc.nicknameChange);
+    if (!megalogDoc.guildNameChange) return;
+    let logChannel = newGuild.channels.get(megalogDoc.guildNameChange);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     logChannel.send({
         "embed": {
@@ -391,5 +391,29 @@ export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
             ]
         }
     });
-    Bot.mStats.logMessageReceived();
+    Bot.mStats.logMessageSend();
+}
+
+/**
+ * megalogger function that caches every attachment from a message in a channel
+ *
+ * @export
+ * @param {Message} message message of which to cache attachments
+ * @returns
+ */
+export async function cacheAttachment(message: Message) {
+    if (message.attachments.size == 0) return;
+    let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
+    if (!megalogDoc) return;
+    if (!megalogDoc.attachmentCache) return;
+    let logChannel = message.guild.channels.get(megalogDoc.attachmentCache);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let attachments: string[] = [];
+    for (const attachment of message.attachments.array()) {
+        attachments.push(attachment.url);
+    }
+    logChannel.send(`from ${message.author.tag} (${message.author.id})\nBulletBotCacheTagThing: ${message.url}`, {
+        files: attachments
+    });
+    Bot.mStats.logMessageSend();
 }
