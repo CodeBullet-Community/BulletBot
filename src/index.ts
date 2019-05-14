@@ -136,7 +136,7 @@ client.on('error', (error: any) => {
 });
 
 client.on('message', async message => {
-    if (message.author.id == client.user.id) cacheAttachment(message);
+    if (message.author.id != client.user.id) cacheAttachment(message);
     if (message.author.bot) return;
     var requestTime = process.hrtime(); //  gets timestamp to calculate the response time 
     Bot.mStats.logMessageReceived();
