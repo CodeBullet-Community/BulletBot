@@ -349,3 +349,47 @@ export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMem
     });
     Bot.mStats.logMessageReceived();
 }
+
+/**
+ * megalogger function that logs a guild name change. Checks if the name was changed, so you don't have to.
+ *
+ * @export
+ * @param {Guild} oldGuild guild before change
+ * @param {Guild} newGuild guild after change
+ * @returns
+ */
+export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
+    if (oldGuild.name == newGuild.name) return;
+    let megalogDoc = await Bot.database.findMegalogDoc(newGuild.id);
+    if (!megalogDoc) return;
+    if (!megalogDoc.nicknameChange) return;
+    let logChannel = newGuild.channels.get(megalogDoc.nicknameChange);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    logChannel.send({
+        "embed": {
+            "description": `**Server name changed**`,
+            "color": Bot.database.settingsDB.cache.embedColors.default,
+            "timestamp": new Date().toISOString(),
+            "footer": {
+                "text": "ID: " + newGuild.id
+            },
+            "author": {
+                "name": newGuild.name,
+                "icon_url": newGuild.iconURL
+            },
+            "fields": [
+                {
+                    "name": "Before",
+                    "value": oldGuild.name,
+                    "inline": true
+                },
+                {
+                    "name": "After",
+                    "value": newGuild.name,
+                    "inline": true
+                }
+            ]
+        }
+    });
+    Bot.mStats.logMessageReceived();
+}
