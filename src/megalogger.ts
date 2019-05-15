@@ -394,6 +394,79 @@ export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
     Bot.mStats.logMessageSend();
 }
 
+export async function logMessageDelete(message: Message) {
+    let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
+    if (!megalogDoc || !megalogDoc.messageDelete) return;
+    if (message.channel.id == megalogDoc.messageDelete) return;
+    let logChannel = message.guild.channels.get(megalogDoc.messageDelete);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let embed: any = {
+        "embed": {
+            "description": `**Message from ${message.author.toString()} deleted in ${message.channel.toString()}**`,
+            "color": Bot.database.settingsDB.cache.embedColors.negative,
+            "timestamp": new Date().toISOString(),
+            "footer": {
+                "text": `Author: ${message.author.id} | Message: ${message.id}`
+            },
+            "author": {
+                "name": message.author.tag,
+                "icon_url": message.author.avatarURL
+            },
+            "fields": [
+                {
+                    "name": "Content",
+                    "value": message.content.length > 0 ? message.content : '*no content*'
+                }
+            ]
+        }
+    };
+    if (message.attachments.size > 0) {
+        let attachments = '';
+        for (const attachment of message.attachments)
+            attachments += attachment[1].url + '\n';
+        embed.embed.fields.push({
+            "name": "Attachments",
+            "value": attachments
+        });
+        let cachedAttachments = await getAttachmentCache(message, megalogDoc.toObject().attachmentCache);
+        let cachedString: string;
+        var cachedArray: string[] = [];
+        if (cachedAttachments && cachedAttachments.size > 0) {
+            cachedString = 'Cached attachments are also attachments of this message\n'
+            for (const attachment of cachedAttachments) {
+                cachedString += attachment[1].url + '\n';
+                cachedArray.push(attachment[1].url);
+            }
+        } else {
+            cachedString = 'Couldn\'t find and cached attachments. Either the `attachmentCache` channel isn\'t defined in the megalogger or the message wasn\'t cached.'
+        }
+        embed.embed.fields.push({
+            "name": "Cached Attachments",
+            "value": cachedString
+        });
+        embed.files = cachedArray;
+    }
+    logChannel.send(embed);
+    Bot.mStats.logMessageSend();
+}
+
+/**
+ * returns cached attachments if they were found
+ *
+ * @param {Message} message message of which to find cached attachments
+ * @param {string} cacheChannelID id of cache channel
+ * @param {number} [timerange=3000] in what timerange it should search the cache
+ * @returns
+ */
+async function getAttachmentCache(message: Message, cacheChannelID: string, timerange = 3000) {
+    let cacheChannel = message.guild.channels.get(cacheChannelID);
+    if (!cacheChannel || !(cacheChannel instanceof TextChannel)) return;
+    var cache = await cacheChannel.fetchMessages({ limit: 20, around: message.id });
+    var cacheMessage = cache.find(x => x.content.includes(`BulletBotCacheTagThing: ${message.url}`));
+    if (!cacheMessage || !cacheMessage.attachments.size) return;
+    return cacheMessage.attachments;
+}
+
 /**
  * megalogger function that caches every attachment from a message in a channel
  *
