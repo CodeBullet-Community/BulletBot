@@ -1,4 +1,4 @@
-import { Channel, GuildChannel, TextChannel, Role, GuildMember, Guild, User, Message, Attachment } from "discord.js";
+import { Channel, GuildChannel, TextChannel, Role, GuildMember, Guild, User, Message, Attachment, Collection } from "discord.js";
 import { Bot } from ".";
 import { timeFormat, getDurationDiff, getDayDiff } from "./utils/time";
 import dateFormat = require('dateformat');
@@ -447,6 +447,62 @@ export async function logMessageDelete(message: Message) {
         embed.files = cachedArray;
     }
     logChannel.send(embed);
+    Bot.mStats.logMessageSend();
+}
+
+export async function logMessageBulkDelete(messages: Collection<string, Message>) {
+    let megalogDoc = await Bot.database.findMegalogDoc(messages.first().guild.id);
+    if (!megalogDoc || !megalogDoc.messageDelete) return;
+    if (messages.first().channel.id == megalogDoc.messageDelete) return;
+    let logChannel = messages.first().guild.channels.get(megalogDoc.messageDelete);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    //@ts-ignore
+    let humanLog = `**Deleted Messages from #${messages.first().channel.name} (${messages.first().channel.id}) in ${messages.first().guild.name} (${messages.first().guild.id})**`;
+    for (const message of messages.array()) {
+        humanLog += `\r\n\r\n[${dateFormat(message.createdAt, timeFormat)}] ${message.author.tag} (${message.id})`;
+        humanLog += ' : ' + message.content;
+        if (message.attachments.size) {
+            humanLog += '\n*Attachments:*';
+            let cachedAttachments = await getAttachmentCache(message, megalogDoc.toObject().attachmentCache);
+            if (cachedAttachments || cachedAttachments.size) {
+                for (const attachment of cachedAttachments.array()) {
+                    humanLog += '\n' + attachment.url;
+                }
+            } else {
+                humanLog += '\n*No cache found*'
+            }
+        }
+    }
+    let attachment = new Attachment(Buffer.from(humanLog, 'utf-8'), 'DeletedMessages.txt');
+    //@ts-ignore
+    let logMessage: Message = await logChannel.send(attachment);
+    logMessage.edit({
+        "embed": {
+            "description": `**Bulk deleted messages in ${messages.first().channel.toString()}**`,
+            "color": Bot.database.settingsDB.cache.embedColors.negative,
+            "timestamp": new Date().toISOString(),
+            "footer": {
+                "text": "Channel: " + messages.first().channel.id
+            },
+            "author": {
+                //@ts-ignore
+                "name": messages.first().channel.name,
+                "icon_url": messages.first().guild.iconURL
+            },
+            "fields": [
+                {
+                    "name": "Message Count",
+                    "value": messages.size,
+                    "inline": true
+                },
+                {
+                    "name": "Deleted Messages",
+                    "value": `[view](https://txt.discord.website/?txt=${logMessage.channel.id}/${logMessage.attachments.first().id}/DeletedMessages)`,
+                    "inline": true
+                }
+            ]
+        }
+    });
     Bot.mStats.logMessageSend();
 }
 
