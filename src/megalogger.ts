@@ -497,7 +497,7 @@ export async function logMessageBulkDelete(messages: Collection<string, Message>
                 },
                 {
                     "name": "Deleted Messages",
-                    "value": `[view](https://txt.discord.website/?txt=${logMessage.channel.id}/${logMessage.attachments.first().id}/DeletedMessages)`,
+                    "value": `[view](https://txt.discord.website/?txt=${logChannel.id}/${logMessage.attachments.first().id}/DeletedMessages)`,
                     "inline": true
                 }
             ]
@@ -543,6 +543,49 @@ export async function cacheAttachment(message: Message) {
     }
     logChannel.send(`from ${message.author.tag} (${message.author.id})\nBulletBotCacheTagThing: ${message.url}`, {
         files: attachments
+    });
+    Bot.mStats.logMessageSend();
+}
+
+/**
+ * megalogger function that logs a message edit. Checks if message was edited, so you don't have to check
+ *
+ * @export
+ * @param {Message} oldMessage message before edit
+ * @param {Message} newMessage message after edit
+ * @returns
+ */
+export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
+    if (oldMessage.content == newMessage.content) return;
+    let megalogDoc = await Bot.database.findMegalogDoc(newMessage.guild.id);
+    if (!megalogDoc) return;
+    if (!megalogDoc.messageEdit) return;
+    if (megalogDoc.messageDelete == newMessage.channel.id && newMessage.author.id == Bot.client.user.id) return;
+    let logChannel = newMessage.guild.channels.get(megalogDoc.messageEdit);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    logChannel.send({
+        "embed": {
+            "description": `**Message of ${newMessage.author.toString()} edited in ${newMessage.channel.toString()}** [Jump to Message](${newMessage.url})`,
+            "color": Bot.database.settingsDB.cache.embedColors.default,
+            "timestamp": newMessage.editedAt.toISOString(),
+            "footer": {
+                "text": `User: ${newMessage.author.id} | Message: ${newMessage.id}`
+            },
+            "author": {
+                "name": newMessage.author.tag,
+                "icon_url": newMessage.author.avatarURL
+            },
+            "fields": [
+                {
+                    "name": "Before",
+                    "value": oldMessage.content.length > 0 ? oldMessage.content : '*empty message*'
+                },
+                {
+                    "name": "After",
+                    "value": newMessage.content.length > 0 ? newMessage.content : '*empty message*'
+                }
+            ]
+        }
     });
     Bot.mStats.logMessageSend();
 }

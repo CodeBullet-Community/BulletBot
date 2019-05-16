@@ -12,7 +12,7 @@ import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
-import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete } from './megalogger';
+import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit } from './megalogger';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -185,6 +185,10 @@ client.on('message', async message => {
     var args = message.content.slice(prefix.length + command.length + 1); // gets arguments
 
     Bot.commands.runCommand(message, args, command, permLevel, dm, requestTime); // runs command
+});
+
+client.on('messageUpdate', (oldMessage: discord.Message, newMessage: discord.Message) => {
+    logMessageEdit(oldMessage, newMessage);
 });
 
 client.on('messageDelete', message => {
