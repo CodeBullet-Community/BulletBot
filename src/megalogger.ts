@@ -590,16 +590,25 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
     Bot.mStats.logMessageSend();
 }
 
-export async function logReactionAdd(reaction: MessageReaction, user: User) {
+/**
+ * megalogger function that logs a react/unreact
+ *
+ * @export
+ * @param {MessageReaction} reaction reactions of message
+ * @param {User} user user that un-/reacted
+ * @param {boolean} reacted true if user reacted, false if user unreacted
+ * @returns
+ */
+export async function logReactionToggle(reaction: MessageReaction, user: User, reacted: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(reaction.message.guild.id);
     if (!megalogDoc) return;
-    if (!megalogDoc.reactionAdd) return;
-    let logChannel = reaction.message.guild.channels.get(megalogDoc.reactionAdd);
+    if ((reacted && !megalogDoc.reactionAdd) || (!reacted && !megalogDoc.reactionRemove)) return;
+    let logChannel = reaction.message.guild.channels.get(reacted ? megalogDoc.reactionAdd : megalogDoc.reactionRemove);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     logChannel.send({
         "embed": {
-            "description": `**${user.toString()} reacted with ${reaction.emoji.toString()} to [this message](${reaction.message.url})**`,
-            "color": Bot.database.settingsDB.cache.embedColors.positive,
+            "description": `**${user.toString()} ${!reacted ? 'un' : ''}reacted with ${reaction.emoji.toString()} to [this message](${reaction.message.url})**`,
+            "color": Bot.database.settingsDB.cache.embedColors[reacted ? 'positive' : 'negative'],
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": `User: ${user.id} | Message: ${reaction.message.id}`
