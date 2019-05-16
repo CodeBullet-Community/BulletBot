@@ -1,4 +1,4 @@
-import { Channel, GuildChannel, TextChannel, Role, GuildMember, Guild, User, Message, Attachment, Collection } from "discord.js";
+import { Channel, GuildChannel, TextChannel, Role, GuildMember, Guild, User, Message, Attachment, Collection, MessageReaction } from "discord.js";
 import { Bot } from ".";
 import { timeFormat, getDurationDiff, getDayDiff } from "./utils/time";
 import dateFormat = require('dateformat');
@@ -585,6 +585,29 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
                     "value": newMessage.content.length > 0 ? newMessage.content : '*empty message*'
                 }
             ]
+        }
+    });
+    Bot.mStats.logMessageSend();
+}
+
+export async function logReactionAdd(reaction: MessageReaction, user: User) {
+    let megalogDoc = await Bot.database.findMegalogDoc(reaction.message.guild.id);
+    if (!megalogDoc) return;
+    if (!megalogDoc.reactionAdd) return;
+    let logChannel = reaction.message.guild.channels.get(megalogDoc.reactionAdd);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    logChannel.send({
+        "embed": {
+            "description": `**${user.toString()} reacted with ${reaction.emoji.toString()} to [this message](${reaction.message.url})**`,
+            "color": Bot.database.settingsDB.cache.embedColors.positive,
+            "timestamp": new Date().toISOString(),
+            "footer": {
+                "text": `User: ${user.id} | Message: ${reaction.message.id}`
+            },
+            "author": {
+                "name": user.tag,
+                "icon_url": user.avatarURL
+            },
         }
     });
     Bot.mStats.logMessageSend();
