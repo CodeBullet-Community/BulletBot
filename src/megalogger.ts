@@ -793,8 +793,32 @@ export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildM
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     logChannel.send({
         "embed": {
-            "description": `**${newMember.toString()} moved from voicechannels ${oldMember.voiceChannel ? oldMember.voiceChannel : 'None'} to ${newMember.voiceChannel ? newMember.voiceChannel : 'None'}**`,
+            "description": `**${newMember.toString()} moved from voice channels ${oldMember.voiceChannel ? oldMember.voiceChannel : 'None'} to ${newMember.voiceChannel ? newMember.voiceChannel : 'None'}**`,
             "color": Bot.database.settingsDB.cache.embedColors[!oldMember.voiceChannelID ? 'positive' : (!newMember.voiceChannelID ? 'negative' : 'default')],
+            "timestamp": new Date().toISOString(),
+            "footer": {
+                "text": "User: " + newMember.id
+            },
+            "author": {
+                "name": newMember.user.username,
+                "icon_url": newMember.user.avatarURL
+            }
+        }
+    });
+    Bot.mStats.logMessageSend();
+}
+
+export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMember) {
+    if (oldMember.mute == newMember.mute) return;
+    let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
+    if (!megalogDoc) return;
+    if (!megalogDoc.voiceMute) return;
+    let logChannel = newMember.guild.channels.get(megalogDoc.voiceMute);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    logChannel.send({
+        "embed": {
+            "description": `**${newMember} was voice ${newMember.mute ? '' : 'un'}muted in ${newMember.voiceChannel}**`,
+            "color": Bot.database.settingsDB.cache.embedColors[newMember.mute ? 'negative' : 'positive'],
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": "User: " + newMember.id
