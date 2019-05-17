@@ -783,3 +783,27 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
         Bot.mStats.logMessageSend();
     }
 }
+
+export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildMember) {
+    if (oldMember.voiceChannelID == newMember.voiceChannelID) return;
+    let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
+    if (!megalogDoc) return;
+    if (!megalogDoc.voiceTransfer) return;
+    let logChannel = newMember.guild.channels.get(megalogDoc.voiceTransfer);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    logChannel.send({
+        "embed": {
+            "description": `**${newMember.toString()} moved from voicechannels ${oldMember.voiceChannel ? oldMember.voiceChannel : 'None'} to ${newMember.voiceChannel ? newMember.voiceChannel : 'None'}**`,
+            "color": Bot.database.settingsDB.cache.embedColors[!oldMember.voiceChannelID ? 'positive' : (!newMember.voiceChannelID ? 'negative' : 'default')],
+            "timestamp": new Date().toISOString(),
+            "footer": {
+                "text": "User: " + newMember.id
+            },
+            "author": {
+                "name": newMember.user.username,
+                "icon_url": newMember.user.avatarURL
+            }
+        }
+    });
+    Bot.mStats.logMessageSend();
+}
