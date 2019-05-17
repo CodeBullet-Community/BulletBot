@@ -33,6 +33,15 @@ function ordinalSuffixOf(i: number) {
     return i + "th";
 }
 
+function getPresenceColor(member: GuildMember){
+    switch (member.user.presence.status) {
+       case "dnd": return 16724736;
+       case "idle": return 16750848;
+       case "offline": return 10526880;
+       case "online": return 39168;
+    }
+}
+
 async function createMemberEmbed(member: GuildMember, permLevel: number) {
     var date = new Date();
     var roles = '';
@@ -55,7 +64,7 @@ async function createMemberEmbed(member: GuildMember, permLevel: number) {
     return {
         "embed": {
             "description": member.toString(),
-            "color": Bot.database.settingsDB.cache.defaultEmbedColor,
+            "color": getPresenceColor(member),
             "timestamp": date.toISOString(),
             "footer": {
                 "text": "ID: " + member.id
