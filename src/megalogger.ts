@@ -693,6 +693,14 @@ export async function logRoleToggle(role: Role, created: boolean) {
     Bot.mStats.logMessageSend();
 }
 
+/**
+ * megalogger function that logs a role name/color/permission change
+ *
+ * @export
+ * @param {Role} oldRole role before change
+ * @param {Role} newRole role after change
+ * @returns
+ */
 export async function logRoleUpdate(oldRole: Role, newRole: Role) {
     if ((oldRole.name == newRole.name) && (oldRole.color == newRole.color) && (oldRole.permissions == newRole.permissions)) return;
     let megalogDoc = await Bot.database.findMegalogDoc(newRole.guild.id);
@@ -784,6 +792,14 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
     }
 }
 
+/**
+ * megalogger function that logs a voice transfer (leave join voice channel)
+ *
+ * @export
+ * @param {GuildMember} oldMember member before transfer
+ * @param {GuildMember} newMember member after transfer
+ * @returns
+ */
 export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildMember) {
     if (oldMember.voiceChannelID == newMember.voiceChannelID) return;
     let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
@@ -808,6 +824,14 @@ export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildM
     Bot.mStats.logMessageSend();
 }
 
+/**
+ * megalogger function that logs a un-/mute in a voice channel
+ *
+ * @export
+ * @param {GuildMember} oldMember member before un-/mute
+ * @param {GuildMember} newMember member after un-/mute
+ * @returns
+ */
 export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMember) {
     if (oldMember.mute == newMember.mute) return;
     let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
@@ -832,6 +856,14 @@ export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMembe
     Bot.mStats.logMessageSend();
 }
 
+/**
+ * megalogger function that logs a un-/deafen in a voice channel
+ *
+ * @export
+ * @param {GuildMember} oldMember member before un-/deafen
+ * @param {GuildMember} newMember member after un-/deafen
+ * @returns
+ */
 export async function logVoiceDeaf(oldMember: GuildMember, newMember: GuildMember) {
     if (oldMember.deaf == newMember.deaf) return;
     let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
