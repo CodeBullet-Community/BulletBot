@@ -831,3 +831,27 @@ export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMembe
     });
     Bot.mStats.logMessageSend();
 }
+
+export async function logVoiceDeaf(oldMember: GuildMember, newMember: GuildMember) {
+    if (oldMember.deaf == newMember.deaf) return;
+    let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
+    if (!megalogDoc) return;
+    if (!megalogDoc.voiceDeaf) return;
+    let logChannel = newMember.guild.channels.get(megalogDoc.voiceDeaf);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    logChannel.send({
+        "embed": {
+            "description": `**${newMember} was voice ${newMember.deaf ? '' : 'un'}deafed in ${newMember.voiceChannel}**`,
+            "color": Bot.database.settingsDB.cache.embedColors[newMember.deaf ? 'negative' : 'positive'],
+            "timestamp": new Date().toISOString(),
+            "footer": {
+                "text": "User: " + newMember.id
+            },
+            "author": {
+                "name": newMember.user.username,
+                "icon_url": newMember.user.avatarURL
+            }
+        }
+    });
+    Bot.mStats.logMessageSend();
+}

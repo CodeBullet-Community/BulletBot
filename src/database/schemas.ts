@@ -437,6 +437,7 @@ export interface megalogObject {
     roleUpdate: string;
     voiceTransfer: string;
     voiceMute: string;
+    voiceDeaf: string;
 }
 export interface megalogDoc extends mongoose.Document, megalogObject { }
 export const megalogSchema = new mongoose.Schema({
@@ -460,7 +461,8 @@ export const megalogSchema = new mongoose.Schema({
     roleDelete: { type: String, required: false },
     roleUpdate: { type: String, required: false },
     voiceTransfer: { type: String, required: false },
-    voiceMute: { type: String, required: false }
+    voiceMute: { type: String, required: false },
+    voiceDeaf: { type: String, required: false }
 });
 
 export interface mStatsObject {

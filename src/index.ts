@@ -12,7 +12,7 @@ import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
-import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate, logVoiceTransfer, logVoiceMute } from './megalogger';
+import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate, logVoiceTransfer, logVoiceMute, logVoiceDeaf } from './megalogger';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -296,6 +296,7 @@ client.on('voiceStateUpdate', (oldMember: discord.GuildMember, newMember: discor
     logVoiceTransfer(oldMember, newMember);
     if (oldMember.voiceChannelID) {
         logVoiceMute(oldMember, newMember);
+        logVoiceDeaf(oldMember, newMember);
     }
 });
 
