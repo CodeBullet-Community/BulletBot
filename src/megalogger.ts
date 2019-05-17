@@ -622,6 +622,13 @@ export async function logReactionToggle(reaction: MessageReaction, user: User, r
     Bot.mStats.logMessageSend();
 }
 
+/**
+ * megalogger function that logs a reaction reset on a message
+ *
+ * @export
+ * @param {Message} message message that got reset
+ * @returns
+ */
 export async function logReactionRemoveAll(message: Message) {
     let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
     if (!megalogDoc) return;
@@ -650,6 +657,37 @@ export async function logReactionRemoveAll(message: Message) {
                     "value": reactions
                 }
             ]
+        }
+    });
+    Bot.mStats.logMessageSend();
+}
+
+/**
+ * megalogger function that logs a role creation/deletion
+ *
+ * @export
+ * @param {Role} role role that got created/deleted
+ * @param {boolean} created true if role got created, false if role got deleted
+ * @returns
+ */
+export async function logRoleToggle(role: Role, created: boolean) {
+    let megalogDoc = await Bot.database.findMegalogDoc(role.guild.id);
+    if (!megalogDoc) return;
+    if (!megalogDoc.roleCreate) return;
+    let logChannel = role.guild.channels.get(megalogDoc.reactionRemove);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    logChannel.send({
+        "embed": {
+            "description": `**Role ${role} (${role.name}) was ${created ? 'created' : 'deleted'}**`,
+            "color": Bot.database.settingsDB.cache.embedColors[created ? 'positive' : 'negative'],
+            "timestamp": created ? role.createdAt.toISOString() : new Date().toISOString(),
+            "footer": {
+                "text": "ID: " + role.id
+            },
+            "author": {
+                "name": role.guild.name,
+                "icon_url": role.guild.iconURL
+            }
         }
     });
     Bot.mStats.logMessageSend();

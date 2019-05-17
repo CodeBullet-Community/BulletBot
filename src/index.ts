@@ -12,7 +12,7 @@ import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
-import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll } from './megalogger';
+import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle } from './megalogger';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -290,9 +290,14 @@ client.on('guildMemberRemove', async member => {
 client.on('guildMemberUpdate', (oldMember: discord.GuildMember, newMember: discord.GuildMember) => {
     logNickname(oldMember, newMember);
     logMemberRoles(oldMember, newMember);
-})
+});
+
+client.on('roleCreate', role => {
+    logRoleToggle(role, true);
+});
 
 client.on('roleDelete', async role => {
+    logRoleToggle(role, false);
     var staffDoc = await Bot.database.findStaffDoc(role.guild.id); // removes role from ranks if it was assigned to any
     if (!staffDoc) return;
     if (staffDoc.admins.roles.includes(role.id)) {
@@ -315,7 +320,7 @@ client.on('debug', info => {
 
 client.on('warn', info => {
     console.warn(info);
-})
+});
 
 setTimeout(() => {
     client.login(botToken); // logs into discord after 2 seconds
