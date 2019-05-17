@@ -12,7 +12,7 @@ import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
-import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle } from './megalogger';
+import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate } from './megalogger';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -312,6 +312,10 @@ client.on('roleDelete', async role => {
         Bot.database.removeFromRank(role.guild.id, 'immune', role.id);
         Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, 'immune', role);
     }
+});
+
+client.on('roleUpdate', (oldRole: discord.Role, newRole: discord.Role) => {
+    logRoleUpdate(oldRole, newRole);
 });
 
 client.on('debug', info => {

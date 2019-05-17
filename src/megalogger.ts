@@ -673,8 +673,8 @@ export async function logReactionRemoveAll(message: Message) {
 export async function logRoleToggle(role: Role, created: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(role.guild.id);
     if (!megalogDoc) return;
-    if (!megalogDoc.roleCreate) return;
-    let logChannel = role.guild.channels.get(megalogDoc.reactionRemove);
+    if ((created && !megalogDoc.roleCreate) || (!created && !megalogDoc.roleDelete)) return;
+    let logChannel = role.guild.channels.get(created ? megalogDoc.roleCreate : megalogDoc.roleDelete);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     logChannel.send({
         "embed": {
@@ -691,4 +691,95 @@ export async function logRoleToggle(role: Role, created: boolean) {
         }
     });
     Bot.mStats.logMessageSend();
+}
+
+export async function logRoleUpdate(oldRole: Role, newRole: Role) {
+    if ((oldRole.name == newRole.name) && (oldRole.color == newRole.color) && (oldRole.permissions == newRole.permissions)) return;
+    let megalogDoc = await Bot.database.findMegalogDoc(newRole.guild.id);
+    if (!megalogDoc) return;
+    if (!megalogDoc.roleUpdate) return;
+    let logChannel = newRole.guild.channels.get(megalogDoc.roleUpdate);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let date = new Date();
+    if (oldRole.name != newRole.name) {
+        logChannel.send({
+            "embed": {
+                "description": `**Role name of ${newRole} (${newRole.name}) changed**`,
+                "color": Bot.database.settingsDB.cache.embedColors.default,
+                "timestamp": date.toISOString(),
+                "footer": {
+                    "text": "ID: " + newRole.id
+                },
+                "author": {
+                    "name": newRole.guild.name,
+                    "icon_url": newRole.guild.iconURL
+                },
+                "fields": [
+                    {
+                        "name": "Before",
+                        "value": oldRole.name
+                    },
+                    {
+                        "name": "After",
+                        "value": newRole.name
+                    }
+                ]
+            }
+        });
+        Bot.mStats.logMessageSend();
+    }
+    if (oldRole.color != newRole.color) {
+        logChannel.send({
+            "embed": {
+                "description": `**Role color of ${newRole} (${newRole.name}) changed**`,
+                "color": Bot.database.settingsDB.cache.embedColors.default,
+                "timestamp": date.toISOString(),
+                "footer": {
+                    "text": "ID: " + newRole.id
+                },
+                "author": {
+                    "name": newRole.guild.name,
+                    "icon_url": newRole.guild.iconURL
+                },
+                "fields": [
+                    {
+                        "name": "Before",
+                        "value": `${oldRole.color} ([${oldRole.hexColor}](https://www.color-hex.com/color/${oldRole.hexColor.slice(1)}))`
+                    },
+                    {
+                        "name": "After",
+                        "value": `${newRole.color} ([${newRole.hexColor}](https://www.color-hex.com/color/${newRole.hexColor.slice(1)}))`
+                    }
+                ]
+            }
+        });
+        Bot.mStats.logMessageSend();
+    }
+    if (oldRole.permissions != newRole.permissions) {
+        logChannel.send({
+            "embed": {
+                "description": `**Role permissions of ${newRole} (${newRole.name}) changed**\n[What those numbers mean](https://discordapp.com/developers/docs/topics/permissions)`,
+                "color": Bot.database.settingsDB.cache.embedColors.default,
+                "timestamp": date.toISOString(),
+                "footer": {
+                    "text": "ID: " + newRole.id
+                },
+                "author": {
+                    "name": newRole.guild.name,
+                    "icon_url": newRole.guild.iconURL
+                },
+                "fields": [
+                    {
+                        "name": "Before",
+                        "value": oldRole.permissions
+                    },
+                    {
+                        "name": "After",
+                        "value": newRole.permissions
+                    }
+                ]
+            }
+        });
+        Bot.mStats.logMessageSend();
+    }
 }
