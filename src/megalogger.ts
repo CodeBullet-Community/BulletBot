@@ -10,6 +10,7 @@ import dateFormat = require('dateformat');
  * @param {GuildChannel} channel deleted/created channel
  * @param {boolean} created true if it was created, false if it was deleted
  * @returns
+ * @memberof megalogger
  */
 export async function logChannelToggle(channel: GuildChannel, created: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(channel.guild.id);
@@ -46,6 +47,7 @@ export async function logChannelToggle(channel: GuildChannel, created: boolean) 
  * @param {GuildChannel} oldChannel channel before update
  * @param {GuildChannel} newChannel channel after update
  * @returns
+ * @memberof megalogger
  */
 export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: GuildChannel) {
     let megalogDoc = await Bot.database.findMegalogDoc(newChannel.guild.id);
@@ -175,7 +177,6 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
 
 }
 
-
 /**
  * megalogger function that logs a ban or unban
  *
@@ -184,6 +185,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
  * @param {User} user user that got un-/banned
  * @param {boolean} banned true if someone was banned, false if someone was unbanned
  * @returns
+ * @memberof megalogger
  */
 export async function logBan(guild: Guild, user: User, banned: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(guild.id);
@@ -218,6 +220,7 @@ export async function logBan(guild: Guild, user: User, banned: boolean) {
  * @param {GuildMember} member member that joined or left
  * @param {boolean} joined true if member joined, false if member left
  * @returns
+ * @memberof megalogger
  */
 export async function logMember(member: GuildMember, joined: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(member.guild.id);
@@ -259,6 +262,7 @@ export async function logMember(member: GuildMember, joined: boolean) {
  * @param {GuildMember} oldMember member before change
  * @param {GuildMember} newMember member after change
  * @returns
+ * @memberof megalogger
  */
 export async function logNickname(oldMember: GuildMember, newMember: GuildMember) {
     if (oldMember.nickname == newMember.nickname) return;
@@ -303,6 +307,7 @@ export async function logNickname(oldMember: GuildMember, newMember: GuildMember
  * @param {GuildMember} oldMember member before change
  * @param {GuildMember} newMember member after change
  * @returns
+ * @memberof megalogger
  */
 export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMember) {
     let rolesAdded = newMember.roles.filter(x => !oldMember.roles.get(x.id));
@@ -357,6 +362,7 @@ export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMem
  * @param {Guild} oldGuild guild before change
  * @param {Guild} newGuild guild after change
  * @returns
+ * @memberof megalogger
  */
 export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
     if (oldGuild.name == newGuild.name) return;
@@ -394,6 +400,14 @@ export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
     Bot.mStats.logMessageSend();
 }
 
+/**
+ * megalogger function that logs a single message delete
+ *
+ * @export
+ * @param {Message} message message that got deleted
+ * @returns
+ * @memberof megalogger
+ */
 export async function logMessageDelete(message: Message) {
     let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
     if (!megalogDoc || !megalogDoc.messageDelete) return;
@@ -450,6 +464,14 @@ export async function logMessageDelete(message: Message) {
     Bot.mStats.logMessageSend();
 }
 
+/**
+ * megalogger function that logs a bulk deletion of messages
+ *
+ * @export
+ * @param {Collection<string, Message>} messages all messages deleted
+ * @returns
+ * @memberof megalogger
+ */
 export async function logMessageBulkDelete(messages: Collection<string, Message>) {
     let megalogDoc = await Bot.database.findMegalogDoc(messages.first().guild.id);
     if (!megalogDoc || !megalogDoc.messageDelete) return;
@@ -513,6 +535,7 @@ export async function logMessageBulkDelete(messages: Collection<string, Message>
  * @param {string} cacheChannelID id of cache channel
  * @param {number} [timerange=3000] in what timerange it should search the cache
  * @returns
+ * @memberof megalogger
  */
 async function getAttachmentCache(message: Message, cacheChannelID: string, timerange = 3000) {
     let cacheChannel = message.guild.channels.get(cacheChannelID);
@@ -529,6 +552,7 @@ async function getAttachmentCache(message: Message, cacheChannelID: string, time
  * @export
  * @param {Message} message message of which to cache attachments
  * @returns
+ * @memberof megalogger
  */
 export async function cacheAttachment(message: Message) {
     if (message.attachments.size == 0) return;
@@ -554,6 +578,7 @@ export async function cacheAttachment(message: Message) {
  * @param {Message} oldMessage message before edit
  * @param {Message} newMessage message after edit
  * @returns
+ * @memberof megalogger
  */
 export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
     if (oldMessage.content == newMessage.content) return;
@@ -598,6 +623,7 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
  * @param {User} user user that un-/reacted
  * @param {boolean} reacted true if user reacted, false if user unreacted
  * @returns
+ * @memberof megalogger
  */
 export async function logReactionToggle(reaction: MessageReaction, user: User, reacted: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(reaction.message.guild.id);
@@ -628,6 +654,7 @@ export async function logReactionToggle(reaction: MessageReaction, user: User, r
  * @export
  * @param {Message} message message that got reset
  * @returns
+ * @memberof megalogger
  */
 export async function logReactionRemoveAll(message: Message) {
     let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
@@ -669,6 +696,7 @@ export async function logReactionRemoveAll(message: Message) {
  * @param {Role} role role that got created/deleted
  * @param {boolean} created true if role got created, false if role got deleted
  * @returns
+ * @memberof megalogger
  */
 export async function logRoleToggle(role: Role, created: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(role.guild.id);
@@ -700,6 +728,7 @@ export async function logRoleToggle(role: Role, created: boolean) {
  * @param {Role} oldRole role before change
  * @param {Role} newRole role after change
  * @returns
+ * @memberof megalogger
  */
 export async function logRoleUpdate(oldRole: Role, newRole: Role) {
     if ((oldRole.name == newRole.name) && (oldRole.color == newRole.color) && (oldRole.permissions == newRole.permissions)) return;
@@ -799,6 +828,7 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
  * @param {GuildMember} oldMember member before transfer
  * @param {GuildMember} newMember member after transfer
  * @returns
+ * @memberof megalogger
  */
 export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildMember) {
     if (oldMember.voiceChannelID == newMember.voiceChannelID) return;
@@ -831,6 +861,7 @@ export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildM
  * @param {GuildMember} oldMember member before un-/mute
  * @param {GuildMember} newMember member after un-/mute
  * @returns
+ * @memberof megalogger
  */
 export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMember) {
     if (oldMember.mute == newMember.mute) return;
@@ -863,6 +894,7 @@ export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMembe
  * @param {GuildMember} oldMember member before un-/deafen
  * @param {GuildMember} newMember member after un-/deafen
  * @returns
+ * @memberof megalogger
  */
 export async function logVoiceDeaf(oldMember: GuildMember, newMember: GuildMember) {
     if (oldMember.deaf == newMember.deaf) return;
