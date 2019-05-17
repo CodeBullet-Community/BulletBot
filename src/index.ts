@@ -12,7 +12,7 @@ import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
-import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle } from './megalogger';
+import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll } from './megalogger';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -205,6 +205,10 @@ client.on('messageReactionAdd', (messageReaction: discord.MessageReaction, user:
 
 client.on('messageReactionRemove', (messageReaction: discord.MessageReaction, user: discord.User) => {
     logReactionToggle(messageReaction, user, false);
+});
+
+client.on('messageReactionRemoveAll', message => {
+    logReactionRemoveAll(message);
 });
 
 client.on('reconnecting', () => {

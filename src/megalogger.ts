@@ -569,7 +569,7 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
             "color": Bot.database.settingsDB.cache.embedColors.default,
             "timestamp": newMessage.editedAt.toISOString(),
             "footer": {
-                "text": `User: ${newMessage.author.id} | Message: ${newMessage.id}`
+                "text": `Author: ${newMessage.author.id} | Message: ${newMessage.id}`
             },
             "author": {
                 "name": newMessage.author.tag,
@@ -607,16 +607,49 @@ export async function logReactionToggle(reaction: MessageReaction, user: User, r
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     logChannel.send({
         "embed": {
-            "description": `**${user.toString()} ${!reacted ? 'un' : ''}reacted with ${reaction.emoji.toString()} to [this message](${reaction.message.url})**`,
+            "description": `**${user.toString()} ${!reacted ? 'un' : ''}reacted with ${reaction.emoji.toString()} to [this message](${reaction.message.url})${!reacted ? ' (or reaction got removed)' : ''}** `,
             "color": Bot.database.settingsDB.cache.embedColors[reacted ? 'positive' : 'negative'],
             "timestamp": new Date().toISOString(),
             "footer": {
-                "text": `User: ${user.id} | Message: ${reaction.message.id}`
+                "text": `User: ${user.id} | Message: ${reaction.message.id} `
             },
             "author": {
                 "name": user.tag,
                 "icon_url": user.avatarURL
             },
+        }
+    });
+    Bot.mStats.logMessageSend();
+}
+
+export async function logReactionRemoveAll(message: Message) {
+    let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
+    if (!megalogDoc) return;
+    if (!megalogDoc.reactionRemove) return;
+    let logChannel = message.guild.channels.get(megalogDoc.reactionRemove);
+    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let reactions = '';
+    for (const reaction of message.reactions.array()) {
+        reactions += `${reaction.emoji}: \`${reaction.count}\`\n`;
+    }
+    logChannel.send({
+        "embed": {
+            "description": `**All reactions were removed from a message of ${message.author.toString()} in ${message.channel.toString()}** [Jump to Message](${message.url})`,
+            "color": Bot.database.settingsDB.cache.embedColors.negative,
+            "timestamp": new Date().toISOString(),
+            "footer": {
+                "text": `Author: ${message.author.id} | Message: ${message.id}`
+            },
+            "author": {
+                "name": message.author.tag,
+                "icon_url": message.author.avatarURL
+            },
+            "fields": [
+                {
+                    "name": "Reaction Count",
+                    "value": reactions
+                }
+            ]
         }
     });
     Bot.mStats.logMessageSend();
