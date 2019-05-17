@@ -37,6 +37,7 @@ async function createMemberEmbed(member: GuildMember, permLevel: number) {
     var date = new Date();
     var roles = '';
     var roleArray = member.roles.array();
+    var roleCount = member.roles.array().length -1;
     roleArray.shift();
     for (const role of roleArray) {
         roles += role.toString() + ' ';
@@ -98,7 +99,7 @@ async function createMemberEmbed(member: GuildMember, permLevel: number) {
                     "inline": true
                 },
                 {
-                    "name": "Roles",
+                    "name": `Roles [${roleCount}]`,
                     "value": roles
                 }
             ]
