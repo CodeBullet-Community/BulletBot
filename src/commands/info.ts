@@ -30,7 +30,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 "fields": [
                     {
                         "name": "My Creators:",
-                        "value": "Jet#1167 (Planning/Coding)\nLucavon#2154 (Hosting)\npagwin#4132 (Coding)\nFreezerx#2116 (Coding)",
+                        "value": "Jet#1167 (Planning/Coding)\nLucavon#2154 (Hosting)\npagwin#4132 (Coding)\nMontori#4707 (Coding)\nFreezerx#2116 (Coding)",
                         "inline": true
                     },
                     {
