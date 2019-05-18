@@ -33,12 +33,12 @@ function ordinalSuffixOf(i: number) {
     return i + "th";
 }
 
-function getPresenceColor(member: GuildMember){
+function getPresenceColor(member: GuildMember) {
     switch (member.user.presence.status) {
-       case "dnd": return 16724736;
-       case "idle": return 16750848;
-       case "offline": return 10526880;
-       case "online": return 39168;
+        case "dnd": return Bot.database.settingsDB.cache.embedColors.negative;
+        case "idle": return Bot.database.settingsDB.cache.embedColors.warn;
+        case "offline": return Bot.database.settingsDB.cache.embedColors.neutral;
+        case "online": return Bot.database.settingsDB.cache.embedColors.positive;
     }
 }
 
@@ -46,7 +46,7 @@ async function createMemberEmbed(member: GuildMember, permLevel: number) {
     var date = new Date();
     var roles = '';
     var roleArray = member.roles.array();
-    var roleCount = member.roles.array().length -1;
+    var roleCount = member.roles.array().length - 1;
     roleArray.shift();
     for (const role of roleArray) {
         roles += role.toString() + ' ';
