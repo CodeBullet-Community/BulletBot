@@ -24,7 +24,7 @@ function sendRandomImage(message: Message, API: string, requestTime: [number,num
             var embed = new RichEmbed();
             embed.setAuthor('requested by: ' + setname + ' (' + message.author.tag + ')', message.author.avatarURL);
             embed.setImage(JSON.parse(body).link);
-            embed.setColor(Bot.database.settingsDB.cache.defaultEmbedColor);
+            embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send(embed);
             Bot.mStats.logMessageSend();
@@ -75,7 +75,7 @@ command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
         'embed': {
-            'color': Bot.database.settingsDB.cache.helpEmbedColor,
+            'color': Bot.database.settingsDB.cache.embedColors.help,
             'author': {
                 'name': 'Command: ' + prefix + command.name
             },

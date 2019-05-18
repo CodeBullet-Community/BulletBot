@@ -25,7 +25,7 @@
     "@types/request": "^2.48.1",
     "console-stamp": "^0.2.7",
     "dateformat": "^3.0.3",
-    "discord.js": "^11.4.2",
+    "discord.js": "^11.5.0",
     "exit-hook": "^2.2.0",
     "express": "^4.16.4",
     "googleapis": "^39.2.0",

@@ -15,7 +15,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             "embed": {
                 "title": "About me:",
                 "description": "Hi, my name is BulletBot! I'm a general purpose discord bot here to help you and your server. \nI originally was created to solve a webhook problem in the [Code Bullet and Co](https://discord.gg/7Z5d4HF) server. After some development time, my main creator Jet extended the goal to replacing every bot in the server.",
-                "color": Bot.database.settingsDB.cache.defaultEmbedColor,
+                "color": Bot.database.settingsDB.cache.embedColors.default,
                 "timestamp": new Date().toISOString(),
                 "footer": {
                     "text": "PFP from Aster#4205"
@@ -60,7 +60,7 @@ command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
         'embed': {
-            'color': Bot.database.settingsDB.cache.helpEmbedColor,
+            'color': Bot.database.settingsDB.cache.embedColors.help,
             'author': {
                 'name': 'Command: ' + prefix + command.name
             },

@@ -103,7 +103,7 @@ export class Logger {
         var embed: any = {
             "embed": {
                 "description": `${role ? 'Role ' + role.toString() : 'User' + user.toString()} was ${type ? 'removed' : 'added'} to ${rank} rank by ${mod.toString()}`,
-                "color": Bot.database.settingsDB.cache.defaultEmbedColor,
+                "color": Bot.database.settingsDB.cache.embedColors.default,
                 "timestamp": date.toISOString(),
                 "author": {
                     "name": rankName + " Rank:"
@@ -246,7 +246,7 @@ export class Logger {
         logChannel.send({
             "embed": {
                 "description": filter.shortHelp,
-                "color": Bot.database.settingsDB.cache.defaultEmbedColor,
+                "color": Bot.database.settingsDB.cache.embedColors.default,
                 "timestamp": message.createdAt.toISOString(),
                 "thumbnail": {
                     "url": message.member.user.avatarURL
@@ -317,7 +317,7 @@ export class Logger {
         logChannel.send({
             'embed': {
                 'description': `Filter \`${filter.name}\` was  ${type ? 'disabled' : 'enabled'} by ${mod.toString()}`,
-                'color': Bot.database.settingsDB.cache.defaultEmbedColor,
+                'color': Bot.database.settingsDB.cache.embedColors.default,
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Filter Change:'
@@ -375,7 +375,7 @@ export class Logger {
         logChannel.send({
             'embed': {
                 'description': `Command \`${command.name}\` was  ${type ? 'disabled' : 'enabled'} by ${mod.toString()}`,
-                'color': Bot.database.settingsDB.cache.defaultEmbedColor,
+                'color': Bot.database.settingsDB.cache.embedColors.default,
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Command Change:',
@@ -434,7 +434,7 @@ export class Logger {
         logChannel.send({
             'embed': {
                 'description': `The prefix was changed by ${mod.toString()}`,
-                'color': Bot.database.settingsDB.cache.defaultEmbedColor,
+                'color': Bot.database.settingsDB.cache.embedColors.default,
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Changed Prefix:'

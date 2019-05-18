@@ -12,6 +12,7 @@ import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
+import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate, logVoiceTransfer, logVoiceMute, logVoiceDeaf } from './megalogger';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -135,6 +136,7 @@ client.on('error', (error: any) => {
 });
 
 client.on('message', async message => {
+    if (message.author.id != client.user.id) cacheAttachment(message);
     if (message.author.bot) return;
     var requestTime = process.hrtime(); //  gets timestamp to calculate the response time 
     Bot.mStats.logMessageReceived();
@@ -185,15 +187,46 @@ client.on('message', async message => {
     Bot.commands.runCommand(message, args, command, permLevel, dm, requestTime); // runs command
 });
 
+client.on('messageUpdate', (oldMessage: discord.Message, newMessage: discord.Message) => {
+    logMessageEdit(oldMessage, newMessage);
+});
+
+client.on('messageDelete', message => {
+    logMessageDelete(message);
+});
+
+client.on('messageDeleteBulk', messages => {
+    logMessageBulkDelete(messages);
+});
+
+client.on('messageReactionAdd', (messageReaction: discord.MessageReaction, user: discord.User) => {
+    logReactionToggle(messageReaction, user, true);
+});
+
+client.on('messageReactionRemove', (messageReaction: discord.MessageReaction, user: discord.User) => {
+    logReactionToggle(messageReaction, user, false);
+});
+
+client.on('messageReactionRemoveAll', message => {
+    logReactionRemoveAll(message);
+});
+
 client.on('reconnecting', () => {
     console.warn('Lost client connection. Reconnecting...');
-})
+});
 
 client.on('resume', missed => {
     console.info(`Successfully reconnected client. Missed ${missed} events.`)
-})
+});
+
+client.on('channelCreate', channel => {
+    if (channel instanceof discord.GuildChannel)
+        logChannelToggle(channel, true);
+});
 
 client.on('channelDelete', async (channel: discord.TextChannel) => {
+    if (channel instanceof discord.GuildChannel)
+        logChannelToggle(channel, false);
     if (channel.type == 'text') { // looks if webhooks for the deleted channel exist if it's a text channel
         var youtubeWebhookDocs = await Bot.youtube.webhooks.find({ guild: channel.guild.id, channel: channel.id });
         for (const webhookDoc of youtubeWebhookDocs) {
@@ -201,6 +234,11 @@ client.on('channelDelete', async (channel: discord.TextChannel) => {
         }
     }
 });
+
+client.on('channelUpdate', (oldChannel: discord.Channel, newChannel: discord.Channel) => {
+    if (oldChannel instanceof discord.GuildChannel && newChannel instanceof discord.GuildChannel)
+        logChannelUpdate(oldChannel, newChannel);
+})
 
 client.on('guildCreate', guild => {
     Bot.database.addGuild(guild.id); // creates guild in database when bot joins a new guild
@@ -210,7 +248,24 @@ client.on('guildDelete', guild => {
     Bot.database.removeGuild(guild.id); // removes all guild related things in database if the bot leaves a guild
 });
 
+client.on('guildUpdate', (oldGuild: discord.Guild, newGuild: discord.Guild) => {
+    logGuildName(oldGuild, newGuild);
+});
+
+client.on('guildBanAdd', (guild: discord.Guild, user: discord.User) => {
+    logBan(guild, user, true);
+});
+
+client.on('guildBanRemove', (guild: discord.Guild, user: discord.User) => {
+    logBan(guild, user, false);
+});
+
+client.on('guildMemberAdd', member => {
+    logMember(member, true);
+});
+
 client.on('guildMemberRemove', async member => {
+    logMember(member, false);
     var permLevel = await getPermLevel(member); // removes guild member from ranks if he/She was assigned any
     if (permLevel == permLevels.admin) {
         Bot.database.removeFromRank(member.guild.id, 'admins', undefined, member.id);
@@ -232,7 +287,25 @@ client.on('guildMemberRemove', async member => {
     }
 });
 
+client.on('guildMemberUpdate', (oldMember: discord.GuildMember, newMember: discord.GuildMember) => {
+    logNickname(oldMember, newMember);
+    logMemberRoles(oldMember, newMember);
+});
+
+client.on('voiceStateUpdate', (oldMember: discord.GuildMember, newMember: discord.GuildMember) => {
+    logVoiceTransfer(oldMember, newMember);
+    if (oldMember.voiceChannelID) {
+        logVoiceMute(oldMember, newMember);
+        logVoiceDeaf(oldMember, newMember);
+    }
+});
+
+client.on('roleCreate', role => {
+    logRoleToggle(role, true);
+});
+
 client.on('roleDelete', async role => {
+    logRoleToggle(role, false);
     var staffDoc = await Bot.database.findStaffDoc(role.guild.id); // removes role from ranks if it was assigned to any
     if (!staffDoc) return;
     if (staffDoc.admins.roles.includes(role.id)) {
@@ -249,13 +322,17 @@ client.on('roleDelete', async role => {
     }
 });
 
+client.on('roleUpdate', (oldRole: discord.Role, newRole: discord.Role) => {
+    logRoleUpdate(oldRole, newRole);
+});
+
 client.on('debug', info => {
     //console.debug(info);
 });
 
 client.on('warn', info => {
     console.warn(info);
-})
+});
 
 setTimeout(() => {
     client.login(botToken); // logs into discord after 2 seconds

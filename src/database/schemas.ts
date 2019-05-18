@@ -414,6 +414,56 @@ export class UserWrapper {
     }
 }
 
+// megalog settings
+export interface megalogObject {
+    guild: string; // guild id
+    channelCreate: string;
+    channelDelete: string;
+    channelUpdate: string;
+    ban: string;
+    unban: string;
+    memberJoin: string;
+    memberLeave: string;
+    nicknameChange: string;
+    memberRolesChange: string;
+    guildNameChange: string;
+    messageDelete: string;
+    attachmentCache: string;
+    messageEdit: string;
+    reactionAdd: string;
+    reactionRemove: string;
+    roleCreate: string;
+    roleDelete: string;
+    roleUpdate: string;
+    voiceTransfer: string;
+    voiceMute: string;
+    voiceDeaf: string;
+}
+export interface megalogDoc extends mongoose.Document, megalogObject { }
+export const megalogSchema = new mongoose.Schema({
+    guild: String,
+    channelCreate: { type: String, required: false },
+    channelDelete: { type: String, required: false },
+    channelUpdate: { type: String, required: false },
+    ban: { type: String, required: false },
+    unban: { type: String, required: false },
+    memberJoin: { type: String, required: false },
+    memberLeave: { type: String, required: false },
+    nicknameChange: { type: String, required: false },
+    memberRolesChange: { type: String, required: false },
+    guildNameChange: { type: String, required: false },
+    messageDelete: { type: String, required: false },
+    attachmentCache: { type: String, required: false },
+    messageEdit: { type: String, required: false },
+    reactionAdd: { type: String, required: false },
+    reactionRemove: { type: String, required: false },
+    roleCreate: { type: String, required: false },
+    roleDelete: { type: String, required: false },
+    roleUpdate: { type: String, required: false },
+    voiceTransfer: { type: String, required: false },
+    voiceMute: { type: String, required: false },
+    voiceDeaf: { type: String, required: false }
+});
 
 export interface mStatsObject {
     messagesReceived: number; // all messages recieved
@@ -537,8 +587,14 @@ export const webhookSchema = new mongoose.Schema({
 export interface globalSettingsObject {
     prefix: string;
     presence: PresenceData;
-    defaultEmbedColor: number;
-    helpEmbedColor: number;
+    embedColors: {
+        default: number;
+        help: number;
+        neutral: number;
+        negative: number;
+        warn: number;
+        positive: number;
+    };
     botMasters: [string];
     commands: {
         // key is command name
@@ -565,8 +621,14 @@ export const globalSettingsSchema = new mongoose.Schema({
             type: { type: String, required: false }
         }
     },
-    defaultEmbedColor: Number,
-    helpEmbedColor: Number,
+    embedColor: {
+        default: Number,
+        help: Number,
+        neutral: Number,
+        bad: Number,
+        warn: Number,
+        positive: Number
+    },
     botMasters: [String],
     commands: mongoose.Schema.Types.Mixed,
     filters: mongoose.Schema.Types.Mixed

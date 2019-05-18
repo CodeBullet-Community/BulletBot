@@ -69,7 +69,7 @@ command.embedHelp = async function (guild: Guild) {
     var prefix = await Bot.database.getPrefix(guild);
     return {
         'embed': {
-            'color': Bot.database.settingsDB.cache.helpEmbedColor,
+            'color': Bot.database.settingsDB.cache.embedColors.help,
             'author': {
                 'name': 'Command: ' + prefix + command.name
             },

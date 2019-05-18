@@ -81,16 +81,29 @@ Jet is using Typescript 3.4.1 but any version will probably work if you use the 
 There also needs to be a mongoDB cluster running. The minimal data in the cluster is in database `settings` in collection `settings` there should be a document with following data.
 
 ```JSON
-{  
+{
    "prefix":"?!",
-   "defaultEmbedColor":8311585,
-   "helpEmbedColor":8311585,
-   "botMasters":[  
+   "presence":{
+      "status":"online",
+      "game":{
+         "name":"something",
+         "type":"WATCHING"
+      }
+   },
+   "embedColors":{
+      "default":8311585,
+      "help":8311585,
+      "neutral":4868682,
+      "negative":15805477,
+      "warn":16086051,
+      "positive":8311585
+   },
+   "botMasters":[
       "[a bot masters user id]"
    ],
-   "commands":{  
-      "animal":{  
-         "apis":{  
+   "commands":{
+      "animal":{
+         "apis":{
             "cat":"https://some-random-api.ml/img/cat",
             "dog":"https://some-random-api.ml/img/dog",
             "fox":"https://some-random-api.ml/img/fox",
@@ -101,7 +114,7 @@ There also needs to be a mongoDB cluster running. The minimal data in the cluste
          }
       }
    },
-   "filters":{  
+   "filters":{
 
    }
 }
