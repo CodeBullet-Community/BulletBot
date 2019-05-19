@@ -72,7 +72,11 @@ var command: commandInterface = {
           }
 
           let roleEmbed = createRoleEmbed(infoRole,message.guild);
+          Bot.mStats.logResponseTime(command.name, requestTime);
           message.channel.send(roleEmbed);
+          Bot.mStats.logMessageSend();
+          Bot.mStats.logCommandUsage(command.name);
+          return true;
 
         } catch (e) {
             sendError(message.channel, e);
