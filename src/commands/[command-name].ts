@@ -18,10 +18,10 @@ var command: commandInterface = {
     cooldownGlobal: durations.second * 10, // global cooldown in ms, if the command shouldn't have any global cooldown, remove the property
     shortHelp: '[short desc]', // very short desc of what the command does
     embedHelp: async function (guild: Guild) {
-        var prefix = await Bot.database.getPrefix(guild);
+        let prefix = await Bot.database.getPrefix(guild);
         return {
             'embed': {
-                'color': Bot.database.settingsDB.cache.helpEmbedColor,
+                'color': Bot.database.settingsDB.cache.embedColors.help,
                 'author': {
                     'name': 'Command: ' + prefix + command.name
                 },
@@ -80,8 +80,8 @@ var command: commandInterface = {
                 return false; // was unsuccessful
             }
             // if the command has several arguments use argIndex, as it's easier to implement optional arguments and new arguments
-            var argIndex = 0;
-            var argsArray = args.split(' ').filter(x => x.length != 0); // this ensures that double spaces get filtered out, so a typo won't make the command not work
+            let argIndex = 0;
+            let argsArray = args.split(' ').filter(x => x.length != 0); // this ensures that double spaces get filtered out, so a typo won't make the command not work
 
             // before the first message or response send (can also be in form of a reaction) `Bot.mStats.logResponseTime(command.name, requestTime);` should be called. 
             // This will log the amount of time the bot needed on process the request, excluding the ping latency of course
