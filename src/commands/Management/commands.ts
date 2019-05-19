@@ -64,7 +64,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 }
                 var cmd = Bot.commands.get(argsArray[argIndex].toLowerCase());
                 if (!cmd) {
-                    message.channel.send(`\`${argsArray[argIndex].toLowerCase()}\` isn't a command.`);
+                    message.channel.send(`That isn't a command.`);
                     Bot.mStats.logMessageSend();
                     return false;
                 }
@@ -99,7 +99,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 }
                 var cmd = Bot.commands.get(argsArray[argIndex].toLowerCase());
                 if (!cmd) {
-                    message.channel.send(`\`${argsArray[argIndex].toLowerCase()}\` isn't a command.`);
+                    message.channel.send(`That isn't a command.`);
                     Bot.mStats.logMessageSend();
                     return false;
                 }

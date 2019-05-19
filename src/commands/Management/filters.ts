@@ -81,7 +81,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     var keys = args.toLocaleLowerCase().split('/');
                     for (var i = 0; i < keys.length; i++) {
                         if (typeof (strucObject[keys[i]]) === 'undefined') {
-                            message.channel.send('Couldn\'t find ' + args + ' category');
+                            message.channel.send('Couldn\'t find specified category');
                             Bot.mStats.logMessageSend();
                             return false;
                         } else {
@@ -100,7 +100,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 }
                 var filter = Bot.filters.get(argsArray[argIndex].toLowerCase());
                 if (!filter) {
-                    message.channel.send(`\`${argsArray[argIndex].toLowerCase()}\` isn't a filter.`);
+                    message.channel.send(`That isn't a filter.`);
                     Bot.mStats.logMessageSend();
                     return false;
                 }
@@ -135,7 +135,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 }
                 var filter = Bot.filters.get(argsArray[argIndex].toLowerCase());
                 if (!filter) {
-                    message.channel.send(`\`${argsArray[argIndex].toLowerCase()}\` isn't a filter.`);
+                    message.channel.send(`That isn't a filter.`);
                     Bot.mStats.logMessageSend();
                     return false;
                 }
@@ -165,7 +165,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 }
                 var filter = Bot.filters.get(argsArray[argIndex]);
                 if (!filter) {
-                    message.channel.send(argsArray[argIndex] + ' isn\'t a filter');
+                    message.channel.send('That isn\'t a filter');
                     Bot.mStats.logMessageSend();
                     return false;
                 }

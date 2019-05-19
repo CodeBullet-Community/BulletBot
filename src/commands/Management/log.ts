@@ -44,7 +44,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 
         var channel = stringToChannel(message.guild, argsArray[argIndex]);
         if (!channel) {
-            message.channel.send('Couldn\'t find ' + argsArray[argIndex] + ' channel');
+            message.channel.send('Couldn\'t find specified channel');
             Bot.mStats.logMessageSend();
             return false;
         }

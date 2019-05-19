@@ -36,7 +36,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 if (!role) {
                     user = await stringToMember(message.guild, argsArray[argIndex]);
                     if (!user) {
-                        message.channel.send('There isn\'t a role or user called ' + argsArray[argIndex]);
+                        message.channel.send('There isn\'t a role or user called that way');
                         Bot.mStats.logMessageSend();
                         return false;
                     }
@@ -112,7 +112,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 Bot.mStats.logMessageSend();
                 break;
             default:
-                message.channel.send('Unkown action ' + argsArray[argIndex]);
+                message.channel.send('Unkown action. Use list, add or rem');
                 Bot.mStats.logMessageSend();
                 break;
         }

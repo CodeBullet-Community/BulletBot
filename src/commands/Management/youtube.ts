@@ -240,7 +240,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 }
                 break;
             default:
-                message.channel.send(`Unknown action ${argsArray[argIndex]}`);
+                message.channel.send(`Unknown action. Use list, add, rem or change`);
                 Bot.mStats.logMessageSend();
                 break;
         }

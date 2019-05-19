@@ -148,7 +148,7 @@ var command: commandInterface = {
                     }
                     break;
                 default:
-                    message.channel.send('unknown action. Use list, enable, disable');
+                    message.channel.send('unknown action. Use list, enable or disable');
                     Bot.mStats.logMessageSend();
                     return false;
             }
