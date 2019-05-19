@@ -91,7 +91,8 @@ export class Database {
 
         setInterval(() => this.updateGlobalSettings(this.settingsDB), globalUpdateInterval);
         console.info(`updating global cache every ${globalUpdateInterval}ms`);
-        setInterval(() => {
+        setInterval(async () => {
+            await this.cleanGuilds();
             this.cleanCommandCaches();
             this.cleanUsers();
             this.cleanMegalogs();
@@ -298,6 +299,20 @@ export class Database {
         this.mainDB.filters.deleteOne({ guild: guildID }).exec();
         this.mainDB.logs.deleteMany({ guild: guildID }).exec();
         this.mainDB.megalogs.deleteOne({ guild: guildID }).exec();
+    }
+
+    /**
+     * cleans the entire guild from guilds, which the bot isn't in anymore
+     *
+     * @memberof Database
+     */
+    async cleanGuilds() {
+        let guildDocs = await this.mainDB.guilds.find({}, ['guild']);
+        for (const guildDoc of guildDocs) {
+            if (!Bot.client.guilds.get(guildDoc.guild)) {
+                await this.removeGuild(guildDoc.guild);
+            }
+        }
     }
 
     /**
