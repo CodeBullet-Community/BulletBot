@@ -1,25 +1,25 @@
 import { Message, RichEmbed, Guild } from 'discord.js';
 import { commandInterface } from '../commands';
-import { permLevels} from '../utils/permissions';
+import { permLevels } from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
 import { permToString } from '../utils/parsers';
 
-async function sendCommandList(guild: Guild, message: Message, strucObject: any, path: string, requestTime: [number,number]) {
+async function sendCommandList(guild: Guild, message: Message, strucObject: any, path: string, requestTime: [number, number]) {
     var output = new RichEmbed();
     output.setAuthor('Command List:', Bot.client.user.avatarURL);
     if (path) output.setFooter('Path: ~' + path);
     output.setColor(Bot.database.settingsDB.cache.embedColors.help);
-    var categories = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) === 'undefined');
+    var categories = Object.keys(strucObject).filter(x => strucObject[x]._categoryName);
     if (categories.length != 0) {
-        var cat_text = categories[0];
+        var cat_text = strucObject[categories[0]]._categoryName;
         for (i = 1; i < categories.length; i++) {
-            cat_text += '\n' + categories[i]
+            cat_text += '\n' + strucObject[categories[i]]._categoryName;
         }
         output.addField('Subcategories:', cat_text);
     }
 
-    var commands = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) != 'undefined');
+    var commands = Object.keys(strucObject).filter(x => strucObject[x].shortHelp);
     for (var i = 0; i < commands.length; i++) {
         var f = Bot.commands.get(commands[i]);
         if (f.permLevel == permLevels.botMaster) continue;
@@ -33,7 +33,7 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
+command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
     try {
         if (args.length == 0) {
             sendCommandList(message.guild, message, Bot.commands.structure, undefined, requestTime);
@@ -41,16 +41,16 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         }
         var command = Bot.commands.get(args.toLowerCase());
         if (command == undefined) {
-            if (typeof (Bot.commands.structure[args.split('/')[0]]) != 'undefined') {
+            if (typeof (Bot.commands.structure[args.split('/')[0].toLowerCase()]) != 'undefined') {
                 var strucObject = Bot.commands.structure;
                 var keys = args.split('/');
                 for (var i = 0; i < keys.length; i++) {
-                    if (typeof (strucObject[keys[i]]) === 'undefined') {
+                    if (typeof (strucObject[keys[i].toLowerCase()]) === 'undefined') {
                         message.channel.send('Couldn\'t find ' + args + ' category');
                         Bot.mStats.logMessageSend();
                         return false;
                     } else {
-                        strucObject = strucObject[keys[i]];
+                        strucObject = strucObject[keys[i].toLowerCase()];
                     }
                 }
                 sendCommandList(message.guild, message, strucObject, args, requestTime);

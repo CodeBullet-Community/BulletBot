@@ -142,8 +142,8 @@ export class Commands {
 
             var folders = files.filter(f => fs.lstatSync(dir + f).isDirectory()); // filters out all non folder paths and calls it self for all remaining paths
             folders.forEach((f, i) => {
-                structureObject[f] = {}
-                this.loadCommands(dir + f + '/', structureObject[f]);
+                structureObject[f.toLowerCase()] = { _categoryName: f }
+                this.loadCommands(dir + f + '/', structureObject[f.toLowerCase()]);
             });
 
             var commands = files.filter(f => f.split('.').pop() == 'js'); // filters out all non js files and loads all remaining into the collection and structure tree
@@ -159,11 +159,11 @@ export class Commands {
                 // puts command in structure
                 var strucObject = structureObject;
                 if (props.path != '') { // if custom path defined
-                    var keys = props.path.split('/');
+                    var keys = props.path.toLowerCase().split('/');
                     strucObject = this.structure;
                     for (var i = 0; i < keys.length; i++) {
                         if (!strucObject[keys[i]]) {
-                            strucObject[keys[i]] = {};
+                            strucObject[keys[i]] = { _categoryName: keys[i] };
                         }
                         strucObject = strucObject[keys[i]];
                     }
