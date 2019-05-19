@@ -138,10 +138,10 @@ var command: commandInterface = {
                 case 'enable':
                 case 'disable':
                     let functions = megalogFunctions[argsArray[argIndex + 1]];
-                    if (!functions) {
-                        functions = [megalogFunctions.all[argsArray[argIndex + 1]]];
+                    if (!functions || megalogFunctions.all.includes(argsArray[argIndex + 1])) {
+                        functions = [argsArray[argIndex + 1]];
                     }
-                    if (!functions || !functions.length) {
+                    if (!functions || !functions[0]) {
                         message.channel.send('The specified group/function doesn\'t exist');
                         Bot.mStats.logMessageSend();
                         return false;
