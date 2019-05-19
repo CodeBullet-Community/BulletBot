@@ -46,7 +46,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 var keys = args.split('/');
                 for (var i = 0; i < keys.length; i++) {
                     if (typeof (strucObject[keys[i].toLowerCase()]) === 'undefined') {
-                        message.channel.send('Couldn\'t find ' + args + ' category');
+                        message.channel.send('Couldn\'t find specified category');
                         Bot.mStats.logMessageSend();
                         return false;
                     } else {
@@ -56,7 +56,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 sendCommandList(message.guild, message, strucObject, args, requestTime);
                 return false;
             } else {
-                message.channel.send('Couldn\'t find ' + args.toLowerCase() + ' command');
+                message.channel.send('Couldn\'t find specified command');
                 Bot.mStats.logMessageSend();
                 return false;
             }

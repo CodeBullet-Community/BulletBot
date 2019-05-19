@@ -71,6 +71,8 @@ var command: commandInterface = {
         try {
             // REMEMBER: return true if the command was successfully executed (meaning the users intention where fulfilled)
             //           return false if the command execution was unsuccessful (then the cooldown doesn't get started)
+            
+            // IMPORTANT: never repsond with "x isn't correct" (or something that the user can define through inputing), because then he could input @everyone or @here
 
             // only put this here when the command always requires arguments
             // if no argument is given then it will send the embed help

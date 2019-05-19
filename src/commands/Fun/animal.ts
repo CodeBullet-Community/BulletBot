@@ -55,7 +55,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 await sendRandomImage(message, apis[args], requestTime);
                 Bot.mStats.logCommandUsage(command.name, args);
             } else {
-                message.channel.send(`\`${args}\` isn't a animal or isn't yet supported.`)
+                message.channel.send(`That isn't a animal or isn't yet supported.`)
                 Bot.mStats.logMessageSend();
             }
         }
