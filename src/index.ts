@@ -227,10 +227,22 @@ client.on('channelCreate', channel => {
 client.on('channelDelete', async (channel: discord.TextChannel) => {
     if (channel instanceof discord.GuildChannel)
         logChannelToggle(channel, false);
-    if (channel.type == 'text') { // looks if webhooks for the deleted channel exist if it's a text channel
-        var youtubeWebhookDocs = await Bot.youtube.webhooks.find({ guild: channel.guild.id, channel: channel.id });
+    if (channel instanceof discord.TextChannel) {
+        var youtubeWebhookDocs = await Bot.youtube.webhooks.find({ guild: channel.guild.id, channel: channel.id }); // looks if webhooks for the deleted channel exist if it's a text channel
         for (const webhookDoc of youtubeWebhookDocs) {
             Bot.youtube.deleteWebhook(channel.guild.id, channel.id, webhookDoc.toObject().feed);
+        }
+        let megalogDoc = await Bot.database.findMegalogDoc(channel.guild.id); // checks if there are any megalogger functions for that channel
+        if (megalogDoc) {
+            let modified = false;
+            let megalogObject = megalogDoc.toObject();
+            for (const key in megalogObject) {
+                if (megalogObject[key] == channel.id) {
+                    megalogDoc[key] = undefined;
+                    modified = true;
+                }
+            }
+            if (modified) megalogDoc.save();
         }
     }
 });
