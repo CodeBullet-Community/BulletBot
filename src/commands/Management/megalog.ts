@@ -4,47 +4,7 @@ import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToChannel } from '../../utils/parsers';
-
-const megalogFunctions = {
-    all: [
-        'channelCreate',
-        'channelDelete',
-        'channelUpdate',
-        'ban',
-        'unban',
-        'memberJoin',
-        'memberLeave',
-        'nicknameChange',
-        'memberRolesChange',
-        'guildNameChange',
-        'messageDelete',
-        'attachmentCache',
-        'messageEdit',
-        'reactionAdd',
-        'reactionRemove',
-        'roleCreate',
-        'roleDelete',
-        'roleUpdate',
-        'voiceTransfer',
-        'voiceMute',
-        'voiceDeaf'],
-    channels: ['channelCreate',
-        'channelDelete',
-        'channelUpdate'],
-    members: ['memberJoin',
-        'memberLeave', 'memberRolesChange'],
-    roles: ['roleCreate',
-        'roleDelete',
-        'roleUpdate'],
-    voice: ['voiceTransfer',
-        'voiceMute',
-        'voiceDeaf'],
-    messages: ['messageDelete',
-        'attachmentCache',
-        'messageEdit'],
-    reactions: ['reactionAdd',
-        'reactionRemove']
-}
+import { megalogFunctions } from '../../database/schemas';
 
 var command: commandInterface = {
     name: 'megalog',

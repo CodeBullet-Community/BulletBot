@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject, CommandCache, userDoc, userSchema, UserWrapper, megalogDoc, megalogSchema } from './schemas';
+import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject, CommandCache, userDoc, userSchema, UserWrapper, megalogDoc, megalogSchema, megalogFunctions, megalogObject } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
 import { Guild, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
@@ -94,6 +94,8 @@ export class Database {
         setInterval(() => {
             this.cleanCommandCaches();
             this.cleanUsers();
+            this.cleanMegalogs();
+            //console.log('cleaned database');
         }, cleanInterval);
         console.info(`cleaning command caches every ${cleanInterval}ms`);
     }
@@ -295,6 +297,7 @@ export class Database {
         this.mainDB.commands.deleteOne({ guild: guildID }).exec();
         this.mainDB.filters.deleteOne({ guild: guildID }).exec();
         this.mainDB.logs.deleteMany({ guild: guildID }).exec();
+        this.mainDB.megalogs.deleteOne({ guild: guildID }).exec();
     }
 
     /**
@@ -621,5 +624,36 @@ export class Database {
             await megalogDoc.save();
         }
         return megalogDoc;
+    }
+
+    /**
+     * cleans database of unused megalog docs and functions with nonexsiting channels
+     *
+     * @memberof Database
+     */
+    async cleanMegalogs() {
+        let deleteQuery = {};
+        for (const func of megalogFunctions.all) {
+            deleteQuery[func] = { $exists: false };
+        }
+        await this.mainDB.megalogs.deleteMany(deleteQuery).exec();
+
+        let megalogDocs = await this.mainDB.megalogs.find();
+        for (const megalogDoc of megalogDocs) {
+            let modified = false;
+            let megalogObject: megalogObject = megalogDoc.toObject();
+            let guild = Bot.client.guilds.get(megalogObject.guild);
+            if (!guild) {
+                megalogDoc.remove();
+                continue;
+            }
+            for (const func of megalogFunctions.all) {
+                if (megalogObject[func] && !guild.channels.get(megalogObject[func])) {
+                    megalogDoc[func] = undefined;
+                    modified = true;
+                }
+            }
+            if (modified) megalogDoc.save();
+        }
     }
 }

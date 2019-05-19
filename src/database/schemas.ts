@@ -464,6 +464,46 @@ export const megalogSchema = new mongoose.Schema({
     voiceMute: { type: String, required: false },
     voiceDeaf: { type: String, required: false }
 });
+export const megalogFunctions = {
+    all: [
+        'channelCreate',
+        'channelDelete',
+        'channelUpdate',
+        'ban',
+        'unban',
+        'memberJoin',
+        'memberLeave',
+        'nicknameChange',
+        'memberRolesChange',
+        'guildNameChange',
+        'messageDelete',
+        'attachmentCache',
+        'messageEdit',
+        'reactionAdd',
+        'reactionRemove',
+        'roleCreate',
+        'roleDelete',
+        'roleUpdate',
+        'voiceTransfer',
+        'voiceMute',
+        'voiceDeaf'],
+    channels: ['channelCreate',
+        'channelDelete',
+        'channelUpdate'],
+    members: ['memberJoin',
+        'memberLeave', 'memberRolesChange'],
+    roles: ['roleCreate',
+        'roleDelete',
+        'roleUpdate'],
+    voice: ['voiceTransfer',
+        'voiceMute',
+        'voiceDeaf'],
+    messages: ['messageDelete',
+        'attachmentCache',
+        'messageEdit'],
+    reactions: ['reactionAdd',
+        'reactionRemove']
+};
 
 export interface mStatsObject {
     messagesReceived: number; // all messages recieved
