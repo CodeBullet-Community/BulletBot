@@ -11,16 +11,16 @@ async function sendFilterList(guild: Guild, message: Message, strucObject: any, 
     output.setAuthor('Filter List:', Bot.client.user.avatarURL);
     if (path) output.setFooter('Path: ~' + path);
     output.setColor(Bot.database.settingsDB.cache.embedColors.help);
-    var categories = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) === 'undefined');
+    var categories = Object.keys(strucObject).filter(x => strucObject[x]._categoryName);
     if (categories.length != 0) {
-        var cat_text = categories[0];
+        var cat_text = strucObject[categories[0]]._categoryName;
         for (i = 1; i < categories.length; i++) {
-            cat_text += '\n' + categories[i]
+            cat_text += '\n' + strucObject[categories[i]]._categoryName;
         }
         output.addField('Subcategories:', cat_text);
     }
 
-    var filters = Object.keys(strucObject).filter(x => typeof (strucObject[x].embedHelp) != 'undefined');
+    var filters = Object.keys(strucObject).filter(x => strucObject[x].shortHelp);
     for (var i = 0; i < filters.length; i++) {
         var f = Bot.filters.get(filters[i]);
         output.addField((await Bot.database.getPrefix(guild)) + f.name, f.shortHelp);
@@ -78,7 +78,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 
                 var strucObject = Bot.filters.structure;
                 if (argsArray[argIndex]) {
-                    var keys = args.split('/');
+                    var keys = args.toLocaleLowerCase().split('/');
                     for (var i = 0; i < keys.length; i++) {
                         if (typeof (strucObject[keys[i]]) === 'undefined') {
                             message.channel.send('Couldn\'t find ' + args + ' category');

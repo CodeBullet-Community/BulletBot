@@ -105,8 +105,8 @@ export class Filters {
 
             var folders = files.filter(f => fs.lstatSync(dir + f).isDirectory()); //  filters out of non folders and calls it self for every remaining object
             folders.forEach((f, i) => {
-                structureObject[f] = {}
-                this.loadFilters(dir + f + "/", structureObject[f]);
+                structureObject[f.toLowerCase()] = { _categoryName: f };
+                this.loadFilters(dir + f + "/", structureObject[f.toLowerCase()]);
             });
 
             var filters = files.filter(f => f.split(".").pop() == "js"); // filters out every non js file and loads the remaining into the structure and collection
@@ -122,11 +122,11 @@ export class Filters {
                 // puts filter in structure
                 var strucObject = structureObject;
                 if (props.path != "") { // if custom path is defined
-                    var keys = props.path.split("/");
+                    var keys = props.path.toLowerCase().split("/");
                     strucObject = this.structure;
                     for (var i = 0; i < keys.length; i++) {
                         if (!strucObject[keys[i]]) {
-                            strucObject[keys[i]] = {};
+                            strucObject[keys[i]] = { _categoryName: keys[i] };
                         }
                         strucObject = strucObject[keys[i]];
                     }
