@@ -311,7 +311,6 @@ export class MStats {
             merged.logs += doc.logs;
             merged.guildsJoined += doc.guildsJoined;
             merged.guildsLeft += doc.guildsLeft;
-            if (merged.guildsTotal < doc.guildsTotal) merged.guildsTotal = doc.guildsTotal;
             merged.errorsTotal += doc.errorsTotal;
             merged.commandTotal += doc.commandTotal;
 
