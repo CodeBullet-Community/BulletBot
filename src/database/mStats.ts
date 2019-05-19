@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { mStatsAllTimeDoc, mStatsDayDoc, mStatsHourDoc, mStatsAllTimeSchema, mStatsDaySchema, mStatsHourSchema, mStatsHourObject, mStatsObject, errorDoc, errorSchema } from './schemas';
+import { mStatsAllTimeDoc, mStatsDayDoc, mStatsHourDoc, mStatsAllTimeSchema, mStatsDaySchema, mStatsHourSchema, mStatsHourObject, mStatsObject, errorDoc, errorSchema, mStatsDayObject } from './schemas';
 import { Bot } from '..';
 import { durations, toNano } from '../utils/time';
 import crypto = require('crypto');
@@ -240,14 +240,18 @@ export class MStats {
      */
     async changeDay(day: number) {
         var hourDocs = await this.hourly.model.find({ day: day }).exec();
-        var hourObjects = [];
+        var hourObjects: mStatsHourObject[] = [];
+        let newestHourObject: mStatsHourObject;
         for (const hour of hourDocs) { // loads all hour docs and deletes them
-            hourObjects.push(hour.toObject());
+            let hourObject = hour.toObject();
+            if (!newestHourObject || newestHourObject.hour < hourObject.hour)
+                newestHourObject = hourObject;
+            hourObjects.push(hourObject);
             hour.remove();
         }
 
         // merges them and creates a new day doc
-        var mergedObject: any = this.mergeStats(hourObjects);
+        var mergedObject: any = this.mergeStats(hourObjects, newestHourObject);
         mergedObject.day = day;
         var dayDoc = new this.daily(mergedObject);
         dayDoc.markModified('commands');
@@ -267,7 +271,8 @@ export class MStats {
             console.log('made new all time doc');
             return;
         }
-        var allTimeObject = this.mergeStats([allTimeDoc.toObject(), dayDoc.toObject()]); // merges day doc with existing all time
+        let dayObject: mStatsDayObject = dayDoc.toObject();
+        var allTimeObject = this.mergeStats([allTimeDoc.toObject(), dayObject], dayObject); // merges day doc with existing all time
         allTimeDoc.set(allTimeObject);
         allTimeDoc.to = day + durations.day; // updates the to timestamp
         await allTimeDoc.save();
@@ -278,10 +283,11 @@ export class MStats {
      * merges an array of mStats objects into a single on
      *
      * @param {mStatsObject[]} docs
+     * @param {mStatsObject} newestDoc the newest doc in the array. Is used to define guildsTotal and webhooks.[service].total properties
      * @returns
      * @memberof MStats
      */
-    mergeStats(docs: mStatsObject[]) {
+    mergeStats(docs: mStatsObject[], newestDoc: mStatsObject) {
         var merged: mStatsObject = {
             messagesReceived: 0,
             messagesSend: 0,
@@ -349,6 +355,15 @@ export class MStats {
         merged.ping.clientAPI /= docs.length;
         merged.ping.cluster /= docs.length;
 
+        merged.guildsTotal = newestDoc.guildsTotal;
+        for (const service in merged.webhooks) {
+            if (newestDoc.webhooks[service] && newestDoc.webhooks[service].total) {
+                merged.webhooks[service].total = newestDoc.webhooks[service].total;
+            } else {
+                merged.webhooks[service].total = 0;
+            }
+        }
+
         return merged;
     }
 
@@ -358,7 +373,7 @@ export class MStats {
      * @memberof MStats
      */
     logMessageReceived() {
-        if(!this.hourly) return;
+        if (!this.hourly) return;
         if (this.hourly.doc.messagesReceived) {
             this.hourly.doc.messagesReceived += 1;
         } else {
@@ -372,7 +387,7 @@ export class MStats {
      * @memberof MStats
      */
     logMessageSend() {
-        if(!this.hourly) return;
+        if (!this.hourly) return;
         this.hourly.doc.messagesSend += 1;
     }
 
@@ -382,7 +397,7 @@ export class MStats {
      * @memberof MStats
      */
     logLog() {
-        if(!this.hourly) return;
+        if (!this.hourly) return;
         this.hourly.doc.logs += 1;
     }
 
@@ -392,7 +407,7 @@ export class MStats {
      * @memberof MStats
      */
     logGuildJoin() {
-        if(!this.hourly) return;
+        if (!this.hourly) return;
         this.hourly.doc.guildsJoined += 1;
     }
 
@@ -402,7 +417,7 @@ export class MStats {
      * @memberof MStats
      */
     logGuildLeave() {
-        if(!this.hourly) return;
+        if (!this.hourly) return;
         this.hourly.doc.guildsLeft += 1;
     }
 
@@ -416,7 +431,7 @@ export class MStats {
      * @memberof MStats
      */
     async logError(error: Error, command?: string) {
-        if(!this.hourly) return;
+        if (!this.hourly) return;
         this.hourly.doc.errorsTotal += 1;
         if (command) {
             if (!this.hourly.doc.commands) {
@@ -456,7 +471,7 @@ export class MStats {
      * @memberof MStats
      */
     logCommandUsage(command: string, subCommand?: string) {
-        if(!this.hourly) return;
+        if (!this.hourly) return;
         this.hourly.doc.commandTotal += 1;
         if (!subCommand) {
             subCommand = '_main';
@@ -483,7 +498,7 @@ export class MStats {
      * @memberof MStats
      */
     logResponseTime(command: string, requestTime: [number, number]) {
-        if(!this.hourly) return;
+        if (!this.hourly) return;
         var latency = toNano(process.hrtime(requestTime));
         if (!this.hourly.doc.commands) {
             this.hourly.doc.commands = {};
@@ -509,7 +524,7 @@ export class MStats {
      * @memberof MStats
      */
     logFilterCatch(filter: string) {
-        if(!this.hourly) return;
+        if (!this.hourly) return;
         if (!this.hourly.doc.filters) {
             this.hourly.doc.filters = {};
         }
@@ -528,7 +543,7 @@ export class MStats {
      * @memberof MStats
      */
     logWebhookAction(service: string, action: 'created' | 'changed' | 'deleted') {
-        if(!this.hourly) return;
+        if (!this.hourly) return;
         if (!this.hourly.doc.webhooks) {
             this.hourly.doc.webhooks = {};
         }
