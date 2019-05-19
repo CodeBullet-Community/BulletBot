@@ -111,7 +111,7 @@ var command: commandInterface = {
             }
             let argIndex = 0;
             let argsArray = args.split(' ').filter(x => x.length != 0);
-            let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
+            let megalogDoc = await Bot.database.getMegalogDoc(message.guild.id);
             let text = '';
             switch (argsArray[argIndex]) {
                 case 'list':
