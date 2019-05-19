@@ -42,6 +42,11 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         "inline": true
                     },
                     {
+                        "name": "Errors Total:",
+                        "value": await Bot.mStats.errors.countDocuments().exec(),
+                        "inline": true
+                    },
+                    {
                         "name": "Errors Current Hour:",
                         "value": Bot.mStats.hourly.doc.toObject().errorsTotal,
                         "inline": true
