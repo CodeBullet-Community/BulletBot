@@ -348,4 +348,16 @@ client.on('warn', info => {
 
 setTimeout(() => {
     client.login(botToken); // logs into discord after 2 seconds
+
+    // enforce presence every hour
+    setInterval(() => {
+        if (Bot.database.settingsDB.cache) {
+            if (Bot.database.settingsDB.cache.presence && (Bot.database.settingsDB.cache.presence.status || Bot.database.settingsDB.cache.presence.game || Bot.database.settingsDB.cache.presence.afk)) {
+                Bot.client.user.setPresence(Bot.database.settingsDB.cache.presence);
+            } else {
+                Bot.client.user.setActivity(undefined);
+                Bot.client.user.setStatus('online');
+            }
+        }
+    }, durations.hour);
 }, 2000);
