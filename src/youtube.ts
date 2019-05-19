@@ -8,6 +8,7 @@ import express = require("express");
 import bodyParser = require("body-parser");
 import xml2js = require('xml2js')
 import { sendMentionMessage } from './utils/messages';
+import { durations } from './utils/time';
 const xmlParser = new xml2js.Parser({ explicitArray: false });
 
 /**
@@ -195,6 +196,7 @@ export class YTWebhookManager {
                     'hub.mode': subscribe ? 'subscribe' : 'unsubscribe',
                     'hub.callback': `http://${callback.URL}:${callback.port}${callback.path}/youtube`, // uses in bot-config specified callback URL
                     'hub.topic': 'https://www.youtube.com/xml/feeds/videos.xml?channel_id=' + YTChannelID,
+                    'hub.lease_seconds': durations.thirtyDays*240/1000
                 }
             }, (error, response, body) => {
                 if (error) reject(error);
