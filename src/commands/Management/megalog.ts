@@ -164,7 +164,7 @@ var command: commandInterface = {
 
                             for (const func of functions) {
                                 megalogDoc[func] = channel.id;
-                                text += func + ', ';
+                                text += '**' + func + '**, ';
                             }
                             await megalogDoc.save();
                             text = text.slice(0, -2);
