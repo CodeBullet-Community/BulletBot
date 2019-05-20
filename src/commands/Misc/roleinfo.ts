@@ -91,9 +91,9 @@ function createRoleEmbed(infoRole, guild){
   return {
       "embed": {
           "author": {"name" : `Description of ${infoRole.name}`},
-          "footer":{"text": infoRole.id},
+          "footer":{"text": `ID: ${infoRole.id}`},
+          "color": infoRole.color,
           "timestamp": date.toISOString(),
-          "color": Bot.database.settingsDB.cache.embedColors.neutral,
           "fields": [
               {
                   "name" : "Created",

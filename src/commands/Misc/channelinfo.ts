@@ -64,18 +64,20 @@ var command: commandInterface = {
             }
 
             var infoChannel = stringToChannel(message.guild, args);
-
             if(!infoChannel){
-                message.channel.send(`${args.replace('@',' ')} is not a valid channel!`);
-                Bot.mStats.logMessageSend();
+                returnNegative();
                 return false;
             }
             var channelEmbed;
-            if(infoChannel.type == "text") channelEmbed = createTextChannelEmbed(infoChannel, message.guild);
-            else if(infoChannel.type == "voice") channelEmbed = createVoiceChannelEmbed(infoChannel, message.guild);
+            if(infoChannel.type == "text") channelEmbed = createTextChannelEmbed(infoChannel);
+            else if(infoChannel.type == "voice") channelEmbed = createVoiceChannelEmbed(infoChannel);
             else {
-                message.channel.send(`${args.replace('@',' ')} is not a valid channel type!`);
-                Bot.mStats.logMessageSend();
+                returnNegative();
+                return false;
+            }
+
+            if(!infoChannel.memberPermissions(message.member).has('VIEW_CHANNEL')){
+                returnNegative();
                 return false;
             }
             Bot.mStats.logResponseTime(command.name, requestTime);
@@ -89,103 +91,67 @@ var command: commandInterface = {
             Bot.mStats.logError(e, command.name);
             return false;
         }
+        function returnNegative(){
+            message.channel.send(`${args.replace('@',' ')} is not a valid channel!`);
+            Bot.mStats.logMessageSend();
+            return false;
+        }
     }
 };
 
-function createTextChannelEmbed(infoChannel, guild){
+function createTextChannelEmbed(infoChannel){
     var date = new Date();
     var channelParent;
+    var lastMessage;
+    var lastMessageDays;
     try{channelParent = infoChannel.parent.name;}
     catch(ex){channelParent = 'None';}
-    return {
-        "embed": {
-            "author": {"name" : `Description of ${infoChannel.name}`},
-            "footer":{"text" : `ID: ${infoChannel.id}`},
-            "timestamp": date.toISOString(),
-            "color": Bot.database.settingsDB.cache.embedColors.neutral,
-            "fields": [
-                {
-                    "name" : "Created At",
-                    "value": `${dateFormat(infoChannel.createdAt, timeFormat)} \n (${getDayDiff(infoChannel.createdAt, date.getTime())} days ago)`,
-                    "inline" : true
-                },
-                {
-                    "name" : "Last Message Sent",
-                    "value" : `${dateFormat(infoChannel.lastMessage.createdAt, timeFormat)} \n (${getDayDiff(infoChannel.lastMessage.createdAt, date.getTime())} days ago)`,
-                    "inline" : true
-                },
-                {
-                    "name" : "Members",
-                    "value" : infoChannel.members.size,
-                },
-                {
-                    "name" : "Typing indicator",
-                    "value" : infoChannel.typing,
-                    "inline" : true
-                },
-                {
-                    "name" : 'NSFW',
-                    "value" : infoChannel.nsfw,
-                    "inline" : true
-                },
-                {
-                    "name" : "Position",
-                    "value" : infoChannel.position+1,
-                    "inline" : true
-                },
-                {
-                    "name" : "Category",
-                    "value" : channelParent,
-                },
-            ]
-        }
-    };
+    try{
+        lastMessage = dateFormat(infoChannel.lastMessage.createdAt, timeFormat);
+        lastMessageDays = `(${getDayDiff(infoChannel.lastMessage.createdAt, date.getTime())} days ago)`
+    }
+    catch(ex){
+        lastMessage = 'N/A';
+        lastMessageDays = '';
+    }
+    var embed = new RichEmbed();
+    embed.setAuthor(`Description of ${infoChannel.name}`);
+    embed.setFooter(`ID: ${infoChannel.id}`);
+    // @ts-ignore
+    embed.setTimestamp(date.toISOString());
+    embed.setColor(Bot.database.settingsDB.cache.embedColors.neutral);
+    embed.addField("Created",`${dateFormat(infoChannel.createdAt, timeFormat)} \n (${getDayDiff(infoChannel.createdAt, date.getTime())} days ago)`,true);
+    embed.addField("Last Message Sent", `${lastMessage} \n ${lastMessageDays}`,true);
+    embed.addField("Members",infoChannel.members.size,true);
+    embed.addField("NSFW",infoChannel.nsfw,true);
+    if(infoChannel.rateLimitPerUser>0) embed.addField("Slowmode",`${infoChannel.rateLimitPerUser} seconds`,true);
+    embed.addField("NSFW",infoChannel.position+1,true);
+    embed.addField("Category",channelParent,true);
+
+    return embed;
 }
 
-function createVoiceChannelEmbed(infoChannel, guild){
+function createVoiceChannelEmbed(infoChannel){
     var date = new Date();
     var userLimit = infoChannel.userLimit;
     if(userLimit == 0) userLimit = 'unlimited';
     var channelParent;
     try{channelParent = infoChannel.parent.name;}
     catch(ex){channelParent = 'None';}
-    return {
-        "embed": {
-            "author": {"name" : `Description of ${infoChannel.name}`},
-            "footer":{"text" : `ID: ${infoChannel.id}`},
-            "timestamp": date.toISOString(),
-            "color": Bot.database.settingsDB.cache.embedColors.neutral,
-            "fields": [
-                {
-                    "name" : "Created At",
-                    "value": `${dateFormat(infoChannel.createdAt, timeFormat)} \n (${getDayDiff(infoChannel.createdAt, date.getTime())} days ago)`
-                },
-                {
-                    "name" : "Currently connected",
-                    "value" : infoChannel.members.size,
-                },
-                {
-                    "name" : "Bitrate",
-                    "value" : infoChannel.bitrate,
-                    "inline" : true
-                },
-                {
-                    "name" : 'User limit',
-                    "value" : userLimit,
-                    "inline" : true
-                },
-                {
-                    "name" : "Position",
-                    "value" : infoChannel.position+1,
-                    "inline" : true
-                },
-                {
-                    "name" : "Category",
-                    "value" : channelParent,
-                },
-            ]
-        }
-    };
+    var embed = new RichEmbed();
+    embed.setAuthor(`Description of ${infoChannel.name}`);
+    embed.setFooter(`ID: ${infoChannel.id}`);
+    // @ts-ignore
+    embed.setTimestamp(date.toISOString());
+    embed.setColor(Bot.database.settingsDB.cache.embedColors.neutral);
+    embed.addField("Created",`${dateFormat(infoChannel.createdAt, timeFormat)} \n (${getDayDiff(infoChannel.createdAt, date.getTime())} days ago)`,true);
+    embed.addField("Currently connected",infoChannel.members.size,true);
+    embed.addField("Bitrate",infoChannel.bitrate,true);
+    embed.addField("User limit",userLimit,true);
+    embed.addField("Position",infoChannel.position+1,true);
+    embed.addField("Category",channelParent,true);
+
+    return embed;
 }
 
 export default command;
