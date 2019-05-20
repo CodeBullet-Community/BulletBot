@@ -91,13 +91,13 @@ function createRoleEmbed(infoRole, guild){
   return {
       "embed": {
           "author": {"name" : `Description of ${infoRole.name}`},
-          "footer":{"text": `Created: ${dateFormat(infoRole.createdAt, timeFormat)} \n (${getDayDiff(infoRole.createdAt, date.getTime())} days ago)`},
-          "thumbnail": {"url" : guild.iconURL},
+          "footer":{"text": infoRole.id},
+          "timestamp": date.toISOString(),
           "color": Bot.database.settingsDB.cache.embedColors.neutral,
           "fields": [
               {
-                  "name" : "ID",
-                  "value" : infoRole.id,
+                  "name" : "Created",
+                  "value" : `${dateFormat(infoRole.createdAt, timeFormat)} \n (${getDayDiff(infoRole.createdAt, date.getTime())} days ago)`,
                   "inline" : true
               },
               {
