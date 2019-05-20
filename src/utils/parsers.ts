@@ -182,7 +182,9 @@ export function stringToChannel(guild: Guild, text: string) {
             text = result[1];
         }
     }
-    return guild.channels.get(text);
+    let channel = guild.channels.get(text);
+    if(!channel) channel = guild.channels.find(x => x.name == text);
+    return channel;
 }
 
 /**
