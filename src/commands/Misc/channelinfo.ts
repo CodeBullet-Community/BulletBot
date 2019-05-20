@@ -119,13 +119,13 @@ function createTextChannelEmbed(infoChannel){
     embed.setFooter(`ID: ${infoChannel.id}`);
     // @ts-ignore
     embed.setTimestamp(date.toISOString());
-    embed.setColor(Bot.database.settingsDB.cache.embedColors.neutral);
+    embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
     embed.addField("Created",`${dateFormat(infoChannel.createdAt, timeFormat)} \n (${getDayDiff(infoChannel.createdAt, date.getTime())} days ago)`,true);
     embed.addField("Last Message Sent", `${lastMessage} \n ${lastMessageDays}`,true);
     embed.addField("Members",infoChannel.members.size,true);
     embed.addField("NSFW",infoChannel.nsfw,true);
     if(infoChannel.rateLimitPerUser>0) embed.addField("Slowmode",`${infoChannel.rateLimitPerUser} seconds`,true);
-    embed.addField("NSFW",infoChannel.position+1,true);
+    embed.addField("Position",infoChannel.position+1,true);
     embed.addField("Category",channelParent,true);
 
     return embed;
@@ -143,7 +143,7 @@ function createVoiceChannelEmbed(infoChannel){
     embed.setFooter(`ID: ${infoChannel.id}`);
     // @ts-ignore
     embed.setTimestamp(date.toISOString());
-    embed.setColor(Bot.database.settingsDB.cache.embedColors.neutral);
+    embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
     embed.addField("Created",`${dateFormat(infoChannel.createdAt, timeFormat)} \n (${getDayDiff(infoChannel.createdAt, date.getTime())} days ago)`,true);
     embed.addField("Currently connected",infoChannel.members.size,true);
     embed.addField("Bitrate",infoChannel.bitrate,true);
