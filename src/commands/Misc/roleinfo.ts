@@ -88,6 +88,7 @@ var command: commandInterface = {
 
 function createRoleEmbed(infoRole, guild){
   let date = new Date();
+  guild.fetchMembers();
   return {
       "embed": {
           "author": {"name" : `Description of ${infoRole.name}`},

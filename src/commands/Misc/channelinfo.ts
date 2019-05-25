@@ -68,9 +68,10 @@ var command: commandInterface = {
                 returnNegative();
                 return false;
             }
+            var guild = infoChannel.guild;
             var channelEmbed;
-            if(infoChannel.type == "text") channelEmbed = createTextChannelEmbed(infoChannel);
-            else if(infoChannel.type == "voice") channelEmbed = createVoiceChannelEmbed(infoChannel);
+            if(infoChannel.type == "text") channelEmbed = createTextChannelEmbed(infoChannel,guild);
+            else if(infoChannel.type == "voice") channelEmbed = createVoiceChannelEmbed(infoChannel,guild);
             else {
                 returnNegative();
                 return false;
@@ -99,7 +100,7 @@ var command: commandInterface = {
     }
 };
 
-function createTextChannelEmbed(infoChannel){
+function createTextChannelEmbed(infoChannel,guild){
     var date = new Date();
     var channelParent;
     var lastMessage;
@@ -122,7 +123,8 @@ function createTextChannelEmbed(infoChannel){
     embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
     embed.addField("Created",`${dateFormat(infoChannel.createdAt, timeFormat)} \n (${getDayDiff(infoChannel.createdAt, date.getTime())} days ago)`,true);
     embed.addField("Last Message Sent", `${lastMessage} \n ${lastMessageDays}`,true);
-    embed.addField("Members",infoChannel.members.size,true);
+    guild.fetchMembers();
+    embed.addField("Members",(infoChannel.members.size),true);
     embed.addField("NSFW",infoChannel.nsfw,true);
     if(infoChannel.rateLimitPerUser>0) embed.addField("Slowmode",`${infoChannel.rateLimitPerUser} seconds`,true);
     embed.addField("Position",infoChannel.position+1,true);
@@ -131,7 +133,7 @@ function createTextChannelEmbed(infoChannel){
     return embed;
 }
 
-function createVoiceChannelEmbed(infoChannel){
+function createVoiceChannelEmbed(infoChannel,guild){
     var date = new Date();
     var userLimit = infoChannel.userLimit;
     if(userLimit == 0) userLimit = 'unlimited';
@@ -145,6 +147,7 @@ function createVoiceChannelEmbed(infoChannel){
     embed.setTimestamp(date.toISOString());
     embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
     embed.addField("Created",`${dateFormat(infoChannel.createdAt, timeFormat)} \n (${getDayDiff(infoChannel.createdAt, date.getTime())} days ago)`,true);
+    guild.fetchMembers();
     embed.addField("Currently connected",infoChannel.members.size,true);
     embed.addField("Bitrate",infoChannel.bitrate,true);
     embed.addField("User limit",userLimit,true);
