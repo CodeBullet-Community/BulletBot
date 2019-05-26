@@ -2,7 +2,7 @@ import mongoose = require('mongoose');
 import { pActionDoc, pActionSchema, pActionObject } from './schemas';
 import { Bot } from '..';
 import { pActionsInterval } from '../bot-config.json';
-import { Guild } from 'discord.js';
+import { Guild, GuildMember } from 'discord.js';
 
 /**
  * Manages pending actions and the connection to the pAction collection
@@ -64,12 +64,19 @@ export class PActions {
                     guild = Bot.client.guilds.get(actionObject.info.guild);
                     if (!guild) break;
                     if (!guild.me.hasPermission('MANAGE_ROLES')) return;
-                    //@ts-ignore
-                    let member = await guild.fetchMember(actionObject.info.user);
+
+                    let member: GuildMember;
+                    try {
+                        //@ts-ignore
+                        member = await guild.fetchMember(actionObject.info.user);
+                    } catch (e) {
+                        break;
+                    }
                     if (!member) break;
 
                     let role = member.roles.find(role => role.name.toLowerCase() == 'muted')
-                    if (role) member.removeRole(role, 'Auto Unmute');
+                    //@ts-ignore
+                    if (role) member.removeRole(role, 'Auto Unmute for case ' + actionObject.info.case);
                     break;
                 case 'ban':
                     //@ts-ignore
@@ -77,7 +84,7 @@ export class PActions {
                     if (!guild) break;
                     if (!guild.me.hasPermission('BAN_MEMBERS')) return;
                     //@ts-ignore
-                    guild.unban(actionObject.info.user, 'Auto Unban');
+                    guild.unban(actionObject.info.user, 'Auto Unban').catch(reason => { });
 
                     break;
                 case 'lockChannel':
@@ -111,5 +118,29 @@ export class PActions {
             }
         });
         return pMute.save();
+    }
+
+    /**
+     * creates a pending unban
+     *
+     * @param {string} guildID guild id
+     * @param {string} userID user id that should be unbanned
+     * @param {number} until timestamp when they should get unbanned
+     * @param {number} caseID case id
+     * @returns
+     * @memberof PActions
+     */
+    addBan(guildID: string, userID: string, until: number, caseID: number) {
+        let pBan = new this.pActions({
+            from: Date.now(),
+            to: until,
+            action: 'ban',
+            info: {
+                guild: guildID,
+                user: userID,
+                case: caseID
+            }
+        });
+        return pBan.save();
     }
 }
