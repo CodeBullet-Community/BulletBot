@@ -505,6 +505,39 @@ export const megalogFunctions = {
         'reactionRemove']
 };
 
+// pAction
+export interface pActionObject {
+    from: number;
+    to: number;
+    action: 'mute' | 'lockChannel' | 'ban' | 'resubWebhook';
+    info: pActionMute | pActionBan | pActionLockChannel | pActionResubWebhook;
+};
+export interface pActionDoc extends mongoose.Document, pActionObject { };
+export const pActionSchema = new mongoose.Schema({
+    from: Number,
+    to: Number,
+    action: String,
+    info: mongoose.Schema.Types.Mixed
+});
+
+export interface pActionMute {
+    guild: string;
+    user: string;
+    case: number;
+}
+export interface pActionBan {
+    guild: string;
+    user: string;
+    case: number;
+}
+export interface pActionLockChannel {
+    guild: string;
+    channel: string;
+}
+export interface pActionResubWebhook {
+    service: string;
+}
+
 export interface mStatsObject {
     messagesReceived: number; // all messages recieved
     messagesSend: number; // all messages send

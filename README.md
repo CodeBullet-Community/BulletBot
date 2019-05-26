@@ -61,6 +61,7 @@ Jet is using Typescript 3.4.1 but any version will probably work if you use the 
     },
     "globalUpdateInterval": 10000,
     "cleanInterval": 60000,
+    "pActionsInterval": 1000,
     "crashProof": {
         "file": "BulletBot\\crashProof.time", // the bot will write the current timestamp to this file
         "interval": 10000

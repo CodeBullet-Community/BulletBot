@@ -13,6 +13,7 @@ import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
 import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate, logVoiceTransfer, logVoiceMute, logVoiceDeaf } from './megalogger';
+import { PActions } from './database/pActions';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -61,6 +62,7 @@ export class Bot {
     static mStats: MStats;
     static catcher: Catcher;
     static logger: Logger;
+    static pActions: PActions;
 
     /**
      * the static version of a constructor
@@ -77,7 +79,7 @@ export class Bot {
      * @memberof Bot
      */
     static init(client: discord.Client, commands: Commands, filters: Filters, youtube: YTWebhookManager,
-        database: Database, mStats: MStats, catcher: Catcher, logger: Logger) {
+        database: Database, mStats: MStats, catcher: Catcher, logger: Logger, pActions: PActions) {
         this.client = client;
         this.commands = commands;
         this.filters = filters;
@@ -86,6 +88,7 @@ export class Bot {
         this.mStats = mStats;
         this.catcher = catcher;
         this.logger = logger;
+        this.pActions = pActions;
     }
 }
 
@@ -97,7 +100,8 @@ var commands = new Commands(__dirname + '/commands/');
 var filters = new Filters(__dirname + '/filters/');
 var youtube = new YTWebhookManager(DBURI, 'admin');
 var catcher = new Catcher(callback.port);
-Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger);
+let pActions = new PActions(DBURI, 'admin');
+Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger, pActions);
 
 exitHook(() => {
     console.log('Saving cached data...');
