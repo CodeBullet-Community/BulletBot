@@ -673,3 +673,25 @@ export const globalSettingsSchema = new mongoose.Schema({
     commands: mongoose.Schema.Types.Mixed,
     filters: mongoose.Schema.Types.Mixed
 });
+
+export interface caseObject {
+    guild: string;
+    caseID: number;
+    user: string;
+    action: string;
+    timestamp: number;
+    duration?: number;
+    mod: string;
+    reason?: string;
+}
+
+export interface caseDoc extends mongoose.Document, caseObject { }
+export const caseSchema = new mongoose.Schema({
+    caseID : Number,
+    user: String,
+    action: String,
+    timestamp: Number,
+    duration: { type: Number, required: false },
+    mod: String,
+    reason: { type: String, required: false },
+});
