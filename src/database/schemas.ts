@@ -533,6 +533,7 @@ export interface pActionBan {
 export interface pActionLockChannel {
     guild: string;
     channel: string;
+    overwrites: string[];
 }
 export interface pActionResubWebhook {
     service: string;

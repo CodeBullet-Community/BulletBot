@@ -76,7 +76,7 @@ export class PActions {
 
                     let role = member.roles.find(role => role.name.toLowerCase() == 'muted')
                     //@ts-ignore
-                    if (role) member.removeRole(role, 'Auto Unmute for case ' + actionObject.info.case);
+                    if (role) member.removeRole(role, `Auto unmute for case ${actionObject.info.case} after ${actionObject.to-actionObject.from}ms`);
                     break;
                 case 'ban':
                     //@ts-ignore
@@ -84,10 +84,21 @@ export class PActions {
                     if (!guild) break;
                     if (!guild.me.hasPermission('BAN_MEMBERS')) return;
                     //@ts-ignore
-                    guild.unban(actionObject.info.user, 'Auto Unban').catch(reason => { });
+                    guild.unban(actionObject.info.user, `Auto unban for case ${actionObject.info.case} after ${actionObject.to-actionObject.from}ms`).catch(reason => { });
 
                     break;
                 case 'lockChannel':
+                    //@ts-ignore
+                    guild = Bot.client.guilds.get(actionObject.info.guild);
+                    if (!guild) break;
+                    if (!guild.me.hasPermission('MANAGE_CHANNELS')) return;
+                    //@ts-ignore
+                    let channel = guild.channels.get(actionObject.info.channel);
+                    if (!channel) break;
+                    //@ts-ignore
+                    for (const overwrite of actionObject.info.overwrites) {
+                        channel.overwritePermissions(overwrite,{'SEND_MESSAGES': null}, `Auto unlock after ${actionObject.to-actionObject.from}ms`);
+                    }
                     break;
                 case 'resubWebhook':
                     break;
@@ -142,5 +153,29 @@ export class PActions {
             }
         });
         return pBan.save();
+    }
+
+    /**
+     * creates pending channel unlock
+     *
+     * @param {string} guildID guild id
+     * @param {string} channelID channel that needs to be unlocked
+     * @param {string[]} overwrites role/users perms that need to be changed
+     * @param {number} until timestamp when the channel should get unlocked
+     * @returns
+     * @memberof PActions
+     */
+    addLockChannel(guildID: string, channelID: string, overwrites: string[], until: number) {
+        let pLock = new this.pActions({
+            from: Date.now(),
+            to: until,
+            action: 'lockChannel',
+            info: {
+                guild: guildID,
+                channel: channelID,
+                overwrites: overwrites
+            }
+        });
+        return pLock.save();
     }
 }
