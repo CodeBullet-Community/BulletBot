@@ -1,7 +1,7 @@
 import mongoose = require('mongoose');
 import { pActionDoc, pActionSchema, pActionObject } from './schemas';
 import { Bot } from '..';
-import { pActionsInterval } from '../bot-config.json';
+import { pActionsInterval, YTResubInterval } from '../bot-config.json';
 import { Guild, GuildMember } from 'discord.js';
 
 /**
@@ -76,7 +76,7 @@ export class PActions {
 
                     let role = member.roles.find(role => role.name.toLowerCase() == 'muted')
                     //@ts-ignore
-                    if (role) member.removeRole(role, `Auto unmute for case ${actionObject.info.case} after ${actionObject.to-actionObject.from}ms`);
+                    if (role) member.removeRole(role, `Auto unmute for case ${actionObject.info.case} after ${actionObject.to - actionObject.from}ms`);
                     break;
                 case 'ban':
                     //@ts-ignore
@@ -84,7 +84,7 @@ export class PActions {
                     if (!guild) break;
                     if (!guild.me.hasPermission('BAN_MEMBERS')) return;
                     //@ts-ignore
-                    guild.unban(actionObject.info.user, `Auto unban for case ${actionObject.info.case} after ${actionObject.to-actionObject.from}ms`).catch(reason => { });
+                    guild.unban(actionObject.info.user, `Auto unban for case ${actionObject.info.case} after ${actionObject.to - actionObject.from}ms`).catch(reason => { });
 
                     break;
                 case 'lockChannel':
@@ -97,10 +97,16 @@ export class PActions {
                     if (!channel) break;
                     //@ts-ignore
                     for (const overwrite of actionObject.info.overwrites) {
-                        channel.overwritePermissions(overwrite,{'SEND_MESSAGES': null}, `Auto unlock after ${actionObject.to-actionObject.from}ms`);
+                        channel.overwritePermissions(overwrite, { 'SEND_MESSAGES': null }, `Auto unlock after ${actionObject.to - actionObject.from}ms`);
                     }
                     break;
                 case 'resubWebhook':
+                    //@ts-ignore
+                    switch (actionObject.info.service) {
+                        case 'youtube':
+                            Bot.youtube.resubWebhooks();
+                            this.addWebhookResub('youtube', actionObject.to + YTResubInterval);
+                    }
                     break;
             }
             action.remove();
@@ -177,5 +183,25 @@ export class PActions {
             }
         });
         return pLock.save();
+    }
+
+    /**
+     * craetes a pending webhook resub
+     *
+     * @param {'youtube'} service which service should do a resub
+     * @param {number} timestamp when it should do the resub
+     * @returns
+     * @memberof PActions
+     */
+    addWebhookResub(service: 'youtube', timestamp: number) {
+        let pResub = new this.pActions({
+            from: Date.now(),
+            to: timestamp,
+            action: 'resubWebhook',
+            info: {
+                service: service
+            }
+        });
+        return pResub.save();
     }
 }

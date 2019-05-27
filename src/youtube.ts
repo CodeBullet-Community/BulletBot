@@ -181,6 +181,19 @@ export class YTWebhookManager {
     }
 
     /**
+     * resubs to all channels on pubsubhubbub
+     *
+     * @memberof YTWebhookManager
+     */
+    async resubWebhooks() {
+        let channelIDs: string[] = await this.webhooks.distinct('feed').exec();
+        for (const channelID of channelIDs) {
+            this.subToChannel(channelID, true);
+        }
+        console.log(`Resubbed to ${channelIDs.length} YouTube webhooks`);
+    }
+
+    /**
      * sends a post to pubsubhubbub to sub to a callback
      *
      * @private
@@ -191,124 +204,124 @@ export class YTWebhookManager {
      */
     private async subToChannel(YTChannelID: string, subscribe: boolean) {
         return new Promise((resolve, reject) => {
-            request.post('https://pubsubhubbub.appspot.com/subscribe', {
-                form: {
-                    'hub.mode': subscribe ? 'subscribe' : 'unsubscribe',
-                    'hub.callback': `http://${callback.URL}:${callback.port}${callback.path}/youtube`, // uses in bot-config specified callback URL
-                    'hub.topic': 'https://www.youtube.com/xml/feeds/videos.xml?channel_id=' + YTChannelID,
-                    'hub.lease_seconds': durations.thirtyDays*240/1000
-                }
-            }, (error, response, body) => {
-                if (error) reject(error);
-                if (response.statusCode != 202) {
-                    reject('Invalid status code <' + response.statusCode + '>');
-                }
-                resolve(body);
+                request.post('https://pubsubhubbub.appspot.com/subscribe', {
+                    form: {
+                        'hub.mode': subscribe ? 'subscribe' : 'unsubscribe',
+                        'hub.callback': `http://${callback.URL}:${callback.port}${callback.path}/youtube`, // uses in bot-config specified callback URL
+                        'hub.topic': 'https://www.youtube.com/xml/feeds/videos.xml?channel_id=' + YTChannelID,
+                        'hub.lease_seconds': durations.thirtyDays * 240 / 1000
+                    }
+                }, (error, response, body) => {
+                    if (error) reject(error);
+                    if (response.statusCode != 202) {
+                        reject('Invalid status code <' + response.statusCode + '>');
+                    }
+                    resolve(body);
+                });
             });
-        });
     }
 
-    /**
-     * creates webhook in database and also calls subToChannel if it0s the first time writing
-     *
-     * @param {string} guildID id of guild where the webhook should be made
-     * @param {string} channelID id for channel to witch the webhook should send
-     * @param {string} YTChannelID id of youtube channel to which to sub
-     * @param {string} message message that should get send on callback
-     * @returns created webhook doc
-     * @memberof YTWebhookManager
-     */
-    async createWebhook(guildID: string, channelID: string, YTChannelID: string, message: string) {
-        var sameFeedWebhook = await this.webhooks.findOne({ feed: YTChannelID }); // searches for a webhook with same feed to know if it should sub to subpubhubbub
-        if (sameFeedWebhook && sameFeedWebhook.guild == guildID && sameFeedWebhook.channel == channelID) return undefined; // checks if similar webhook already exists and if so then return
-        if (!sameFeedWebhook) {
-            try {
-                this.subToChannel(YTChannelID, true);
-            } catch (e) {
-                console.error('error while subscribing to youtube webhook:', e);
-                Bot.mStats.logError(e);
-                return null;
-            }
+/**
+ * creates webhook in database and also calls subToChannel if it0s the first time writing
+ *
+ * @param {string} guildID id of guild where the webhook should be made
+ * @param {string} channelID id for channel to witch the webhook should send
+ * @param {string} YTChannelID id of youtube channel to which to sub
+ * @param {string} message message that should get send on callback
+ * @returns created webhook doc
+ * @memberof YTWebhookManager
+ */
+async createWebhook(guildID: string, channelID: string, YTChannelID: string, message: string) {
+    var sameFeedWebhook = await this.webhooks.findOne({ feed: YTChannelID }); // searches for a webhook with same feed to know if it should sub to subpubhubbub
+    if (sameFeedWebhook && sameFeedWebhook.guild == guildID && sameFeedWebhook.channel == channelID) return undefined; // checks if similar webhook already exists and if so then return
+    if (!sameFeedWebhook) {
+        try {
+            this.subToChannel(YTChannelID, true);
+        } catch (e) {
+            console.error('error while subscribing to youtube webhook:', e);
+            Bot.mStats.logError(e);
+            return null;
         }
-        var guildDoc = await Bot.database.findGuildDoc(guildID);
-        if (!guildDoc) return undefined;
-        var webhhookDoc = new this.webhooks({ // creates webhook doc
-            feed: YTChannelID,
-            guild: guildID,
-            channel: channelID,
-            message: message
-        });
-        await webhhookDoc.save();
-        if (!guildDoc.webhooks) guildDoc.webhooks = {};
-        if (!guildDoc.webhooks.youtube) guildDoc.webhooks.youtube = [];
-        guildDoc.webhooks.youtube.push(webhhookDoc.id); // adds webhook id to guild doc
-        await guildDoc.save()
-        Bot.mStats.logWebhookAction('youtube', 'created'); // logs action in mStats
-        return webhhookDoc;
     }
+    var guildDoc = await Bot.database.findGuildDoc(guildID);
+    if (!guildDoc) return undefined;
+    var webhhookDoc = new this.webhooks({ // creates webhook doc
+        feed: YTChannelID,
+        guild: guildID,
+        channel: channelID,
+        message: message
+    });
+    await webhhookDoc.save();
+    if (!guildDoc.webhooks) guildDoc.webhooks = {};
+    if (!guildDoc.webhooks.youtube) guildDoc.webhooks.youtube = [];
+    guildDoc.webhooks.youtube.push(webhhookDoc.id); // adds webhook id to guild doc
+    await guildDoc.save()
+    Bot.mStats.logWebhookAction('youtube', 'created'); // logs action in mStats
+    return webhhookDoc;
+}
 
-    /**
-     * deletes webhook form database and also unsubs from pubsubhubbub if it's the only webhook for specified channel
-     *
-     * @param {string} guildID guild where the webhook is
-     * @param {string} channelID channel where webhook sends notification to
-     * @param {string} YTChannelID id of youtube channel
-     * @returns deleted webhook doc
-     * @memberof YTWebhookManager
-     */
-    async deleteWebhook(guildID: string, channelID: string, YTChannelID: string) {
-        var webhhookDoc = await this.webhooks.findOne({ feed: YTChannelID, guild: guildID, channel: channelID }).exec(); // searches for exact webhook
-        if (!webhhookDoc) return undefined;
-        var guildDoc = await Bot.database.findGuildDoc(guildID);
-        if (!guildDoc) return undefined;
-        guildDoc.webhooks.youtube.splice(guildDoc.webhooks.youtube.indexOf(webhhookDoc.id), 1); // removes webhook id of guild doc
-        await guildDoc.save();
+/**
+ * deletes webhook form database and also unsubs from pubsubhubbub if it's the only webhook for specified channel
+ *
+ * @param {string} guildID guild where the webhook is
+ * @param {string} channelID channel where webhook sends notification to
+ * @param {string} YTChannelID id of youtube channel
+ * @returns deleted webhook doc
+ * @memberof YTWebhookManager
+ */
+async deleteWebhook(guildID: string, channelID: string, YTChannelID: string) {
+    var webhhookDoc = await this.webhooks.findOne({ feed: YTChannelID, guild: guildID, channel: channelID }).exec(); // searches for exact webhook
+    if (!webhhookDoc) return undefined;
+    var guildDoc = await Bot.database.findGuildDoc(guildID);
+    if (!guildDoc) return undefined;
+    guildDoc.webhooks.youtube.splice(guildDoc.webhooks.youtube.indexOf(webhhookDoc.id), 1); // removes webhook id of guild doc
+    await guildDoc.save();
 
-        var sameFeedWebhookCount = await this.webhooks.countDocuments({ feed: YTChannelID }).exec(); // counts webhooks with same feed to see if it need to unsub form pubsubhubbub
-        if (sameFeedWebhookCount == 1) {
-            try {
-                this.subToChannel(YTChannelID, false);
-            } catch (e) {
-                console.error('error while unsubscribing to youtube webhook:', e);
-                Bot.mStats.logError(e);
-                return null;
-            }
+    var sameFeedWebhookCount = await this.webhooks.countDocuments({ feed: YTChannelID }).exec(); // counts webhooks with same feed to see if it need to unsub form pubsubhubbub
+    if (sameFeedWebhookCount == 1) {
+        try {
+            this.subToChannel(YTChannelID, false);
+        } catch (e) {
+            console.error('error while unsubscribing to youtube webhook:', e);
+            Bot.mStats.logError(e);
+            return null;
         }
-        Bot.mStats.logWebhookAction('youtube', 'deleted') // logs action in mStats
-        return await webhhookDoc.remove();
     }
+    Bot.mStats.logWebhookAction('youtube', 'deleted') // logs action in mStats
+    return await webhhookDoc.remove();
+}
 
-    /**
-     * changes a property of a webhook.
-     * If the feed gets changed, this function will delete the older webhook and create a new one
-     *
-     * @param {string} guildID id of guild where existing webhook is in
-     * @param {string} channelID id of channel where the existing webhook sends notifications to
-     * @param {string} YTChannelID youtube channel id of existing webhook
-     * @param {string} [newChannelID] id of the new channel where to send notifications in
-     * @param {string} [newYTChannelID] id of new youtube channel to sub to
-     * @param {string} [newMessage] new message to send on callback
-     * @returns updated webhook doc
-     * @memberof YTWebhookManager
-     */
-    async changeWebhook(guildID: string, channelID: string, YTChannelID: string, newChannelID?: string, newYTChannelID?: string, newMessage?: string) {
-        var webhhookDoc = await this.webhooks.findOne({ feed: YTChannelID, guild: guildID, channel: channelID }).exec(); // gets exact webhook doc
-        if (!webhhookDoc) return undefined;
-        Bot.mStats.logWebhookAction('youtube', 'changed');
-        if (newYTChannelID) { // if there is a new feed it will delete the old one and create a new one
-            var newWebhookDoc = await this.createWebhook(guildID, (newChannelID ? newChannelID : channelID),
-                newYTChannelID, (newMessage ? newMessage : webhhookDoc.toObject().message)); // first try to create a new one
-            if (!newWebhookDoc) return undefined;
-            await this.deleteWebhook(guildID, channelID, YTChannelID)
-            return newWebhookDoc;
-        }
-        if (newChannelID) { // changes channel where notifications gets send in
-            webhhookDoc.channel = newChannelID;
-        }
-        if (newMessage) { // changes message for notification
-            webhhookDoc.message = newMessage;
-        }
-        webhhookDoc.save();
-        return webhhookDoc;
+/**
+ * changes a property of a webhook.
+ * If the feed gets changed, this function will delete the older webhook and create a new one
+ *
+ * @param {string} guildID id of guild where existing webhook is in
+ * @param {string} channelID id of channel where the existing webhook sends notifications to
+ * @param {string} YTChannelID youtube channel id of existing webhook
+ * @param {string} [newChannelID] id of the new channel where to send notifications in
+ * @param {string} [newYTChannelID] id of new youtube channel to sub to
+ * @param {string} [newMessage] new message to send on callback
+ * @returns updated webhook doc
+ * @memberof YTWebhookManager
+ */
+async changeWebhook(guildID: string, channelID: string, YTChannelID: string, newChannelID ?: string, newYTChannelID ?: string, newMessage ?: string) {
+    var webhhookDoc = await this.webhooks.findOne({ feed: YTChannelID, guild: guildID, channel: channelID }).exec(); // gets exact webhook doc
+    if (!webhhookDoc) return undefined;
+    Bot.mStats.logWebhookAction('youtube', 'changed');
+    if (newYTChannelID) { // if there is a new feed it will delete the old one and create a new one
+        var newWebhookDoc = await this.createWebhook(guildID, (newChannelID ? newChannelID : channelID),
+            newYTChannelID, (newMessage ? newMessage : webhhookDoc.toObject().message)); // first try to create a new one
+        if (!newWebhookDoc) return undefined;
+        await this.deleteWebhook(guildID, channelID, YTChannelID)
+        return newWebhookDoc;
     }
+    if (newChannelID) { // changes channel where notifications gets send in
+        webhhookDoc.channel = newChannelID;
+    }
+    if (newMessage) { // changes message for notification
+        webhhookDoc.message = newMessage;
+    }
+    webhhookDoc.save();
+    return webhhookDoc;
+}
 }
