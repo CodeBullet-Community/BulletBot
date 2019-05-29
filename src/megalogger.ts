@@ -414,6 +414,12 @@ export async function logMessageDelete(message: Message) {
     if (message.channel.id == megalogDoc.messageDelete) return;
     let logChannel = message.guild.channels.get(megalogDoc.messageDelete);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let shortened = false;
+    let content = message.content;
+    if (content.length > 1024) {
+        content = content.slice(0, 1020) + '...';
+        shortened = true;
+    }
     let embed: any = {
         "embed": {
             "description": `**Message from ${message.author.toString()} deleted in ${message.channel.toString()}**`,
@@ -428,8 +434,8 @@ export async function logMessageDelete(message: Message) {
             },
             "fields": [
                 {
-                    "name": "Content",
-                    "value": message.content.length > 0 ? message.content : '*no content*'
+                    "name": "Content" + (shortened ? ' (shortened)' : ''),
+                    "value": message.content.length > 0 ? content : '*no content*'
                 }
             ]
         }
@@ -593,6 +599,18 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
     if (megalogDoc.messageDelete == newMessage.channel.id && newMessage.author.id == Bot.client.user.id) return;
     let logChannel = newMessage.guild.channels.get(megalogDoc.messageEdit);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let oldShortened = false;
+    let oldContent = oldMessage.content;
+    if (oldContent.length > 1024) {
+        oldContent = oldContent.slice(0, 1020) + '...';
+        oldShortened = true;
+    }
+    let newShortened = false;
+    let newContent = newMessage.content;
+    if (newContent.length > 1024) {
+        newContent = newContent.slice(0, 1020) + '...';
+        newShortened = true;
+    }
     await logChannel.send({
         "embed": {
             "description": `**Message of ${newMessage.author.toString()} edited in ${newMessage.channel.toString()}** [Jump to Message](${newMessage.url})`,
@@ -607,12 +625,12 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
             },
             "fields": [
                 {
-                    "name": "Before",
-                    "value": oldMessage.content.length > 0 ? oldMessage.content : '*empty message*'
+                    "name": "Before" + (oldShortened ? ' (shortened)' : ''),
+                    "value": oldMessage.content.length > 0 ? oldContent : '*empty message*'
                 },
                 {
-                    "name": "After",
-                    "value": newMessage.content.length > 0 ? newMessage.content : '*empty message*'
+                    "name": "After" + (newShortened ? ' (shortened)' : ''),
+                    "value": newMessage.content.length > 0 ? newContent : '*empty message*'
                 }
             ]
         }
