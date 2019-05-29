@@ -77,7 +77,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     },
                     {
                         "name": "Super Average Join Rate",
-                        "value": `${(memberCount / (1 || age)).toFixed(2)} a day\n${(memberCount / (1 || age) * 7).toFixed(2)} a week\n${(memberCount / (1 || age) * 30).toFixed(2)} a month`,
+                        "value": `${(memberCount / (age || 1)).toFixed(2)} a day\n${(memberCount / (age || 1) * 7).toFixed(2)} a week\n${(memberCount / (age || 1) * 30).toFixed(2)} a month`,
                         "inline": true
                     }
                 ]
