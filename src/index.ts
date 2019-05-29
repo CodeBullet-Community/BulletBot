@@ -119,6 +119,9 @@ setInterval(() => {
 
 client.on('ready', () => {
     Bot.client.user.setActivity('I\'m ready!');
+    for (const guild of client.guilds.array()) { // adds are guilds that were added while the bot was down
+        Bot.database.addGuild(guild.id);
+    }
     console.log('I\'m ready!');
 });
 
