@@ -566,12 +566,12 @@ export async function cacheAttachment(message: Message) {
         attachments.push(attachment.url);
     }
     try {
-        await logChannel.send(`from ${message.author.tag} (${message.author.id})\nBulletBotCacheTagThing: ${message.url}`, {
+        await logChannel.send(`from ${message.author.tag} (${message.author.id}) in ${message.channel} (${message.channel.id})\nBulletBotCacheTagThing: ${message.url}`, {
             files: attachments
         });
     } catch (e) {
         // attachment probably too big
-        logChannel.send(`from ${message.author.tag} (${message.author.id})\n${message.url}\nAttachment-s too large to send`);
+        logChannel.send(`from ${message.author.tag} (${message.author.id}) in ${message.channel} (${message.channel.id})\n${message.url}\nAttachments too large to send`);
     }
     Bot.mStats.logMessageSend();
 }
