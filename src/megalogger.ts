@@ -19,7 +19,7 @@ export async function logChannelToggle(channel: GuildChannel, created: boolean) 
     if (!megalogDoc.channelDelete && !created) return;
     let logChannel = channel.guild.channels.get(created ? megalogDoc.toObject().channelCreate : megalogDoc.toObject().channelDelete);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    logChannel.send({
+    await logChannel.send({
         "embed": {
             "description": `**Channel ${created ? 'Created' : 'Deleted'}: ${created ? channel.toString() : '#' + channel.name}**`,
             "color": (created ? Bot.database.settingsDB.cache.embedColors.positive : Bot.database.settingsDB.cache.embedColors.negative),
@@ -56,7 +56,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
     let logChannel = newChannel.guild.channels.get(megalogDoc.toObject().channelUpdate);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     if (oldChannel.name != newChannel.name) { // name change
-        logChannel.send({
+        await logChannel.send({
             "embed": {
                 "description": `**Channel name changed of ${newChannel.toString()}**`,
                 "color": Bot.database.settingsDB.cache.embedColors.default,
@@ -84,7 +84,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
         });
         Bot.mStats.logMessageSend();
     } if (oldChannel instanceof TextChannel && newChannel instanceof TextChannel && oldChannel.topic != newChannel.topic) { // topic change
-        logChannel.send({
+        await logChannel.send({
             "embed": {
                 "description": `**Channel topic changed of ${newChannel.toString()}**`,
                 "color": Bot.database.settingsDB.cache.embedColors.default,
@@ -171,7 +171,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
                 "value": value
             });
         }
-        logChannel.send(embed);
+        await logChannel.send(embed);
         Bot.mStats.logMessageSend();
     }
 
@@ -193,7 +193,7 @@ export async function logBan(guild: Guild, user: User, banned: boolean) {
     if ((!megalogDoc.ban && banned) || (!megalogDoc.unban && !banned)) return;
     let logChannel = guild.channels.get(banned ? megalogDoc.toObject().ban : megalogDoc.toObject().unban);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    logChannel.send({
+    await logChannel.send({
         "embed": {
             "description": `${user.toString()}\n${user.tag}`,
             "color": Bot.database.settingsDB.cache.embedColors[banned ? 'negative' : 'positive'],
@@ -251,7 +251,7 @@ export async function logMember(member: GuildMember, joined: boolean) {
             "value": dateFormat(member.joinedAt, timeFormat) + ` (${getDayDiff(member.joinedTimestamp, Date.now())} days ago)`
         }];
     }
-    logChannel.send(embed);
+    await logChannel.send(embed);
     Bot.mStats.logMessageSend();
 }
 
@@ -271,7 +271,7 @@ export async function logNickname(oldMember: GuildMember, newMember: GuildMember
     if (!megalogDoc.nicknameChange) return;
     let logChannel = newMember.guild.channels.get(megalogDoc.nicknameChange);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    logChannel.send({
+    await logChannel.send({
         "embed": {
             "description": `**${newMember.toString()} nickname changed**`,
             "color": Bot.database.settingsDB.cache.embedColors.default,
@@ -326,7 +326,7 @@ export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMem
     for (const role of rolesRemoved.array()) {
         roleRemovedString += role.toString();
     }
-    logChannel.send({
+    await logChannel.send({
         "embed": {
             "description": `**${newMember.toString()} roles changed**`,
             "color": Bot.database.settingsDB.cache.embedColors.default,
@@ -371,7 +371,7 @@ export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
     if (!megalogDoc.guildNameChange) return;
     let logChannel = newGuild.channels.get(megalogDoc.guildNameChange);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    logChannel.send({
+    await logChannel.send({
         "embed": {
             "description": `**Server name changed**`,
             "color": Bot.database.settingsDB.cache.embedColors.default,
@@ -460,7 +460,7 @@ export async function logMessageDelete(message: Message) {
         });
         embed.files = cachedArray;
     }
-    logChannel.send(embed);
+    await logChannel.send(embed);
     Bot.mStats.logMessageSend();
 }
 
@@ -497,7 +497,7 @@ export async function logMessageBulkDelete(messages: Collection<string, Message>
     }
     let attachment = new Attachment(Buffer.from(humanLog, 'utf-8'), 'DeletedMessages.txt');
     //@ts-ignore
-    let logMessage: Message = await logChannel.send(attachment);
+    let logMessage: Message = await await logChannel.send(attachment);
     logMessage.edit({
         "embed": {
             "description": `**Bulk deleted messages in ${messages.first().channel.toString()}**`,
@@ -571,7 +571,7 @@ export async function cacheAttachment(message: Message) {
         });
     } catch (e) {
         // attachment probably too big
-        logChannel.send(`from ${message.author.tag} (${message.author.id}) in ${message.channel} (${message.channel.id})\n${message.url}\nAttachments too large to send`);
+        await logChannel.send(`from ${message.author.tag} (${message.author.id}) in ${message.channel} (${message.channel.id})\n${message.url}\nAttachments too large to send`);
     }
     Bot.mStats.logMessageSend();
 }
@@ -593,7 +593,7 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
     if (megalogDoc.messageDelete == newMessage.channel.id && newMessage.author.id == Bot.client.user.id) return;
     let logChannel = newMessage.guild.channels.get(megalogDoc.messageEdit);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    logChannel.send({
+    await logChannel.send({
         "embed": {
             "description": `**Message of ${newMessage.author.toString()} edited in ${newMessage.channel.toString()}** [Jump to Message](${newMessage.url})`,
             "color": Bot.database.settingsDB.cache.embedColors.default,
@@ -636,7 +636,7 @@ export async function logReactionToggle(reaction: MessageReaction, user: User, r
     if ((reacted && !megalogDoc.reactionAdd) || (!reacted && !megalogDoc.reactionRemove)) return;
     let logChannel = reaction.message.guild.channels.get(reacted ? megalogDoc.reactionAdd : megalogDoc.reactionRemove);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    logChannel.send({
+    await logChannel.send({
         "embed": {
             "description": `**${user.toString()} ${!reacted ? 'un' : ''}reacted with ${reaction.emoji.toString()} to [this message](${reaction.message.url})${!reacted ? ' (or reaction got removed)' : ''}** `,
             "color": Bot.database.settingsDB.cache.embedColors[reacted ? 'positive' : 'negative'],
@@ -671,7 +671,7 @@ export async function logReactionRemoveAll(message: Message) {
     for (const reaction of message.reactions.array()) {
         reactions += `${reaction.emoji}: \`${reaction.count}\`\n`;
     }
-    logChannel.send({
+    await logChannel.send({
         "embed": {
             "description": `**All reactions were removed from a message of ${message.author.toString()} in ${message.channel.toString()}** [Jump to Message](${message.url})`,
             "color": Bot.database.settingsDB.cache.embedColors.negative,
@@ -709,20 +709,24 @@ export async function logRoleToggle(role: Role, created: boolean) {
     if ((created && !megalogDoc.roleCreate) || (!created && !megalogDoc.roleDelete)) return;
     let logChannel = role.guild.channels.get(created ? megalogDoc.roleCreate : megalogDoc.roleDelete);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    logChannel.send({
-        "embed": {
-            "description": `**Role ${role} (${role.name}) was ${created ? 'created' : 'deleted'}**`,
-            "color": Bot.database.settingsDB.cache.embedColors[created ? 'positive' : 'negative'],
-            "timestamp": created ? role.createdAt.toISOString() : new Date().toISOString(),
-            "footer": {
-                "text": "ID: " + role.id
-            },
-            "author": {
-                "name": role.guild.name,
-                "icon_url": role.guild.iconURL
+    try {
+        await logChannel.send({
+            "embed": {
+                "description": `**Role ${role} (${role.name}) was ${created ? 'created' : 'deleted'}**`,
+                "color": Bot.database.settingsDB.cache.embedColors[created ? 'positive' : 'negative'],
+                "timestamp": created ? role.createdAt.toISOString() : new Date().toISOString(),
+                "footer": {
+                    "text": "ID: " + role.id
+                },
+                "author": {
+                    "name": role.guild.name,
+                    "icon_url": role.guild.iconURL
+                }
             }
-        }
-    });
+        });
+    } catch (e) {
+        return; // very likely just left the server and the bot specific role got deleted
+    }
     Bot.mStats.logMessageSend();
 }
 
@@ -744,7 +748,7 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     let date = new Date();
     if (oldRole.name != newRole.name) {
-        logChannel.send({
+        await logChannel.send({
             "embed": {
                 "description": `**Role name of ${newRole} (${newRole.name}) changed**`,
                 "color": Bot.database.settingsDB.cache.embedColors.default,
@@ -771,7 +775,7 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
         Bot.mStats.logMessageSend();
     }
     if (oldRole.color != newRole.color) {
-        logChannel.send({
+        await logChannel.send({
             "embed": {
                 "description": `**Role color of ${newRole} (${newRole.name}) changed**`,
                 "color": Bot.database.settingsDB.cache.embedColors.default,
@@ -798,7 +802,7 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
         Bot.mStats.logMessageSend();
     }
     if (oldRole.permissions != newRole.permissions) {
-        logChannel.send({
+        await logChannel.send({
             "embed": {
                 "description": `**Role permissions of ${newRole} (${newRole.name}) changed**\n[What those numbers mean](https://discordapp.com/developers/docs/topics/permissions)`,
                 "color": Bot.database.settingsDB.cache.embedColors.default,
@@ -842,7 +846,7 @@ export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildM
     if (!megalogDoc.voiceTransfer) return;
     let logChannel = newMember.guild.channels.get(megalogDoc.voiceTransfer);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    logChannel.send({
+    await logChannel.send({
         "embed": {
             "description": `**${newMember.toString()} moved from voice channels ${oldMember.voiceChannel ? oldMember.voiceChannel : 'None'} to ${newMember.voiceChannel ? newMember.voiceChannel : 'None'}**`,
             "color": Bot.database.settingsDB.cache.embedColors[!oldMember.voiceChannelID ? 'positive' : (!newMember.voiceChannelID ? 'negative' : 'default')],
@@ -875,7 +879,7 @@ export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMembe
     if (!megalogDoc.voiceMute) return;
     let logChannel = newMember.guild.channels.get(megalogDoc.voiceMute);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    logChannel.send({
+    await logChannel.send({
         "embed": {
             "description": `**${newMember} was voice ${newMember.mute ? '' : 'un'}muted in ${newMember.voiceChannel}**`,
             "color": Bot.database.settingsDB.cache.embedColors[newMember.mute ? 'negative' : 'positive'],
@@ -908,7 +912,7 @@ export async function logVoiceDeaf(oldMember: GuildMember, newMember: GuildMembe
     if (!megalogDoc.voiceDeaf) return;
     let logChannel = newMember.guild.channels.get(megalogDoc.voiceDeaf);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    logChannel.send({
+    await logChannel.send({
         "embed": {
             "description": `**${newMember} was voice ${newMember.deaf ? '' : 'un'}deafed in ${newMember.voiceChannel}**`,
             "color": Bot.database.settingsDB.cache.embedColors[newMember.deaf ? 'negative' : 'positive'],
