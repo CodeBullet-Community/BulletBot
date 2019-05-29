@@ -23,7 +23,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 "timestamp": new Date().toISOString(),
                 "author": {
                     "name": "BulletBot Status",
-                    "icon_url": Bot.client.user.avatarURL
+                    "icon_url": Bot.client.user.displayAvatarURL
                 },
                 "fields": [
                     {

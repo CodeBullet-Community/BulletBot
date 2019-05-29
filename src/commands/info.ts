@@ -21,11 +21,11 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     "text": "PFP from Aster#4205"
                 },
                 "thumbnail": {
-                    "url": Bot.client.user.avatarURL
+                    "url": Bot.client.user.displayAvatarURL
                 },
                 "author": {
                     "name": "BulletBot",
-                    "icon_url": Bot.client.user.avatarURL
+                    "icon_url": Bot.client.user.displayAvatarURL
                 },
                 "fields": [
                     {

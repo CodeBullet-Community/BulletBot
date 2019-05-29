@@ -202,11 +202,11 @@ export async function logBan(guild: Guild, user: User, banned: boolean) {
                 "text": "ID: " + user.id
             },
             "thumbnail": {
-                "url": user.avatarURL
+                "url": user.displayAvatarURL
             },
             "author": {
                 "name": "User " + (banned ? 'Banned' : 'Unbanned'),
-                "icon_url": user.avatarURL
+                "icon_url": user.displayAvatarURL
             }
         }
     });
@@ -237,11 +237,11 @@ export async function logMember(member: GuildMember, joined: boolean) {
                 "text": "ID: " + member.id
             },
             "thumbnail": {
-                "url": member.user.avatarURL
+                "url": member.user.displayAvatarURL
             },
             "author": {
                 "name": "User " + (joined ? 'Joined' : 'Left'),
-                "icon_url": member.user.avatarURL
+                "icon_url": member.user.displayAvatarURL
             }
         }
     };
@@ -281,7 +281,7 @@ export async function logNickname(oldMember: GuildMember, newMember: GuildMember
             },
             "author": {
                 "name": newMember.user.tag,
-                "icon_url": newMember.user.avatarURL
+                "icon_url": newMember.user.displayAvatarURL
             },
             "fields": [
                 {
@@ -336,7 +336,7 @@ export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMem
             },
             "author": {
                 "name": newMember.user.tag,
-                "icon_url": newMember.user.avatarURL
+                "icon_url": newMember.user.displayAvatarURL
             },
             "fields": [
                 {
@@ -430,7 +430,7 @@ export async function logMessageDelete(message: Message) {
             },
             "author": {
                 "name": message.author.tag,
-                "icon_url": message.author.avatarURL
+                "icon_url": message.author.displayAvatarURL
             },
             "fields": [
                 {
@@ -621,7 +621,7 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
             },
             "author": {
                 "name": newMessage.author.tag,
-                "icon_url": newMessage.author.avatarURL
+                "icon_url": newMessage.author.displayAvatarURL
             },
             "fields": [
                 {
@@ -664,7 +664,7 @@ export async function logReactionToggle(reaction: MessageReaction, user: User, r
             },
             "author": {
                 "name": user.tag,
-                "icon_url": user.avatarURL
+                "icon_url": user.displayAvatarURL
             },
         }
     });
@@ -699,7 +699,7 @@ export async function logReactionRemoveAll(message: Message) {
             },
             "author": {
                 "name": message.author.tag,
-                "icon_url": message.author.avatarURL
+                "icon_url": message.author.displayAvatarURL
             },
             "fields": [
                 {
@@ -874,7 +874,7 @@ export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildM
             },
             "author": {
                 "name": newMember.user.username,
-                "icon_url": newMember.user.avatarURL
+                "icon_url": newMember.user.displayAvatarURL
             }
         }
     });
@@ -907,7 +907,7 @@ export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMembe
             },
             "author": {
                 "name": newMember.user.username,
-                "icon_url": newMember.user.avatarURL
+                "icon_url": newMember.user.displayAvatarURL
             }
         }
     });
@@ -940,7 +940,7 @@ export async function logVoiceDeaf(oldMember: GuildMember, newMember: GuildMembe
             },
             "author": {
                 "name": newMember.user.username,
-                "icon_url": newMember.user.avatarURL
+                "icon_url": newMember.user.displayAvatarURL
             }
         }
     });

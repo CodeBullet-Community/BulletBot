@@ -22,7 +22,7 @@ function sendRandomImage(message: Message, API: string, requestTime: [number,num
                 setname = message.member.nickname;
             }
             var embed = new RichEmbed();
-            embed.setAuthor('requested by: ' + setname + ' (' + message.author.tag + ')', message.author.avatarURL);
+            embed.setAuthor('requested by: ' + setname + ' (' + message.author.tag + ')', message.author.displayAvatarURL);
             embed.setImage(JSON.parse(body).link);
             embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
             Bot.mStats.logResponseTime(command.name, requestTime);

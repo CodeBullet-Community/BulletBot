@@ -7,7 +7,7 @@ import { permToString } from '../utils/parsers';
 
 async function sendCommandList(guild: Guild, message: Message, strucObject: any, path: string, requestTime: [number, number]) {
     var output = new RichEmbed();
-    output.setAuthor('Command List:', Bot.client.user.avatarURL);
+    output.setAuthor('Command List:', Bot.client.user.displayAvatarURL);
     if (path) output.setFooter('Path: ~' + path);
     output.setColor(Bot.database.settingsDB.cache.embedColors.help);
     var categories = Object.keys(strucObject).filter(x => strucObject[x]._categoryName);

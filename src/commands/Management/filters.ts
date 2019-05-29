@@ -8,7 +8,7 @@ import { commandsObject, logTypes, filtersObject } from '../../database/schemas'
 
 async function sendFilterList(guild: Guild, message: Message, strucObject: any, path: string, requestTime: [number, number]) {
     var output = new RichEmbed();
-    output.setAuthor('Filter List:', Bot.client.user.avatarURL);
+    output.setAuthor('Filter List:', Bot.client.user.displayAvatarURL);
     if (path) output.setFooter('Path: ~' + path);
     output.setColor(Bot.database.settingsDB.cache.embedColors.help);
     var categories = Object.keys(strucObject).filter(x => strucObject[x]._categoryName);
@@ -54,7 +54,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                         Bot.mStats.logMessageSend();
                     } else {
                         var output = new RichEmbed();
-                        output.setAuthor('Enabled Filters:', Bot.client.user.avatarURL);
+                        output.setAuthor('Enabled Filters:', Bot.client.user.displayAvatarURL);
                         output.setColor(Bot.database.settingsDB.cache.embedColors.help);
 
                         var filtersObject: filtersObject = filtersDoc.toObject();

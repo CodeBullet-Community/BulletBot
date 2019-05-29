@@ -70,11 +70,11 @@ async function createMemberEmbed(member: GuildMember, permLevel: number) {
                 "text": "ID: " + member.id
             },
             "thumbnail": {
-                "url": member.user.avatarURL
+                "url": member.user.displayAvatarURL
             },
             "author": {
                 "name": `${member.user.username} ${member.nickname ? '(' + member.nickname + ')' : ''}`,
-                "icon_url": member.user.avatarURL
+                "icon_url": member.user.displayAvatarURL
             },
             "fields": [
                 {

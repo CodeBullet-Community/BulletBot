@@ -111,7 +111,7 @@ export class Logger {
             }
         }
         if (user) {
-            embed.embed.thumbnail = { url: user.avatarURL };
+            embed.embed.thumbnail = { url: user.displayAvatarURL };
         }
         Bot.mStats.logMessageSend();
         logChannel.send(embed);
@@ -249,7 +249,7 @@ export class Logger {
                 "color": Bot.database.settingsDB.cache.embedColors.default,
                 "timestamp": message.createdAt.toISOString(),
                 "thumbnail": {
-                    "url": message.member.user.avatarURL
+                    "url": message.member.user.displayAvatarURL
                 },
                 "author": {
                     "name": "Filter: " + filter.name
@@ -379,7 +379,7 @@ export class Logger {
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Command Change:',
-                    'icon_url': Bot.client.user.avatarURL
+                    'icon_url': Bot.client.user.displayAvatarURL
                 },
                 'fields': [
                     {

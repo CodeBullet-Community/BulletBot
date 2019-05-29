@@ -31,7 +31,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     } else {
 
                         var output = new RichEmbed();
-                        output.setAuthor('Disabled Commands:', Bot.client.user.avatarURL);
+                        output.setAuthor('Disabled Commands:', Bot.client.user.displayAvatarURL);
                         output.setColor(Bot.database.settingsDB.cache.embedColors.help);
 
                         var commandsObject: commandsObject = commandsDoc.toObject();
