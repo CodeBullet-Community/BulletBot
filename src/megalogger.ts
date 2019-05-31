@@ -486,7 +486,7 @@ export async function logMessageBulkDelete(messages: Collection<string, Message>
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     //@ts-ignore
     let humanLog = `**Deleted Messages from #${messages.first().channel.name} (${messages.first().channel.id}) in ${messages.first().guild.name} (${messages.first().guild.id})**`;
-    for (const message of messages.array()) {
+    for (const message of messages.array().reverse()) {
         humanLog += `\r\n\r\n[${dateFormat(message.createdAt, timeFormat)}] ${message.author.tag} (${message.id})`;
         humanLog += ' : ' + message.content;
         if (message.attachments.size) {
@@ -503,7 +503,7 @@ export async function logMessageBulkDelete(messages: Collection<string, Message>
     }
     let attachment = new Attachment(Buffer.from(humanLog, 'utf-8'), 'DeletedMessages.txt');
     //@ts-ignore
-    let logMessage: Message = await await logChannel.send(attachment);
+    let logMessage: Message = await logChannel.send(attachment);
     logMessage.edit({
         "embed": {
             "description": `**Bulk deleted messages in ${messages.first().channel.toString()}**`,
