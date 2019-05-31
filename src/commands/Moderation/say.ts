@@ -87,15 +87,20 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             content = embedObject.content;
         }
 
-        if (content && content.includes("{{role:")) {
-            sendMentionMessage(message.guild, channel, content, embedObject, editMessage, requestTime, command.name);
-        } else {
-            Bot.mStats.logResponseTime(command.name, requestTime);
-            if (editMessage) {
-                editMessage.edit(content, embedObject ? embedObject : { embed: {} });
+        try {
+            if (content && content.includes("{{role:")) {
+                await sendMentionMessage(message.guild, channel, content, embedObject, editMessage, requestTime, command.name);
             } else {
-                channel.send(content, embedObject);
+                Bot.mStats.logResponseTime(command.name, requestTime);
+                if (editMessage) {
+                    await editMessage.edit(content, embedObject ? embedObject : { embed: {} });
+                } else {
+                    await channel.send(content, embedObject);
+                }
             }
+        } catch (e) {
+            message.channel.send("couldn't send message");
+            return false;
         }
         Bot.mStats.logMessageSend();
         if (editMessage) {
