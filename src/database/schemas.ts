@@ -6,6 +6,8 @@ import { Bot } from '..';
 export interface guildObject {
     guild: string;
     logChannel: string;
+    caseChannel: string;
+    totalCases: number;
     logs: mongoose.Schema.Types.ObjectId[];
     staff: mongoose.Schema.Types.ObjectId;
     webhooks: {
@@ -17,6 +19,8 @@ export interface guildDoc extends mongoose.Document, guildObject { }
 export const guildSchema = new mongoose.Schema({
     guild: String,
     logChannel: String,
+    caseChannel: String,
+    totalCases: Number,
     logs: [mongoose.Schema.Types.ObjectId],
     staff: mongoose.Schema.Types.ObjectId,
     webhooks: {
@@ -687,6 +691,7 @@ export interface caseObject {
 
 export interface caseDoc extends mongoose.Document, caseObject { }
 export const caseSchema = new mongoose.Schema({
+    guild: String,
     caseID : Number,
     user: String,
     action: String,

@@ -1,8 +1,7 @@
 import mongoose = require('mongoose');
-import {caseDoc, caseSchema, caseObject, guildDoc, guildSchema} from './schemas';
-import {Guild, Role, User, GuildMember, Message, RichEmbed,} from 'discord.js';
-import { Bot } from '..';
-import {getDayDiff, timeFormat} from "../utils/time";
+import {caseDoc, caseObject, caseSchema, guildDoc, guildSchema} from './schemas';
+import {Guild, GuildMember, RichEmbed,} from 'discord.js';
+import {Bot} from '..';
 
 export class CaseLogger{
 
@@ -45,37 +44,73 @@ export class CaseLogger{
     }
 
     async logKick(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string){
-        await this.logCase(guild, user, mod,'Kick', reason);
+        let color = Bot.database.settingsDB.cache.embedColors.negative;
+        await this.logCase(guild, user, mod,'Kick', color, reason);
     }
 
     async logBan(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string, duration?: number){
-        await this.logCase(guild, user, mod,'Ban', reason, duration);
+        let color = Bot.database.settingsDB.cache.embedColors.negative;
+        await this.logCase(guild, user, mod,'Ban', color, reason, duration);
     }
 
     async logSoftban(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string){
-        await this.logCase(guild, user, mod,'Softban', reason);
+        let color = Bot.database.settingsDB.cache.embedColors.negative;
+        await this.logCase(guild, user, mod,'Softban', color, reason);
     }
 
     async logUnban(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string){
-        await this.logCase(guild, user, mod,'Unban', reason);
+        let color = Bot.database.settingsDB.cache.embedColors.positive;
+        await this.logCase(guild, user, mod,'Unban', color, reason);
     }
 
     async logMute(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string, duration?: number){
-        await this.logCase(guild, user, mod,'Mute', reason, duration);
+        let color = Bot.database.settingsDB.cache.embedColors.negative;
+        await this.logCase(guild, user, mod,'Mute', color, reason, duration);
     }
 
     async logUnmute(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string){
-        await this.logCase(guild, user, mod,'Unmute', reason);
+        let color = Bot.database.settingsDB.cache.embedColors.positive;
+        await this.logCase(guild, user, mod,'Unmute', color, reason);
     }
 
     async logWarn(guild: Guild, user: GuildMember, mod: GuildMember, reason: string){
-        await this.logCase(guild, user, mod,'Warn', reason);
+        let color = Bot.database.settingsDB.cache.embedColors.warn;
+        await this.logCase(guild, user, mod,'Warn', color, reason);
     }
 
-    private async logCase(guild: Guild, user: GuildMember, mod: GuildMember, action: string, reason?: string, duration?: number){
+    async findByGuild(guildID: string){
+        return await this.cases.find({guild: guildID}).exec();
+    }
+
+    async findByCase(guildID: string, caseID: string){
+        return await this.cases.findOne({guild: guildID, caseID: caseID}).exec();
+    }
+
+    async findByMod(guildID: string, modID: string){
+        return await this.cases.find({guild: guildID, mod: modID}).exec();
+    }
+
+    async findByMember(guildID: string, userID: string){
+        return await this.cases.find({guild: guildID, user: userID}).exec();
+    }
+
+    async deleteCase(caseID: number){
+        let success = false;
+        let cases = await this.cases.findOne({caseID}).exec();
+        if(cases){
+            await this.cases.deleteOne({caseID: caseID}).exec();
+            success = true;
+        }
+        return success;
+    }
+
+    private async logCase(guild: Guild, user: GuildMember, mod: GuildMember, action: string, color: number, reason?: string, duration?: number){
         let date = new Date();
         let guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
-        let logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
+        let caseChannel = guild.channels.get(guildDoc.toObject().caseChannel);
+        let totalCases = guildDoc.totalCases;
+
+        if(!totalCases) totalCases = 0;
 
         let caseObject: caseObject = {
             guild: guild.id,
@@ -90,25 +125,28 @@ export class CaseLogger{
 
         let caseDoc = new this.cases(caseObject);
         await caseDoc.save();
+        guildDoc.totalCases = totalCases+1;
+        await guildDoc.save();
 
-        if (!logChannel) return;
-        let caseEmbed = this.createCaseEmbed(user, mod, caseObject.caseID, action, duration);
-        logChannel.send(caseEmbed);
+        if (!caseChannel) return;
+        let caseEmbed = this.createCaseEmbed(user, mod, caseObject.caseID, action, color, duration, reason);
+        // @ts-ignore
+        caseChannel.send(caseEmbed);
+        Bot.mStats.logMessageSend();
 
 
     }
-    private createCaseEmbed(user: GuildMember, mod: GuildMember, caseID: number, action: string, duration?: number, reason?: string){
+    private createCaseEmbed(user: GuildMember, mod: GuildMember, caseID: number, action: string, color: number, duration?: number, reason?: string){
+        let date = new Date();
         var embed = new RichEmbed();
-        embed.setAuthor(`A case was created`);
-        embed.setFooter(`ID: ${caseID}`);
+        embed.setAuthor(`Case ${caseID} | ${action} | ${user.user.tag}`,user.user.avatarURL);
         // @ts-ignore
         embed.setTimestamp(date.toISOString());
-        embed.setColor(Bot.database.settingsDB.cache.embedColors.warn);
-        embed.addField('Type: ',action,true);
+        embed.setColor(color);
         embed.addField("Mod: ", mod,true);
         embed.addField("User: ", user,true);
         if(duration) embed.addField("Duration: ", duration,true);
-        if(reason) embed.addField("Reason: ", reason,true);
+        if(reason) embed.addField("Reason: ", reason);
 
         return embed;
     }

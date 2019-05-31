@@ -261,3 +261,18 @@ export function permToString(permLevel: number) {
             return 'Unknown PermissionLevel';
     }
 }
+
+export function durationToString(duration: number){
+
+    var ms = duration % 1000;
+    duration = (duration - ms) / 1000;
+    var seconds = duration % 60;
+    duration = (duration - seconds) / 60;
+    var minutes = duration % 60;
+    duration = (duration - minutes) / 60;
+    var hours = duration % 24;
+    var days = (duration-hours) / 24;
+
+
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+}
