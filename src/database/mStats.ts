@@ -120,7 +120,7 @@ export class MStats {
             pingTestCounter: pingTestCounter,
             interval: null
         };
-        this.hourly.interval = this.createHourInterval(durations.minute, durations.hour - (UTC % durations.hour) - durations.minute);
+        this.hourly.interval = this.createHourInterval(durations.minute/6, durations.hour - (UTC % durations.hour) - durations.minute);
 
         setTimeout(() => { // timeout and interval for the next hour and all hours after that
             this.changeHour();
@@ -159,9 +159,9 @@ export class MStats {
             hourly.doc.webhooks.youtube.total = await Bot.youtube.webhooks.countDocuments().exec();
 
             // marks nested objects as modified so they also get saved
-            hourly.doc.markModified('commands');
-            hourly.doc.markModified('filters');
-            hourly.doc.markModified('webhooks');
+            for(const keys in hourly.doc.toObject()){
+                hourly.doc.markModified(keys);
+            }
             return await hourly.doc.save();
         } catch (e) {
             console.error("from saveHour():", e, hourly);
