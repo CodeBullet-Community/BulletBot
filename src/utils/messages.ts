@@ -15,7 +15,7 @@ import { Bot } from '..';
  * @param {number} [requestTime] if call comes from a command the request timestamp should be passed
  * @param {string} [commandName] if call comes from a command the name of the command should be passed
  */
-export async function sendMentionMessage(guild: Guild, channel: TextChannel, content: string, embed?: any, editMessage?: Message, requestTime?: [number, number], commandName?: string) {
+export async function sendMentionMessage(guild: Guild, channel: TextChannel, content: string, disableEveryone = false, embed?: any, editMessage?: Message, requestTime?: [number, number], commandName?: string) {
     var regex: RegExpExecArray;
     const roleRegex = /{{role:(.*)}}/gm;
     // [ '{{role:[role]}}' , [role object] ]
@@ -40,8 +40,12 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
     }
     if (requestTime) Bot.mStats.logResponseTime(commandName, requestTime);
     if (!/^\s*$/.test(content)) {
+        if(embed) {
+            embed.disableEveryone = disableEveryone
+        }else embed = {disableEveryone: disableEveryone };
         if (editMessage) {
-            await editMessage.edit(content, embed ? embed : { embed: {} });
+            if(!embed.embed) embed.embed = embed;
+            await editMessage.edit(content, embed);
         } else {
             await channel.send(content, embed);
         }
@@ -49,7 +53,7 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
     for (const role of changedRoles) { // resets all mentionable properties
         role.setMentionable(false, 'BulletBot mention revert').catch((reason) => {
             console.error('error while reverting mentionable property:', reason);
-            Bot.mStats.logError(new Error('error while reverting mentionable property:'+ reason));
+            Bot.mStats.logError(new Error('error while reverting mentionable property:' + reason));
         });
     }
 }
