@@ -273,6 +273,12 @@ export function durationToString(duration: number){
     var hours = duration % 24;
     var days = (duration-hours) / 24;
 
+    var durationString = '';
 
-    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    if(days != 0) durationString += days + 'd ';
+    if(hours != 0) durationString += hours + 'h ';
+    if(minutes != 0) durationString += minutes + 'm ';
+    if(seconds != 0) durationString += seconds + 's';
+
+    return durationString;
 }

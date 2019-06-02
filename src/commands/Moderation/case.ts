@@ -4,8 +4,6 @@ import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import {durationToString, permToString, stringToChannel, stringToMember, stringToRole} from '../../utils/parsers';
-import { getDayDiff, timeFormat } from '../../utils/time';
-import dateFormat = require('dateformat');
 
 var command: commandInterface = {
     name: 'case',
@@ -13,7 +11,7 @@ var command: commandInterface = {
     dm: false,
     permLevel: permLevels.mod,
     togglable: false,
-    shortHelp: 'gives a description of a channel',
+    shortHelp: 'lists/deletes all cases of a guild',
     embedHelp: async function (guild: Guild) {
         var prefix = await Bot.database.getPrefix(guild);
         return {
@@ -56,35 +54,41 @@ var command: commandInterface = {
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
-            console.log(2)
             if(args.length === 0){
                 message.channel.send(await command.embedHelp(message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            var argIndex = 0;
-            var argsArray = args.split(' ').filter(x => x.length != 0);
+            let argIndex = 0;
+            let argsArray = args.split(' ').filter(x => x.length != 0);
 
             if(argsArray[argIndex] == 'list'){
                 argIndex++;
                 let embed;
                 if(!argsArray[argIndex]){
                     embed = await createTotalEmbed(message.guild);
+                    Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send(embed);
+                    Bot.mStats.logMessageSend();
+                    Bot.mStats.logCommandUsage(command.name);
                     return true;
                 }
                 if(argsArray[argIndex]){
                     let caseMember = await stringToMember(message.guild, args.substr(4));
                     if(!caseMember){
                         message.channel.send(`Cannot find user '${args.substr(4).replace('@','')}'`);
+                        Bot.mStats.logMessageSend();
                         return false;
                     }
                     let totalEmbed = await createTotalEmbed(message.guild, caseMember);
                     let detailEmbeds = await createDetailEmbeds(message.guild, caseMember);
+                    Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send(totalEmbed);
                     for(let i = 0; detailEmbeds.length>i; i++){
                         message.channel.send(detailEmbeds[i]);
                     }
+                    Bot.mStats.logMessageSend();
+                    Bot.mStats.logCommandUsage(command.name);
                     return true;
                 }
             }
@@ -93,10 +97,34 @@ var command: commandInterface = {
                 argIndex++;
                 if(!argsArray[argIndex] || isNaN(Number(argsArray[argIndex]))){
                     message.channel.send('Please provide a valid case ID');
+                    Bot.mStats.logMessageSend();
                     return false;
                 }
                 let embed = await createSpecificEmbed(message.guild,argsArray[argIndex]);
+                Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(embed);
+                Bot.mStats.logMessageSend();
+                Bot.mStats.logCommandUsage(command.name);
+            }
+
+            if(argsArray[argIndex] == 'delete'){
+                argIndex++;
+                if(!argsArray[argIndex]){
+                    message.channel.send('Please provide a valid case ID');
+                    Bot.mStats.logMessageSend();
+                    return false;
+                }
+                if(!await Bot.caseLogger.deleteCase(argsArray[argIndex])) {
+                    message.channel.send('Please provide a valid case ID');
+                    Bot.mStats.logMessageSend();
+                    return false;
+                }
+                Bot.mStats.logResponseTime(command.name, requestTime);
+                message.channel.send("The case has been deleted");
+                Bot.mStats.logMessageSend();
+                Bot.mStats.logCommandUsage(command.name);
+                return true;
+
             }
 
         } catch (e) {
@@ -112,11 +140,11 @@ async function createTotalEmbed(guild: Guild, member?: GuildMember){
     let embed = new RichEmbed();
 
     let subject;
-    let id = guild.id;
-    let name = guild.name;
-    let avatar = guild.iconURL;
-    let query = await Bot.caseLogger.findByGuild(guild.id);
-    let cases = await resolveTotalCases(query);
+    let id: string;
+    let name: string;
+    let avatar: string;
+    let query;
+    let cases;
 
     if(member){
         subject = member;
@@ -124,8 +152,15 @@ async function createTotalEmbed(guild: Guild, member?: GuildMember){
         name = member.user.tag;
         avatar = member.user.avatarURL;
         query = await Bot.caseLogger.findByMember(guild.id,member.id);
-        cases = await resolveTotalCases(query);
-    }else subject = guild.name;
+        cases = resolveTotalCases(query);
+    }else {
+        id = guild.id;
+        name = guild.name;
+        avatar = guild.iconURL;
+        query = await Bot.caseLogger.findByGuild(guild.id);
+        cases = resolveTotalCases(query);
+        subject = guild.name;
+    }
 
     embed.setAuthor(name,avatar);
     embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
@@ -172,7 +207,7 @@ async function createDetailEmbeds(guild: Guild, member: GuildMember){
             tempMod = await stringToMember(guild, tempCase.mod);
             if(!tempMod) tempMod = cases[caseIndex].mod;
 
-            embed.addField(`Case ${tempCase.caseID} | ${tempCase.action} | ${date.toDateString()} ${date.toTimeString().substr(0,8)}`, `**User:** ${member.user.tag}\n**Mod:** ${tempMod.user.tag}\n**Reason:** ${tempCase.reason}`);
+            embed.addField(`Case ${tempCase.caseID} | ${tempCase.action} | ${date.toDateString()} ${date.toTimeString().substr(0,8)}`, `**User:** ${member}\n**Mod:** ${tempMod}\n**Reason:** ${tempCase.reason}`);
             caseIndex++;
          }
         numOfCases -= 10;
@@ -204,8 +239,7 @@ async function createSpecificEmbed(guild: Guild, caseID: string){
     let date = new Date(tempCase.timestamp);
 
     embed.setAuthor(`Case ${caseID} | ${tempCase.action} | ${user.user.tag}`,user.user.avatarURL);
-    //@ts-ignore
-    embed.setTimestamp(date.toISOString());
+    embed.setTimestamp(date);
     embed.setColor(color);
     embed.addField("Mod: ", mod,true);
     embed.addField("User: ", user,true);
