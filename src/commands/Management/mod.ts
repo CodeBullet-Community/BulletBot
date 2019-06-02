@@ -26,7 +26,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     Bot.mStats.logMessageSend();
                     return false;
                 }
-                var role = stringToRole(message.guild, argsArray[argIndex]);
+                var role = stringToRole(message.guild, argsArray[argIndex], true, false);
                 if (typeof (role) == 'string') {
                     message.channel.send('You can\'t add everyone or here to a rank.');
                     Bot.mStats.logMessageSend();
@@ -34,7 +34,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 }
                 var user: GuildMember;
                 if (!role) {
-                    user = await stringToMember(message.guild, argsArray[argIndex]);
+                    user = await stringToMember(message.guild, argsArray[argIndex], true, true, false);
                     if (!user) {
                         message.channel.send('There isn\'t a role or user called that way');
                         Bot.mStats.logMessageSend();

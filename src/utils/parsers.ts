@@ -67,13 +67,17 @@ function editDistance(s1: string, s2: string) {
  * - username
  * - nickname
  * - user id
+ * - similar username
  *
  * @export
  * @param {Guild} guild guild where the member is in
  * @param {string} text string to parse
+ * @param {boolean} [byUsername=true] if it should also search by username (default true)
+ * @param {boolean} [byNickname=true] if it should also search by nickname (default true)
+ * @param {boolean} [bySimilar=true] if it should also search by similar username (default true)
  * @returns
  */
-export async function stringToMember(guild: Guild, text: string, bySimilar: boolean = true) {
+export async function stringToMember(guild: Guild, text: string, byUsername = true, byNickname = true, bySimilar: boolean = true) {
     if (/<@(\d*)>/g.test(text)) {
         var result = /<@(\d*)>/g.exec(text);
         if (result != null) {
@@ -96,10 +100,10 @@ export async function stringToMember(guild: Guild, text: string, bySimilar: bool
 
     // by id
     var member = guild.members.get(text);
-    if (!member)
+    if (!member && byUsername)
         // by username
         member = guild.members.find(x => x.user.username == text);
-    if (!member)
+    if (!member && byNickname)
         // by nickname
         member = guild.members.find(x => x.nickname == text);
 
@@ -124,13 +128,16 @@ export async function stringToMember(guild: Guild, text: string, bySimilar: bool
  * - role name
  * - role mention
  * - role id
+ * - similar role name
  *
  * @export
  * @param {Guild} guild guild where the role is in
  * @param {string} text string to parse
+ * @param {boolean} [byName=true] if it should also search by name (default true)
+ * @param {boolean} [bySimilar=true] if it should also search by similar name (default true)
  * @returns
  */
-export function stringToRole(guild: Guild, text: string) {
+export function stringToRole(guild: Guild, text: string, byName = true, bySimilar = true) {
 
     if (text == 'here' || text == '@here') {
         return '@here';
@@ -147,11 +154,11 @@ export function stringToRole(guild: Guild, text: string) {
     }
     // by id
     var role = guild.roles.get(text);
-    if (!role) {
+    if (!role && byName) {
         // by name
         role = guild.roles.find(x => x.name == text);
     }
-    if (!role) {
+    if (!role && bySimilar) {
         // closest matching name
         role = guild.roles.reduce(function (prev, curr) {
             return (stringSimilarity(curr.name, text) > stringSimilarity(prev.name, text) ? curr : prev);
@@ -168,13 +175,15 @@ export function stringToRole(guild: Guild, text: string) {
  * Can parse following input:
  * - channel mention
  * - channel id
+ * - channel name
+ * - similar channel name
  *
  * @export
  * @param {Guild} guild guild where channel is in
  * @param {string} text string to parse
  * @returns
  */
-export function stringToChannel(guild: Guild, text: string) {
+export function stringToChannel(guild: Guild, text: string, byName = true, bySimilar = true) {
     if (!guild) return null;
     if (/<#(\d*)>/g.test(text)) {
         var result = /<#(\d*)>/g.exec(text);
@@ -183,7 +192,16 @@ export function stringToChannel(guild: Guild, text: string) {
         }
     }
     let channel = guild.channels.get(text);
-    if(!channel) channel = guild.channels.find(x => x.name == text);
+    if (!channel && byName) channel = guild.channels.find(x => x.name == text);
+    if (!channel && bySimilar) {
+        // closest matching name
+        channel = guild.channels.reduce(function (prev, curr) {
+            return (stringSimilarity(curr.name, text) > stringSimilarity(prev.name, text) ? curr : prev);
+        });
+        if (stringSimilarity(channel.name, text) < 0.4) {
+            channel = undefined;
+        }
+    }
     return channel;
 }
 

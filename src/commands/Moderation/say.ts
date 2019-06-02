@@ -18,7 +18,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         }
         var argsArray = args.split(" ").filter(x => x.length != 0);
 
-        var channel: any = stringToChannel(message.guild, argsArray[argIndex]);
+        var channel: any = stringToChannel(message.guild, argsArray[argIndex], false, false);
         if (!channel) {
             channel = message.channel;
         } else {
@@ -95,14 +95,14 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 await sendMentionMessage(message.guild, channel, content, !mentionEveryone, embedObject, editMessage, requestTime, command.name);
             } else {
                 Bot.mStats.logResponseTime(command.name, requestTime);
-                if(embedObject){
+                if (embedObject) {
                     embedObject.disableEveryone = !mentionEveryone;
-                }else{
+                } else {
                     embedObject = { disableEveryone: !mentionEveryone };
                 }
 
                 if (editMessage) {
-                    if(!embedObject.embed) embedObject.embed = {};
+                    if (!embedObject.embed) embedObject.embed = {};
                     await editMessage.edit(content, embedObject);
                 } else {
                     await channel.send(content, embedObject);
