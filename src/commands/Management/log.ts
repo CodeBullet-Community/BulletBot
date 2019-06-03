@@ -20,45 +20,87 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         var guildDoc = await Bot.database.findGuildDoc(message.guild.id);
 
         if (argsArray[argIndex] == 'rem') {
-            guildDoc.logChannel = null;
-            guildDoc.save();
-            Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send('Successfully unassigned log channel');
-            Bot.mStats.logMessageSend();
-            Bot.mStats.logCommandUsage(command.name, 'remove');
+            argIndex++;
+            if(argsArray[argIndex] == 'normal'){
+
+                guildDoc.logChannel = null;
+                guildDoc.save();
+                Bot.mStats.logResponseTime(command.name, requestTime);
+                message.channel.send('Successfully unassigned log channel');
+                Bot.mStats.logMessageSend();
+                Bot.mStats.logCommandUsage(command.name, 'remove');
+
+            }else if(argsArray[argIndex] == 'case'){
+
+                guildDoc.caseChannel = null;
+                guildDoc.save();
+                Bot.mStats.logResponseTime(command.name, requestTime);
+                message.channel.send('Successfully unassigned case channel');
+                Bot.mStats.logMessageSend();
+                Bot.mStats.logCommandUsage(command.name, 'remove');
+            }
+
             return;
         }
         if (argsArray[argIndex] == 'list') {
             var guildObject = guildDoc.toObject();
-            if (!guildObject.logChannel) {
-                message.channel.send('Currently no channel is assigned as log channel');
+            var logChannel = null;
+            var caseChannel = null;
+
+            if (!guildObject.logChannel && !guildObject.caseChannel) {
+                message.channel.send('Currently no channel is assigned as log or case channel');
                 Bot.mStats.logMessageSend();
                 return false;
             }
+            if(!guildObject.logChannel) {logChannel = 'not defined'} else logChannel = Bot.client.channels.get(guildObject.logChannel).toString();
+            if(!guildObject.caseChannel) {caseChannel = 'not defined'} else caseChannel = Bot.client.channels.get(guildObject.caseChannel).toString();
+
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send('Current log channel is ' + Bot.client.channels.get(guildObject.logChannel).toString());
+            message.channel.send('Current log channel is ' + logChannel + ' and the current case channel is ' + caseChannel);
             Bot.mStats.logMessageSend();
             Bot.mStats.logCommandUsage(command.name, 'list');
             return;
         }
-
-        var channel = stringToChannel(message.guild, argsArray[argIndex]);
-        if (!channel) {
-            message.channel.send('Couldn\'t find specified channel');
-            Bot.mStats.logMessageSend();
-            return false;
+        let channelType;
+        if (argsArray[argIndex] == 'normal'){
+            argIndex++;
+            var channel = stringToChannel(message.guild, argsArray[argIndex]);
+            if (!channel) {
+                message.channel.send('Couldn\'t find specified channel');
+                Bot.mStats.logMessageSend();
+                return false;
+            }
+            guildDoc.logChannel = channel.id;
+            guildDoc.save();
+            channelType = 'log';
         }
-        guildDoc.logChannel = channel.id;
-        guildDoc.save();
+
+        if (argsArray[argIndex] == 'case'){
+            argIndex++;
+            var channel = stringToChannel(message.guild, argsArray[argIndex]);
+            if (!channel) {
+                message.channel.send('Couldn\'t find specified channel');
+                Bot.mStats.logMessageSend();
+                return false;
+            }
+            guildDoc.caseChannel = channel.id;
+            guildDoc.save();
+            channelType = 'case';
+        }
 
         Bot.mStats.logResponseTime(command.name, requestTime);
-        message.channel.send('Successfully assigned log channel to ' + channel.toString());
+        message.channel.send(`Successfully assigned ${channelType} channel to`  + channel.toString());
         Bot.mStats.logMessageSend();
         Bot.mStats.logCommandUsage(command.name, 'set');
+
     } catch (e) {
         sendError(message.channel, e);
         Bot.mStats.logError(e, command.name);
     }
+}
+
+function returnPositive(channelType: string){
+
 }
 
 command.name = 'log';
@@ -78,7 +120,7 @@ command.embedHelp = async function (guild: Guild) {
             'fields': [
                 {
                     'name': 'Description:',
-                    'value': 'assignes/unassignes and list log channel'
+                    'value': 'assignes/unassignes and lists the log and case channel'
                 },
                 {
                     'name': 'Need to be:',
@@ -97,11 +139,11 @@ command.embedHelp = async function (guild: Guild) {
                 },
                 {
                     'name': 'Usage:',
-                    'value': '{command} [channel]\n{command} rem\n{command} list'.replace(/\{command\}/g, prefix + command.name)
+                    'value': '{command} [logtype] [channel]\n{command} rem [logtype]\n{command} list'.replace(/\{command\}/g, prefix + command.name)
                 },
                 {
                     'name': 'Example:',
-                    'value': '{command} #logs\n{command} rem\n{command} list'.replace(/\{command\}/g, prefix + command.name)
+                    'value': '{command} normal #logs\n{command} case #logs \n{command} rem normal\n{command} list'.replace(/\{command\}/g, prefix + command.name)
                 }
             ]
         }

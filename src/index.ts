@@ -14,6 +14,7 @@ import { durations } from './utils/time';
 import fs = require('fs');
 import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate, logVoiceTransfer, logVoiceMute, logVoiceDeaf } from './megalogger';
 import { PActions } from './database/pActions';
+import { CaseLogger } from "./database/caseLogger";
 
 // add console logging info
 require('console-stamp')(console, {
@@ -63,6 +64,7 @@ export class Bot {
     static catcher: Catcher;
     static logger: Logger;
     static pActions: PActions;
+    static caseLogger: CaseLogger;
 
     /**
      * the static version of a constructor
@@ -76,10 +78,11 @@ export class Bot {
      * @param {MStats} mStats
      * @param {Catcher} catcher
      * @param {Logger} logger
+     * @param {CaseLogger} caseLogger
      * @memberof Bot
      */
     static init(client: discord.Client, commands: Commands, filters: Filters, youtube: YTWebhookManager,
-        database: Database, mStats: MStats, catcher: Catcher, logger: Logger, pActions: PActions) {
+        database: Database, mStats: MStats, catcher: Catcher, logger: Logger, pActions: PActions, caseLogger: CaseLogger) {
         this.client = client;
         this.commands = commands;
         this.filters = filters;
@@ -89,6 +92,7 @@ export class Bot {
         this.catcher = catcher;
         this.logger = logger;
         this.pActions = pActions;
+        this.caseLogger = caseLogger;
     }
 }
 
@@ -101,7 +105,8 @@ var filters = new Filters(__dirname + '/filters/');
 var youtube = new YTWebhookManager(DBURI, 'admin');
 var catcher = new Catcher(callback.port);
 let pActions = new PActions(DBURI, 'admin');
-Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger, pActions);
+var caseLogger = new CaseLogger(DBURI, 'admin');
+Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger, pActions, caseLogger);
 
 exitHook(() => {
     console.log('Saving cached data...');

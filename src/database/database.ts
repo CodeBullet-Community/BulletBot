@@ -1,5 +1,34 @@
 import mongoose = require('mongoose');
-import { guildDoc, logDoc, commandsDoc, filtersDoc, globalSettingsDoc, staffDoc, prefixDoc, commandCacheDoc, guildSchema, staffSchema, prefixSchema, commandsSchema, filtersSchema, logSchema, commandCacheSchema, globalSettingsSchema, globalSettingsObject, CommandCache, userDoc, userSchema, UserWrapper, megalogDoc, megalogSchema, megalogFunctions, megalogObject } from './schemas';
+import {
+    guildDoc,
+    logDoc,
+    commandsDoc,
+    filtersDoc,
+    globalSettingsDoc,
+    staffDoc,
+    prefixDoc,
+    commandCacheDoc,
+    guildSchema,
+    staffSchema,
+    prefixSchema,
+    commandsSchema,
+    filtersSchema,
+    logSchema,
+    commandCacheSchema,
+    globalSettingsSchema,
+    globalSettingsObject,
+    CommandCache,
+    userDoc,
+    userSchema,
+    UserWrapper,
+    megalogDoc,
+    megalogSchema,
+    megalogFunctions,
+    megalogObject,
+    caseObject,
+    caseDoc,
+    caseSchema
+} from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
 import { Guild, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
@@ -30,6 +59,7 @@ export class Database {
         commandCache: mongoose.Model<commandCacheDoc>;
         users: mongoose.Model<userDoc>;
         megalogs: mongoose.Model<megalogDoc>;
+        cases: mongoose.Model<caseDoc>;
     };
     /**
      * represents the settings database with the settings collection and the connection. There is also a cache of the settings doc.
@@ -71,6 +101,7 @@ export class Database {
             commandCache: mainCon.model('commandCache', commandCacheSchema, 'commandCaches'),
             users: mainCon.model('user', userSchema, 'users'),
             megalogs: mainCon.model('megalogSettings', megalogSchema, 'megalogs'),
+            cases: mainCon.model('cases', caseSchema,'cases')
         }
 
         var settingsCon = mongoose.createConnection(URI + '/settings' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true })

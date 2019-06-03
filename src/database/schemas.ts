@@ -6,6 +6,8 @@ import { Bot } from '..';
 export interface guildObject {
     guild: string;
     logChannel: string;
+    caseChannel: string;
+    totalCases: number;
     logs: mongoose.Schema.Types.ObjectId[];
     staff: mongoose.Schema.Types.ObjectId;
     webhooks: {
@@ -17,6 +19,8 @@ export interface guildDoc extends mongoose.Document, guildObject { }
 export const guildSchema = new mongoose.Schema({
     guild: String,
     logChannel: String,
+    caseChannel: String,
+    totalCases: Number,
     logs: [mongoose.Schema.Types.ObjectId],
     staff: mongoose.Schema.Types.ObjectId,
     webhooks: {
@@ -538,6 +542,40 @@ export interface pActionLockChannel {
 export interface pActionResubWebhook {
     service: string;
 }
+
+// case
+export enum caseActions {
+    ban = 'ban',
+    warn = 'warn',
+    mute = 'mute',
+    kick = 'kick',
+    softban = 'softban',
+    unmute = 'unmute',
+    unban = 'unban'
+};
+
+export interface caseObject {
+    guild: string;
+    caseID: number;
+    user: string;
+    action: string;
+    timestamp: number;
+    duration?: number;
+    mod: string;
+    reason?: string;
+}
+
+export interface caseDoc extends mongoose.Document, caseObject { }
+export const caseSchema = new mongoose.Schema({
+    guild: String,
+    caseID: Number,
+    user: String,
+    action: String,
+    timestamp: Number,
+    duration: { type: Number, required: false },
+    mod: String,
+    reason: { type: String, required: false },
+});
 
 export interface mStatsObject {
     messagesReceived: number; // all messages recieved
