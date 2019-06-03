@@ -18,7 +18,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         }
         var argsArray = args.split(" ").filter(x => x.length != 0);
 
-        var channel: any = stringToChannel(message.guild, argsArray[argIndex]);
+        var channel: any = stringToChannel(message.guild, argsArray[argIndex], false, false);
         if (!channel) {
             channel = message.channel;
         } else {
@@ -87,13 +87,23 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             content = embedObject.content;
         }
 
+        let mentionEveryone = permLevel >= permLevels.admin ? true : false;
+        if (!mentionEveryone) mentionEveryone = message.member.hasPermission('MENTION_EVERYONE');
+
         try {
             if (content && content.includes("{{role:")) {
-                await sendMentionMessage(message.guild, channel, content, embedObject, editMessage, requestTime, command.name);
+                await sendMentionMessage(message.guild, channel, content, !mentionEveryone, embedObject, editMessage, requestTime, command.name);
             } else {
                 Bot.mStats.logResponseTime(command.name, requestTime);
+                if (embedObject) {
+                    embedObject.disableEveryone = !mentionEveryone;
+                } else {
+                    embedObject = { disableEveryone: !mentionEveryone };
+                }
+
                 if (editMessage) {
-                    await editMessage.edit(content, embedObject ? embedObject : { embed: {} });
+                    if (!embedObject.embed) embedObject.embed = {};
+                    await editMessage.edit(content, embedObject);
                 } else {
                     await channel.send(content, embedObject);
                 }
