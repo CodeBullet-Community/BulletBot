@@ -175,15 +175,16 @@ export class CaseLogger {
 
     /**
      * Deletes a case with a given case ID and returns a boolean when successful
+     * @param guildID
      * @param caseID
      */
-    async deleteCase(caseID: string) {
+    async deleteCase(guildID: string, caseID: string) {
         let success = false;
         if (!isNaN(Number(caseID))) {
             let caseIDInt = parseInt(caseID);
-            let cases = await this.cases.findOne({ caseID }).exec();
+            let cases = await this.cases.findOne({ guild: guildID, caseID: caseID  }).exec();
             if (cases) {
-                await this.cases.deleteOne({ caseID: caseIDInt }).exec();
+                await this.cases.deleteOne({guild: guildID, caseID: caseIDInt}).exec();
 
                 success = true;
             }

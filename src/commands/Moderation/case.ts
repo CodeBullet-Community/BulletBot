@@ -119,7 +119,7 @@ var command: commandInterface = {
                     Bot.mStats.logMessageSend();
                     return false;
                 }
-                if (!await Bot.caseLogger.deleteCase(argsArray[argIndex])) {
+                if (!await Bot.caseLogger.deleteCase(message.guild.id, argsArray[argIndex])) {
                     message.channel.send('Please provide a valid case ID');
                     Bot.mStats.logMessageSend();
                     return false;
