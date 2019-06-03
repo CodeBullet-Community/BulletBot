@@ -3,7 +3,8 @@ import { commandInterface } from '../../commands';
 import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import {durationToString, permToString, stringToChannel, stringToMember, stringToRole} from '../../utils/parsers';
+import { durationToString, permToString, stringToChannel, stringToMember, stringToRole } from '../../utils/parsers';
+import { caseActions } from '../../database/schemas';
 
 var command: commandInterface = {
     name: 'case',
@@ -42,11 +43,11 @@ var command: commandInterface = {
                     },
                     {
                         'name': 'Usage:', // all possible inputs to the guild, the arguments should be named
-                        'value': `${prefix+command.name} list [member] \n ${prefix+command.name} delete [caseID] \n ${prefix+command.name} view [caseID]`
+                        'value': `${prefix + command.name} list [member] \n ${prefix + command.name} delete [caseID] \n ${prefix + command.name} view [caseID]`
                     },
                     {
                         'name': 'Example:', // example use of the command
-                        'value': `${prefix+command.name} list\n${prefix + command.name} list Montori\n${prefix+command.name} delete 1559318905494`
+                        'value': `${prefix + command.name} list\n${prefix + command.name} list Montori\n${prefix + command.name} delete 1559318905494`
                     }
                 ]
             }
@@ -54,7 +55,7 @@ var command: commandInterface = {
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
-            if(args.length === 0){
+            if (args.length === 0) {
                 message.channel.send(await command.embedHelp(message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
@@ -62,10 +63,10 @@ var command: commandInterface = {
             let argIndex = 0;
             let argsArray = args.split(' ').filter(x => x.length != 0);
 
-            if(argsArray[argIndex] == 'list'){
+            if (argsArray[argIndex] == 'list') {
                 argIndex++;
                 let embed;
-                if(!argsArray[argIndex]){
+                if (!argsArray[argIndex]) {
                     embed = await createTotalEmbed(message.guild);
                     Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send(embed);
@@ -73,10 +74,10 @@ var command: commandInterface = {
                     Bot.mStats.logCommandUsage(command.name);
                     return true;
                 }
-                if(argsArray[argIndex]){
+                if (argsArray[argIndex]) {
                     let caseMember = await stringToMember(message.guild, args.substr(4));
-                    if(!caseMember){
-                        message.channel.send(`Cannot find user '${args.substr(4).replace('@','')}'`);
+                    if (!caseMember) {
+                        message.channel.send(`Cannot find user '${args.substr(4).replace('@', '')}'`);
                         Bot.mStats.logMessageSend();
                         return false;
                     }
@@ -84,7 +85,7 @@ var command: commandInterface = {
                     let detailEmbeds = await createDetailEmbeds(message.guild, caseMember);
                     Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send(totalEmbed);
-                    for(let i = 0; detailEmbeds.length>i; i++){
+                    for (let i = 0; detailEmbeds.length > i; i++) {
                         message.channel.send(detailEmbeds[i]);
                     }
                     Bot.mStats.logMessageSend();
@@ -93,28 +94,28 @@ var command: commandInterface = {
                 }
             }
 
-            if(argsArray[argIndex] == 'view'){
+            if (argsArray[argIndex] == 'view') {
                 argIndex++;
-                if(!argsArray[argIndex] || isNaN(Number(argsArray[argIndex]))){
+                if (!argsArray[argIndex] || isNaN(Number(argsArray[argIndex]))) {
                     message.channel.send('Please provide a valid case ID');
                     Bot.mStats.logMessageSend();
                     return false;
                 }
-                let embed = await createSpecificEmbed(message.guild,argsArray[argIndex]);
+                let embed = await createSpecificEmbed(message.guild, argsArray[argIndex]);
                 Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(embed);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name);
             }
 
-            if(argsArray[argIndex] == 'delete'){
+            if (argsArray[argIndex] == 'delete') {
                 argIndex++;
-                if(!argsArray[argIndex]){
+                if (!argsArray[argIndex]) {
                     message.channel.send('Please provide a valid case ID');
                     Bot.mStats.logMessageSend();
                     return false;
                 }
-                if(!await Bot.caseLogger.deleteCase(argsArray[argIndex])) {
+                if (!await Bot.caseLogger.deleteCase(argsArray[argIndex])) {
                     message.channel.send('Please provide a valid case ID');
                     Bot.mStats.logMessageSend();
                     return false;
@@ -136,7 +137,7 @@ var command: commandInterface = {
     }
 };
 
-async function createTotalEmbed(guild: Guild, member?: GuildMember){
+async function createTotalEmbed(guild: Guild, member?: GuildMember) {
     let embed = new RichEmbed();
 
     let subject;
@@ -146,14 +147,14 @@ async function createTotalEmbed(guild: Guild, member?: GuildMember){
     let query;
     let cases;
 
-    if(member){
+    if (member) {
         subject = member;
         id = member.id;
         name = member.user.tag;
         avatar = member.user.avatarURL;
-        query = await Bot.caseLogger.findByMember(guild.id,member.id);
+        query = await Bot.caseLogger.findByMember(guild.id, member.id);
         cases = resolveTotalCases(query);
-    }else {
+    } else {
         id = guild.id;
         name = guild.name;
         avatar = guild.iconURL;
@@ -162,34 +163,34 @@ async function createTotalEmbed(guild: Guild, member?: GuildMember){
         subject = guild.name;
     }
 
-    embed.setAuthor(name,avatar);
+    embed.setAuthor(name, avatar);
     embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
     embed.setDescription(`All cases for ${subject}`);
-    embed.addField("Count",`Total: ${cases.total}\nWarn: ${cases.warn}\nMute: ${cases.mute}\n Mute: ${cases.mute}\nKick: ${cases.kick}\nSoftban: ${cases.softban}\nBan: ${cases.ban}\nUnmute: ${cases.unmute}\nUnban: ${cases.unban}`);
+    embed.addField("Count", `Total: ${cases.total}\nWarn: ${cases.warn}\nMute: ${cases.mute}\n Mute: ${cases.mute}\nKick: ${cases.kick}\nSoftban: ${cases.softban}\nBan: ${cases.ban}\nUnmute: ${cases.unmute}\nUnban: ${cases.unban}`);
     embed.setFooter(`ID: ${id}`);
     embed.setTimestamp();
 
     return embed;
 }
 
-function resolveTotalCases(query){
-    var caseResolved = {unmute : 0, mute : 0, unban : 0,ban : 0,kick : 0,warn : 0,softban : 0,total : 0};
-    for(let i = 0; query.length > i; i++){
+function resolveTotalCases(query) {
+    var caseResolved = { unmute: 0, mute: 0, unban: 0, ban: 0, kick: 0, warn: 0, softban: 0, total: 0 };
+    for (let i = 0; query.length > i; i++) {
         caseResolved.total += 1;
         switch (query[i].action) {
-            case 'Ban': caseResolved.ban++; break;
-            case 'Warn': caseResolved.warn++; break;
-            case 'Mute': caseResolved.mute++; break;
-            case 'Kick': caseResolved.kick++; break;
-            case 'Softban': caseResolved.softban++; break;
-            case 'Unmute': caseResolved.unmute++; break;
-            case 'Unban': caseResolved.unban++; break;
+            case caseActions.ban: caseResolved.ban++; break;
+            case caseActions.warn: caseResolved.warn++; break;
+            case caseActions.mute: caseResolved.mute++; break;
+            case caseActions.kick: caseResolved.kick++; break;
+            case caseActions.softban: caseResolved.softban++; break;
+            case caseActions.unmute: caseResolved.unmute++; break;
+            case caseActions.unban: caseResolved.unban++; break;
         }
     }
     return caseResolved;
 }
 
-async function createDetailEmbeds(guild: Guild, member: GuildMember){
+async function createDetailEmbeds(guild: Guild, member: GuildMember) {
     let cases = await Bot.caseLogger.findByMember(guild.id, member.id);
     let detailEmbedArray = [];
     let caseIndex = 0;
@@ -198,18 +199,18 @@ async function createDetailEmbeds(guild: Guild, member: GuildMember){
     let tempMod;
     let embed;
 
-    while((cases.length - caseIndex) > 0){
+    while ((cases.length - caseIndex) > 0) {
         embed = new RichEmbed();
         embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
-        for(let i = 0; i<10 && numOfCases>i ; i++){
+        for (let i = 0; i < 10 && numOfCases > i; i++) {
             tempCase = cases[caseIndex];
             let date = new Date(tempCase.timestamp);
             tempMod = await stringToMember(guild, tempCase.mod);
-            if(!tempMod) tempMod = cases[caseIndex].mod;
+            if (!tempMod) tempMod = cases[caseIndex].mod;
 
-            embed.addField(`Case ${tempCase.caseID} | ${tempCase.action} | ${date.toDateString()} ${date.toTimeString().substr(0,8)}`, `**User:** ${member}\n**Mod:** ${tempMod}\n**Reason:** ${tempCase.reason}`);
+            embed.addField(`Case ${tempCase.caseID} | ${tempCase.action} | ${date.toDateString()} ${date.toTimeString().substr(0, 8)}`, `**User:** ${member}\n**Mod:** ${tempMod}\n**Reason:** ${tempCase.reason}`);
             caseIndex++;
-         }
+        }
         numOfCases -= 10;
         detailEmbedArray.push(embed);
     }
@@ -217,43 +218,43 @@ async function createDetailEmbeds(guild: Guild, member: GuildMember){
 
 }
 
-async function createSpecificEmbed(guild: Guild, caseID: string){
+async function createSpecificEmbed(guild: Guild, caseID: string) {
     let tempCase = await Bot.caseLogger.findByCase(guild.id, caseID);
 
-    if(!tempCase){
+    if (!tempCase) {
         return 'Case not found';
     }
 
     let embed = new RichEmbed();
 
     let user;
-    user = await stringToMember(guild,tempCase.user);
-    if(!user) tempCase.user;
+    user = await stringToMember(guild, tempCase.user);
+    if (!user) tempCase.user;
 
 
     let mod;
-    mod = await stringToMember(guild,tempCase.mod);
-    if(!mod) mod = tempCase.mod;
+    mod = await stringToMember(guild, tempCase.mod);
+    if (!mod) mod = tempCase.mod;
 
     let color = resolveColor(tempCase.action);
     let date = new Date(tempCase.timestamp);
 
-    embed.setAuthor(`Case ${caseID} | ${tempCase.action} | ${user.user.tag}`,user.user.avatarURL);
+    embed.setAuthor(`Case ${caseID} | ${tempCase.action} | ${user.user.tag}`, user.user.avatarURL);
     embed.setTimestamp(date);
     embed.setColor(color);
-    embed.addField("Mod: ", mod,true);
-    embed.addField("User: ", user,true);
-    if(tempCase.duration) embed.addField("Duration: ", durationToString(tempCase.duration),true);
-    if(tempCase.reason) embed.addField("Reason: ", tempCase.reason);
+    embed.addField("Mod: ", mod, true);
+    embed.addField("User: ", user, true);
+    if (tempCase.duration) embed.addField("Duration: ", durationToString(tempCase.duration), true);
+    if (tempCase.reason) embed.addField("Reason: ", tempCase.reason);
 
     return embed;
 }
 
-function resolveColor(action: string){
+function resolveColor(action: string) {
     switch (action) {
-        case 'Warn': return Bot.database.settingsDB.cache.embedColors.warn;
-        case 'Ban' || 'Kick' || 'Mute' || 'Softban' : return Bot.database.settingsDB.cache.embedColors.negative;
-        case 'Unmute' || 'Unban' : return Bot.database.settingsDB.cache.embedColors.positive;
+        case caseActions.warn: return Bot.database.settingsDB.cache.embedColors.warn;
+        case caseActions.ban || caseActions.kick || caseActions.mute || caseActions.softban: return Bot.database.settingsDB.cache.embedColors.negative;
+        case caseActions.unmute || caseActions.unban: return Bot.database.settingsDB.cache.embedColors.positive;
         default: return Bot.database.settingsDB.cache.embedColors.default;
     }
 }

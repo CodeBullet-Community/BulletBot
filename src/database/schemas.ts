@@ -509,6 +509,40 @@ export const megalogFunctions = {
         'reactionRemove']
 };
 
+// case
+export enum caseActions {
+    ban = 'ban',
+    warn = 'warn',
+    mute = 'mute',
+    kick = 'kick',
+    softban = 'softban',
+    unmute = 'unmute',
+    unban = 'unban'
+};
+
+export interface caseObject {
+    guild: string;
+    caseID: number;
+    user: string;
+    action: string;
+    timestamp: number;
+    duration?: number;
+    mod: string;
+    reason?: string;
+}
+
+export interface caseDoc extends mongoose.Document, caseObject { }
+export const caseSchema = new mongoose.Schema({
+    guild: String,
+    caseID: Number,
+    user: String,
+    action: String,
+    timestamp: Number,
+    duration: { type: Number, required: false },
+    mod: String,
+    reason: { type: String, required: false },
+});
+
 export interface mStatsObject {
     messagesReceived: number; // all messages recieved
     messagesSend: number; // all messages send
@@ -676,27 +710,4 @@ export const globalSettingsSchema = new mongoose.Schema({
     botMasters: [String],
     commands: mongoose.Schema.Types.Mixed,
     filters: mongoose.Schema.Types.Mixed
-});
-
-export interface caseObject {
-    guild: string;
-    caseID: number;
-    user: string;
-    action: string;
-    timestamp: number;
-    duration?: number;
-    mod: string;
-    reason?: string;
-}
-
-export interface caseDoc extends mongoose.Document, caseObject { }
-export const caseSchema = new mongoose.Schema({
-    guild: String,
-    caseID : Number,
-    user: String,
-    action: String,
-    timestamp: Number,
-    duration: { type: Number, required: false },
-    mod: String,
-    reason: { type: String, required: false },
 });
