@@ -13,7 +13,7 @@ import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
 import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate, logVoiceTransfer, logVoiceMute, logVoiceDeaf } from './megalogger';
-import {CaseLogger} from "./database/caseLogger";
+import { CaseLogger } from "./database/caseLogger";
 
 // add console logging info
 require('console-stamp')(console, {
@@ -62,7 +62,7 @@ export class Bot {
     static mStats: MStats;
     static catcher: Catcher;
     static logger: Logger;
-    static caseLogger : CaseLogger;
+    static caseLogger: CaseLogger;
 
     /**
      * the static version of a constructor
@@ -101,7 +101,7 @@ var commands = new Commands(__dirname + '/commands/');
 var filters = new Filters(__dirname + '/filters/');
 var youtube = new YTWebhookManager(DBURI, 'admin');
 var catcher = new Catcher(callback.port);
-var caseLogger = new CaseLogger(DBURI,'admin');
+var caseLogger = new CaseLogger(DBURI, 'admin');
 Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger, caseLogger);
 
 exitHook(() => {

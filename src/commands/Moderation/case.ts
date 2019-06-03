@@ -4,7 +4,7 @@ import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { durationToString, permToString, stringToChannel, stringToMember, stringToRole } from '../../utils/parsers';
-import { caseActions } from '../../database/schemas';
+import { caseActions, caseDoc } from '../../database/schemas';
 
 var command: commandInterface = {
     name: 'case',
@@ -68,8 +68,12 @@ var command: commandInterface = {
                 let embed;
                 if (!argsArray[argIndex]) {
                     embed = await createTotalEmbed(message.guild);
+                    let detailEmbeds = await createDetailEmbeds(message.guild);
                     Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send(embed);
+                    for (let i = 0; detailEmbeds.length > i; i++) {
+                        message.channel.send(detailEmbeds[i]);
+                    }
                     Bot.mStats.logMessageSend();
                     Bot.mStats.logCommandUsage(command.name);
                     return true;
@@ -190,13 +194,19 @@ function resolveTotalCases(query) {
     return caseResolved;
 }
 
-async function createDetailEmbeds(guild: Guild, member: GuildMember) {
-    let cases = await Bot.caseLogger.findByMember(guild.id, member.id);
+async function createDetailEmbeds(guild: Guild, member?: GuildMember) {
+    let cases: caseDoc[]
+    if (member) {
+        cases = await Bot.caseLogger.findByMember(guild.id, member.id);
+    } else {
+        cases = await Bot.caseLogger.findByGuild(guild.id);
+    }
     let detailEmbedArray = [];
     let caseIndex = 0;
     let numOfCases = cases.length;
-    let tempCase;
+    let tempCase: caseDoc;
     let tempMod;
+    let tempMember;
     let embed;
 
     while ((cases.length - caseIndex) > 0) {
@@ -205,10 +215,16 @@ async function createDetailEmbeds(guild: Guild, member: GuildMember) {
         for (let i = 0; i < 10 && numOfCases > i; i++) {
             tempCase = cases[caseIndex];
             let date = new Date(tempCase.timestamp);
-            tempMod = await stringToMember(guild, tempCase.mod);
+            tempMod = guild.members.get(tempCase.mod);
             if (!tempMod) tempMod = cases[caseIndex].mod;
+            if (member) {
+                tempMember = member;
+            } else {
+                tempMember = guild.members.get(tempCase.user);
+                if (!tempMember) tempMember = cases[caseIndex].user;
+            }
 
-            embed.addField(`Case ${tempCase.caseID} | ${tempCase.action} | ${date.toDateString()} ${date.toTimeString().substr(0, 8)}`, `**User:** ${member}\n**Mod:** ${tempMod}\n**Reason:** ${tempCase.reason}`);
+            embed.addField(`Case ${tempCase.caseID} | ${capitalizeFirstLetter(tempCase.action)} | ${date.toDateString()} ${date.toTimeString().substr(0, 8)}`, `**User:** ${tempMember}\n**Mod:** ${tempMod}\n**Reason:** ${tempCase.reason}`);
             caseIndex++;
         }
         numOfCases -= 10;
@@ -239,7 +255,7 @@ async function createSpecificEmbed(guild: Guild, caseID: string) {
     let color = resolveColor(tempCase.action);
     let date = new Date(tempCase.timestamp);
 
-    embed.setAuthor(`Case ${caseID} | ${tempCase.action} | ${user.user.tag}`, user.user.avatarURL);
+    embed.setAuthor(`Case ${caseID} | ${capitalizeFirstLetter(tempCase.action)} | ${user.user.tag}`, user.user.avatarURL);
     embed.setTimestamp(date);
     embed.setColor(color);
     embed.addField("Mod: ", mod, true);
@@ -248,6 +264,10 @@ async function createSpecificEmbed(guild: Guild, caseID: string) {
     if (tempCase.reason) embed.addField("Reason: ", tempCase.reason);
 
     return embed;
+}
+
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 function resolveColor(action: string) {
