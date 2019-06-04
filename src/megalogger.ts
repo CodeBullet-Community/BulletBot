@@ -685,10 +685,6 @@ export async function logReactionRemoveAll(message: Message) {
     if (!megalogDoc.reactionRemove) return;
     let logChannel = message.guild.channels.get(megalogDoc.reactionRemove);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    let reactions = '';
-    for (const reaction of message.reactions.array()) {
-        reactions += `${reaction.emoji}: \`${reaction.count}\`\n`;
-    }
     await logChannel.send({
         "embed": {
             "description": `**All reactions were removed from a message of ${message.author.toString()} in ${message.channel.toString()}** [Jump to Message](${message.url})`,
@@ -700,13 +696,7 @@ export async function logReactionRemoveAll(message: Message) {
             "author": {
                 "name": message.author.tag,
                 "icon_url": message.author.displayAvatarURL
-            },
-            "fields": [
-                {
-                    "name": "Reaction Count",
-                    "value": reactions
-                }
-            ]
+            }
         }
     });
     Bot.mStats.logMessageSend();
