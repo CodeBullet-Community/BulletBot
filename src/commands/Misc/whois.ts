@@ -48,9 +48,10 @@ async function createMemberEmbed(member: GuildMember, permLevel: number) {
     var roleArray = member.roles.array();
     var roleCount = member.roles.array().length - 1;
     roleArray.shift();
-    for (const role of roleArray) {
+    for (const role of roleArray.slice(0, 40)) {
         roles += role.toString() + ' ';
     }
+    if (roleArray.length > 40) roles += `and ${roleCount - 40} more`;
     if (roles.length == 0) {
         roles = 'member has no roles';
     }
