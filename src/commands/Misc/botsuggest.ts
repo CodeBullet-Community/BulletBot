@@ -3,7 +3,7 @@ import { commandInterface } from '../../commands';
 import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString } from '../../utils/parsers';
+import { permToString, durationToString } from '../../utils/parsers';
 import request = require('request');
 import { durations, getDurationDiff } from '../../utils/time';
 import { suggestionForm } from '../../bot-config.json';
@@ -46,7 +46,7 @@ var command: commandInterface = {
                     },
                     {
                         'name': 'Global Cooldown:',
-                        'value': getDurationDiff(command.cooldownGlobal, 0, durations.second) + 'sec',
+                        'value': durationToString(command.cooldownGlobal),
                         'inline': true
                     },
                     {
