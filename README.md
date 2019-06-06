@@ -123,7 +123,7 @@ There also needs to be a mongoDB cluster running. The minimal data in the cluste
 
 ## Logo/PFP
 
-The logo/PFP was a fanart from @Aster#4205.
+The original logo/PFP was a fanart from @Aster#4205.
 
 Original:
 
