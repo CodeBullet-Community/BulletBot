@@ -167,7 +167,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
             }
 
             embed.embed.fields.push({
-                "name": newPerm.type == 'role' ? role.name + ` (ID: ${role.id}):` : member.user.username + ` (ID: ${member.id}):`,
+                "name": role ? role.name + ` (ID: ${role.id}):` : member.user.username + ` (ID: ${member.id}):`,
                 "value": value
             });
         }
