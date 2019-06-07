@@ -170,7 +170,7 @@ async function createTotalEmbed(guild: Guild, member?: GuildMember) {
     embed.setAuthor(name, avatar);
     embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
     embed.setDescription(`All cases for ${subject}`);
-    embed.addField("Count", `Total: ${cases.total}\nWarn: ${cases.warn}\nMute: ${cases.mute}\n Mute: ${cases.mute}\nKick: ${cases.kick}\nSoftban: ${cases.softban}\nBan: ${cases.ban}\nUnmute: ${cases.unmute}\nUnban: ${cases.unban}`);
+    embed.addField("Count", `Total: ${cases.total}\nWarn: ${cases.warn}\n Mute: ${cases.mute}\nKick: ${cases.kick}\nSoftban: ${cases.softban}\nBan: ${cases.ban}\nUnmute: ${cases.unmute}\nUnban: ${cases.unban}`);
     embed.setFooter(`ID: ${id}`);
     embed.setTimestamp();
 
