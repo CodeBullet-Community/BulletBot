@@ -25,7 +25,7 @@ var command: commandInterface = {
                 'fields': [
                     {
                         'name': 'Description:',
-                        'value': 'warn people for a rule break or something similar'
+                        'value': 'Warn member for a rule break or something similar'
                     },
                     {
                         'name': 'Need to be:',
@@ -49,7 +49,7 @@ var command: commandInterface = {
                     },
                     {
                         'name': 'Usage:',
-                        'value': '{command} [user] [reason]'.replace(/\{command\}/g, prefix + command.name)
+                        'value': '{command} [member] [reason]'.replace(/\{command\}/g, prefix + command.name)
                     },
                     {
                         'name': 'Example:',
@@ -69,7 +69,7 @@ var command: commandInterface = {
 
             let user = await stringToMember(message.guild, args.substring(0, args.indexOf(' ')));
             if (!user) {
-                message.channel.send('Couldn\'t find specified user');
+                message.channel.send('Couldn\'t find specified member');
                 Bot.mStats.logMessageSend();
                 return false;
             }
