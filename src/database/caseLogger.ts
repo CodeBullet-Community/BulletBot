@@ -61,7 +61,7 @@ export class CaseLogger {
 
     async logKick(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string) {
         let color = Bot.database.settingsDB.cache.embedColors.negative;
-        await this.logCase(guild, user, mod, caseActions.kick, color, reason);
+        return await this.logCase(guild, user, mod, caseActions.kick, color, reason);
     }
 
     /**
@@ -74,7 +74,7 @@ export class CaseLogger {
      */
     async logBan(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string, duration?: number) {
         let color = Bot.database.settingsDB.cache.embedColors.negative;
-        await this.logCase(guild, user, mod, caseActions.ban, color, reason, duration);
+        return await this.logCase(guild, user, mod, caseActions.ban, color, reason, duration);
     }
 
     /**
@@ -86,7 +86,7 @@ export class CaseLogger {
      */
     async logSoftban(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string) {
         let color = Bot.database.settingsDB.cache.embedColors.negative;
-        await this.logCase(guild, user, mod, caseActions.softban, color, reason);
+        return await this.logCase(guild, user, mod, caseActions.softban, color, reason);
     }
 
     /**
@@ -98,7 +98,7 @@ export class CaseLogger {
      */
     async logUnban(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string) {
         let color = Bot.database.settingsDB.cache.embedColors.positive;
-        await this.logCase(guild, user, mod, caseActions.unban, color, reason);
+        return await this.logCase(guild, user, mod, caseActions.unban, color, reason);
     }
 
     /**
@@ -111,7 +111,7 @@ export class CaseLogger {
      */
     async logMute(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string, duration?: number) {
         let color = Bot.database.settingsDB.cache.embedColors.negative;
-        await this.logCase(guild, user, mod, caseActions.mute, color, reason, duration);
+        return await this.logCase(guild, user, mod, caseActions.mute, color, reason, duration);
     }
 
     /**
@@ -123,7 +123,7 @@ export class CaseLogger {
      */
     async logUnmute(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string) {
         let color = Bot.database.settingsDB.cache.embedColors.positive;
-        await this.logCase(guild, user, mod, caseActions.unmute, color, reason);
+        return await this.logCase(guild, user, mod, caseActions.unmute, color, reason);
     }
 
     /**
@@ -135,7 +135,7 @@ export class CaseLogger {
      */
     async logWarn(guild: Guild, user: GuildMember, mod: GuildMember, reason: string) {
         let color = Bot.database.settingsDB.cache.embedColors.warn;
-        await this.logCase(guild, user, mod, caseActions.warn, color, reason);
+        return await this.logCase(guild, user, mod, caseActions.warn, color, reason);
     }
 
     /**
@@ -182,9 +182,9 @@ export class CaseLogger {
         let success = false;
         if (!isNaN(Number(caseID))) {
             let caseIDInt = parseInt(caseID);
-            let cases = await this.cases.findOne({ guild: guildID, caseID: caseID  }).exec();
+            let cases = await this.cases.findOne({ guild: guildID, caseID: caseID }).exec();
             if (cases) {
-                await this.cases.deleteOne({guild: guildID, caseID: caseIDInt}).exec();
+                await this.cases.deleteOne({ guild: guildID, caseID: caseIDInt }).exec();
 
                 success = true;
             }
@@ -231,6 +231,7 @@ export class CaseLogger {
         // @ts-ignore
         caseChannel.send(caseEmbed);
         Bot.mStats.logMessageSend();
+        return caseObject;
     }
 
     /**
