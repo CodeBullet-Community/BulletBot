@@ -69,7 +69,7 @@ var command: commandInterface = {
             let argIndex = 0;
             let argsArray = args.split(' ').filter(x => x.length != 0);
 
-            let member = await stringToMember(message.guild, argsArray[argIndex]);
+            let member = await stringToMember(message.guild, argsArray[argIndex], true, false, false);
             if (!member) {
                 message.channel.send('Couldn\'t find specified member');
                 Bot.mStats.logMessageSend();
@@ -96,11 +96,11 @@ var command: commandInterface = {
                 return false;
             }
 
-            let reason = args.substr(args.indexOf(argsArray[0]) + argsArray[0].length);
+            let reason = args.substr(args.indexOf(argsArray[0]) + argsArray[0].length).trim();
 
             await Bot.caseLogger.logKick(message.guild, member, message.member, reason);
-            await member.send(`You were kick from **${message.guild.name}** ${reason ? 'because of following reason:\n' + reason: ''}`);
-            member.kick();
+            await member.send(`You were kicked from **${message.guild.name}** ${reason ? 'because of following reason:\n' + reason: ''}`);
+            member.kick(reason);
 
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send(`:white_check_mark: **${member.user.tag} has been kicked ${reason ? 'for ' + reason :''}**`);
