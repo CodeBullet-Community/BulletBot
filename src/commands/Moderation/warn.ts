@@ -67,7 +67,7 @@ var command: commandInterface = {
                 return false;
             }
 
-            let user = await stringToMember(message.guild, args.substring(0, args.indexOf(' ')));
+            let user = await stringToMember(message.guild, args.substring(0, args.indexOf(' ')), true, false, false);
             if (!user) {
                 message.channel.send('Couldn\'t find specified member');
                 Bot.mStats.logMessageSend();
