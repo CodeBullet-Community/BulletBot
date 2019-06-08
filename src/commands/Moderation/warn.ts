@@ -67,14 +67,14 @@ var command: commandInterface = {
                 return false;
             }
 
-            let user = await stringToMember(message.guild, args.substring(0, args.indexOf(' ')), true, false, false);
+            let user = await stringToMember(message.guild, args.substring(0, args.indexOf(' ')), false, false, false);
             if (!user) {
                 message.channel.send('Couldn\'t find specified member');
                 Bot.mStats.logMessageSend();
                 return false;
             }
 
-            let reason = args.substring(args.indexOf(' ') + 1);
+            let reason = args.slice(args.indexOf(args) + args.length).trim();;
             Bot.caseLogger.logWarn(message.guild, user, message.member, reason);
             user.send(`You were warned in **${message.guild.name}** for:\n${reason}`);
 

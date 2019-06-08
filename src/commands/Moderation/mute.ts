@@ -85,7 +85,7 @@ var command: commandInterface = {
             let argIndex = 0;
             let argsArray = args.split(' ').filter(x => x.length != 0);
 
-            let member = await stringToMember(message.guild, argsArray[argIndex], true, false, false);
+            let member = await stringToMember(message.guild, argsArray[argIndex], false, false, false);
             if (!member) {
                 message.channel.send('Couldn\'t find specified member');
                 Bot.mStats.logMessageSend();
@@ -106,21 +106,21 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
+            if (!await message.guild.me.hasPermission("MANAGE_ROLES")) {
+                message.channel.send("I do not have the permissions to do that");
+                Bot.mStats.logMessageSend();
+                return false;
+            }
             argIndex++;
 
             let time = await stringToDuration(argsArray[argIndex]);
             let stringTime = time ? durationToString(time) : 'a indefinite time';
 
-            let reason = args.substr(args.indexOf(argsArray[0]) + argsArray[0].length);
+            let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length).trim();
 
             let muteRole = await getMuteRole(message.guild);
             if (!muteRole) {
                 message.channel.send('Couldn\'t find or create a `Muted` role');
-                Bot.mStats.logMessageSend();
-                return false;
-            }
-            if(!await message.guild.me.hasPermission("MANAGE_ROLES")){
-                message.channel.send("I do not have the permissions to do that");
                 Bot.mStats.logMessageSend();
                 return false;
             }
