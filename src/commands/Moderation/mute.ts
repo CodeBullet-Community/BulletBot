@@ -110,13 +110,8 @@ var command: commandInterface = {
 
             let time = await stringToDuration(argsArray[argIndex]);
             let stringTime = time ? durationToString(time) : 'a indefinite time';
-            argIndex++;
 
-            let reason = '';
-            for (const part of args.split(argsArray[time ? 1 : 0]).slice(1)) {
-                reason += part;
-            }
-            reason = reason.trim();
+            let reason = args.substr(args.indexOf(argsArray[0]) + argsArray[0].length);
 
             let muteRole = await getMuteRole(message.guild);
             if (!muteRole) {
@@ -124,7 +119,11 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-
+            if(!await message.guild.me.hasPermission("MANAGE_ROLES")){
+                message.channel.send("I do not have the permissions to do that");
+                Bot.mStats.logMessageSend();
+                return false;
+            }
             await member.addRole(muteRole, reason);
 
             let caseObject = await Bot.caseLogger.logMute(message.guild, member, message.member, reason, time ? time : undefined);

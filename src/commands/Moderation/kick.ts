@@ -90,6 +90,11 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
+            if(!await message.guild.me.hasPermission("KICK_MEMBERS")){
+                message.channel.send("I don\'t have the permissions to do that");
+                Bot.mStats.logMessageSend();
+                return false;
+            }
 
             let reason = args.substr(args.indexOf(argsArray[0]) + argsArray[0].length);
 
