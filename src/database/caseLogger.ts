@@ -226,11 +226,12 @@ export class CaseLogger {
         guildDoc.totalCases = totalCases + 1;
         await guildDoc.save();
 
-        if (!caseChannel) return;
+        if (caseChannel){
         let caseEmbed = this.createCaseEmbed(user, mod, caseObject.caseID, action, color, duration, reason);
         // @ts-ignore
         caseChannel.send(caseEmbed);
         Bot.mStats.logMessageSend();
+        }
         return caseObject;
     }
 

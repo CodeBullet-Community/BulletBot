@@ -312,7 +312,7 @@ export function durationToString(duration: number) {
 
     if (durationString == '') durationString = '0s';
 
-    return durationString;
+    return durationString.trim();
 }
 
 /**

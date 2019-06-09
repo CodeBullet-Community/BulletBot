@@ -3,17 +3,17 @@ import { commandInterface } from '../../commands';
 import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString, stringToMember } from '../../utils/parsers';
+import { permToString, durationToString, stringToMember, stringToDuration } from '../../utils/parsers';
 import { durations } from '../../utils/time';
 
 var command: commandInterface = {
-    name: 'kick',
+    name: 'ban',
     path: '',
     dm: false,
     permLevel: permLevels.mod,
     togglable: false,
     cooldownLocal: durations.second,
-    shortHelp: 'Kick members',
+    shortHelp: 'Ban a member',
     embedHelp: async function (guild: Guild) {
         let prefix = await Bot.database.getPrefix(guild);
         return {
@@ -25,7 +25,7 @@ var command: commandInterface = {
                 'fields': [
                     {
                         'name': 'Description:',
-                        'value': 'Kick a member from this server'
+                        'value': 'Ban a member from this server'
                     },
                     {
                         'name': 'Need to be:',
@@ -49,11 +49,11 @@ var command: commandInterface = {
                     },
                     {
                         'name': 'Usage:',
-                        'value': '{command} [member]\n{command} [member] [reason]'.replace(/\{command\}/g, prefix + command.name)
+                        'value': '{command} [member] [reason]\n{command} [member] [duration] [reason]'.replace(/\{command\}/g, prefix + command.name)
                     },
                     {
                         'name': 'Example:',
-                        'value': '{command} @jeff#1234\n{command} @jeff#1234 for not being a good boi'.replace(/\{command\}/g, prefix + command.name)
+                        'value': '{command} @jeff#1234 showing bobs and vagene\n{command} @jeff#1234 1d12h20m1s requesting a very specific ban duration'.replace(/\{command\}/g, prefix + command.name)
                     }
                 ]
             }
@@ -76,34 +76,42 @@ var command: commandInterface = {
                 return false;
             }
             if (member.user.id == message.author.id) {
-                message.channel.send('You can\'t kick yourself');
+                message.channel.send('You can\'t ban yourself');
                 Bot.mStats.logMessageSend();
                 return false;
             }
             if (member.user.id == Bot.client.user.id) {
-                message.channel.send('You can\'t kick me :smiling_imp:');
+                message.channel.send('Don\'t ban me :frowning:');
                 Bot.mStats.logMessageSend();
                 return false;
             }
             if (await getPermLevel(member) >= permLevels.mod) {
-                message.channel.send('You can\'t kick that member');
+                message.channel.send('You can\'t ban that member');
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            if (!await message.guild.me.hasPermission("KICK_MEMBERS")) {
-                message.channel.send("I don\'t have the permissions to do that");
+            if (!await message.guild.me.hasPermission("BAN_MEMBERS")) {
+                message.channel.send("I do not have the permissions to do that");
                 Bot.mStats.logMessageSend();
                 return false;
             }
+            argIndex++;
+
+            let time = await stringToDuration(argsArray[argIndex]);
+            let stringTime = time ? durationToString(time) : 'forever';
 
             let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length).trim();
+            if(time){
+                reason = reason.substr(stringTime.length).trim();
+            }
 
-            await Bot.caseLogger.logKick(message.guild, member, message.member, reason);
-            await member.send(`You were kicked from **${message.guild.name}** ${reason ? 'for:\n' + reason : ''}`);
-            member.kick(reason);
+            let caseObject = await Bot.caseLogger.logBan(message.guild, member, message.member, reason, time ? time : undefined);
+            if (time) Bot.pActions.addBan(message.guild.id, member.user.id, message.createdTimestamp + time, caseObject.caseID);
+            await member.send(`You were banned in **${message.guild.name}** for ${stringTime} ${reason ? 'because of following reason:\n' + reason : ''}`);
+            member.ban(reason);
 
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send(`:white_check_mark: **${member.user.tag} has been kicked ${reason ? ', ' + reason : ''}**`);
+            message.channel.send(`:white_check_mark: **${member.user.tag} has been banned for ${stringTime}${reason ? ", " + reason : ''}**`);
             Bot.mStats.logCommandUsage(command.name);
             Bot.mStats.logMessageSend();
             return true;

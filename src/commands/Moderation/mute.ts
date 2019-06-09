@@ -114,9 +114,12 @@ var command: commandInterface = {
             argIndex++;
 
             let time = await stringToDuration(argsArray[argIndex]);
-            let stringTime = time ? durationToString(time) : 'a indefinite time';
+            let stringTime = time ? durationToString(time) : 'an indefinite time';
 
             let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length).trim();
+            if(time){
+                reason = reason.substr(stringTime.length);
+            }
 
             let muteRole = await getMuteRole(message.guild);
             if (!muteRole) {
@@ -128,10 +131,10 @@ var command: commandInterface = {
 
             let caseObject = await Bot.caseLogger.logMute(message.guild, member, message.member, reason, time ? time : undefined);
             if (time) Bot.pActions.addMute(message.guild.id, member.user.id, message.createdTimestamp + time, caseObject.caseID);
-            member.send(`You were muted in **${message.guild.name}** for ${stringTime} because of following reason:\n${reason}`);
+            member.send(`You were muted in **${message.guild.name}** for ${stringTime} ${reason ? 'because of following reason:\n' + reason : ''}`);
 
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send(`:white_check_mark: **${member.user.tag} has been muted for ${stringTime}, ${reason}**`);
+            message.channel.send(`:white_check_mark: **${member.user.tag} has been muted for ${stringTime}${reason ? ', ' + reason : ''} **`);
             Bot.mStats.logCommandUsage(command.name);
             Bot.mStats.logMessageSend();
             return true;
