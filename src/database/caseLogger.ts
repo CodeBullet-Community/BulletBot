@@ -192,6 +192,20 @@ export class CaseLogger {
         return success;
     }
 
+    async editReason(guildID: string, caseID: string, reason: string) {
+        let success = false;
+        if (!isNaN(Number(caseID))) {
+            let editCase = await this.cases.findOne({ guild: guildID, caseID: caseID }).exec();
+            if (editCase) {
+                editCase.reason = reason;
+                editCase.save();
+
+                success = true;
+            }
+        }
+        return success;
+    }
+
     /**
      * Logs a ban into the database and sends an case embed if case channel if provided
      * @param {Guild} guild where the case is from
