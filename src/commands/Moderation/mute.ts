@@ -1,4 +1,4 @@
-import { Message, Guild } from 'discord.js';
+import { Message, Guild, GuildMember } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
@@ -22,6 +22,15 @@ async function getMuteRole(guild: Guild) {
     return role;
 }
 
+async function createMute(message: Message, member: GuildMember, reason: string, duration: number, deletePending: boolean) {
+    let caseObject = await Bot.caseLogger.logMute(message.guild, member, message.member, reason, duration ? duration : undefined);
+    if (duration) {
+        Bot.pActions.addMute(message.guild.id, member.user.id, message.createdTimestamp + duration, caseObject.caseID);
+    } else if (deletePending) {
+        Bot.pActions.removeMute(message.guild.id, member.user.id);
+    }
+}
+
 var command: commandInterface = {
     name: 'mute',
     path: '',
@@ -41,7 +50,7 @@ var command: commandInterface = {
                 'fields': [
                     {
                         'name': 'Description:',
-                        'value': 'Mute members for a certain or indefinite time'
+                        'value': 'Mute members for a certain or indefinite time. You can also change the mute time after a user was already muted'
                     },
                     {
                         'name': 'Need to be:',
@@ -116,27 +125,48 @@ var command: commandInterface = {
             let time = await stringToDuration(argsArray[argIndex]);
             let stringTime = time ? durationToString(time) : 'an indefinite time';
 
-            let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length).trim();
-            if(time){
-                reason = reason.substr(stringTime.length);
+            let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length);
+            if (time) {
+                reason = reason.slice(argsArray[1].length);
             }
+            reason = reason.trim();
 
-            let muteRole = await getMuteRole(message.guild);
+            let muteRole = member.roles.find(x => x.name.toLowerCase() == 'muted');
+            let alreadyMuted = true;
+            if (!muteRole) {
+                muteRole = await getMuteRole(message.guild);
+                alreadyMuted = false;
+            }
             if (!muteRole) {
                 message.channel.send('Couldn\'t find or create a `Muted` role');
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            await member.addRole(muteRole, reason);
 
-            let caseObject = await Bot.caseLogger.logMute(message.guild, member, message.member, reason, time ? time : undefined);
-            if (time) Bot.pActions.addMute(message.guild.id, member.user.id, message.createdTimestamp + time, caseObject.caseID);
-            member.send(`You were muted in **${message.guild.name}** for ${stringTime} ${reason ? 'because of following reason:\n' + reason : ''}`);
+            if (!alreadyMuted)
+                await member.addRole(muteRole, reason);
 
-            Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send(`:white_check_mark: **${member.user.tag} has been muted for ${stringTime}${reason ? ', ' + reason : ''} **`);
-            Bot.mStats.logCommandUsage(command.name);
-            Bot.mStats.logMessageSend();
+            if (!alreadyMuted) {
+                createMute(message, member, reason, time, false);
+
+                member.send(`You were muted in **${message.guild.name}** for ${stringTime} ${reason ? 'because of following reason:\n' + reason : ''}`);
+                Bot.mStats.logMessageSend();
+
+                Bot.mStats.logResponseTime(command.name, requestTime);
+                message.channel.send(`:white_check_mark: **${member.user.tag} has been muted for ${stringTime}${reason ? ', ' + reason : ''}**`);
+                Bot.mStats.logCommandUsage(command.name, 'new');
+                Bot.mStats.logMessageSend();
+            } else {
+                createMute(message, member, reason, time, true);
+
+                member.send(`You mute time was changed in **${message.guild.name}** to ${stringTime} ${reason ? 'because of following reason:\n' + reason : ''}`);
+                Bot.mStats.logMessageSend();
+
+                Bot.mStats.logResponseTime(command.name, requestTime);
+                message.channel.send(`:white_check_mark: **${member.user.tag}'s mute time has been changed to ${stringTime}${reason ? ', ' + reason : ''}**`);
+                Bot.mStats.logCommandUsage(command.name, 'changed');
+                Bot.mStats.logMessageSend();
+            }
             return true;
         } catch (e) {
             sendError(message.channel, e);

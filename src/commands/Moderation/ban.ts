@@ -13,7 +13,7 @@ var command: commandInterface = {
     permLevel: permLevels.mod,
     togglable: false,
     cooldownLocal: durations.second,
-    shortHelp: 'Ban a member',
+    shortHelp: 'Ban members',
     embedHelp: async function (guild: Guild) {
         let prefix = await Bot.database.getPrefix(guild);
         return {
@@ -25,7 +25,7 @@ var command: commandInterface = {
                 'fields': [
                     {
                         'name': 'Description:',
-                        'value': 'Ban a member from this server'
+                        'value': 'Ban members for a certain or indefinite time'
                     },
                     {
                         'name': 'Need to be:',
@@ -100,10 +100,11 @@ var command: commandInterface = {
             let time = await stringToDuration(argsArray[argIndex]);
             let stringTime = time ? durationToString(time) : 'forever';
 
-            let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length).trim();
-            if(time){
-                reason = reason.substr(stringTime.length).trim();
+            let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length);
+            if (time) {
+                reason = reason.slice(argsArray[1].length);
             }
+            reason = reason.trim();
 
             let caseObject = await Bot.caseLogger.logBan(message.guild, member, message.member, reason, time ? time : undefined);
             if (time) Bot.pActions.addBan(message.guild.id, member.user.id, message.createdTimestamp + time, caseObject.caseID);

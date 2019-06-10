@@ -114,7 +114,7 @@ export class PActions {
     }
 
     /**
-     * creates a pending unmute
+     * creates a pending unmute. If one already exists for the specific guild and user it will just overwrite the case ID and until value.
      *
      * @param {string} guildID guild id
      * @param {string} userID user id of muted member
@@ -123,18 +123,39 @@ export class PActions {
      * @returns
      * @memberof PActions
      */
-    addMute(guildID: string, userID: string, until: number, caseID: number) {
-        let pMute = new this.pActions({
-            from: Date.now(),
-            to: until,
-            action: 'mute',
-            info: {
-                guild: guildID,
-                user: userID,
-                case: caseID
-            }
-        });
+    async addMute(guildID: string, userID: string, until: number, caseID: number) {
+        let pMute = await this.pActions.findOne({ action: 'mute', info: { guild: guildID, user: userID } }).exec();
+        if (pMute) {
+            pMute.to = until;
+            //@ts-ignore
+            pMute.info.case = caseID;
+            pMute.markModified('info.case');
+            pMute.markModified('to');
+        } else {
+            pMute = new this.pActions({
+                from: Date.now(),
+                to: until,
+                action: 'mute',
+                info: {
+                    guild: guildID,
+                    user: userID,
+                    case: caseID
+                }
+            });
+        }
         return pMute.save();
+    }
+
+    /**
+     * removes a pending mute
+     *
+     * @param {string} guildID guild id
+     * @param {string} userID user id of muted member
+     * @returns
+     * @memberof PActions
+     */
+    removeMute(guildID: string, userID: string) {
+        return this.pActions.deleteOne({ action: 'mute', info: { guild: guildID, user: userID } }).exec();
     }
 
     /**
