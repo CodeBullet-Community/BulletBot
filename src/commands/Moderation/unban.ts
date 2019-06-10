@@ -84,7 +84,7 @@ var command: commandInterface = {
 
             let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length).trim();
             Bot.caseLogger.logUnban(message.guild, user, message.member, reason);
-            user.send(`You were unbanned in **${message.guild.name}** for:\n${reason ? 'for: ' + reason : ''}`).catch(error => { });
+            user.send(`You were unbanned in **${message.guild.name}**${reason ? ' for:\n' + reason : ''}`).catch(error => { });
 
             message.guild.unban(user);
 
