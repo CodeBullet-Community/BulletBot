@@ -224,7 +224,7 @@ async function createDetailEmbeds(guild: Guild, member?: GuildMember) {
                 if (!tempMember) tempMember = cases[caseIndex].user;
             }
 
-            embed.addField(`Case ${tempCase.caseID} | ${capitalizeFirstLetter(tempCase.action)} | ${date.toDateString()} ${date.toTimeString().substr(0, 8)}`, `**User:** ${tempMember}\n**Mod:** ${tempMod}\n**Reason:** ${tempCase.reason}`);
+            embed.addField(`Case ${tempCase.caseID} | ${capitalizeFirstLetter(tempCase.action)} | ${date.toDateString()} ${date.toTimeString().substr(0, 8)}`, `**User:** ${tempMember}\n**Mod:** ${tempMod}\n**Reason:** ${tempCase.reason}${tempCase.duration ? `\n**Duration:** ${durationToString(tempCase.duration)}` : ''}`);
             caseIndex++;
         }
         numOfCases -= 10;
