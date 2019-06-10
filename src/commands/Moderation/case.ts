@@ -155,7 +155,7 @@ async function createTotalEmbed(guild: Guild, member?: GuildMember) {
         subject = member;
         id = member.id;
         name = member.user.tag;
-        avatar = member.user.avatarURL;
+        avatar = member.user.displayAvatarURL;
         query = await Bot.caseLogger.findByMember(guild.id, member.id);
         cases = resolveTotalCases(query);
     } else {
@@ -243,10 +243,9 @@ async function createSpecificEmbed(guild: Guild, caseID: string) {
 
     let embed = new RichEmbed();
 
-    let user;
+    let user: GuildMember | string;
     user = await stringToMember(guild, tempCase.user);
-    if (!user) tempCase.user;
-
+    if (!user) user = tempCase.user;
 
     let mod;
     mod = await stringToMember(guild, tempCase.mod);
@@ -255,7 +254,7 @@ async function createSpecificEmbed(guild: Guild, caseID: string) {
     let color = resolveColor(tempCase.action);
     let date = new Date(tempCase.timestamp);
 
-    embed.setAuthor(`Case ${caseID} | ${capitalizeFirstLetter(tempCase.action)} | ${user.user.tag}`, user.user.avatarURL);
+    embed.setAuthor(`Case ${caseID} | ${capitalizeFirstLetter(tempCase.action)} | ${user instanceof GuildMember ? user.user.tag : user}`, user instanceof GuildMember ? user.user.displayAvatarURL : undefined);
     embed.setTimestamp(date);
     embed.setColor(color);
     embed.addField("Mod: ", mod, true);
