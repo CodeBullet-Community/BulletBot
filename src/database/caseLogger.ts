@@ -248,9 +248,10 @@ export class CaseLogger {
     private createCaseEmbed(user: GuildMember, mod: GuildMember, caseID: number, action: string, color: number, duration?: number, reason?: string) {
         let date = new Date();
         var embed = new RichEmbed();
-        embed.setAuthor(`Case ${caseID} | ${action} | ${user.user.tag}`, user.user.avatarURL);
+        embed.setAuthor(`Case ${caseID} | ${action} | ${user.user.tag}`, user.user.displayAvatarURL);
         embed.setTimestamp(date);
         embed.setColor(color);
+        embed.setFooter(`User: ${user.id} Mod: ${mod.id}`);
         embed.addField("Mod: ", mod, true);
         embed.addField("User: ", user, true);
         if (duration) embed.addField("Duration: ", durationToString(duration), true);
