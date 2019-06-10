@@ -3,17 +3,24 @@ import { commandInterface } from '../../commands';
 import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, stringToMember, durationToString } from '../../utils/parsers';
+import { permToString, durationToString } from '../../utils/parsers';
 import { durations } from '../../utils/time';
 
+async function getBannedUser(guild: Guild, text: string) {
+    let bans = await guild.fetchBans();
+    let user = bans.find(x => x.id == text);
+    if (!user) user = bans.find(x => x.username == text);
+    return user;
+}
+
 var command: commandInterface = {
-    name: 'warn',
+    name: 'unban',
     path: '',
     dm: false,
     permLevel: permLevels.mod,
     togglable: false,
     cooldownLocal: durations.second,
-    shortHelp: 'Warn members',
+    shortHelp: 'Unban users',
     embedHelp: async function (guild: Guild) {
         let prefix = await Bot.database.getPrefix(guild);
         return {
@@ -25,7 +32,7 @@ var command: commandInterface = {
                 'fields': [
                     {
                         'name': 'Description:',
-                        'value': 'Warn member for a rule break or something similar'
+                        'value': 'Unban users' // more detailed desc
                     },
                     {
                         'name': 'Need to be:',
@@ -49,11 +56,11 @@ var command: commandInterface = {
                     },
                     {
                         'name': 'Usage:',
-                        'value': '{command} [member] [reason]'.replace(/\{command\}/g, prefix + command.name)
+                        'value': '{command} [user] [reason]'.replace(/\{command\}/g, prefix + command.name)
                     },
                     {
                         'name': 'Example:',
-                        'value': '{command} @jeff#1234 being a dick'.replace(/\{command\}/g, prefix + command.name)
+                        'value': '{command} 418112403419430915 didn\'t steal my ice cream after all'.replace(/\{command\}/g, prefix + command.name)
                     }
                 ]
             }
@@ -67,7 +74,7 @@ var command: commandInterface = {
                 return false;
             }
 
-            let user = await stringToMember(message.guild, args.slice(0, args.indexOf(' ')), false, false, false);
+            let user = await getBannedUser(message.guild, args.slice(0, args.indexOf(' ')));
             if (!user) {
                 message.channel.send('Couldn\'t find specified member');
                 Bot.mStats.logMessageSend();
@@ -75,11 +82,13 @@ var command: commandInterface = {
             }
 
             let reason = args.slice(args.indexOf(' ')).trim();
-            Bot.caseLogger.logWarn(message.guild, user, message.member, reason);
-            user.send(`You were warned in **${message.guild.name}** for:\n${reason}`);
+            Bot.caseLogger.logUnban(message.guild, user, message.member, reason);
+            user.send(`You were unbanned in **${message.guild.name}** for:\n${reason}`).catch(error => { });
+
+            message.guild.unban(user);
 
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send(`:white_check_mark: **${user.user.tag} has been warned, ${reason}**`);
+            message.channel.send(`:white_check_mark: **${user.tag} has been unbanned, ${reason}**`);
             Bot.mStats.logCommandUsage(command.name);
             Bot.mStats.logMessageSend();
             return true;

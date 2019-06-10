@@ -1,6 +1,6 @@
 import mongoose = require('mongoose');
 import { caseDoc, caseObject, caseSchema, guildDoc, guildSchema, caseActions } from './schemas';
-import { Guild, GuildMember, RichEmbed, } from 'discord.js';
+import { Guild, GuildMember, RichEmbed, User, } from 'discord.js';
 import { Bot } from '..';
 import { durationToString } from "../utils/parsers";
 
@@ -53,40 +53,40 @@ export class CaseLogger {
 
     /**
      * Logs a kick into the database and sends an case embed if case channel if provided
-     * @param {Guild} guild where the user was kicked from
-     * @param {GuildMember} user user that was kicked
-     * @param {GuildMember} mod mod that kicked the user
-     * @param {string} reason the reason why the user was kicked (optional)
+     * @param {Guild} guild where the member was kicked from
+     * @param {GuildMember} member member that was kicked
+     * @param {GuildMember} mod mod that kicked the member
+     * @param {string} reason the reason why the member was kicked (optional)
     */
 
-    async logKick(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string) {
+    async logKick(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string) {
         let color = Bot.database.settingsDB.cache.embedColors.negative;
-        return await this.logCase(guild, user, mod, caseActions.kick, color, reason);
+        return await this.logCase(guild, member.user, mod, caseActions.kick, color, reason);
     }
 
     /**
      * Logs a ban into the database and sends an case embed if case channel if provided
-     * @param {Guild} guild where the user was banned from
-     * @param {GuildMember} user user that was banned
-     * @param {GuildMember} mod mod that banned the user
-     * @param {string} reason the reason why the user was banned (optional)
+     * @param {Guild} guild where the member was banned from
+     * @param {GuildMember} member member that was banned
+     * @param {GuildMember} mod mod that banned the member
+     * @param {string} reason the reason why the member was banned (optional)
      * @param {number} duration duration of the ban (optional)
      */
-    async logBan(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string, duration?: number) {
+    async logBan(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string, duration?: number) {
         let color = Bot.database.settingsDB.cache.embedColors.negative;
-        return await this.logCase(guild, user, mod, caseActions.ban, color, reason, duration);
+        return await this.logCase(guild, member.user, mod, caseActions.ban, color, reason, duration);
     }
 
     /**
      * Logs a softban into the database and sends an case embed if case channel if provided
-     * @param {Guild} guild where the user was softbanned from
-     * @param {GuildMember} user user that was softbanned
-     * @param {GuildMember} mod mod that softbanned the user
-     * @param {string} reason the reason why the user was softbanned (optional)
+     * @param {Guild} guild where the member was softbanned from
+     * @param {GuildMember} member member that was softbanned
+     * @param {GuildMember} mod mod that softbanned the member
+     * @param {string} reason the reason why the member was softbanned (optional)
      */
-    async logSoftban(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string) {
+    async logSoftban(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string) {
         let color = Bot.database.settingsDB.cache.embedColors.negative;
-        return await this.logCase(guild, user, mod, caseActions.softban, color, reason);
+        return await this.logCase(guild, member.user, mod, caseActions.softban, color, reason);
     }
 
     /**
@@ -96,46 +96,46 @@ export class CaseLogger {
      * @param {GuildMember} mod mod that unbanned the user
      * @param {string} reason the reason why the user was unbanned (optional)
      */
-    async logUnban(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string) {
+    async logUnban(guild: Guild, user: User, mod: GuildMember, reason?: string) {
         let color = Bot.database.settingsDB.cache.embedColors.positive;
         return await this.logCase(guild, user, mod, caseActions.unban, color, reason);
     }
 
     /**
      * Logs a mute into the database and sends an case embed if case channel if provided
-     * @param {Guild} guild where the user was muted from
-     * @param {GuildMember} user user that was muted
-     * @param {GuildMember} mod mod that muted the user
-     * @param {string} reason the reason why the user was muted (optional)
+     * @param {Guild} guild where the member was muted from
+     * @param {GuildMember} member member that was muted
+     * @param {GuildMember} mod mod that muted the member
+     * @param {string} reason the reason why the member was muted (optional)
      * @param {number} duration duration of the mute (optional)
      */
-    async logMute(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string, duration?: number) {
+    async logMute(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string, duration?: number) {
         let color = Bot.database.settingsDB.cache.embedColors.negative;
-        return await this.logCase(guild, user, mod, caseActions.mute, color, reason, duration);
+        return await this.logCase(guild, member.user, mod, caseActions.mute, color, reason, duration);
     }
 
     /**
      * Logs an unmute into the database and sends an case embed if case channel if provided
-     * @param {Guild} guild where the user was unmuted from
-     * @param {GuildMember} user user that was unmuted
-     * @param {GuildMember} mod mod that unmuted the user
-     * @param {string} reason the reason why the user was unmuted (optional)
+     * @param {Guild} guild where the member was unmuted from
+     * @param {GuildMember} member member that was unmuted
+     * @param {GuildMember} mod mod that unmuted the member
+     * @param {string} reason the reason why the member was unmuted (optional)
      */
-    async logUnmute(guild: Guild, user: GuildMember, mod: GuildMember, reason?: string) {
+    async logUnmute(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string) {
         let color = Bot.database.settingsDB.cache.embedColors.positive;
-        return await this.logCase(guild, user, mod, caseActions.unmute, color, reason);
+        return await this.logCase(guild, member.user, mod, caseActions.unmute, color, reason);
     }
 
     /**
      * Logs a warn into the database and sends an case embed if case channel if provided
-     * @param {Guild} guild where the user was warned from
-     * @param {GuildMember} user user that was warned
-     * @param {GuildMember} mod mod that warned the user
-     * @param {string} reason the reason why the user was warned
+     * @param {Guild} guild where the member was warned from
+     * @param {GuildMember} member member that was warned
+     * @param {GuildMember} mod mod that warned the member
+     * @param {string} reason the reason why the member was warned
      */
-    async logWarn(guild: Guild, user: GuildMember, mod: GuildMember, reason: string) {
+    async logWarn(guild: Guild, member: GuildMember, mod: GuildMember, reason: string) {
         let color = Bot.database.settingsDB.cache.embedColors.warn;
-        return await this.logCase(guild, user, mod, caseActions.warn, color, reason);
+        return await this.logCase(guild, member.user, mod, caseActions.warn, color, reason);
     }
 
     /**
@@ -202,7 +202,7 @@ export class CaseLogger {
      * @param {string} reason the reason why the action was performed (optional)
      * @param {number} duration duration of the action (optional)
      */
-    private async logCase(guild: Guild, user: GuildMember, mod: GuildMember, action: string, color: number, reason?: string, duration?: number) {
+    private async logCase(guild: Guild, user: User, mod: GuildMember, action: string, color: number, reason?: string, duration?: number) {
         let date = new Date();
         let guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         let caseChannel = guild.channels.get(guildDoc.toObject().caseChannel);
@@ -226,11 +226,11 @@ export class CaseLogger {
         guildDoc.totalCases = totalCases + 1;
         await guildDoc.save();
 
-        if (caseChannel){
-        let caseEmbed = this.createCaseEmbed(user, mod, caseObject.caseID, action, color, duration, reason);
-        // @ts-ignore
-        caseChannel.send(caseEmbed);
-        Bot.mStats.logMessageSend();
+        if (caseChannel) {
+            let caseEmbed = this.createCaseEmbed(user, mod, caseObject.caseID, action, color, duration, reason);
+            // @ts-ignore
+            caseChannel.send(caseEmbed);
+            Bot.mStats.logMessageSend();
         }
         return caseObject;
     }
@@ -245,10 +245,10 @@ export class CaseLogger {
      * @param {number} duration duration of the action (optional)
      * @param {string} reason the reason why the action was performed (optional)
      */
-    private createCaseEmbed(user: GuildMember, mod: GuildMember, caseID: number, action: string, color: number, duration?: number, reason?: string) {
+    private createCaseEmbed(user: User, mod: GuildMember, caseID: number, action: string, color: number, duration?: number, reason?: string) {
         let date = new Date();
         var embed = new RichEmbed();
-        embed.setAuthor(`Case ${caseID} | ${action} | ${user.user.tag}`, user.user.displayAvatarURL);
+        embed.setAuthor(`Case ${caseID} | ${action} | ${user.tag}`, user.displayAvatarURL);
         embed.setTimestamp(date);
         embed.setColor(color);
         embed.setFooter(`User: ${user.id} Mod: ${mod.id}`);
