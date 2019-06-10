@@ -73,22 +73,23 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
+            let argsArray = args.split(' ').filter(x => x.length != 0);
 
-            let user = await getBannedUser(message.guild, args.slice(0, args.indexOf(' ')));
+            let user = await getBannedUser(message.guild, argsArray[0]);
             if (!user) {
                 message.channel.send('Couldn\'t find specified member');
                 Bot.mStats.logMessageSend();
                 return false;
             }
 
-            let reason = args.slice(args.indexOf(' ')).trim();
+            let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length).trim();
             Bot.caseLogger.logUnban(message.guild, user, message.member, reason);
-            user.send(`You were unbanned in **${message.guild.name}** for:\n${reason}`).catch(error => { });
+            user.send(`You were unbanned in **${message.guild.name}** for:\n${reason ? 'for: ' + reason : ''}`).catch(error => { });
 
             message.guild.unban(user);
 
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send(`:white_check_mark: **${user.tag} has been unbanned, ${reason}**`);
+            message.channel.send(`:white_check_mark: **${user.tag} has been unbanned${reason ? ', ' + reason : ''}**`);
             Bot.mStats.logCommandUsage(command.name);
             Bot.mStats.logMessageSend();
             return true;
