@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { pActionDoc, pActionSchema, pActionObject } from './schemas';
+import { pActionDoc, pActionSchema, pActionObject, pActionActions } from './schemas';
 import { Bot } from '..';
 import { pActionsInterval, YTResubInterval } from '../bot-config.json';
 import { Guild, GuildMember } from 'discord.js';
@@ -59,7 +59,7 @@ export class PActions {
             let actionObject: pActionObject = action.toObject();
             let guild: Guild;
             switch (actionObject.action) {
-                case 'mute':
+                case pActionActions.mute:
                     //@ts-ignore
                     guild = Bot.client.guilds.get(actionObject.info.guild);
                     if (!guild) break;
@@ -78,7 +78,7 @@ export class PActions {
                     //@ts-ignore
                     if (role) member.removeRole(role, `Auto unmute for case ${actionObject.info.case} after ${actionObject.to - actionObject.from}ms`);
                     break;
-                case 'ban':
+                case pActionActions.ban:
                     //@ts-ignore
                     guild = Bot.client.guilds.get(actionObject.info.guild);
                     if (!guild) break;
@@ -87,7 +87,7 @@ export class PActions {
                     guild.unban(actionObject.info.user, `Auto unban for case ${actionObject.info.case} after ${actionObject.to - actionObject.from}ms`).catch(reason => { });
 
                     break;
-                case 'lockChannel':
+                case pActionActions.lockChannel:
                     //@ts-ignore
                     guild = Bot.client.guilds.get(actionObject.info.guild);
                     if (!guild) break;
@@ -100,7 +100,7 @@ export class PActions {
                         channel.overwritePermissions(overwrite, { 'SEND_MESSAGES': null }, `Auto unlock after ${actionObject.to - actionObject.from}ms`);
                     }
                     break;
-                case 'resubWebhook':
+                case pActionActions.resubWebhook:
                     //@ts-ignore
                     switch (actionObject.info.service) {
                         case 'youtube':
@@ -124,7 +124,7 @@ export class PActions {
      * @memberof PActions
      */
     async addMute(guildID: string, userID: string, until: number, caseID: number) {
-        let pMute = await this.pActions.findOne({ action: 'mute', info: { guild: guildID, user: userID } }).exec();
+        let pMute = await this.pActions.findOne({ action: pActionActions.mute, info: { guild: guildID, user: userID } }).exec();
         if (pMute) {
             pMute.to = until;
             //@ts-ignore
@@ -135,7 +135,7 @@ export class PActions {
             pMute = new this.pActions({
                 from: Date.now(),
                 to: until,
-                action: 'mute',
+                action: pActionActions.mute,
                 info: {
                     guild: guildID,
                     user: userID,
@@ -155,7 +155,7 @@ export class PActions {
      * @memberof PActions
      */
     removeMute(guildID: string, userID: string) {
-        return this.pActions.deleteOne({ action: 'mute', info: { guild: guildID, user: userID } }).exec();
+        return this.pActions.deleteOne({ action: pActionActions.mute, 'info.guild': guildID, 'info.user': userID }).exec();
     }
 
     /**
@@ -172,7 +172,7 @@ export class PActions {
         let pBan = new this.pActions({
             from: Date.now(),
             to: until,
-            action: 'ban',
+            action: pActionActions.ban,
             info: {
                 guild: guildID,
                 user: userID,
@@ -180,6 +180,18 @@ export class PActions {
             }
         });
         return pBan.save();
+    }
+
+    /**
+    * removes a pending ban
+    *
+    * @param {string} guildID guild id
+    * @param {string} userID user id of banned member
+    * @returns
+    * @memberof PActions
+    */
+    removeBan(guildID: string, userID: string) {
+        return this.pActions.deleteOne({ action: pActionActions.ban, 'info.guild': guildID, 'info.user': userID }).exec();
     }
 
     /**
@@ -196,7 +208,7 @@ export class PActions {
         let pLock = new this.pActions({
             from: Date.now(),
             to: until,
-            action: 'lockChannel',
+            action: pActionActions.lockChannel,
             info: {
                 guild: guildID,
                 channel: channelID,
@@ -218,7 +230,7 @@ export class PActions {
         let pResub = new this.pActions({
             from: Date.now(),
             to: timestamp,
-            action: 'resubWebhook',
+            action: pActionActions.resubWebhook,
             info: {
                 service: service
             }

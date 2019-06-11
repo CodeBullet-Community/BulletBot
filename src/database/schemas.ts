@@ -510,10 +510,17 @@ export const megalogFunctions = {
 };
 
 // pAction
+export enum pActionActions {
+    mute = 'mute',
+    lockChannel = 'lockChannel',
+    ban = 'ban',
+    resubWebhook = 'resubWebhook'
+}
+
 export interface pActionObject {
     from: number;
     to: number;
-    action: 'mute' | 'lockChannel' | 'ban' | 'resubWebhook';
+    action: pActionActions;
     info: pActionMute | pActionBan | pActionLockChannel | pActionResubWebhook;
 };
 export interface pActionDoc extends mongoose.Document, pActionObject { };

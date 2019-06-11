@@ -87,6 +87,7 @@ var command: commandInterface = {
             user.send(`You were unbanned in **${message.guild.name}**${reason ? ' for:\n' + reason : ''}`).catch(error => { });
 
             message.guild.unban(user);
+            Bot.pActions.removeBan(message.guild.id, user.id);
 
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send(`:white_check_mark: **${user.tag} has been unbanned${reason ? ', ' + reason : ''}**`);
