@@ -100,16 +100,12 @@ var command: commandInterface = {
             let time = await stringToDuration(argsArray[argIndex]);
             let stringTime = time ? durationToString(time) : 'forever';
 
-            let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length);
-            if (time) {
-                reason = reason.slice(argsArray[1].length);
-            }
-            reason = reason.trim();
+            let reason = args.slice(args.indexOf(argsArray[time ? 1 : 0]) + argsArray[time ? 1 : 0].length).trim();
 
             let caseObject = await Bot.caseLogger.logBan(message.guild, member, message.member, reason, time ? time : undefined);
             if (time) Bot.pActions.addBan(message.guild.id, member.user.id, message.createdTimestamp + time, caseObject.caseID);
             await member.send(`You were banned in **${message.guild.name}** for ${stringTime} ${reason ? 'because of following reason:\n' + reason : ''}`);
-            member.ban(reason);
+            member.ban({ reason: reason, days: 7 });
 
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send(`:white_check_mark: **${member.user.tag} has been banned for ${stringTime}${reason ? ", " + reason : ''}**`);

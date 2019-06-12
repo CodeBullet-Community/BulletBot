@@ -125,11 +125,7 @@ var command: commandInterface = {
             let time = await stringToDuration(argsArray[argIndex]);
             let stringTime = time ? durationToString(time) : 'an indefinite time';
 
-            let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length);
-            if (time) {
-                reason = reason.slice(argsArray[1].length);
-            }
-            reason = reason.trim();
+            let reason = args.slice(args.indexOf(argsArray[time ? 1 : 0]) + argsArray[time ? 1 : 0].length).trim();
 
             let muteRole = member.roles.find(x => x.name.toLowerCase() == 'muted');
             let alreadyMuted = true;
