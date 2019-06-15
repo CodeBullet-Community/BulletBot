@@ -1,6 +1,6 @@
 import mongoose = require('mongoose');
-import { logDoc, logSchema, guildDoc, guildSchema, logObject, logActions, webhookDoc, logTypes } from './schemas';
-import { Guild, Role, User, GuildMember, Message, } from 'discord.js';
+import { logDoc, logSchema, guildDoc, guildSchema, logObject, logActions, webhookDoc, logTypes, logMegalog } from './schemas';
+import { Guild, Role, User, GuildMember, Message, Channel, } from 'discord.js';
 import { commandInterface } from '../commands';
 import { Bot } from '..';
 import { filterInterface } from '../filters';
@@ -459,4 +459,60 @@ export class Logger {
         });
     }
 
+    /**
+     * logs webhook create/remove/change in database and log channel
+     *
+     * @param {Guild} guild guild where change was made
+     * @param {GuildMember} admin admin that made the change
+     * @param {0 | 1} type whether command was added or removed
+     * @param {string[]} functions functions which were added / removed
+     * @returns
+     * @memberof Logger
+     */
+    async logMegalog(guild: Guild, admin: GuildMember, type: 0 | 1, functions: string[], channel?: Channel) {
+        var date = new Date();
+        var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
+        if (!guildDoc) return;
+
+        // logs log in database
+        var logObject: logObject = {
+            guild: guild.id,
+            mod: admin.id,
+            action: logActions.megalog,
+            timestamp: date.getTime(),
+            info: {
+                type: type,
+                functions: functions,
+                channel: channel ? channel.id : "delete_command"
+            }
+        }
+        var logDoc = new this.logs(logObject);
+        await logDoc.save();
+        guildDoc.logs.push(logDoc.id);
+        guildDoc.save();
+        Bot.mStats.logLog();
+        // for some reason there is always one more in the 'enabled' log call, so this is a hacky fix:
+        let functionLength = functions.length;
+        // logs log in log channel if one is specified
+        var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
+        if (!logChannel) return;
+        Bot.mStats.logMessageSend();
+        logChannel.send({
+            'embed': {
+                'description': `Megalog setting: ${functionLength} ${functionLength > 1 ? "functions were" : "function was"} ${type ? 'disabled' : 'enabled'} by ${admin.toString()}`,
+                'color': type ? Bot.database.settingsDB.cache.embedColors.negative : Bot.database.settingsDB.cache.embedColors.positive, // bad or good?
+                'timestamp': date.toISOString(),
+                'author': {
+                    'name': 'Megalog Logging Change:',
+                    'icon_url': Bot.client.user.displayAvatarURL
+                },
+                'fields': [
+                    {
+                        'name': `The following ${functionLength > 1 ? "functions were" : "function was"} ${type ? 'disabled' : 'enabled'}:`,
+                        'value': functions.join('\n')
+                    }
+                ]
+            }
+        });
+    }
 }

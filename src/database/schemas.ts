@@ -112,7 +112,7 @@ export interface logObject {
     action: number;
     mod: string;
     timestamp: number;
-    info?: logStaff | logWebhook | logFilter | logCommand | logPrefix;
+    info?: logStaff | logWebhook | logFilter | logCommand | logPrefix | logMegalog;
 }
 export interface logDoc extends mongoose.Document, logObject { }
 export const logSchema = new mongoose.Schema({
@@ -146,7 +146,8 @@ export enum logActions {
     webhook = 1,
     filter = 2,
     command = 3,
-    prefix = 4
+    prefix = 4,
+    megalog = 5
 }
 
 export interface logStaff {
@@ -187,6 +188,13 @@ export interface commandCacheObject {
     cache: any;
     delete: number;
 }
+
+export interface logMegalog {
+    type: 0 | 1; // enable/disable
+    functions: string[] // functions enabled/disabled
+    channel: string // channel ID
+}
+
 export interface commandCacheDoc extends mongoose.Document, commandCacheObject { }
 export const commandCacheSchema = new mongoose.Schema({
     channel: String,

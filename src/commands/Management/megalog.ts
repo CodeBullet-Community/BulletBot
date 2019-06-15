@@ -106,7 +106,7 @@ var command: commandInterface = {
                         Bot.mStats.logMessageSend();
                         return false;
                     }
-
+                    let changed = 0;
                     switch (argsArray[argIndex]) {
                         case 'enable':
                             argIndex += 2;
@@ -122,11 +122,28 @@ var command: commandInterface = {
                                 return false;
                             }
 
+                            let enabledFunctions: string[] = [];
                             for (const func of functions) {
+                                if (megalogDoc[func] == channel.id) // skip over those already toggled
+                                {
+                                    megalogDoc[func] = channel.id;
+                                    continue;
+                                }
+                                enabledFunctions.push(func);
                                 megalogDoc[func] = channel.id;
                                 text += '**' + func + '**, ';
+                                changed += 1;
                             }
+
+                            if (changed == 0)
+                            {
+                                message.channel.send(`No functions were changed`);
+                                Bot.mStats.logMessageSend();
+                                return true;
+                            }
+
                             await megalogDoc.save();
+                            await Bot.logger.logMegalog(message.guild, message.member, 0, enabledFunctions, channel);
                             text = text.slice(0, -2);
                             Bot.mStats.logResponseTime(command.name, requestTime);
                             message.channel.send(`Successfully enabled function(-s) ${text} in ${channel}`);
@@ -134,11 +151,27 @@ var command: commandInterface = {
                             Bot.mStats.logMessageSend();
                             break;
                         case 'disable':
+                            let disabledFunctions: string[] = [];
                             for (const func of functions) {
+                                if (megalogDoc[func] == undefined) // skip over those already undefined
+                                {
+                                    megalogDoc[func] = undefined;
+                                    continue;
+                                }
+                                disabledFunctions.push(func);
                                 megalogDoc[func] = undefined;
                                 text += '**' + func + '**, ';
+                                changed += 1;
                             }
+                            if (changed == 0)
+                            {
+                                message.channel.send(`No functions were changed`);
+                                Bot.mStats.logMessageSend();
+                                return true;
+                            }
+
                             await megalogDoc.save();
+                            await Bot.logger.logMegalog(message.guild, message.member, 1, disabledFunctions);
                             text = text.slice(0, -2);
                             Bot.mStats.logResponseTime(command.name, requestTime);
                             message.channel.send(`Successfully disabled function(-s) ${text}`);
