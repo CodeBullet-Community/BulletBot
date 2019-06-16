@@ -460,7 +460,7 @@ export class Logger {
     }
 
     /**
-     * logs webhook create/remove/change in database and log channel
+     * logs megalog settings change (enable/disable of hooks)
      *
      * @param {Guild} guild guild where change was made
      * @param {GuildMember} admin admin that made the change
@@ -469,7 +469,7 @@ export class Logger {
      * @returns
      * @memberof Logger
      */
-    async logMegalog(guild: Guild, admin: GuildMember, type: 0 | 1, functions: string[], channel?: Channel) {
+    async logMegalog(guild: Guild, admin: GuildMember, type: logTypes, functions: string[], channel?: Channel) {
         var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
@@ -483,7 +483,7 @@ export class Logger {
             info: {
                 type: type,
                 functions: functions,
-                channel: channel ? channel.id : "delete_command"
+                channel: channel ? channel.id : undefined
             }
         }
         var logDoc = new this.logs(logObject);
@@ -499,8 +499,8 @@ export class Logger {
         Bot.mStats.logMessageSend();
         logChannel.send({
             'embed': {
-                'description': `Megalog setting: ${functionLength} ${functionLength > 1 ? "functions were" : "function was"} ${type ? 'disabled' : 'enabled'} by ${admin.toString()}`,
-                'color': type ? Bot.database.settingsDB.cache.embedColors.negative : Bot.database.settingsDB.cache.embedColors.positive, // bad or good?
+                'description': `Megalog setting: ${functionLength} ${functionLength > 1 ? "functions were" : "function was"} ${type.valueOf() ? 'disabled' : 'enabled'} by ${admin.toString()}`,
+                'color': type.valueOf() ? Bot.database.settingsDB.cache.embedColors.negative : Bot.database.settingsDB.cache.embedColors.positive, // bad or good?
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Megalog Logging Change:',
@@ -508,7 +508,7 @@ export class Logger {
                 },
                 'fields': [
                     {
-                        'name': `The following ${functionLength > 1 ? "functions were" : "function was"} ${type ? 'disabled' : 'enabled'}:`,
+                        'name': `The following ${functionLength > 1 ? "functions were" : "function was"} ${type.valueOf() ? 'disabled' : 'enabled'}:`,
                         'value': functions.join('\n')
                     }
                 ]

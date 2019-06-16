@@ -180,6 +180,12 @@ export interface logPrefix {
     new: string
 }
 
+export interface logMegalog {
+    type: logTypes; // add/remove/~~change~~
+    functions: string[]; // functions enabled/disabled
+    channel?: string // channel ID
+}
+
 // command cache
 export interface commandCacheObject {
     channel: string;
@@ -187,12 +193,6 @@ export interface commandCacheObject {
     command: string;
     cache: any;
     delete: number;
-}
-
-export interface logMegalog {
-    type: 0 | 1; // enable/disable
-    functions: string[] // functions enabled/disabled
-    channel: string // channel ID
 }
 
 export interface commandCacheDoc extends mongoose.Document, commandCacheObject { }
