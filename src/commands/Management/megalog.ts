@@ -131,9 +131,9 @@ var command: commandInterface = {
 
                             if (enabledFunctions.length == 0)
                             {
+                                Bot.mStats.logResponseTime(command.name, requestTime);
                                 message.channel.send(`No functions were changed`);
                                 Bot.mStats.logMessageSend();
-                                Bot.mStats.logResponseTime(command.name, requestTime);
                                 Bot.mStats.logCommandUsage(command.name, 'enable');
                                 return true;
                             }
@@ -156,9 +156,9 @@ var command: commandInterface = {
                             }
                             if (disabledFunctions.length == 0)
                             {
+                                Bot.mStats.logResponseTime(command.name, requestTime);
                                 message.channel.send(`No functions were changed`);
                                 Bot.mStats.logMessageSend();
-                                Bot.mStats.logResponseTime(command.name, requestTime);
                                 Bot.mStats.logCommandUsage(command.name, 'disable');
                                 return true;
                             }
