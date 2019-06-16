@@ -464,8 +464,9 @@ export class Logger {
      *
      * @param {Guild} guild guild where change was made
      * @param {GuildMember} admin admin that made the change
-     * @param {0 | 1} type whether command was added or removed
+     * @param {logTypes} type whether command was added or removed
      * @param {string[]} functions functions which were added / removed
+     * @param {Channel} channel specifies the channed where the logging function has been placed
      * @returns
      * @memberof Logger
      */
@@ -508,7 +509,7 @@ export class Logger {
                 },
                 'fields': [
                     {
-                        'name': `The following ${functionLength > 1 ? "functions were" : "function was"} ${type.valueOf() ? 'disabled' : 'enabled'}:`,
+                        'name': `Function${functionLength > 1 ? 's' : ''} ${type.valueOf() ? 'disabled' : 'enabled'}`,
                         'value': functions.join('\n')
                     }
                 ]
