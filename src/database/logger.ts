@@ -509,7 +509,11 @@ export class Logger {
                 },
                 'fields': [
                     {
+<<<<<<< HEAD
                         'name': `Functions disabled/enabled:`,
+=======
+                        'name': `Function${functionLength > 1 ? 's' : ''} ${type.valueOf() ? 'disabled' : 'enabled'}`,
+>>>>>>> 38fa587d40276c76fdae7c5112745bece37bb827
                         'value': functions.join('\n')
                     }
                 ]
