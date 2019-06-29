@@ -96,9 +96,19 @@ export class PActions {
                     let channel = guild.channels.get(actionObject.info.channel);
                     if (!channel) break;
                     //@ts-ignore
-                    for (const overwrite of actionObject.info.overwrites) {
-                        channel.overwritePermissions(overwrite, { 'SEND_MESSAGES': null }, `Auto unlock after ${actionObject.to - actionObject.from}ms`);
+                    for (const id of actionObject.info.overwrites) {
+                        await channel.overwritePermissions(id, { SEND_MESSAGES: null }, `Auto unlock after ${actionObject.to - actionObject.from}ms`);
+
+                        let permOverwrite = channel.permissionOverwrites.get(id);
+                        if (permOverwrite && !permOverwrite.allow && !permOverwrite.allow)
+                            permOverwrite.delete();
                     }
+
+                    let updateDoc = {};
+                    updateDoc['$unset'] = {};
+                    updateDoc['$unset'][`locks.${channel.id}`] = "";
+                    //@ts-ignore
+                    Bot.database.mainDB.guilds.updateOne({ guild: actionObject.info.guild }, updateDoc).exec();
                     break;
                 case pActionActions.resubWebhook:
                     //@ts-ignore
@@ -195,31 +205,49 @@ export class PActions {
     }
 
     /**
-     * creates pending channel unlock
+     * creates pending channel unlock. If there already is one with for the specific guild and channel, it will overwrite the until property.
      *
      * @param {string} guildID guild id
      * @param {string} channelID channel that needs to be unlocked
-     * @param {string[]} overwrites role/users perms that need to be changed
+     * @param {string[]} overwrites roles/users perm overwrites that were changed
      * @param {number} until timestamp when the channel should get unlocked
      * @returns
      * @memberof PActions
      */
-    addLockChannel(guildID: string, channelID: string, overwrites: string[], until: number) {
-        let pLock = new this.pActions({
-            from: Date.now(),
-            to: until,
-            action: pActionActions.lockChannel,
-            info: {
-                guild: guildID,
-                channel: channelID,
-                overwrites: overwrites
-            }
-        });
+    async addLockChannel(guildID: string, channelID: string, overwrites: string[], until: number) {
+        let pLock = await this.pActions.findOne({ action: pActionActions.lockChannel, 'info.guild': guildID, 'info.channel': channelID }).exec();
+        if (!pLock) {
+            pLock = new this.pActions({
+                from: Date.now(),
+                to: until,
+                action: pActionActions.lockChannel,
+                info: {
+                    guild: guildID,
+                    channel: channelID,
+                    overwrites: overwrites
+                }
+            });
+        } else {
+            pLock.to = until;
+            pLock.markModified('to');
+        }
         return pLock.save();
     }
 
     /**
-     * craetes a pending webhook resub
+    * removes a pending channel unlock
+    *
+    * @param {string} guildID guild id
+    * @param {string} channelID channel that needs to be unlocked
+    * @returns
+    * @memberof PActions
+    */
+    removeLockChannel(guildID: string, channelID: string) {
+        return this.pActions.deleteOne({ action: pActionActions.lockChannel, 'info.guild': guildID, 'info.channel': channelID }).exec();
+    }
+
+    /**
+     * creates a pending webhook resub
      *
      * @param {'youtube'} service which service should do a resub
      * @param {number} timestamp when it should do the resub

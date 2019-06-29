@@ -13,7 +13,14 @@ export interface guildObject {
     webhooks: {
         // key is service name
         [key: string]: mongoose.Schema.Types.ObjectId[];
-    }
+    };
+    locks: {
+        // channel id
+        [key: string]: {
+            until?: number;
+            overwrites: string[];
+        };
+    };
 }
 export interface guildDoc extends mongoose.Document, guildObject { }
 export const guildSchema = new mongoose.Schema({
@@ -25,7 +32,8 @@ export const guildSchema = new mongoose.Schema({
     staff: mongoose.Schema.Types.ObjectId,
     webhooks: {
         youtube: [mongoose.Schema.Types.ObjectId]
-    }
+    },
+    locks: mongoose.Schema.Types.Mixed
 });
 
 // staff

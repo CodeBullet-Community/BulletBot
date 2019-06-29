@@ -165,6 +165,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
             if (oldBitfields.denied !== newBitfields.denied) {
                 value += `Denied Perms: \`${oldBitfields.denied}\` to \`${newBitfields.denied}\``;
             }
+            if (!value.length) value = 'Overwrite got deleted';
 
             embed.embed.fields.push({
                 "name": role ? role.name + ` (ID: ${role.id}):` : member.user.username + ` (ID: ${member.id}):`,
