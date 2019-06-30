@@ -104,6 +104,12 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
+            // check if the bot even has the right permissions
+            if (!message.guild.me.hasPermission('MANAGE_CHANNELS')) {
+                message.channel.send('I don\'t have the `Manage Channels` permission');
+                Bot.mStats.logMessageSend();
+                return false;
+            }
             let argIndex = 0;
             let argsArray = args.split(' ').filter(x => x.length != 0);
 
@@ -115,7 +121,7 @@ var command: commandInterface = {
                 return false;
             }
             if (!(channel instanceof TextChannel)) {
-                message.channel.send('You can only look text channels');
+                message.channel.send('You can only lock text channels');
                 Bot.mStats.logMessageSend();
                 return false;
             }
@@ -171,6 +177,11 @@ var command: commandInterface = {
 
             // add/change pending unlock if needed
             if (time) Bot.pActions.addLockChannel(message.guild.id, channel.id, overwrites.allow.concat(overwrites.deny), message.createdTimestamp + time);
+
+            if (channel.id != message.channel.id) {
+                channel.send(`Channel has been locked for ${timeString}`);
+                Bot.mStats.logMessageSend();
+            }
 
             Bot.mStats.logResponseTime(command.name, requestTime);
             if (existingLock) {
