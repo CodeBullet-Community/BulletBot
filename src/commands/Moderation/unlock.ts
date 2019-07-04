@@ -88,7 +88,7 @@ var command: commandInterface = {
 
             let query = { guild: message.guild.id };
             query[`locks.${channel.id}`] = { $exists: true };
-            let guildDoc = await Bot.database.mainDB.guilds.findOne(query, [`locks.${channel.id}.overwrites`]).exec();
+            let guildDoc = await Bot.database.mainDB.guilds.findOne(query, [`locks.${channel.id}.allowOverwrites`, `locks.${channel.id}.neutralOverwrites`]).exec();
             if (!guildDoc) {
                 message.channel.send('The channel isn\'t locked by the bot');
                 Bot.mStats.logMessageSend();
@@ -96,7 +96,9 @@ var command: commandInterface = {
             }
 
             Bot.pActions.removeLockChannel(message.guild.id, channel.id);
-            for (const id of guildDoc.toObject().locks[channel.id].overwrites) {
+            for (const id of guildDoc.toObject().locks[channel.id].allowOverwrites)
+                await channel.overwritePermissions(id, { SEND_MESSAGES: true }, `Manual unlock by ${message.author.tag} (${message.author.id})`);
+            for (const id of guildDoc.toObject().locks[channel.id].neutralOverwrites) {
                 await channel.overwritePermissions(id, { SEND_MESSAGES: null }, `Manual unlock by ${message.author.tag} (${message.author.id})`);
 
                 let permOverwrite = channel.permissionOverwrites.get(id);

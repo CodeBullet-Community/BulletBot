@@ -18,7 +18,8 @@ export interface guildObject {
         // channel id
         [key: string]: {
             until?: number;
-            overwrites: string[];
+            allowOverwrites: string[];
+            neutralOverwrites: string[];
         };
     };
 }
@@ -552,7 +553,8 @@ export interface pActionBan {
 export interface pActionLockChannel {
     guild: string;
     channel: string;
-    overwrites: string[];
+    allowOverwrites: string[];
+    neutralOverwrites: string[];
 }
 export interface pActionResubWebhook {
     service: string;

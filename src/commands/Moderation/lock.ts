@@ -27,21 +27,35 @@ async function getIDsToOverwrite(channel: TextChannel) {
         denyIDs = denyIDs.filter(id => !allowIDs.includes(id));
     }
 
+    let allowOverwrites: string[] = []; // ids that originally had a allow overwrite for sending messages
+    let neutralOverwrites: string[] = []; // ids that originally had a neutral overwrite for sending messages
+
     for (let i = 0; i < allowIDs.length;) {
         let permOverwrite = channel.permissionOverwrites.get(allowIDs[i]);
         if (permOverwrite && (permOverwrite.allowed.has('SEND_MESSAGES') || permOverwrite.denied.has('SEND_MESSAGES'))) {
             allowIDs.splice(i, 1);
-        } else i++;
+        } else {
+            neutralOverwrites.push(allowIDs[i]);
+            i++;
+        }
     }
 
     for (let i = 0; i < denyIDs.length;) {
         let permOverwrite = channel.permissionOverwrites.get(denyIDs[i]);
-        if (permOverwrite && (permOverwrite.allowed.has('SEND_MESSAGES') || permOverwrite.denied.has('SEND_MESSAGES'))) {
+        if (permOverwrite && permOverwrite.denied.has('SEND_MESSAGES')) {
             denyIDs.splice(i, 1);
-        } else i++;
+            continue;
+        }
+
+        if (permOverwrite && permOverwrite.allowed.has('SEND_MESSAGES')) {
+            allowOverwrites.push(denyIDs[i]);
+        } else {
+            neutralOverwrites.push(denyIDs[i]);
+        }
+        i++;
     }
 
-    return { allow: allowIDs, deny: denyIDs };
+    return { allow: allowIDs, deny: denyIDs, allowOverwrites: allowOverwrites, neutralOverwrites: neutralOverwrites };
 }
 
 var command: commandInterface = {
@@ -136,7 +150,7 @@ var command: commandInterface = {
 
             let query = { guild: message.guild.id };
             query[`locks.${channel.id}`] = { $exists: true };
-            let existingLock = await Bot.database.mainDB.guilds.findOne(query, [`locks.${channel.id}.overwrites`]).exec();
+            let existingLock = await Bot.database.mainDB.guilds.findOne(query, [`locks.${channel.id}.allowOverwrites`, `locks.${channel.id}.neutralOverwrites`]).exec();
 
             if (!existingLock) { // check if the channel is already locked by the bot
                 if (!overwrites.allow.length && !overwrites.deny.length) { // check if the bot would even modify the channels overwrites
@@ -154,7 +168,8 @@ var command: commandInterface = {
                 // add the channel to the locks property in the guild doc
                 let updateDoc = {};
                 updateDoc[`locks.${channel.id}`] = {
-                    overwrites: overwrites.allow.concat(overwrites.deny),
+                    allowOverwrites: overwrites.allowOverwrites,
+                    neutralOverwrites: overwrites.neutralOverwrites
                 }
                 if (time) updateDoc[`locks.${channel.id}`].until = message.createdTimestamp + time;
                 Bot.database.mainDB.guilds.updateOne({ guild: message.guild.id }, updateDoc).exec();
@@ -172,11 +187,12 @@ var command: commandInterface = {
 
                 // get overwrites ids from guild doc (it only needs to be put into allow, because the arrays get merged anyways later)
                 let guildObject: guildObject = existingLock.toObject();
-                overwrites.allow = guildObject.locks[channel.id].overwrites;
+                overwrites.allowOverwrites = guildObject.locks[channel.id].allowOverwrites;
+                overwrites.neutralOverwrites = guildObject.locks[channel.id].neutralOverwrites;
             }
 
             // add/change pending unlock if needed
-            if (time) Bot.pActions.addLockChannel(message.guild.id, channel.id, overwrites.allow.concat(overwrites.deny), message.createdTimestamp + time);
+            if (time) Bot.pActions.addLockChannel(message.guild.id, channel.id, overwrites.allowOverwrites, overwrites.neutralOverwrites, message.createdTimestamp + time);
 
             if (channel.id != message.channel.id) {
                 channel.send(`Channel has been locked for ${timeString}`);

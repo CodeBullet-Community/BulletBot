@@ -2,7 +2,8 @@ import mongoose = require('mongoose');
 import { pActionDoc, pActionSchema, pActionObject, pActionActions } from './schemas';
 import { Bot } from '..';
 import { pActionsInterval, YTResubInterval } from '../bot-config.json';
-import { Guild, GuildMember } from 'discord.js';
+import { Guild, GuildMember, TextChannel } from 'discord.js';
+import { durationToString } from '../utils/parsers';
 
 /**
  * Manages pending actions and the connection to the pAction collection
@@ -76,7 +77,7 @@ export class PActions {
 
                     let role = member.roles.find(role => role.name.toLowerCase() == 'muted')
                     //@ts-ignore
-                    if (role) member.removeRole(role, `Auto unmute for case ${actionObject.info.case} after ${actionObject.to - actionObject.from}ms`);
+                    if (role) member.removeRole(role, `Auto unmute for case ${actionObject.info.case} after ${durationToString(actionObject.to - actionObject.from)}`);
                     break;
                 case pActionActions.ban:
                     //@ts-ignore
@@ -84,7 +85,7 @@ export class PActions {
                     if (!guild) break;
                     if (!guild.me.hasPermission('BAN_MEMBERS')) return;
                     //@ts-ignore
-                    guild.unban(actionObject.info.user, `Auto unban for case ${actionObject.info.case} after ${actionObject.to - actionObject.from}ms`).catch(reason => { });
+                    guild.unban(actionObject.info.user, `Auto unban for case ${actionObject.info.case} after ${durationToString(actionObject.to - actionObject.from)}`).catch(reason => { });
 
                     break;
                 case pActionActions.lockChannel:
@@ -94,15 +95,24 @@ export class PActions {
                     if (!guild.me.hasPermission('MANAGE_CHANNELS')) return;
                     //@ts-ignore
                     let channel = guild.channels.get(actionObject.info.channel);
-                    if (!channel) break;
+                    if (!channel || !(channel instanceof TextChannel)) break;
+                    let durationString = durationToString(actionObject.to - actionObject.from);
                     //@ts-ignore
-                    for (const id of actionObject.info.overwrites) {
-                        await channel.overwritePermissions(id, { SEND_MESSAGES: null }, `Auto unlock after ${actionObject.to - actionObject.from}ms`);
-
+                    for (const id of actionObject.info.allowOverwrites)
+                        await channel.overwritePermissions(id, { SEND_MESSAGES: true }, `Auto unlock after ${durationString}`);
+                    //@ts-ignore
+                    for (const id of actionObject.info.neutralOverwrites) {
                         let permOverwrite = channel.permissionOverwrites.get(id);
-                        if (permOverwrite && !permOverwrite.allow && !permOverwrite.allow)
-                            permOverwrite.delete();
+                        if (permOverwrite)
+                            if ((permOverwrite.allow == 0 && permOverwrite.deny == 2048) || (permOverwrite.deny == 0 && permOverwrite.allow == 2048)) {
+                                permOverwrite.delete();
+                            } else {
+                                channel.overwritePermissions(id, { SEND_MESSAGES: null }, `Auto unlock after ${durationString}`);
+                            }
                     }
+
+                    channel.send('Channel is unlocked now');
+                    Bot.mStats.logMessageSend();
 
                     let updateDoc = {};
                     updateDoc['$unset'] = {};
@@ -209,12 +219,13 @@ export class PActions {
      *
      * @param {string} guildID guild id
      * @param {string} channelID channel that needs to be unlocked
-     * @param {string[]} overwrites roles/users perm overwrites that were changed
+     * @param {string[]} allowOverwrites role/user ids that had originally a allow overwrite
+     * @param {string[]} neutralOverwrites role/user ids that had originally a neutral overwrite
      * @param {number} until timestamp when the channel should get unlocked
      * @returns
      * @memberof PActions
      */
-    async addLockChannel(guildID: string, channelID: string, overwrites: string[], until: number) {
+    async addLockChannel(guildID: string, channelID: string, allowOverwrites: string[], neutralOverwrites: string[], until: number) {
         let pLock = await this.pActions.findOne({ action: pActionActions.lockChannel, 'info.guild': guildID, 'info.channel': channelID }).exec();
         if (!pLock) {
             pLock = new this.pActions({
@@ -224,7 +235,8 @@ export class PActions {
                 info: {
                     guild: guildID,
                     channel: channelID,
-                    overwrites: overwrites
+                    allowOverwrites: allowOverwrites,
+                    neutralOverwrites: neutralOverwrites
                 }
             });
         } else {
