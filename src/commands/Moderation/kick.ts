@@ -100,10 +100,11 @@ var command: commandInterface = {
 
             await Bot.caseLogger.logKick(message.guild, member, message.member, reason);
             await member.send(`You were kicked from **${message.guild.name}** ${reason ? 'for:\n' + reason : ''}`);
+            Bot.mStats.logMessageSend();
             member.kick(reason);
 
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send(`:white_check_mark: **${member.user.tag} has been kicked ${reason ? ', ' + reason : ''}**`);
+            message.channel.send(`:white_check_mark: **${member.user.tag} has been kicked${reason ? ', ' + reason : ''}**`);
             Bot.mStats.logCommandUsage(command.name);
             Bot.mStats.logMessageSend();
             return true;
