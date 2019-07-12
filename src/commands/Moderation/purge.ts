@@ -3,9 +3,10 @@ import { commandInterface } from '../../commands';
 import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, stringToChannel } from '../../utils/parsers';
+import { permToString, stringToChannel, stringToMember } from '../../utils/parsers';
 import { durations } from '../../utils/time';
 import { Collection } from 'mongoose';
+import { commandCacheSchema } from '../../database/schemas';
 
 /**
  * An enum which describes the possible types of messages that can be filtered
@@ -18,7 +19,7 @@ enum messageTypes {
     image = 3,
     url = 4,
     invite = 5,
-    botMessage = 6,
+    //botMessage = 6,
     mention = 7
 }
 
@@ -78,7 +79,7 @@ var command: commandInterface = {
                     },
                     {
                         'name': 'Usage:',
-                        'value': '{command} [number of messages to delete]\n{command} [user] [number of messages to delete]\n{command} fromuser [user] [number of messages to delete]\n{command} endswith [content] [number of messages to delete]\n{command} startswith [content] [number of messages to delete]\n{command} contains [content] [number of messages to delete]\n{command} has [content: img | text | file | link | invite] [number of messages to delete]'.replace(/\{command\}/g, prefix + command.name)
+                        'value': '{command} [n messages]\n{command} [user] [n messages]\n{command} mentions [user] [n messages]\n{command} endswith [content] [n messages]\n{command} startswith [content] [n messages]\n{command} contains [content] [n messages]\n{command} has [img | text | file | link | invite] [n messages]'.replace(/\{command\}/g, prefix + command.name)
                     },
                     {
                         'name': 'Example:',
@@ -99,33 +100,189 @@ var command: commandInterface = {
             if (argsArray.length == 1) {
                 if (!Number.isInteger(parseInt(argsArray[0])))
                 {
-                    message.channel.send(await command.embedHelp(message.guild));
+                    message.channel.send(`Malformed command.`);
                     Bot.mStats.logMessageSend();
                     return false; // was unsuccessful
                 }
                 await message.delete();
                 let numberOfMessages = parseInt(argsArray[0]);
                 //@ts-ignore
-                let worked = await DeleteLastXmessages(numberOfMessages, message.channel);
-                
+                let found = await DeleteLastXmessages(numberOfMessages, message.channel);
                 Bot.mStats.logResponseTime(command.name, requestTime);
-                Bot.mStats.logCommandUsage(command.name, `${numberOfMessages - 1}`);
-            }
-            else if (argsArray.length == 2) // [user] [num messages]
-            {
-                let criteria: purgeCommandCriteria = {
-                    userID: argsArray[0]
+                if (!found) {
+                    message.channel.send(`I couldn't find any messages based on your criteria/range.`);
+                    Bot.mStats.logMessageSend();
                 }
-                if (!Number.isInteger(parseInt(argsArray[0])))
-                {
-                    message.channel.send(await command.embedHelp(message.guild));
+                Bot.mStats.logCommandUsage(command.name);
+                return true;
+            }
+            else if (argsArray.length == 2) { // [user] [num messages] 
+                let user = await stringToMember(message.guild, argsArray[0], false, false, false);
+                if (!user) {
+                    message.channel.send(`Malformed command.`);
+                    Bot.mStats.logMessageSend();
+                    return false;
+                }
+                let criteria: purgeCommandCriteria = {
+                    userID: user.id
+                }
+
+                if (!Number.isInteger(parseInt(argsArray[1]))) {
+                    message.channel.send(`Malformed command.`);
                     Bot.mStats.logMessageSend();
                     return false; // was unsuccessful
                 }
+
                 await message.delete();
-                let numberOfMessages = parseInt(argsArray[0]);
+
+                let numberOfMessages = parseInt(argsArray[1]);
                 //@ts-ignore
                 let found: boolean = await DeleteLastXmessages(numberOfMessages, message.channel, criteria);
+                Bot.mStats.logResponseTime(command.name, requestTime);
+                if (!found) {
+                    message.channel.send(`I couldn't find any messages based on your criteria/range.`);
+                    Bot.mStats.logMessageSend();
+                }
+                Bot.mStats.logCommandUsage(command.name, `user`);
+                return true;
+            }
+            else {
+                let numMessages = parseInt(argsArray[argsArray.length-1]);
+                if (!Number.isInteger(numMessages)) {
+                    message.channel.send(`Malformed command.`);
+                    Bot.mStats.logMessageSend();
+                    return false; // was unsuccessful
+                }
+
+                message.delete();
+
+                let commandWord: string = argsArray[0];
+                switch(commandWord) {
+                    case 'mentions':
+                    {
+                        let user: string = (await stringToMember(message.guild, argsArray[1], false, false, false)).id;
+                        let criteria: purgeCommandCriteria = {
+                            type: messageTypes.mention,
+                            value: user
+                        };
+                        //@ts-ignore
+                        let found = await DeleteLastXmessages(numMessages, message.channel, criteria);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
+                        if (!found) {
+                            message.channel.send(`I couldn't find any messages based on your criteria/range.`);
+                            Bot.mStats.logMessageSend();
+                        }
+                        Bot.mStats.logCommandUsage(command.name, commandWord);
+                        return true;
+                    }
+                    break;
+
+                    case 'startswith':
+                    {
+                        let startingString: string = argsArray.slice(1, argsArray.length-1).join(" ");
+                        let criteria: purgeCommandCriteria = {
+                            value: startingString,
+                            location: substringLocation.beginning
+                        };
+                        //@ts-ignore
+                        let found = await DeleteLastXmessages(numMessages, message.channel, criteria);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
+                        if (!found) {
+                            message.channel.send(`I couldn't find any messages based on your criteria/range.`);
+                            Bot.mStats.logMessageSend();
+                        }
+                        Bot.mStats.logCommandUsage(command.name, commandWord);
+                        return true;
+                    }
+                        break;
+
+                    case 'endswith':
+                    {
+                        let endingString: string = argsArray.slice(1, argsArray.length-1).join(" ");
+                        let criteria: purgeCommandCriteria = {
+                            value: endingString,
+                            location: substringLocation.end
+                        };
+                        //@ts-ignore
+                        let found = await DeleteLastXmessages(numMessages, message.channel, criteria);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
+                        if (!found) {
+                            message.channel.send(`I couldn't find any messages based on your criteria/range.`);
+                            Bot.mStats.logMessageSend();
+                        }
+                        Bot.mStats.logCommandUsage(command.name, commandWord);
+                        return true;
+                    }
+                        break;
+
+                    case 'contains':
+                    {
+                        let stringToFind: string = argsArray.slice(1, argsArray.length-1).join(" ");
+                        let criteria: purgeCommandCriteria = {
+                            value: stringToFind,
+                            location: substringLocation.anywhere
+                        };
+                        //@ts-ignore
+                        let found = await DeleteLastXmessages(numMessages, message.channel, criteria);
+                        Bot.mStats.logResponseTime(command.name, requestTime);
+                        if (!found) {
+                            message.channel.send(`I couldn't find any messages based on your criteria/range.`);
+                            Bot.mStats.logMessageSend();
+                        }
+                        return true;
+                    }
+                        break;
+                    
+                    case 'has':
+                    {
+                        let subCommandWord: string = argsArray[1];
+                        commandWord += ` ` + subCommandWord;
+                        let criteria: purgeCommandCriteria = {};
+                        let validOption = true;
+                        switch(subCommandWord) {
+                            case 'text':
+                                criteria.type = messageTypes.text;
+                                break;
+                            case 'file':
+                                criteria.type = messageTypes.file;
+                                break;
+                            case 'img':
+                                criteria.type = messageTypes.image;
+                                break;
+                            case 'invite':
+                                criteria.type = messageTypes.invite;
+                                break;
+                            case 'link':
+                                criteria.type = messageTypes.url;
+                                break;
+                            // // TODO: believed discord.js issue preventing message.author.bot boolean..
+                            // case 'botmessage':
+                            //     criteria.type = messageTypes.botMessage;
+                            default:
+                                validOption = false;
+                                break;
+                        }
+                        if (!validOption) {
+                            message.channel.send(`Malformed command.`);
+                            Bot.mStats.logMessageSend();
+                            return false;
+                        } else {
+                            //@ts-ignore
+                            let found = await DeleteLastXmessages(numMessages, message.channel, criteria);
+                            Bot.mStats.logResponseTime(command.name, requestTime);
+                            if (!found) {
+                                message.channel.send(`I couldn't find any messages based on your criteria/range.`);
+                                Bot.mStats.logMessageSend();
+                            }
+                            Bot.mStats.logCommandUsage(command.name, commandWord);
+                            return true;
+                        }
+                    }
+                        break;
+                    
+                    default:
+                        break;
+                }
             }
             return true; // was successful
         } catch (e) {
@@ -154,7 +311,6 @@ async function DeleteLastXmessages(numberOfMessages: number, channel: TextChanne
     let latest: string = ""
     for (let i = 0; i < Math.floor(numberOfMessages/100); i++)
     {
-        console.log("we got here :("); // why does this happen 2x when i call it with like 3!!
         if (!criteria) {
             channel.bulkDelete(100);
             found = true;
@@ -233,11 +389,11 @@ function valid(message: Message, criteria: purgeCommandCriteria) : boolean
             if (!regexp.test(message.content)) return false;
         }
         if (criteria.type == messageTypes.invite) {
-            if (!message.content.includes('discord.gg/'||'discordapp.com/invite/')) return false;
+            if (!(message.content.includes('discord.gg/') || message.content.includes('discordapp.com/invite/'))) return false;
         }
-        if (criteria.type == messageTypes.botMessage) {
-            if (!message.author.bot) return false;
-        }
+        // if (criteria.type == messageTypes.botMessage) {
+        //     if (message.author.bot == false) return false;
+        // }
         if (criteria.value && criteria.type == messageTypes.mention) {
             let mentions = false;
             for (const messageMention of message.mentions.users) {
