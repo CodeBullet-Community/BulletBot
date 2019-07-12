@@ -7,13 +7,13 @@ import { permToString, durationToString, stringToMember } from '../../utils/pars
 import { durations } from '../../utils/time';
 
 var command: commandInterface = {
-    name: 'kick',
+    name: 'unmute',
     path: '',
     dm: false,
     permLevel: permLevels.mod,
     togglable: false,
     cooldownLocal: durations.second,
-    shortHelp: 'Kick members',
+    shortHelp: 'Unmute members',
     embedHelp: async function (guild: Guild) {
         let prefix = await Bot.database.getPrefix(guild);
         return {
@@ -25,7 +25,7 @@ var command: commandInterface = {
                 'fields': [
                     {
                         'name': 'Description:',
-                        'value': 'Kick a member from this server'
+                        'value': 'Unmute muted members'
                     },
                     {
                         'name': 'Need to be:',
@@ -49,11 +49,11 @@ var command: commandInterface = {
                     },
                     {
                         'name': 'Usage:',
-                        'value': '{command} [member]\n{command} [member] [reason]'.replace(/\{command\}/g, prefix + command.name)
+                        'value': '{command} [member] [reason]'.replace(/\{command\}/g, prefix + command.name)
                     },
                     {
                         'name': 'Example:',
-                        'value': '{command} @jeff#1234\n{command} @jeff#1234 for not being a good boi'.replace(/\{command\}/g, prefix + command.name)
+                        'value': '{command} @jeff#1234\n{command} @jeff#1234 accidentally muted him'.replace(/\{command\}/g, prefix + command.name)
                     }
                 ]
             }
@@ -66,45 +66,54 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            let argIndex = 0;
-            let argsArray = args.split(' ').filter(x => x.length != 0);
+            if (!await message.guild.me.hasPermission("MANAGE_ROLES")) {
+                message.channel.send("I don\'t have the right permissions to do that");
+                Bot.mStats.logMessageSend();
+                return false;
+            }
 
-            let member = await stringToMember(message.guild, argsArray[argIndex], false, false, false);
+            args = args.trim();
+
+            let memberString = args.split(' ').shift();
+            let member = await stringToMember(message.guild, memberString, true, true, false);
             if (!member) {
                 message.channel.send('Couldn\'t find specified member');
                 Bot.mStats.logMessageSend();
                 return false;
             }
             if (member.user.id == message.author.id) {
-                message.channel.send('You can\'t kick yourself');
+                message.channel.send('You can\'t unmute yourself');
                 Bot.mStats.logMessageSend();
                 return false;
             }
             if (member.user.id == Bot.client.user.id) {
-                message.channel.send('You can\'t kick me :smiling_imp:');
+                message.channel.send('You can\'t unmute me :smiling_imp:');
                 Bot.mStats.logMessageSend();
                 return false;
             }
             if (await getPermLevel(member) >= permLevels.mod) {
-                message.channel.send('You can\'t kick that member');
-                Bot.mStats.logMessageSend();
-                return false;
-            }
-            if (!await message.guild.me.hasPermission("KICK_MEMBERS")) {
-                message.channel.send("I don\'t have the permissions to do that");
+                message.channel.send('You can\'t unmute that member');
                 Bot.mStats.logMessageSend();
                 return false;
             }
 
-            let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length).trim();
+            let reason = args.slice(memberString.length).trim();
 
-            await Bot.caseLogger.logKick(message.guild, member, message.member, reason);
-            await member.send(`You were kicked from **${message.guild.name}** ${reason ? 'for:\n' + reason : ''}`);
+            await Bot.pActions.removeMute(message.guild.id, member.id);
+            let role = member.roles.find(x => x.name.toLocaleLowerCase() == 'muted');
+            if (!role) {
+                message.channel.send('Member isn\'t muted');
+                Bot.mStats.logMessageSend();
+                return false;
+            }
+            await member.removeRole(role, `Manual unmuted by ${message.author.tag} (${message.author.id})`);
+            await Bot.caseLogger.logUnmute(message.guild, member, message.member, reason);
+
+            member.send(`You were unmuted in **${message.guild.name}** ${reason.length ? 'for:\n' + reason : ''}`);
             Bot.mStats.logMessageSend();
-            member.kick(reason);
 
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send(`:white_check_mark: **${member.user.tag} has been kicked${reason ? ', ' + reason : ''}**`);
+            message.channel.send(`:white_check_mark: **${member.user.tag} has been unmuted${reason ? ', ' + reason : ''}**`);
             Bot.mStats.logCommandUsage(command.name);
             Bot.mStats.logMessageSend();
             return true;
