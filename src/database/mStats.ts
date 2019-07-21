@@ -96,6 +96,11 @@ export class MStats {
             doc.save();
             pingTestCounter = 0;
         } else {
+            // old mStats object don't have a megalog property
+            if (!doc.megalog)
+                doc.megalog = createEmptyMStatsObject().megalog;
+            if (!doc.megalog.enabled)
+                doc.megalog.enabled = createEmptyMStatsObject().megalog.enabled;
             console.info('Using existing hour document');
         }
 
@@ -310,8 +315,9 @@ export class MStats {
             mergedDoc.ping.clientAPI += doc.ping.clientAPI;
             mergedDoc.ping.cluster += doc.ping.cluster;
 
-            for (const megalogFunction in doc.megalog.logged)
-                mergedDoc.megalog.logged[megalogFunction] += doc.megalog.logged[megalogFunction];
+            if (doc.megalog) // old mStats doc don't have this property
+                for (const megalogFunction in doc.megalog.logged)
+                    mergedDoc.megalog.logged[megalogFunction] += doc.megalog.logged[megalogFunction];
         }
         for (const command in mergedDoc.commands) {
             mergedDoc.commands[command]._resp /= docs.length;
@@ -327,7 +333,8 @@ export class MStats {
                 mergedDoc.webhooks[service].total = 0;
             }
         }
-        mergedDoc.megalog.enabled = Object.assign({}, newestDoc.megalog.enabled);
+        if (newestDoc.megalog) // old mStats doc don't have this property
+            mergedDoc.megalog.enabled = Object.assign({}, newestDoc.megalog.enabled);
 
         return mergedDoc;
     }
