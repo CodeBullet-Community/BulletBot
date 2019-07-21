@@ -82,7 +82,7 @@ var command: commandInterface = {
             }
             if (!tempMutedString.length) tempMutedString = '*None*';
 
-            // creat string for perm muted
+            // create string for perm muted
             let permMutedString = '';
             let permMutedArray = permMuted.array()
             for (let i = 0; i < permMutedArray.length; i++) {
