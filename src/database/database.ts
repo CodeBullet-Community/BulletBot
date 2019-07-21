@@ -272,8 +272,8 @@ export class Database {
      * @returns
      * @memberof Database
      */
-    findGuildDoc(guildID: string) {
-        return this.mainDB.guilds.findOne({ guild: guildID }).exec();
+    findGuildDoc(guildID: string, projection?: string[]) {
+        return this.mainDB.guilds.findOne({ guild: guildID }, projection).exec();
     }
 
     /**
