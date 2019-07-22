@@ -192,7 +192,7 @@ var command: commandInterface = {
             }
 
             // add/change pending unlock if needed
-            if (time) Bot.pActions.addLockChannel(message.guild.id, channel.id, overwrites.allowOverwrites, overwrites.neutralOverwrites, message.createdTimestamp + time);
+            if (time) Bot.pActions.addLockChannel(message.guild.id, channel.id, overwrites.allowOverwrites, overwrites.neutralOverwrites, message.createdTimestamp + time, message.createdTimestamp);
 
             if (channel.id != message.channel.id) {
                 channel.send(`Channel has been locked for ${timeString}`);

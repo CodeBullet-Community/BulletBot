@@ -103,7 +103,7 @@ var command: commandInterface = {
             let reason = args.slice(args.indexOf(argsArray[time ? 1 : 0]) + argsArray[time ? 1 : 0].length).trim();
 
             let caseObject = await Bot.caseLogger.logBan(message.guild, member, message.member, reason, time ? time : undefined);
-            if (time) Bot.pActions.addBan(message.guild.id, member.user.id, message.createdTimestamp + time, caseObject.caseID);
+            if (time) Bot.pActions.addBan(message.guild.id, member.user.id, message.createdTimestamp + time, caseObject.caseID, message.createdTimestamp);
             await member.send(`You were banned in **${message.guild.name}** for ${stringTime} ${reason ? 'because of following reason:\n' + reason : ''}`);
             member.ban({ reason: reason, days: 7 });
 

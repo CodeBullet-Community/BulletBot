@@ -25,7 +25,7 @@ async function getMuteRole(guild: Guild) {
 async function createMute(message: Message, member: GuildMember, reason: string, duration: number, deletePending: boolean) {
     let caseObject = await Bot.caseLogger.logMute(message.guild, member, message.member, reason, duration ? duration : undefined);
     if (duration) {
-        Bot.pActions.addMute(message.guild.id, member.user.id, message.createdTimestamp + duration, caseObject.caseID);
+        Bot.pActions.addMute(message.guild.id, member.user.id, message.createdTimestamp + duration, caseObject.caseID, message.createdTimestamp);
     } else if (deletePending) {
         Bot.pActions.removeMute(message.guild.id, member.user.id);
     }

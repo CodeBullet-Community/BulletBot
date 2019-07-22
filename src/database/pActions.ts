@@ -168,10 +168,11 @@ export class PActions {
      * @param {string} userID user id of muted member
      * @param {number} until timestamp when they should get unmuted
      * @param {string} caseID case id
+     * @param {number} [requestTime] timestamp when mute was requested
      * @returns
      * @memberof PActions
      */
-    async addMute(guildID: string, userID: string, until: number, caseID: number) {
+    async addMute(guildID: string, userID: string, until: number, caseID: number, requestTime?: number) {
         let pMute = await this.pActions.findOne({ action: pActionActions.mute, info: { guild: guildID, user: userID } }).exec();
         if (pMute) {
             pMute.to = until;
@@ -181,7 +182,7 @@ export class PActions {
             pMute.markModified('to');
         } else {
             pMute = new this.pActions({
-                from: Date.now(),
+                from: requestTime || Date.now(),
                 to: until,
                 action: pActionActions.mute,
                 info: {
@@ -213,12 +214,13 @@ export class PActions {
      * @param {string} userID user id that should be unbanned
      * @param {number} until timestamp when they should get unbanned
      * @param {number} caseID case id
+     * @param {number} [requestTime] timestamp when mute was requested
      * @returns
      * @memberof PActions
      */
-    addBan(guildID: string, userID: string, until: number, caseID: number) {
+    addBan(guildID: string, userID: string, until: number, caseID: number, requestTime?: number) {
         let pBan = new this.pActions({
-            from: Date.now(),
+            from: requestTime || Date.now(),
             to: until,
             action: pActionActions.ban,
             info: {
@@ -250,14 +252,15 @@ export class PActions {
      * @param {string[]} allowOverwrites role/user ids that had originally a allow overwrite
      * @param {string[]} neutralOverwrites role/user ids that had originally a neutral overwrite
      * @param {number} until timestamp when the channel should get unlocked
+     * @param {number} [requestTime] timestamp when mute was requested
      * @returns
      * @memberof PActions
      */
-    async addLockChannel(guildID: string, channelID: string, allowOverwrites: string[], neutralOverwrites: string[], until: number) {
+    async addLockChannel(guildID: string, channelID: string, allowOverwrites: string[], neutralOverwrites: string[], until: number, requestTime?: number) {
         let pLock = await this.pActions.findOne({ action: pActionActions.lockChannel, 'info.guild': guildID, 'info.channel': channelID }).exec();
         if (!pLock) {
             pLock = new this.pActions({
-                from: Date.now(),
+                from: requestTime || Date.now(),
                 to: until,
                 action: pActionActions.lockChannel,
                 info: {
