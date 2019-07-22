@@ -133,7 +133,7 @@ export class Database {
             this.cleanMegalogs();
             //console.log('cleaned database');
         }, cleanInterval);
-        console.info(`cleaning command caches every ${cleanInterval}ms`);
+        console.info(`cleaning database every ${cleanInterval}ms`);
     }
 
     /**
