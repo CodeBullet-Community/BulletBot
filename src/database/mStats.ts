@@ -83,6 +83,40 @@ export class MStats {
         var hour = date.getUTCHours();
 
         var model = this.connection.model<mStatsHourDoc>('hour', mStatsHourSchema, 'hourly');
+
+        // checks if there are hours saved from other days
+        let existingDays: number[] = await model.distinct('day').exec();
+        if (existingDays.includes(day)) existingDays.splice(existingDays.indexOf(day), 1);
+        for (const existingDay of existingDays) {
+            if (!await this.daily.findOne({ day: existingDay })) { // only make a new day doc if there isn't one
+                let hourObjects: mStatsHourObject[] = (await model.find({ day: existingDay }).exec()).map(x => x.toObject());
+
+                let mergedObject: any;
+                if (hourObjects.length != 1) {
+                    // get the newest hour doc
+                    let newestIndex = 0;
+                    let newestHour = hourObjects[newestIndex];
+                    hourObjects.forEach((x, i) => {
+                        if (x.hour > newestHour.hour) {
+                            newestHour = x;
+                            newestIndex = i;
+                        }
+                    });
+                    hourObjects.splice(newestIndex, 1);
+
+                    mergedObject = this.mergeStats(hourObjects, newestHour);
+                    mergedObject.day = existingDay;
+                } else {
+                    mergedObject = hourObjects[0];
+                    delete mergedObject.day;
+                }
+
+                await new this.daily(mergedObject).save();
+            }
+            model.deleteMany({ day: existingDay }).exec();
+        }
+        console.info(`Resolved ${existingDays.length} days in hourly collection.`);
+
         var doc = await model.findOne({ day: day, hour: hour }).exec(); // looks if it can find an existing hour document
         var pingTestCounter = 1;
         if (!doc) {
