@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { pActionDoc, pActionSchema, pActionObject, pActionActions } from './schemas';
+import { pActionDoc, pActionSchema, pActionObject, pActionActions, caseActions } from './schemas';
 import { Bot } from '..';
 import { pActionsInterval, YTResubInterval } from '../bot-config.json';
 import { Guild, GuildMember, TextChannel } from 'discord.js';
@@ -61,73 +61,101 @@ export class PActions {
             let guild: Guild;
             switch (actionObject.action) {
                 case pActionActions.mute:
-                    //@ts-ignore
-                    guild = Bot.client.guilds.get(actionObject.info.guild);
-                    if (!guild) break;
-                    if (!guild.me.hasPermission('MANAGE_ROLES')) return;
-
-                    let member: GuildMember;
-                    try {
+                    {
                         //@ts-ignore
-                        member = await guild.fetchMember(actionObject.info.user);
-                    } catch (e) {
+                        guild = Bot.client.guilds.get(actionObject.info.guild);
+                        if (!guild) break;
+                        if (!guild.me.hasPermission('MANAGE_ROLES')) break;
+
+                        let member: GuildMember;
+                        try {
+                            //@ts-ignore
+                            member = await guild.fetchMember(actionObject.info.user);
+                        } catch (e) {
+                            break;
+                        }
+                        if (!member) break;
+
+                        let durationString = durationToString(actionObject.to - actionObject.from);
+                        let role = member.roles.find(role => role.name.toLowerCase() == 'muted')
+                        //@ts-ignore
+                        if (role) member.removeRole(role, `Auto unmute for case ${actionObject.info.case} after ${durationString}`);
+
+                        // sends log in caseChannel
+                        let guildDoc = await Bot.database.findGuildDoc(guild.id, ['caseChannel']);
+                        if (!guildDoc || !guildDoc.caseChannel) break;
+                        let caseChannel = guild.channels.get(guildDoc.caseChannel);
+                        if (!caseChannel || !(caseChannel instanceof TextChannel)) break;
+                        //@ts-ignore
+                        caseChannel.send(Bot.caseLogger.createCaseEmbed(member.user, guild.me, actionObject.info.case, caseActions.unmute, Bot.database.settingsDB.cache.embedColors.positive, null, `Auto unmute for case ${actionObject.info.case} after ${durationString}`));
                         break;
                     }
-                    if (!member) break;
-
-                    let role = member.roles.find(role => role.name.toLowerCase() == 'muted')
-                    //@ts-ignore
-                    if (role) member.removeRole(role, `Auto unmute for case ${actionObject.info.case} after ${durationToString(actionObject.to - actionObject.from)}`);
-                    break;
                 case pActionActions.ban:
-                    //@ts-ignore
-                    guild = Bot.client.guilds.get(actionObject.info.guild);
-                    if (!guild) break;
-                    if (!guild.me.hasPermission('BAN_MEMBERS')) return;
-                    //@ts-ignore
-                    guild.unban(actionObject.info.user, `Auto unban for case ${actionObject.info.case} after ${durationToString(actionObject.to - actionObject.from)}`).catch(reason => { });
+                    {
+                        //@ts-ignore
+                        guild = Bot.client.guilds.get(actionObject.info.guild);
+                        if (!guild) break;
+                        if (!guild.me.hasPermission('BAN_MEMBERS')) break;
+                        //@ts-ignore
+                        let banInfo = await guild.fetchBan(actionObject.info.user);
+                        if (!banInfo) break;
+                        let durationString = durationToString(actionObject.to - actionObject.from);
+                        //@ts-ignore
+                        guild.unban(actionObject.info.user, `Auto unban for case ${actionObject.info.case} after ${durationString}`).catch(reason => { });
 
-                    break;
+                        // sends log in caseChannel
+                        let guildDoc = await Bot.database.findGuildDoc(guild.id, ['caseChannel']);
+                        if (!guildDoc || !guildDoc.caseChannel) break;
+                        let caseChannel = guild.channels.get(guildDoc.caseChannel);
+                        if (!caseChannel || !(caseChannel instanceof TextChannel)) break;
+                        //@ts-ignore
+                        caseChannel.send(Bot.caseLogger.createCaseEmbed(banInfo.user, guild.me, actionObject.info.case, caseActions.unban, Bot.database.settingsDB.cache.embedColors.positive, null, `Auto unban for case ${actionObject.info.case} after ${durationString}`));
+                        break;
+                    }
                 case pActionActions.lockChannel:
-                    //@ts-ignore
-                    guild = Bot.client.guilds.get(actionObject.info.guild);
-                    if (!guild) break;
-                    if (!guild.me.hasPermission('MANAGE_CHANNELS')) return;
-                    //@ts-ignore
-                    let channel = guild.channels.get(actionObject.info.channel);
-                    if (!channel || !(channel instanceof TextChannel)) break;
-                    let durationString = durationToString(actionObject.to - actionObject.from);
-                    //@ts-ignore
-                    for (const id of actionObject.info.allowOverwrites)
-                        await channel.overwritePermissions(id, { SEND_MESSAGES: true }, `Auto unlock after ${durationString}`);
-                    //@ts-ignore
-                    for (const id of actionObject.info.neutralOverwrites) {
-                        let permOverwrite = channel.permissionOverwrites.get(id);
-                        if (permOverwrite)
-                            if ((permOverwrite.allow == 0 && permOverwrite.deny == 2048) || (permOverwrite.deny == 0 && permOverwrite.allow == 2048)) {
-                                permOverwrite.delete();
-                            } else {
-                                channel.overwritePermissions(id, { SEND_MESSAGES: null }, `Auto unlock after ${durationString}`);
-                            }
+                    {
+                        //@ts-ignore
+                        guild = Bot.client.guilds.get(actionObject.info.guild);
+                        if (!guild) break;
+                        if (!guild.me.hasPermission('MANAGE_CHANNELS')) break;
+                        //@ts-ignore
+                        let channel = guild.channels.get(actionObject.info.channel);
+                        if (!channel || !(channel instanceof TextChannel)) break;
+                        let durationString = durationToString(actionObject.to - actionObject.from);
+                        //@ts-ignore
+                        for (const id of actionObject.info.allowOverwrites)
+                            await channel.overwritePermissions(id, { SEND_MESSAGES: true }, `Auto unlock after ${durationString}`);
+                        //@ts-ignore
+                        for (const id of actionObject.info.neutralOverwrites) {
+                            let permOverwrite = channel.permissionOverwrites.get(id);
+                            if (permOverwrite)
+                                if ((permOverwrite.allow == 0 && permOverwrite.deny == 2048) || (permOverwrite.deny == 0 && permOverwrite.allow == 2048)) {
+                                    permOverwrite.delete();
+                                } else {
+                                    channel.overwritePermissions(id, { SEND_MESSAGES: null }, `Auto unlock after ${durationString}`);
+                                }
+                        }
+
+                        channel.send('Channel is unlocked now');
+                        Bot.mStats.logMessageSend();
+
+                        let updateDoc = {};
+                        updateDoc['$unset'] = {};
+                        updateDoc['$unset'][`locks.${channel.id}`] = "";
+                        //@ts-ignore
+                        Bot.database.mainDB.guilds.updateOne({ guild: actionObject.info.guild }, updateDoc).exec();
+                        break;
                     }
-
-                    channel.send('Channel is unlocked now');
-                    Bot.mStats.logMessageSend();
-
-                    let updateDoc = {};
-                    updateDoc['$unset'] = {};
-                    updateDoc['$unset'][`locks.${channel.id}`] = "";
-                    //@ts-ignore
-                    Bot.database.mainDB.guilds.updateOne({ guild: actionObject.info.guild }, updateDoc).exec();
-                    break;
                 case pActionActions.resubWebhook:
-                    //@ts-ignore
-                    switch (actionObject.info.service) {
-                        case 'youtube':
-                            Bot.youtube.resubWebhooks();
-                            this.addWebhookResub('youtube', actionObject.to + YTResubInterval);
+                    {
+                        //@ts-ignore
+                        switch (actionObject.info.service) {
+                            case 'youtube':
+                                Bot.youtube.resubWebhooks();
+                                this.addWebhookResub('youtube', actionObject.to + YTResubInterval);
+                        }
+                        break;
                     }
-                    break;
             }
             action.remove();
         }

@@ -259,7 +259,7 @@ export class CaseLogger {
      * @param {number} duration duration of the action (optional)
      * @param {string} reason the reason why the action was performed (optional)
      */
-    private createCaseEmbed(user: User, mod: GuildMember, caseID: number, action: string, color: number, duration?: number, reason?: string) {
+    createCaseEmbed(user: User, mod: GuildMember, caseID: number, action: string, color: number, duration?: number, reason?: string) {
         let date = new Date();
         var embed = new RichEmbed();
         embed.setAuthor(`Case ${caseID} | ${action} | ${user.tag}`, user.displayAvatarURL);
