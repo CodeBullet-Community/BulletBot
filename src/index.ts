@@ -99,7 +99,7 @@ export class Bot {
 var mStats = new MStats(DBURI, 'admin');
 var database = new Database(DBURI, 'admin');
 var logger = new Logger(DBURI, 'admin');
-var client = new discord.Client();
+var client = new discord.Client({ disableEveryone: true });
 var commands = new Commands(__dirname + '/commands/');
 var filters = new Filters(__dirname + '/filters/');
 var youtube = new YTWebhookManager(DBURI, 'admin');
