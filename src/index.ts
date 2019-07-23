@@ -99,7 +99,7 @@ export class Bot {
 var mStats = new MStats(DBURI, 'admin');
 var database = new Database(DBURI, 'admin');
 var logger = new Logger(DBURI, 'admin');
-var client = new discord.Client();
+var client = new discord.Client({ disableEveryone: true });
 var commands = new Commands(__dirname + '/commands/');
 var filters = new Filters(__dirname + '/filters/');
 var youtube = new YTWebhookManager(DBURI, 'admin');
@@ -122,11 +122,18 @@ setInterval(() => {
     }
 }, crashProof.interval);
 
-client.on('ready', () => {
-    Bot.client.user.setActivity('I\'m ready!');
-    for (const guild of client.guilds.array()) { // adds are guilds that were added while the bot was down
+client.on('ready', async () => {
+    let existingGuilds = await Bot.database.mainDB.guilds.distinct('guild').exec();
+    let guildsToRemove = existingGuilds.filter(x => !client.guilds.get(x));
+    let guildsToAdd = client.guilds.filter(x => !existingGuilds.includes(x.id));
+    console.info(`Adding ${guildsToAdd.size} guilds and removing ${guildsToRemove.length} guilds`);
+    for (const guildID of guildsToRemove) { // removes all guilds that the bot left while it was down
+        Bot.database.removeGuild(guildID)
+    }
+    for (const guild of guildsToAdd.array()) { // adds all guilds that the bot joined while it was down
         Bot.database.addGuild(guild.id);
     }
+    Bot.client.user.setActivity('I\'m ready!');
     console.log('I\'m ready!');
 });
 

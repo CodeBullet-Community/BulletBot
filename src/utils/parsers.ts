@@ -2,6 +2,7 @@ import { Guild } from 'discord.js';
 import { filterAction, filterActions } from './filters';
 import { permLevels } from './permissions';
 import { Bot } from '..';
+import { durations } from './time';
 
 /**
  * Returns similarity value based on Levenshtein distance.
@@ -280,7 +281,18 @@ export function permToString(permLevel: number) {
     }
 }
 
-export function durationToString(duration: number){
+/**
+ * converts milliseconds into a string. Examples:
+ * - 3m 4s
+ * - 20d 30m
+ * - 0s
+ * - 1d 1h 1m 1s
+ *
+ * @export
+ * @param {number} duration duration in milliseconds
+ * @returns
+ */
+export function durationToString(duration: number) {
 
     var ms = duration % 1000;
     duration = (duration - ms) / 1000;
@@ -289,14 +301,41 @@ export function durationToString(duration: number){
     var minutes = duration % 60;
     duration = (duration - minutes) / 60;
     var hours = duration % 24;
-    var days = (duration-hours) / 24;
+    var days = (duration - hours) / 24;
 
     var durationString = '';
 
-    if(days != 0) durationString += days + 'd ';
-    if(hours != 0) durationString += hours + 'h ';
-    if(minutes != 0) durationString += minutes + 'm ';
-    if(seconds != 0) durationString += seconds + 's';
+    if (days != 0) durationString += days + 'd ';
+    if (hours != 0) durationString += hours + 'h ';
+    if (minutes != 0) durationString += minutes + 'm ';
+    if (seconds != 0) durationString += seconds + 's';
 
-    return durationString;
+    if (durationString == '') durationString = '0s';
+
+    return durationString.trim();
+}
+
+/**
+ * converts string into milliseconds. Syntax:
+ * - Ns = N seconds
+ * - Nm = N minutes
+ * - Nh = N hours
+ * - Nd = N days
+ *
+ * @export
+ * @param {string} text input text
+ * @returns
+ */
+export function stringToDuration(text: string) {
+    let ms = 0;
+    let seconds = /(\d+)s/.exec(text);
+    if (seconds) ms += Number(seconds[1]) * durations.second;
+    let minutes = /(\d+)m/.exec(text);
+    if (minutes) ms += Number(minutes[1]) * durations.minute;
+    let hours = /(\d+)h/.exec(text);
+    if (hours) ms += Number(hours[1]) * durations.hour;
+    let days = /(\d+)d/.exec(text);
+    if (days) ms += Number(days[1]) * durations.day;
+
+    return ms;
 }

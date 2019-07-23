@@ -5,7 +5,7 @@ import { commandInterface } from '../commands';
 import { permLevels } from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
-import { permToString } from '../utils/parsers';
+import { permToString, durationToString } from '../utils/parsers';
 import { durations } from '../utils/time';
 
 var command: commandInterface = {
@@ -47,12 +47,12 @@ var command: commandInterface = {
                     },
                     { // remove this if the command doesn't have local cooldown
                         'name': 'Local Cooldown:',
-                        'value': command.cooldownLocal + 'ms',
+                        'value': durationToString(command.cooldownLocal),
                         'inline': true
                     },
                     { // remove this if the command doesn't have global cooldown
                         'name': 'Global Cooldown:',
-                        'value': command.cooldownGlobal + 'ms',
+                        'value': durationToString(command.cooldownGlobal),
                         'inline': true
                     },
                     {
@@ -71,7 +71,7 @@ var command: commandInterface = {
         try {
             // REMEMBER: return true if the command was successfully executed (meaning the users intention where fulfilled)
             //           return false if the command execution was unsuccessful (then the cooldown doesn't get started)
-            
+
             // IMPORTANT: never repsond with "x isn't correct" (or something that the user can define through inputing), because then he could input @everyone or @here
 
             // only put this here when the command always requires arguments

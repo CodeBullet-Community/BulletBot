@@ -13,7 +13,15 @@ export interface guildObject {
     webhooks: {
         // key is service name
         [key: string]: mongoose.Schema.Types.ObjectId[];
-    }
+    };
+    locks: {
+        // channel id
+        [key: string]: {
+            until?: number;
+            allowOverwrites: string[];
+            neutralOverwrites: string[];
+        };
+    };
 }
 export interface guildDoc extends mongoose.Document, guildObject { }
 export const guildSchema = new mongoose.Schema({
@@ -25,7 +33,8 @@ export const guildSchema = new mongoose.Schema({
     staff: mongoose.Schema.Types.ObjectId,
     webhooks: {
         youtube: [mongoose.Schema.Types.ObjectId]
-    }
+    },
+    locks: mongoose.Schema.Types.Mixed
 });
 
 // staff
@@ -518,10 +527,17 @@ export const megalogFunctions = {
 };
 
 // pAction
+export enum pActionActions {
+    mute = 'mute',
+    lockChannel = 'lockChannel',
+    ban = 'ban',
+    resubWebhook = 'resubWebhook'
+}
+
 export interface pActionObject {
     from: number;
     to: number;
-    action: 'mute' | 'lockChannel' | 'ban' | 'resubWebhook';
+    action: pActionActions;
     info: pActionMute | pActionBan | pActionLockChannel | pActionResubWebhook;
 };
 export interface pActionDoc extends mongoose.Document, pActionObject { };
@@ -545,7 +561,8 @@ export interface pActionBan {
 export interface pActionLockChannel {
     guild: string;
     channel: string;
-    overwrites: string[];
+    allowOverwrites: string[];
+    neutralOverwrites: string[];
 }
 export interface pActionResubWebhook {
     service: string;
@@ -621,6 +638,121 @@ export interface mStatsObject {
         clientAPI: number; // client ping
         cluster: number;
     };
+    megalog: {
+        enabled: {
+            channelCreate: number;
+            channelDelete: number;
+            channelUpdate: number;
+            ban: number;
+            unban: number;
+            memberJoin: number;
+            memberLeave: number;
+            nicknameChange: number;
+            memberRolesChange: number;
+            guildNameChange: number;
+            messageDelete: number;
+            attachmentCache: number;
+            messageEdit: number;
+            reactionAdd: number;
+            reactionRemove: number;
+            roleCreate: number;
+            roleDelete: number;
+            roleUpdate: number;
+            voiceTranfer: number;
+            voiceMute: number;
+            voiceDeaf: number;
+        };
+        logged: {
+            channelCreate: number;
+            channelDelete: number;
+            channelUpdate: number;
+            ban: number;
+            unban: number;
+            memberJoin: number;
+            memberLeave: number;
+            nicknameChange: number;
+            memberRolesChange: number;
+            guildNameChange: number;
+            messageDelete: number;
+            attachmentCache: number;
+            messageEdit: number;
+            reactionAdd: number;
+            reactionRemove: number;
+            roleCreate: number;
+            roleDelete: number;
+            roleUpdate: number;
+            voiceTranfer: number;
+            voiceMute: number;
+            voiceDeaf: number;
+        };
+    };
+}
+export function createEmptyMStatsObject(): mStatsObject {
+    return {
+        messagesReceived: 0,
+        messagesSend: 0,
+        logs: 0,
+        guildsJoined: 0,
+        guildsLeft: 0,
+        guildsTotal: 0,
+        errorsTotal: 0,
+        commandTotal: 0,
+        commands: {},
+        filters: {},
+        webhooks: {},
+        ping: {
+            clientAPI: 0,
+            cluster: 0
+        },
+        megalog: {
+            enabled: {
+                channelCreate: 0,
+                channelDelete: 0,
+                channelUpdate: 0,
+                ban: 0,
+                unban: 0,
+                memberJoin: 0,
+                memberLeave: 0,
+                nicknameChange: 0,
+                memberRolesChange: 0,
+                guildNameChange: 0,
+                messageDelete: 0,
+                attachmentCache: 0,
+                messageEdit: 0,
+                reactionAdd: 0,
+                reactionRemove: 0,
+                roleCreate: 0,
+                roleDelete: 0,
+                roleUpdate: 0,
+                voiceTranfer: 0,
+                voiceMute: 0,
+                voiceDeaf: 0
+            },
+            logged: {
+                channelCreate: 0,
+                channelDelete: 0,
+                channelUpdate: 0,
+                ban: 0,
+                unban: 0,
+                memberJoin: 0,
+                memberLeave: 0,
+                nicknameChange: 0,
+                memberRolesChange: 0,
+                guildNameChange: 0,
+                messageDelete: 0,
+                attachmentCache: 0,
+                messageEdit: 0,
+                reactionAdd: 0,
+                reactionRemove: 0,
+                roleCreate: 0,
+                roleDelete: 0,
+                roleUpdate: 0,
+                voiceTranfer: 0,
+                voiceMute: 0,
+                voiceDeaf: 0
+            }
+        }
+    };
 }
 const mStatsSchemaStruc = {
     messagesReceived: Number,
@@ -637,6 +769,54 @@ const mStatsSchemaStruc = {
     ping: {
         clientAPI: Number,
         cluster: Number
+    },
+    megalog: {
+        enabled: {
+            channelCreate: Number,
+            channelDelete: Number,
+            channelUpdate: Number,
+            ban: Number,
+            unban: Number,
+            memberJoin: Number,
+            memberLeave: Number,
+            nicknameChange: Number,
+            memberRolesChange: Number,
+            guildNameChange: Number,
+            messageDelete: Number,
+            attachmentCache: Number,
+            messageEdit: Number,
+            reactionAdd: Number,
+            reactionRemove: Number,
+            roleCreate: Number,
+            roleDelete: Number,
+            roleUpdate: Number,
+            voiceTranfer: Number,
+            voiceMute: Number,
+            voiceDeaf: Number
+        },
+        logged: {
+            channelCreate: Number,
+            channelDelete: Number,
+            channelUpdate: Number,
+            ban: Number,
+            unban: Number,
+            memberJoin: Number,
+            memberLeave: Number,
+            nicknameChange: Number,
+            memberRolesChange: Number,
+            guildNameChange: Number,
+            messageDelete: Number,
+            attachmentCache: Number,
+            messageEdit: Number,
+            reactionAdd: Number,
+            reactionRemove: Number,
+            roleCreate: Number,
+            roleDelete: Number,
+            roleUpdate: Number,
+            voiceTranfer: Number,
+            voiceMute: Number,
+            voiceDeaf: Number
+        }
     }
 }
 
@@ -727,7 +907,7 @@ export interface globalSettingsObject {
         [key: string]: {
             [key: string]: any;
         }
-    }
+    };
 }
 export interface globalSettingsDoc extends mongoose.Document, globalSettingsObject { }
 export const globalSettingsSchema = new mongoose.Schema({

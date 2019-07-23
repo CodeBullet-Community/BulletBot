@@ -27,7 +27,9 @@ import {
     megalogObject,
     caseObject,
     caseDoc,
-    caseSchema
+    caseSchema,
+    pActionDoc,
+    pActionSchema
 } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
@@ -60,6 +62,7 @@ export class Database {
         users: mongoose.Model<userDoc>;
         megalogs: mongoose.Model<megalogDoc>;
         cases: mongoose.Model<caseDoc>;
+        pActions: mongoose.Model<pActionDoc>;
     };
     /**
      * represents the settings database with the settings collection and the connection. There is also a cache of the settings doc.
@@ -101,7 +104,8 @@ export class Database {
             commandCache: mainCon.model('commandCache', commandCacheSchema, 'commandCaches'),
             users: mainCon.model('user', userSchema, 'users'),
             megalogs: mainCon.model('megalogSettings', megalogSchema, 'megalogs'),
-            cases: mainCon.model('cases', caseSchema,'cases')
+            cases: mainCon.model('cases', caseSchema, 'cases'),
+            pActions: mainCon.model('pActions', pActionSchema, 'pAction')
         }
 
         var settingsCon = mongoose.createConnection(URI + '/settings' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true })
@@ -129,7 +133,7 @@ export class Database {
             this.cleanMegalogs();
             //console.log('cleaned database');
         }, cleanInterval);
-        console.info(`cleaning command caches every ${cleanInterval}ms`);
+        console.info(`cleaning database every ${cleanInterval}ms`);
     }
 
     /**
@@ -268,8 +272,8 @@ export class Database {
      * @returns
      * @memberof Database
      */
-    findGuildDoc(guildID: string) {
-        return this.mainDB.guilds.findOne({ guild: guildID }).exec();
+    findGuildDoc(guildID: string, projection?: string[]) {
+        return this.mainDB.guilds.findOne({ guild: guildID }, projection).exec();
     }
 
     /**
@@ -330,6 +334,8 @@ export class Database {
         this.mainDB.filters.deleteOne({ guild: guildID }).exec();
         this.mainDB.logs.deleteMany({ guild: guildID }).exec();
         this.mainDB.megalogs.deleteOne({ guild: guildID }).exec();
+        this.mainDB.cases.deleteMany({ guild: guildID }).exec();
+        this.mainDB.pActions.deleteMany({ 'info.guild': guildID }).exec();
     }
 
     /**

@@ -48,9 +48,10 @@ async function createMemberEmbed(member: GuildMember, permLevel: number) {
     var roleArray = member.roles.array();
     var roleCount = member.roles.array().length - 1;
     roleArray.shift();
-    for (const role of roleArray) {
+    for (const role of roleArray.slice(0, 40)) {
         roles += role.toString() + ' ';
     }
+    if (roleArray.length > 40) roles += `and ${roleCount - 40} more`;
     if (roles.length == 0) {
         roles = 'member has no roles';
     }
@@ -61,7 +62,7 @@ async function createMemberEmbed(member: GuildMember, permLevel: number) {
     } else {
         joinRank = ordinalSuffixOf(joinRank) + ' oldest member';
     }
-    return {
+    let embed: any = {
         "embed": {
             "description": member.toString(),
             "color": getPresenceColor(member),
@@ -114,6 +115,18 @@ async function createMemberEmbed(member: GuildMember, permLevel: number) {
             ]
         }
     };
+    if (permLevel >= permLevels.mod) {
+        let caseDocs = await Bot.caseLogger.cases.find({ user: member.id, guild: member.guild.id }, ['action']).exec();
+        let summary = { unmute: 0, mute: 0, unban: 0, ban: 0, kick: 0, warn: 0, softban: 0 };
+        for (const caseDoc of caseDocs)
+            summary[caseDoc.action]++;
+
+        embed.embed.fields.push({
+            "name": "Cases",
+            "value": `Total: ${caseDocs.length} | Warn: ${summary.warn} | Mute: ${summary.mute} | Kick: ${summary.warn} | Softban: ${summary.softban} | Ban: ${summary.ban} | Unmute: ${summary.unmute} | Unban: ${summary.unban}`
+        });
+    }
+    return embed;
 }
 
 async function sendMemberInfo(message: Message, member: GuildMember, permLevel: number, requestTime: [number, number]) {

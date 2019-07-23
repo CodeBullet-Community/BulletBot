@@ -113,6 +113,9 @@ There also needs to be a mongoDB cluster running. The minimal data in the cluste
             "bird":"https://some-random-api.ml/img/birb",
             "pikachu":"https://some-random-api.ml/pikachuimg"
          }
+      },
+      "purge":{
+         "maxMessages": 1000
       }
    },
    "filters":{
@@ -123,7 +126,7 @@ There also needs to be a mongoDB cluster running. The minimal data in the cluste
 
 ## Logo/PFP
 
-The logo/PFP was a fanart from @Aster#4205.
+The original logo/PFP was a fanart from @Aster#4205.
 
 Original:
 

@@ -34,6 +34,7 @@ export async function logChannelToggle(channel: GuildChannel, created: boolean) 
         }
     });
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog(created ? 'channelCreate' : 'channelDelete');
 }
 
 /**
@@ -165,16 +166,17 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
             if (oldBitfields.denied !== newBitfields.denied) {
                 value += `Denied Perms: \`${oldBitfields.denied}\` to \`${newBitfields.denied}\``;
             }
+            if (!value.length) value = 'Overwrite got deleted';
 
             embed.embed.fields.push({
-                "name": newPerm.type == 'role' ? role.name + ` (ID: ${role.id}):` : member.user.username + ` (ID: ${member.id}):`,
+                "name": role ? role.name + ` (ID: ${role.id}):` : member.user.username + ` (ID: ${member.id}):`,
                 "value": value
             });
         }
         await logChannel.send(embed);
         Bot.mStats.logMessageSend();
     }
-
+    Bot.mStats.logMegalogLog('channelUpdate');
 }
 
 /**
@@ -211,6 +213,7 @@ export async function logBan(guild: Guild, user: User, banned: boolean) {
         }
     });
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog(banned ? 'ban' : 'unban');
 }
 
 /**
@@ -253,6 +256,7 @@ export async function logMember(member: GuildMember, joined: boolean) {
     }
     await logChannel.send(embed);
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog(joined ? 'memberJoin' : 'memberLeave');
 }
 
 /**
@@ -298,6 +302,7 @@ export async function logNickname(oldMember: GuildMember, newMember: GuildMember
         }
     });
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog('nicknameChange');
 }
 
 /**
@@ -353,6 +358,7 @@ export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMem
         }
     });
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog('memberRolesChange');
 }
 
 /**
@@ -398,6 +404,7 @@ export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
         }
     });
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog('guildNameChange');
 }
 
 /**
@@ -468,6 +475,7 @@ export async function logMessageDelete(message: Message) {
     }
     await logChannel.send(embed);
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog('messageDelete');
 }
 
 /**
@@ -532,6 +540,7 @@ export async function logMessageBulkDelete(messages: Collection<string, Message>
         }
     });
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog('messageDelete');
 }
 
 /**
@@ -580,6 +589,7 @@ export async function cacheAttachment(message: Message) {
         await logChannel.send(`from ${message.author.tag} (${message.author.id}) in ${message.channel} (${message.channel.id})\n${message.url}\nAttachments too large to send`);
     }
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog('attachmentCache');
 }
 
 /**
@@ -636,6 +646,8 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
         }
     });
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog('messageEdit');
+
 }
 
 /**
@@ -669,6 +681,7 @@ export async function logReactionToggle(reaction: MessageReaction, user: User, r
         }
     });
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog(reacted ? 'reactionAdd' : 'reactionRemove');
 }
 
 /**
@@ -685,10 +698,6 @@ export async function logReactionRemoveAll(message: Message) {
     if (!megalogDoc.reactionRemove) return;
     let logChannel = message.guild.channels.get(megalogDoc.reactionRemove);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    let reactions = '';
-    for (const reaction of message.reactions.array()) {
-        reactions += `${reaction.emoji}: \`${reaction.count}\`\n`;
-    }
     await logChannel.send({
         "embed": {
             "description": `**All reactions were removed from a message of ${message.author.toString()} in ${message.channel.toString()}** [Jump to Message](${message.url})`,
@@ -700,16 +709,11 @@ export async function logReactionRemoveAll(message: Message) {
             "author": {
                 "name": message.author.tag,
                 "icon_url": message.author.displayAvatarURL
-            },
-            "fields": [
-                {
-                    "name": "Reaction Count",
-                    "value": reactions
-                }
-            ]
+            }
         }
     });
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog('reactionRemove');
 }
 
 /**
@@ -746,6 +750,7 @@ export async function logRoleToggle(role: Role, created: boolean) {
         return; // very likely just left the server and the bot specific role got deleted
     }
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog(created ? 'roleCreate' : 'roleDelete');
 }
 
 /**
@@ -846,6 +851,7 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
         });
         Bot.mStats.logMessageSend();
     }
+    Bot.mStats.logMegalogLog('roleUpdate');
 }
 
 /**
@@ -879,6 +885,7 @@ export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildM
         }
     });
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog('voiceTransfer');
 }
 
 /**
@@ -912,6 +919,7 @@ export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMembe
         }
     });
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog('voiceMute');
 }
 
 /**
@@ -945,4 +953,5 @@ export async function logVoiceDeaf(oldMember: GuildMember, newMember: GuildMembe
         }
     });
     Bot.mStats.logMessageSend();
+    Bot.mStats.logMegalogLog('voiceDeaf');
 }

@@ -4,20 +4,25 @@ import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, durationToString } from '../../utils/parsers';
-import request = require('request');
-import { durations, getDurationDiff } from '../../utils/time';
-import { suggestionForm } from '../../bot-config.json';
+import { durations } from '../../utils/time';
+
+async function getBannedUser(guild: Guild, text: string) {
+    let bans = await guild.fetchBans();
+    let user = bans.find(x => x.id == text);
+    if (!user) user = bans.find(x => x.username == text);
+    return user;
+}
 
 var command: commandInterface = {
-    name: 'botsuggest',
+    name: 'unban',
     path: '',
-    dm: true,
-    permLevel: permLevels.member,
+    dm: false,
+    permLevel: permLevels.mod,
     togglable: false,
-    cooldownGlobal: durations.second * 20,
-    shortHelp: 'make suggestion for bot',
+    cooldownLocal: durations.second,
+    shortHelp: 'Unban users',
     embedHelp: async function (guild: Guild) {
-        var prefix = await Bot.database.getPrefix(guild);
+        let prefix = await Bot.database.getPrefix(guild);
         return {
             'embed': {
                 'color': Bot.database.settingsDB.cache.embedColors.help,
@@ -27,7 +32,7 @@ var command: commandInterface = {
                 'fields': [
                     {
                         'name': 'Description:',
-                        'value': 'Make a suggestion for the bot. Be as descriptive as you can'
+                        'value': 'Unban users' // more detailed desc
                     },
                     {
                         'name': 'Need to be:',
@@ -45,17 +50,17 @@ var command: commandInterface = {
                         'inline': true
                     },
                     {
-                        'name': 'Global Cooldown:',
-                        'value': durationToString(command.cooldownGlobal),
+                        'name': 'Local Cooldown:',
+                        'value': durationToString(command.cooldownLocal),
                         'inline': true
                     },
                     {
-                        'name': 'Usage:', // all possible inputs to the guild, the arguments should be named
-                        'value': '{command} [bug]'.replace(/\{command\}/g, prefix + command.name)
+                        'name': 'Usage:',
+                        'value': '{command} [user] [reason]'.replace(/\{command\}/g, prefix + command.name)
                     },
                     {
-                        'name': 'Example:', // example use of the command
-                        'value': '{command} This feature doesn\'t work with that'.replace(/\{command\}/g, prefix + command.name)
+                        'name': 'Example:',
+                        'value': '{command} 418112403419430915 didn\'t steal my ice cream after all'.replace(/\{command\}/g, prefix + command.name)
                     }
                 ]
             }
@@ -68,24 +73,31 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            let form = {};
-            form['entry.' + suggestionForm.serverID] = (!dm ? message.guild.id : undefined);
-            form['entry.' + suggestionForm.serverName] = (!dm ? message.guild.name : undefined);
-            form['entry.' + suggestionForm.userID] = message.author.id;
-            form['entry.' + suggestionForm.userName] = message.author.username;
-            form['entry.' + suggestionForm.messageID] = message.id;
-            form['entry.' + suggestionForm.channelID] = message.channel.id;
-            form['entry.' + suggestionForm.suggestion] = args;
-            request.post('https://docs.google.com/forms/d/e/1FAIpQLSee3V4--MxBJqPjoDgfUIw2u22NG-4GBlT92Bbj10-R1ScuHA/formResponse', {
-                form: form
-            });
+            let argsArray = args.split(' ').filter(x => x.length != 0);
+
+            let user = await getBannedUser(message.guild, argsArray[0]);
+            if (!user) {
+                message.channel.send('Couldn\'t find specified member');
+                Bot.mStats.logMessageSend();
+                return false;
+            }
+
+            let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length).trim();
+            Bot.caseLogger.logUnban(message.guild, user, message.member, reason);
+            user.send(`You were unbanned in **${message.guild.name}**${reason ? ' for:\n' + reason : ''}`).catch(error => { });
+
+            message.guild.unban(user);
+            Bot.pActions.removeBan(message.guild.id, user.id);
+
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send('Suggestion was logged. Thanks for making one.');
-            Bot.mStats.logMessageSend();
+            message.channel.send(`:white_check_mark: **${user.tag} has been unbanned${reason ? ', ' + reason : ''}**`);
             Bot.mStats.logCommandUsage(command.name);
+            Bot.mStats.logMessageSend();
+            return true;
         } catch (e) {
             sendError(message.channel, e);
             Bot.mStats.logError(e, command.name);
+            return false;
         }
     }
 };

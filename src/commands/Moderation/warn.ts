@@ -3,21 +3,19 @@ import { commandInterface } from '../../commands';
 import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString } from '../../utils/parsers';
-import request = require('request');
-import { durations, getDurationDiff } from '../../utils/time';
-import { suggestionForm } from '../../bot-config.json';
+import { permToString, stringToMember, durationToString } from '../../utils/parsers';
+import { durations } from '../../utils/time';
 
 var command: commandInterface = {
-    name: 'botsuggest',
+    name: 'warn',
     path: '',
-    dm: true,
-    permLevel: permLevels.member,
+    dm: false,
+    permLevel: permLevels.mod,
     togglable: false,
-    cooldownGlobal: durations.second * 20,
-    shortHelp: 'make suggestion for bot',
+    cooldownLocal: durations.second,
+    shortHelp: 'Warn members',
     embedHelp: async function (guild: Guild) {
-        var prefix = await Bot.database.getPrefix(guild);
+        let prefix = await Bot.database.getPrefix(guild);
         return {
             'embed': {
                 'color': Bot.database.settingsDB.cache.embedColors.help,
@@ -27,7 +25,7 @@ var command: commandInterface = {
                 'fields': [
                     {
                         'name': 'Description:',
-                        'value': 'Make a suggestion for the bot. Be as descriptive as you can'
+                        'value': 'Warn member for a rule break or something similar'
                     },
                     {
                         'name': 'Need to be:',
@@ -45,17 +43,17 @@ var command: commandInterface = {
                         'inline': true
                     },
                     {
-                        'name': 'Global Cooldown:',
-                        'value': durationToString(command.cooldownGlobal),
+                        'name': 'Local Cooldown:',
+                        'value': durationToString(command.cooldownLocal),
                         'inline': true
                     },
                     {
-                        'name': 'Usage:', // all possible inputs to the guild, the arguments should be named
-                        'value': '{command} [bug]'.replace(/\{command\}/g, prefix + command.name)
+                        'name': 'Usage:',
+                        'value': '{command} [member] [reason]'.replace(/\{command\}/g, prefix + command.name)
                     },
                     {
-                        'name': 'Example:', // example use of the command
-                        'value': '{command} This feature doesn\'t work with that'.replace(/\{command\}/g, prefix + command.name)
+                        'name': 'Example:',
+                        'value': '{command} @jeff#1234 being a dick'.replace(/\{command\}/g, prefix + command.name)
                     }
                 ]
             }
@@ -68,24 +66,27 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            let form = {};
-            form['entry.' + suggestionForm.serverID] = (!dm ? message.guild.id : undefined);
-            form['entry.' + suggestionForm.serverName] = (!dm ? message.guild.name : undefined);
-            form['entry.' + suggestionForm.userID] = message.author.id;
-            form['entry.' + suggestionForm.userName] = message.author.username;
-            form['entry.' + suggestionForm.messageID] = message.id;
-            form['entry.' + suggestionForm.channelID] = message.channel.id;
-            form['entry.' + suggestionForm.suggestion] = args;
-            request.post('https://docs.google.com/forms/d/e/1FAIpQLSee3V4--MxBJqPjoDgfUIw2u22NG-4GBlT92Bbj10-R1ScuHA/formResponse', {
-                form: form
-            });
+
+            let user = await stringToMember(message.guild, args.slice(0, args.indexOf(' ')), false, false, false);
+            if (!user) {
+                message.channel.send('Couldn\'t find specified member');
+                Bot.mStats.logMessageSend();
+                return false;
+            }
+
+            let reason = args.slice(args.indexOf(' ')).trim();
+            Bot.caseLogger.logWarn(message.guild, user, message.member, reason);
+            user.send(`You were warned in **${message.guild.name}** for:\n${reason}`);
+
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send('Suggestion was logged. Thanks for making one.');
-            Bot.mStats.logMessageSend();
+            message.channel.send(`:white_check_mark: **${user.user.tag} has been warned, ${reason}**`);
             Bot.mStats.logCommandUsage(command.name);
+            Bot.mStats.logMessageSend();
+            return true;
         } catch (e) {
             sendError(message.channel, e);
             Bot.mStats.logError(e, command.name);
+            return false;
         }
     }
 };

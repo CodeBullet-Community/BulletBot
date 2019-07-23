@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { mStatsAllTimeDoc, mStatsDayDoc, mStatsHourDoc, mStatsAllTimeSchema, mStatsDaySchema, mStatsHourSchema, mStatsHourObject, mStatsObject, errorDoc, errorSchema, mStatsDayObject } from './schemas';
+import { mStatsAllTimeDoc, mStatsDayDoc, mStatsHourDoc, mStatsAllTimeSchema, mStatsDaySchema, mStatsHourSchema, mStatsHourObject, mStatsObject, errorDoc, errorSchema, mStatsDayObject, megalogFunctions, createEmptyMStatsObject } from './schemas';
 import { Bot } from '..';
 import { durations, toNano } from '../utils/time';
 import crypto = require('crypto');
@@ -83,34 +83,58 @@ export class MStats {
         var hour = date.getUTCHours();
 
         var model = this.connection.model<mStatsHourDoc>('hour', mStatsHourSchema, 'hourly');
+
+        // checks if there are hours saved from other days
+        let existingDays: number[] = await model.distinct('day').exec();
+        if (existingDays.includes(day)) existingDays.splice(existingDays.indexOf(day), 1);
+        for (const existingDay of existingDays) {
+            if (!await this.daily.findOne({ day: existingDay })) { // only make a new day doc if there isn't one
+                let hourObjects: mStatsHourObject[] = (await model.find({ day: existingDay }).exec()).map(x => x.toObject());
+
+                let mergedObject: any;
+                if (hourObjects.length != 1) {
+                    // get the newest hour doc
+                    let newestIndex = 0;
+                    let newestHour = hourObjects[newestIndex];
+                    hourObjects.forEach((x, i) => {
+                        if (x.hour > newestHour.hour) {
+                            newestHour = x;
+                            newestIndex = i;
+                        }
+                    });
+                    hourObjects.splice(newestIndex, 1);
+
+                    mergedObject = this.mergeStats(hourObjects, newestHour);
+                    mergedObject.day = existingDay;
+                } else {
+                    mergedObject = hourObjects[0];
+                    delete mergedObject.day;
+                }
+
+                await new this.daily(mergedObject).save();
+            }
+            model.deleteMany({ day: existingDay }).exec();
+        }
+        console.info(`Resolved ${existingDays.length} days in hourly collection.`);
+
         var doc = await model.findOne({ day: day, hour: hour }).exec(); // looks if it can find an existing hour document
         var pingTestCounter = 1;
         if (!doc) {
-            doc = new model({
-                day: day,
-                hour: hour,
-                messagesRecieved: 0,
-                messagesSend: 0,
-                logs: 0,
-                guildsJoined: 0,
-                guildsLeft: 0,
-                guildsTotal: 0,
-                errorsTotal: 0,
-                commandTotal: 0,
-                commands: {},
-                filters: {},
-                webhooks: {},
-                ping: {
-                    clientAPI: 0,
-                    cluster: 0
-                }
-            });
+            let docObject: any = createEmptyMStatsObject();
+            docObject.day = day;
+            docObject.hour = hour;
+            doc = new model(docObject);
             doc.markModified('commands');
             doc.markModified('filters');
             doc.markModified('webhooks');
             doc.save();
             pingTestCounter = 0;
         } else {
+            // old mStats object don't have a megalog property
+            if (!doc.megalog)
+                doc.megalog = createEmptyMStatsObject().megalog;
+            if (!doc.megalog.enabled)
+                doc.megalog.enabled = createEmptyMStatsObject().megalog.enabled;
             console.info('Using existing hour document');
         }
 
@@ -120,7 +144,7 @@ export class MStats {
             pingTestCounter: pingTestCounter,
             interval: null
         };
-        this.hourly.interval = this.createHourInterval(durations.minute/6, durations.hour - (UTC % durations.hour) - durations.minute);
+        this.hourly.interval = this.createHourInterval(durations.minute / 6, durations.hour - (UTC % durations.hour) - durations.minute);
 
         setTimeout(() => { // timeout and interval for the next hour and all hours after that
             this.changeHour();
@@ -151,15 +175,23 @@ export class MStats {
             hourly.pingTestCounter++;
 
             // total stats
+            // total guilds
             hourly.doc.guildsTotal = Bot.client.guilds.size;
+            // total youtube webhooks
             if (!hourly.doc.webhooks) hourly.doc.webhooks = {};
             if (!hourly.doc.webhooks.youtube) {
                 hourly.doc.webhooks.youtube = { total: 0, created: 0, deleted: 0, changed: 0 };
             }
             hourly.doc.webhooks.youtube.total = await Bot.youtube.webhooks.countDocuments().exec();
+            // total enabled megalog functions
+            for (const megalogFunction of megalogFunctions.all) {
+                let query = {};
+                query[megalogFunction] = { $exists: true };
+                hourly.doc.megalog.enabled[megalogFunction] = await Bot.database.mainDB.megalogs.countDocuments(query).exec();
+            }
 
             // marks nested objects as modified so they also get saved
-            for(const keys in hourly.doc.toObject()){
+            for (const keys in hourly.doc.toObject()) {
                 hourly.doc.markModified(keys);
             }
             return await hourly.doc.save();
@@ -205,25 +237,10 @@ export class MStats {
             await this.changeDay(oldHourObject.day);
         }
 
-        var hourObject: mStatsHourObject = {
-            day: day,
-            hour: hour,
-            messagesReceived: 0,
-            messagesSend: 0,
-            logs: 0,
-            guildsJoined: 0,
-            guildsLeft: 0,
-            guildsTotal: 0,
-            errorsTotal: 0,
-            commandTotal: 0,
-            commands: {},
-            filters: {},
-            webhooks: {},
-            ping: {
-                clientAPI: 0,
-                cluster: 0
-            }
-        };
+        var hourObject: any = createEmptyMStatsObject();
+        hourObject.day = day;
+        hourObject.hour = hour;
+
         this.hourly.doc = new this.hourly.model(hourObject);
         await this.saveHour(this.hourly);
         this.hourly.pingTestCounter = 0; // resets ping test counter because there weren't any ping test save into this document
@@ -288,82 +305,72 @@ export class MStats {
      * @memberof MStats
      */
     mergeStats(docs: mStatsObject[], newestDoc: mStatsObject) {
-        var merged: mStatsObject = {
-            messagesReceived: 0,
-            messagesSend: 0,
-            logs: 0,
-            guildsJoined: 0,
-            guildsLeft: 0,
-            guildsTotal: 0,
-            errorsTotal: 0,
-            commandTotal: 0,
-            commands: {},
-            filters: {},
-            webhooks: {},
-            ping: {
-                clientAPI: 0,
-                cluster: 0
-            }
-        };
+        var mergedDoc: mStatsObject = createEmptyMStatsObject();
         for (const doc of docs) {
-            merged.messagesReceived += doc.messagesReceived;
-            merged.messagesSend += doc.messagesSend;
-            merged.logs += doc.logs;
-            merged.guildsJoined += doc.guildsJoined;
-            merged.guildsLeft += doc.guildsLeft;
-            merged.errorsTotal += doc.errorsTotal;
-            merged.commandTotal += doc.commandTotal;
+            mergedDoc.messagesReceived += doc.messagesReceived;
+            mergedDoc.messagesSend += doc.messagesSend;
+            mergedDoc.logs += doc.logs;
+            mergedDoc.guildsJoined += doc.guildsJoined;
+            mergedDoc.guildsLeft += doc.guildsLeft;
+            mergedDoc.errorsTotal += doc.errorsTotal;
+            mergedDoc.commandTotal += doc.commandTotal;
 
             for (const cmd in doc.commands) {
-                if (!merged.commands[cmd]) {
-                    merged.commands[cmd] = { _errors: 0, _resp: 0 };
+                if (!mergedDoc.commands[cmd]) {
+                    mergedDoc.commands[cmd] = { _errors: 0, _resp: 0 };
                 }
                 for (const subCmd in doc.commands[cmd]) {
-                    if (!merged.commands[cmd][subCmd]) {
-                        merged.commands[cmd][subCmd] = doc.commands[cmd][subCmd];
+                    if (!mergedDoc.commands[cmd][subCmd]) {
+                        mergedDoc.commands[cmd][subCmd] = doc.commands[cmd][subCmd];
                     } else {
-                        merged.commands[cmd][subCmd] += doc.commands[cmd][subCmd];
+                        mergedDoc.commands[cmd][subCmd] += doc.commands[cmd][subCmd];
                     }
                 }
             }
 
             for (const filter in doc.filters) {
-                if (!merged.filters[filter]) {
-                    merged.filters[filter] = doc.filters[filter];
+                if (!mergedDoc.filters[filter]) {
+                    mergedDoc.filters[filter] = doc.filters[filter];
                 } else {
-                    merged.filters[filter] += doc.filters[filter];
+                    mergedDoc.filters[filter] += doc.filters[filter];
                 }
             }
 
             for (const service in doc.webhooks) {
-                if (!merged.webhooks[service]) {
-                    merged.webhooks[service] = doc.webhooks[service];
+                if (!mergedDoc.webhooks[service]) {
+                    mergedDoc.webhooks[service] = doc.webhooks[service];
                 } else {
                     for (const key in doc.webhooks[service]) {
-                        merged.webhooks[service][key] += doc.webhooks[service][key];
+                        mergedDoc.webhooks[service][key] += doc.webhooks[service][key];
                     }
                 }
             }
 
-            merged.ping.clientAPI += doc.ping.clientAPI;
-            merged.ping.cluster += doc.ping.cluster;
-        }
-        for (const command in merged.commands) {
-            merged.commands[command]._resp /= docs.length;
-        }
-        merged.ping.clientAPI /= docs.length;
-        merged.ping.cluster /= docs.length;
+            mergedDoc.ping.clientAPI += doc.ping.clientAPI;
+            mergedDoc.ping.cluster += doc.ping.cluster;
 
-        merged.guildsTotal = newestDoc.guildsTotal;
-        for (const service in merged.webhooks) {
+            if (doc.megalog) // old mStats doc don't have this property
+                for (const megalogFunction in doc.megalog.logged)
+                    mergedDoc.megalog.logged[megalogFunction] += doc.megalog.logged[megalogFunction];
+        }
+        for (const command in mergedDoc.commands) {
+            mergedDoc.commands[command]._resp /= docs.length;
+        }
+        mergedDoc.ping.clientAPI /= docs.length;
+        mergedDoc.ping.cluster /= docs.length;
+
+        mergedDoc.guildsTotal = newestDoc.guildsTotal;
+        for (const service in mergedDoc.webhooks) {
             if (newestDoc.webhooks[service] && newestDoc.webhooks[service].total) {
-                merged.webhooks[service].total = newestDoc.webhooks[service].total;
+                mergedDoc.webhooks[service].total = newestDoc.webhooks[service].total;
             } else {
-                merged.webhooks[service].total = 0;
+                mergedDoc.webhooks[service].total = 0;
             }
         }
+        if (newestDoc.megalog) // old mStats doc don't have this property
+            mergedDoc.megalog.enabled = Object.assign({}, newestDoc.megalog.enabled);
 
-        return merged;
+        return mergedDoc;
     }
 
     /**
@@ -550,6 +557,29 @@ export class MStats {
             this.hourly.doc.webhooks[service] = { total: 0, created: 0, changed: 0, deleted: 0 };
         }
         this.hourly.doc.webhooks[service][action] += 1;
+    }
+
+    /**
+     * logs a log that the megalogger created
+     *
+     * @param {string} megalogFunction which function made the log
+     * @returns
+     * @memberof MStats
+     */
+    logMegalogLog(megalogFunction: 'channelCreate' | 'channelDelete' | 'channelUpdate' | 'ban' | 'unban' |
+        'memberJoin' | 'memberLeave' | 'nicknameChange' | 'memberRolesChange' | 'guildNameChange' |
+        'messageDelete' | 'attachmentCache' | 'messageEdit' | 'reactionAdd' | 'reactionRemove' |
+        'roleCreate' | 'roleDelete' | 'roleUpdate' | 'voiceTransfer' | 'voiceMute' | 'voiceDeaf') {
+        if (!this.hourly) return;
+        if (!this.hourly.doc.megalog)
+            this.hourly.doc.megalog = createEmptyMStatsObject().megalog;
+        if (!this.hourly.doc.megalog.logged)
+            this.hourly.doc.megalog.logged = createEmptyMStatsObject().megalog.logged;
+        if (!megalogFunctions.all.includes(megalogFunction)) {
+            console.warn(`Invalid input in mStats.logMegalogLog function: ${megalogFunction}`);
+            return;
+        }
+        this.hourly.doc.megalog.logged[megalogFunction] += 1;
     }
 
 }
