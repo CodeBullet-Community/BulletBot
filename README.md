@@ -113,6 +113,9 @@ There also needs to be a mongoDB cluster running. The minimal data in the cluste
             "bird":"https://some-random-api.ml/img/birb",
             "pikachu":"https://some-random-api.ml/pikachuimg"
          }
+      },
+      "purge":{
+         "maxMessages": 1000
       }
    },
    "filters":{
