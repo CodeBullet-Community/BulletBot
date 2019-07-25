@@ -42,7 +42,7 @@ function getPresenceColor(member: GuildMember) {
     }
 }
 
-async function createMemberEmbed(member: GuildMember, permLevel: number) {
+async function createMemberEmbed(member: GuildMember, permLevel: number, requesterPermLevel: number) {
     var date = new Date();
     var roles = '';
     var roleArray = member.roles.array();
@@ -115,7 +115,7 @@ async function createMemberEmbed(member: GuildMember, permLevel: number) {
             ]
         }
     };
-    if (permLevel >= permLevels.mod) {
+    if (requesterPermLevel >= permLevels.mod) {
         let caseDocs = await Bot.caseLogger.cases.find({ user: member.id, guild: member.guild.id }, ['action']).exec();
         let summary = { unmute: 0, mute: 0, unban: 0, ban: 0, kick: 0, warn: 0, softban: 0 };
         for (const caseDoc of caseDocs)
@@ -123,14 +123,14 @@ async function createMemberEmbed(member: GuildMember, permLevel: number) {
 
         embed.embed.fields.push({
             "name": "Cases",
-            "value": `Total: ${caseDocs.length} | Warn: ${summary.warn} | Mute: ${summary.mute} | Kick: ${summary.warn} | Softban: ${summary.softban} | Ban: ${summary.ban} | Unmute: ${summary.unmute} | Unban: ${summary.unban}`
+            "value": `Total: ${caseDocs.length} | Warn: ${summary.warn} | Mute: ${summary.mute} | Kick: ${summary.kick} | Softban: ${summary.softban} | Ban: ${summary.ban} | Unmute: ${summary.unmute} | Unban: ${summary.unban}`
         });
     }
     return embed;
 }
 
-async function sendMemberInfo(message: Message, member: GuildMember, permLevel: number, requestTime: [number, number]) {
-    var embed = await createMemberEmbed(member, permLevel)
+async function sendMemberInfo(message: Message, member: GuildMember, permLevel: number, requesterPermLevel: number, requestTime: [number, number]) {
+    var embed = await createMemberEmbed(member, permLevel, requesterPermLevel)
     Bot.mStats.logResponseTime(command.name, requestTime);
     message.channel.send(embed);
     Bot.mStats.logCommandUsage(command.name, 'self');
@@ -142,7 +142,7 @@ var command: commandInterface = { name: undefined, path: undefined, dm: undefine
 command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
     try {
         if (args.length === 0) {
-            await sendMemberInfo(message, message.member, permLevel, requestTime);
+            await sendMemberInfo(message, message.member, permLevel, permLevel, requestTime);
             return;
         }
 
@@ -152,7 +152,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             Bot.mStats.logMessageSend();
             return false;
         }
-        await sendMemberInfo(message, member, await getPermLevel(member), requestTime);
+        await sendMemberInfo(message, member, await getPermLevel(member), permLevel, requestTime);
     } catch (e) {
         sendError(message.channel, e);
         Bot.mStats.logError(e, command.name);
