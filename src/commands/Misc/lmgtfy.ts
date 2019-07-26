@@ -5,7 +5,7 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, durationToString } from '../../utils/parsers';
 import { durations } from '../../utils/time';
-const lmgtfy = require('lmgtfy')
+import lmgtfy from 'lmgtfy';
 
 var command: commandInterface = {
     name: 'lmgtfy',
@@ -13,8 +13,6 @@ var command: commandInterface = {
     dm: true,
     permLevel: permLevels.member,
     togglable: true,
-    cooldownLocal: durations.second * 10,
-    cooldownGlobal: durations.second * 10,
     shortHelp: 'Let Me Google That For You link generator',
     embedHelp: async function (guild: Guild) {
         let prefix = await Bot.database.getPrefix(guild);
@@ -35,23 +33,13 @@ var command: commandInterface = {
                         'inline': true
                     },
                     {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
                         'name': 'Togglable:',
                         'value': command.togglable,
-                        'inline': true
+			'inline': true
                     },
                     {
-                        'name': 'Local Cooldown:',
-                        'value': durationToString(command.cooldownLocal),
-                        'inline': true
-                    },
-                    {
-                        'name': 'Global Cooldown:',
-                        'value': durationToString(command.cooldownGlobal),
+                        'name': 'DM capable:',
+                        'value': command.dm,
                         'inline': true
                     },
                     {
@@ -79,7 +67,7 @@ var command: commandInterface = {
 
             Bot.mStats.logResponseTime(command.name, requestTime);
 
-            message.reply(content);
+            message.channel.send(content);
 
             Bot.mStats.logMessageSend();
             Bot.mStats.logCommandUsage(command.name);
