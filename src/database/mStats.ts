@@ -579,7 +579,12 @@ export class MStats {
             console.warn(`Invalid input in mStats.logMegalogLog function: ${megalogFunction}`);
             return;
         }
-        this.hourly.doc.megalog.logged[megalogFunction] += 1;
+        if (isNaN(this.hourly.doc.megalog.logged[megalogFunction])) {
+            this.hourly.doc.megalog.logged[megalogFunction] = 1;
+        } else {
+            this.hourly.doc.megalog.logged[megalogFunction] += 1;
+        }
+
     }
 
 }
