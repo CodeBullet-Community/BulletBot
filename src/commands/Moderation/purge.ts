@@ -115,6 +115,11 @@ var command: commandInterface = {
                     Bot.mStats.logMessageSend();
                     return false; // was unsuccessful
                 }
+                if (numberOfMessages <= 0) {
+                    message.channel.send(`The number of messages must be greater than 0.`);
+                    Bot.mStats.logMessageSend();
+                    return false;
+                }
                 await message.delete();
                 //@ts-ignore
                 let found = await DeleteLastXmessages(numberOfMessages, message.channel);
@@ -149,6 +154,11 @@ var command: commandInterface = {
                     Bot.mStats.logMessageSend();
                     return false; // was unsuccessful
                 }
+                if (numberOfMessages <= 0) {
+                    message.channel.send(`The number of messages must be greater than 0.`);
+                    Bot.mStats.logMessageSend();
+                    return false;
+                }
 
                 await message.delete();
                 
@@ -173,6 +183,11 @@ var command: commandInterface = {
                     message.channel.send(`You can only delete a maximum of ${maxMessages} messages.`);
                     Bot.mStats.logMessageSend();
                     return false; // was unsuccessful
+                }
+                if (numMessages <= 0) {
+                    message.channel.send(`The number of messages must be greater than 0.`);
+                    Bot.mStats.logMessageSend();
+                    return false;
                 }
 
                 message.delete();
@@ -336,7 +351,9 @@ async function DeleteLastXmessages(numberOfMessages: number, channel: TextChanne
             }
         }
     }
-    if (!criteria) {
+    if (numberOfMessages % 100 == 0) {
+        return found;
+    } else if (!criteria) {
         channel.bulkDelete(numberOfMessages % 100, true);
         return true
     } else {

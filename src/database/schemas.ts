@@ -10,6 +10,7 @@ export interface guildObject {
     totalCases: number;
     logs: mongoose.Schema.Types.ObjectId[];
     staff: mongoose.Schema.Types.ObjectId;
+    modmailChannel: string,
     webhooks: {
         // key is service name
         [key: string]: mongoose.Schema.Types.ObjectId[];
@@ -29,6 +30,7 @@ export const guildSchema = new mongoose.Schema({
     logChannel: String,
     caseChannel: String,
     totalCases: Number,
+    modmailChannel: String,
     logs: [mongoose.Schema.Types.ObjectId],
     staff: mongoose.Schema.Types.ObjectId,
     webhooks: {
@@ -886,7 +888,7 @@ export const webhookSchema = new mongoose.Schema({
 // global settings
 export interface globalSettingsObject {
     prefix: string;
-    presence: PresenceData;
+    presence: PresenceData;    
     embedColors: {
         default: number;
         help: number;

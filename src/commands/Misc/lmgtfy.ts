@@ -35,7 +35,7 @@ var command: commandInterface = {
                     {
                         'name': 'Togglable:',
                         'value': command.togglable,
-			'inline': true
+			            'inline': true
                     },
                     {
                         'name': 'DM capable:',

@@ -1,4 +1,4 @@
-import { Channel, GuildChannel, TextChannel, Role, GuildMember, Guild, User, Message, Attachment, Collection, MessageReaction } from "discord.js";
+import { Channel, GuildChannel, TextChannel, Role, GuildMember, Guild, User, Message, Attachment, Collection, MessageReaction, DMChannel } from "discord.js";
 import { Bot } from ".";
 import { timeFormat, getDurationDiff, getDayDiff } from "./utils/time";
 import dateFormat = require('dateformat');
@@ -416,6 +416,7 @@ export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
  * @memberof megalogger
  */
 export async function logMessageDelete(message: Message) {
+    if (typeof message.channel == typeof new DMChannel(undefined, undefined)) return;
     let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
     if (!megalogDoc || !megalogDoc.messageDelete) return;
     if (message.channel.id == megalogDoc.messageDelete) return;
@@ -487,6 +488,7 @@ export async function logMessageDelete(message: Message) {
  * @memberof megalogger
  */
 export async function logMessageBulkDelete(messages: Collection<string, Message>) {
+    if (typeof messages.first().channel == typeof new DMChannel(undefined, undefined)) return;
     let megalogDoc = await Bot.database.findMegalogDoc(messages.first().guild.id);
     if (!megalogDoc || !megalogDoc.messageDelete) return;
     if (messages.first().channel.id == megalogDoc.messageDelete) return;
@@ -570,6 +572,7 @@ async function getAttachmentCache(message: Message, cacheChannelID: string, time
  * @memberof megalogger
  */
 export async function cacheAttachment(message: Message) {
+    if (typeof message.channel == typeof new DMChannel(undefined, undefined)) return;
     if (message.attachments.size == 0) return;
     let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
     if (!megalogDoc) return;
@@ -602,6 +605,7 @@ export async function cacheAttachment(message: Message) {
  * @memberof megalogger
  */
 export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
+    if (typeof newMessage.channel == typeof new DMChannel(undefined, undefined)) return;
     if (oldMessage.content == newMessage.content) return;
     let megalogDoc = await Bot.database.findMegalogDoc(newMessage.guild.id);
     if (!megalogDoc) return;
@@ -661,6 +665,7 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
  * @memberof megalogger
  */
 export async function logReactionToggle(reaction: MessageReaction, user: User, reacted: boolean) {
+    if (typeof reaction.message.channel == typeof new DMChannel(undefined, undefined)) return;
     let megalogDoc = await Bot.database.findMegalogDoc(reaction.message.guild.id);
     if (!megalogDoc) return;
     if ((reacted && !megalogDoc.reactionAdd) || (!reacted && !megalogDoc.reactionRemove)) return;
@@ -693,6 +698,7 @@ export async function logReactionToggle(reaction: MessageReaction, user: User, r
  * @memberof megalogger
  */
 export async function logReactionRemoveAll(message: Message) {
+    if (typeof message.channel == typeof new DMChannel(undefined, undefined)) return;
     let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
     if (!megalogDoc) return;
     if (!megalogDoc.reactionRemove) return;
