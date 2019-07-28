@@ -579,6 +579,8 @@ export enum caseActions {
     unban = 'unban'
 };
 
+export const caseActionsArray = ['ban', 'warn', 'mute', 'kick', 'softban', 'unmute', 'unban'];
+
 export interface caseObject {
     guild: string;
     caseID: number;

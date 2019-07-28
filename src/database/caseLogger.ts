@@ -175,21 +175,16 @@ export class CaseLogger {
 
     /**
      * Deletes a case with a given case ID and returns a boolean when successful
-     * @param guildID
-     * @param caseID
+     * @param guildID id of guild in which case is in
+     * @param caseID id of case that should be deleted
      */
-    async deleteCase(guildID: string, caseID: string) {
-        let success = false;
-        if (!isNaN(Number(caseID))) {
-            let caseIDInt = parseInt(caseID);
-            let cases = await this.cases.findOne({ guild: guildID, caseID: caseID }).exec();
-            if (cases) {
-                await this.cases.deleteOne({ guild: guildID, caseID: caseIDInt }).exec();
-
-                success = true;
-            }
+    async deleteCase(guildID: string, caseID: number) {
+        let cases = await this.cases.findOne({ guild: guildID, caseID: caseID }).exec();
+        if (cases) {
+            await this.cases.deleteOne({ guild: guildID, caseID: caseID }).exec();
+            return true;
         }
-        return success;
+        return false;
     }
 
     async editReason(guildID: string, caseID: string, reason: string) {
