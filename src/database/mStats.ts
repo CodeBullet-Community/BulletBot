@@ -55,8 +55,8 @@ export class MStats {
      * @param {string} authDB name of auth database
      * @memberof MStats
      */
-    constructor(URI: string, authDB: string) {
-        this.connection = mongoose.createConnection(URI + '/mStats' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true });
+    constructor(clusterInfo: { url: string, suffix: string }) {
+        this.connection = mongoose.createConnection(clusterInfo.url + '/mStats' + clusterInfo.suffix, { useNewUrlParser: true });
         this.connection.on('error', error => {
             console.error('connection error:', error);
             Bot.mStats.logError(error);

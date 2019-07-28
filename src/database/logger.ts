@@ -42,12 +42,11 @@ export class Logger {
     /**
      * Creates an instance of Logger, connections to main database and inits all models.
      * 
-     * @param {string} URI
-     * @param {string} authDB
+     * @param {{ url: string, suffix: string }} clusterInfo
      * @memberof Logger
      */
-    constructor(URI: string, authDB: string) {
-        var mainCon = mongoose.createConnection(URI + '/main' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true });
+    constructor(clusterInfo: { url: string, suffix: string }) {
+        var mainCon = mongoose.createConnection(clusterInfo.url + '/main' + clusterInfo.suffix, { useNewUrlParser: true });
         mainCon.on('error', error => {
             console.error('connection error:', error);
             Bot.mStats.logError(error);

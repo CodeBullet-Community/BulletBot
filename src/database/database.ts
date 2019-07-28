@@ -79,12 +79,11 @@ export class Database {
     /**
      * Creates an instance of Database and connections to the main and settings database.
      * 
-     * @param {string} URI URL to cluster with login credentials when needed
-     * @param {string} authDB authentication database name
+     * @param {{ url: string, suffix: string }} clusterInfo object containing the url and suffix for the cluster
      * @memberof Database
      */
-    constructor(URI: string, authDB: string) {
-        var mainCon = mongoose.createConnection(URI + '/main' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true });
+    constructor(clusterInfo: { url: string, suffix: string }) {
+        var mainCon = mongoose.createConnection(clusterInfo.url + '/main' + clusterInfo.suffix, { useNewUrlParser: true });
         mainCon.on('error', error => {
             console.error('connection error:', error);
             Bot.mStats.logError(error);
@@ -108,7 +107,7 @@ export class Database {
             pActions: mainCon.model('pActions', pActionSchema, 'pAction')
         }
 
-        var settingsCon = mongoose.createConnection(URI + '/settings' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true })
+        var settingsCon = mongoose.createConnection(clusterInfo.url + '/settings' + clusterInfo.suffix, { useNewUrlParser: true })
         settingsCon.on('error', error => {
             console.error('connection error:', error);
             Bot.mStats.logError(error);

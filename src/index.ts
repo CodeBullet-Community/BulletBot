@@ -7,7 +7,7 @@ import { Catcher } from './catcher';
 import { Logger } from './database/logger';
 import { Database } from './database/database';
 import { MStats } from './database/mStats';
-import { botToken, DBURI, callback, crashProof } from './bot-config.json';
+import { botToken, cluster, callback, crashProof } from './bot-config.json';
 import { permLevels, getPermLevel } from './utils/permissions';
 import { logTypes } from './database/schemas';
 import { durations } from './utils/time';
@@ -96,16 +96,16 @@ export class Bot {
     }
 }
 
-var mStats = new MStats(DBURI, 'admin');
-var database = new Database(DBURI, 'admin');
-var logger = new Logger(DBURI, 'admin');
+var mStats = new MStats(cluster);
+var database = new Database(cluster);
+var logger = new Logger(cluster);
 var client = new discord.Client({ disableEveryone: true });
 var commands = new Commands(__dirname + '/commands/');
 var filters = new Filters(__dirname + '/filters/');
-var youtube = new YTWebhookManager(DBURI, 'admin');
+var youtube = new YTWebhookManager(cluster);
 var catcher = new Catcher(callback.port);
-let pActions = new PActions(DBURI, 'admin');
-var caseLogger = new CaseLogger(DBURI, 'admin');
+let pActions = new PActions(cluster);
+var caseLogger = new CaseLogger(cluster);
 Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger, pActions, caseLogger);
 
 exitHook(() => {

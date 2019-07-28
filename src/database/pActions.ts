@@ -29,12 +29,11 @@ export class PActions {
     /**
      * Creates an instance of PActions and connects to the pActions collection.
      * 
-     * @param {string} URI
-     * @param {string} authDB
+     * @param {{ url: string, suffix: string }} clusterInfo
      * @memberof PActions
      */
-    constructor(URI: string, authDB: string) {
-        this.connection = mongoose.createConnection(URI + '/main' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true });
+    constructor(clusterInfo: { url: string, suffix: string }) {
+        this.connection = mongoose.createConnection(clusterInfo.url + '/main' + clusterInfo.suffix, { useNewUrlParser: true });
         this.connection.on('error', error => {
             console.error('connection error:', error);
             Bot.mStats.logError(error);

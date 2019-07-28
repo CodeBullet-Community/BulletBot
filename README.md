@@ -37,7 +37,10 @@ Jet is using Typescript 3.4.1 but any version will probably work if you use the 
 {
     "version": "v1.0", //the version of the current build
     "botToken": "[bot token here]",
-    "DBURI": "mongodb://localhost", // URI to mongodb cluster
+    "cluster": {
+        "url": "mongodb://localhost", // url to mongo cluster
+        "suffix": "?authSource=admin" // string that comes after the full url (for example for auth)
+    },
     "googleAPIKey": "[google api key for youtube_v3]",
     "bugForm": { // google form for suggestions
         "url": "https://docs.google.com/forms/d/e/1FAIpQLScWsqLDncKzqSgmZuFhuwenqexzmKSr0K_B4GSOgoF6fEBcMA/formResponse",
