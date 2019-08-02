@@ -243,7 +243,7 @@ client.on('channelCreate', async channel => {
         logChannelToggle(channel, true);
 });
 
-client.on('channelDelete', async (channel: discord.TextChannel) => {
+client.on('channelDelete', async channel => {
     if (channel instanceof discord.GuildChannel)
         logChannelToggle(channel, false);
     if (channel instanceof discord.TextChannel) {
@@ -254,6 +254,10 @@ client.on('channelDelete', async (channel: discord.TextChannel) => {
         let megalogDoc = await Bot.database.findMegalogDoc(channel.guild.id); // checks if there are any megalogger functions for that channel
         if (megalogDoc) {
             let modified = false;
+            if (megalogDoc.ignoreChannels.includes(channel.id)) {
+                megalogDoc.ignoreChannels.splice(megalogDoc.ignoreChannels.indexOf(channel.id), 1);
+                modified = true;
+            }
             let megalogObject = megalogDoc.toObject();
             for (const key in megalogObject) {
                 if (megalogObject[key] == channel.id) {
