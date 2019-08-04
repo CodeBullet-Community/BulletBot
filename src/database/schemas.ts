@@ -123,7 +123,7 @@ export interface logObject {
     action: number;
     mod: string;
     timestamp: number;
-    info?: logStaff | logWebhook | logFilter | logCommand | logPrefix | logMegalog;
+    info?: logStaff | logWebhook | logFilter | logCommand | logPrefix | logMegalog | logMegalogIgnore;
 }
 export interface logDoc extends mongoose.Document, logObject { }
 export const logSchema = new mongoose.Schema({
@@ -158,18 +158,19 @@ export enum logActions {
     filter = 2,
     command = 3,
     prefix = 4,
-    megalog = 5
+    megalog = 5,
+    megalogIgnore = 6
 }
 
 export interface logStaff {
-    type: 0 | 1; // add or remove
+    type: logTypes.add | logTypes.remove; // add or remove
     rank: 'admins' | 'mods' | 'immune';
     role?: string; // role id
     user?: string; // user id
 }
 
 export interface logWebhook {
-    type: 0 | 1 | 2; // add, remove or change
+    type: logTypes; // add, remove or change
     service: string; // service name
     webhookID: string; // doc id
     changedChannel?: boolean; // if channel was changed
@@ -177,12 +178,12 @@ export interface logWebhook {
 }
 
 export interface logFilter {
-    type: 0 | 1; // add, remove or change
+    type: logTypes.add | logTypes.remove; // add, remove or change
     filter: string; // filter name
 }
 
 export interface logCommand {
-    type: 0 | 1; // add, remove or change
+    type: logTypes.add | logTypes.remove; // add, remove or change
     command: string; // command name
 }
 
@@ -192,8 +193,13 @@ export interface logPrefix {
 }
 
 export interface logMegalog {
-    type: logTypes; // add/remove/~~change~~
+    type: logTypes.add | logTypes.remove; // add/remove
     functions: string[]; // functions enabled/disabled
+    channel?: string // channel ID
+}
+
+export interface logMegalogIgnore {
+    type: logTypes.add | logTypes.remove; // add/remove
     channel?: string // channel ID
 }
 
@@ -440,6 +446,7 @@ export class UserWrapper {
 // megalog settings
 export interface megalogObject {
     guild: string; // guild id
+    ignoreChannels: string[]; // channel ids
     channelCreate: string;
     channelDelete: string;
     channelUpdate: string;
@@ -465,6 +472,7 @@ export interface megalogObject {
 export interface megalogDoc extends mongoose.Document, megalogObject { }
 export const megalogSchema = new mongoose.Schema({
     guild: String,
+    ignoreChannels: [String],
     channelCreate: { type: String, required: false },
     channelDelete: { type: String, required: false },
     channelUpdate: { type: String, required: false },
@@ -580,6 +588,8 @@ export enum caseActions {
     unmute = 'unmute',
     unban = 'unban'
 };
+
+export const caseActionsArray = ['ban', 'warn', 'mute', 'kick', 'softban', 'unmute', 'unban'];
 
 export interface caseObject {
     guild: string;

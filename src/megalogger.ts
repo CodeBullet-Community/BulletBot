@@ -15,6 +15,7 @@ import dateFormat = require('dateformat');
 export async function logChannelToggle(channel: GuildChannel, created: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(channel.guild.id);
     if (!megalogDoc) return;
+    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(channel.id)) return;
     if (!megalogDoc.channelCreate && created) return;
     if (!megalogDoc.channelDelete && !created) return;
     let logChannel = channel.guild.channels.get(created ? megalogDoc.toObject().channelCreate : megalogDoc.toObject().channelDelete);
@@ -53,6 +54,7 @@ export async function logChannelToggle(channel: GuildChannel, created: boolean) 
 export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: GuildChannel) {
     let megalogDoc = await Bot.database.findMegalogDoc(newChannel.guild.id);
     if (!megalogDoc) return;
+    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(newChannel.id)) return;
     if (!megalogDoc.channelUpdate) return;
     let logChannel = newChannel.guild.channels.get(megalogDoc.toObject().channelUpdate);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
@@ -418,7 +420,9 @@ export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
 export async function logMessageDelete(message: Message) {
     if (typeof message.channel == typeof new DMChannel(undefined, undefined)) return;
     let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
-    if (!megalogDoc || !megalogDoc.messageDelete) return;
+    if (!megalogDoc) return;
+    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(message.channel.id)) return;
+    if (!megalogDoc.messageDelete) return;
     if (message.channel.id == megalogDoc.messageDelete) return;
     let logChannel = message.guild.channels.get(megalogDoc.messageDelete);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
@@ -490,7 +494,9 @@ export async function logMessageDelete(message: Message) {
 export async function logMessageBulkDelete(messages: Collection<string, Message>) {
     if (typeof messages.first().channel == typeof new DMChannel(undefined, undefined)) return;
     let megalogDoc = await Bot.database.findMegalogDoc(messages.first().guild.id);
-    if (!megalogDoc || !megalogDoc.messageDelete) return;
+    if (!megalogDoc) return;
+    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(messages.first().channel.id)) return;
+    if (!megalogDoc.messageDelete) return;
     if (messages.first().channel.id == megalogDoc.messageDelete) return;
     let logChannel = messages.first().guild.channels.get(megalogDoc.messageDelete);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
@@ -576,6 +582,7 @@ export async function cacheAttachment(message: Message) {
     if (message.attachments.size == 0) return;
     let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
     if (!megalogDoc) return;
+    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(message.channel.id)) return;
     if (!megalogDoc.attachmentCache) return;
     let logChannel = message.guild.channels.get(megalogDoc.attachmentCache);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
@@ -609,6 +616,7 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
     if (oldMessage.content == newMessage.content) return;
     let megalogDoc = await Bot.database.findMegalogDoc(newMessage.guild.id);
     if (!megalogDoc) return;
+    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(newMessage.channel.id)) return;
     if (!megalogDoc.messageEdit) return;
     if (megalogDoc.messageDelete == newMessage.channel.id && newMessage.author.id == Bot.client.user.id) return;
     let logChannel = newMessage.guild.channels.get(megalogDoc.messageEdit);
@@ -668,6 +676,7 @@ export async function logReactionToggle(reaction: MessageReaction, user: User, r
     if (typeof reaction.message.channel == typeof new DMChannel(undefined, undefined)) return;
     let megalogDoc = await Bot.database.findMegalogDoc(reaction.message.guild.id);
     if (!megalogDoc) return;
+    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(reaction.message.channel.id)) return;
     if ((reacted && !megalogDoc.reactionAdd) || (!reacted && !megalogDoc.reactionRemove)) return;
     let logChannel = reaction.message.guild.channels.get(reacted ? megalogDoc.reactionAdd : megalogDoc.reactionRemove);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
@@ -701,6 +710,7 @@ export async function logReactionRemoveAll(message: Message) {
     if (typeof message.channel == typeof new DMChannel(undefined, undefined)) return;
     let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
     if (!megalogDoc) return;
+    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(message.channel.id)) return;
     if (!megalogDoc.reactionRemove) return;
     let logChannel = message.guild.channels.get(megalogDoc.reactionRemove);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;

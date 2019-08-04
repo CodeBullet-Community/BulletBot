@@ -43,11 +43,11 @@ var command: commandInterface = {
                     },
                     {
                         'name': 'Usage:', // all possible inputs to the guild, the arguments should be named
-                        'value': `${prefix + command.name} list [member] \n ${prefix + command.name} delete [caseID] \n ${prefix + command.name} view [caseID]`
+                        'value': `${prefix + command.name} list [member] \n ${prefix + command.name} view [caseID]`
                     },
                     {
                         'name': 'Example:', // example use of the command
-                        'value': `${prefix + command.name} list\n${prefix + command.name} list Montori\n${prefix + command.name} delete 1559318905494`
+                        'value': `${prefix + command.name} list\n${prefix + command.name} list Montori`
                     }
                 ]
             }
@@ -110,26 +110,6 @@ var command: commandInterface = {
                 message.channel.send(embed);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name);
-            }
-
-            if (argsArray[argIndex] == 'delete') {
-                argIndex++;
-                if (!argsArray[argIndex]) {
-                    message.channel.send('Please provide a valid case ID');
-                    Bot.mStats.logMessageSend();
-                    return false;
-                }
-                if (!await Bot.caseLogger.deleteCase(message.guild.id, argsArray[argIndex])) {
-                    message.channel.send('Please provide a valid case ID');
-                    Bot.mStats.logMessageSend();
-                    return false;
-                }
-                Bot.mStats.logResponseTime(command.name, requestTime);
-                message.channel.send("The case has been deleted");
-                Bot.mStats.logMessageSend();
-                Bot.mStats.logCommandUsage(command.name);
-                return true;
-
             }
 
         } catch (e) {

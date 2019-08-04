@@ -33,12 +33,11 @@ export class CaseLogger {
     cases: mongoose.Model<caseDoc>;
     /**
      * Creates an instance of CaseLogger, connections to main database and inits all models.
-     * @param {string} URI
-     * @param {string} authDB
+     * @param {{ url: string, suffix: string }} clusterInfo
      * @memberof CaseLogger
      */
-    constructor(URI: string, authDB: string) {
-        var mainCon = mongoose.createConnection(URI + '/main' + (authDB ? '?authSource=' + authDB : ''), { useNewUrlParser: true });
+    constructor(clusterInfo: { url: string, suffix: string }) {
+        var mainCon = mongoose.createConnection(clusterInfo.url + '/main' + clusterInfo.suffix, { useNewUrlParser: true });
         mainCon.on('error', error => {
             console.error('connection error:', error);
             Bot.mStats.logError(error);
@@ -175,21 +174,16 @@ export class CaseLogger {
 
     /**
      * Deletes a case with a given case ID and returns a boolean when successful
-     * @param guildID
-     * @param caseID
+     * @param guildID id of guild in which case is in
+     * @param caseID id of case that should be deleted
      */
-    async deleteCase(guildID: string, caseID: string) {
-        let success = false;
-        if (!isNaN(Number(caseID))) {
-            let caseIDInt = parseInt(caseID);
-            let cases = await this.cases.findOne({ guild: guildID, caseID: caseID }).exec();
-            if (cases) {
-                await this.cases.deleteOne({ guild: guildID, caseID: caseIDInt }).exec();
-
-                success = true;
-            }
+    async deleteCase(guildID: string, caseID: number) {
+        let cases = await this.cases.findOne({ guild: guildID, caseID: caseID }).exec();
+        if (cases) {
+            await this.cases.deleteOne({ guild: guildID, caseID: caseID }).exec();
+            return true;
         }
-        return success;
+        return false;
     }
 
     async editReason(guildID: string, caseID: string, reason: string) {
