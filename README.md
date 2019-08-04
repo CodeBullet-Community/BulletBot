@@ -31,7 +31,7 @@ typedoc --out [path to output folder] .\src\ --tsconfig .\tsconfig.json --mode f
 
 ## How to run the bot
 
-Jet is using Typescript 3.4.1 but any version will probably work if you use the `tsconfig.json`. The bot also needs a `bot-config.json` file in `src\` and respectively `out/`. The json structure is the following:
+Codec is using Typescript 3.4.1 but any version will probably work if you use the `tsconfig.json`. The bot also needs a `bot-config.json` file in `src\` and respectively `out/`. The json structure is the following:
 
 ```JSON
 {
