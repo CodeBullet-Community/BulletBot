@@ -1,0 +1,12 @@
+[Unit]
+Description=A service to start BulletBot after a crash or server reboot
+After=network.target mongod.service
+
+[Service]
+User=codec
+ExecStart=/usr/bin/node
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

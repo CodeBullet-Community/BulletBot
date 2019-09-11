@@ -1,0 +1,8 @@
+[Unit]
+Description=A service to execute bullet-mongo-start.sh on server reboot
+
+[Service]
+ExecStart=/bin/bash 
+
+[Install]
+WantedBy=multi-user.target
