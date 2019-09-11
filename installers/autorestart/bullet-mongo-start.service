@@ -2,7 +2,7 @@
 Description=A service to execute bullet-mongo-start.sh on server reboot
 
 [Service]
-ExecStart=/bin/bash 
+ExecStart=/bin/bash <location of execution script>
 
 [Install]
 WantedBy=multi-user.target
