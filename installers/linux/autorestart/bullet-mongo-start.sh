@@ -39,8 +39,7 @@ while true; do
                     #20)\n---------End of bulletbot.service logs--------" \
                     #| mail -t
                 exit 0
-            elif [[ $bullet_status = "inactive" || $bullet_status = "failed" \
-                    ]]; then
+            elif [[ $bullet_status = "inactive" || $bullet_status = "failed" ]]; then
                 # Attempts to (re)start bulletbot.service a max of 3 times
                 if [[ $bullet_attempts -le 2 ]]; then
                     systemctl start bulletbot.service
