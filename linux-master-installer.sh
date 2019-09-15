@@ -152,6 +152,7 @@ while true; do
                 "using option 1.${nc}"
         elif [[ ! -d src && ! -d out ]]; then
             echo "${cyan}BulletBot has not been downloaded to your system"
+        fi
         echo "1. Download BulletBot"
         echo "2. Stop and exit script"
         read option
