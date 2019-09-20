@@ -5,12 +5,28 @@ cyan=$'\033[0;36m'
 red=$'\033[1;31m'
 nc=$'\033[0m'
 execution_path="$(dirname $0)"
+start_script_exists=$(find . -path installers -prune -o -print | grep \
+    -i "bullet-mongo-start.sh" &>/dev/null; echo $?)
+bullet_service_exists=$(systemctl list-units --full --all | grep -Fq \
+    "bulletbot.service" &>/dev/null; echo $?)
+start_service_exists=$(systemctl list-units --full --all | grep -Fq \
+    "bullet-mongo-start.service" &>/dev/null; echo $?)
+# TODO: Change the urls below when everything is moved to new repo
+tag=$(curl -s https://api.github.com/repos/StrangeRanger/Bull/releases/latest \
+    | grep -oP '"tag_name": "\K(.*)(?=")')
+latest_release="https://github.com/StrangeRanger/Bull/releases/download/${tag}/BulletBot.zip"
 
+# Checks to see if this script was executed with root privilege, and if not,
+# stops the script
 if [[ $EUID -ne 0 ]]; then 
     echo "${red}Please run this script as root or with root privilege${nc}"
     exit 1
 fi
 
+
+# ----------------------------------- #
+# FUNCTION USED ALL THROUGHOUT SCRIPT #
+# ----------------------------------- #
 # This function deals with downloading BulletBot (the latest release from github)
 # then replaces the existing the existing BulletBot code with it, if there is any
 download_bb() {
@@ -52,16 +68,13 @@ download_bb() {
             }
         fi
 
-        # Removes unneeded files 
+        # Removes unneeded files
+        echo "Removing unneeded files..."
         if [ -d src ]; then rm -r src/; fi
         if [ -d media ]; then rm -r media/; fi
         if [ -f tsconfig.json ]; then rm tsconfig.json; fi
     fi
     
-    # TODO: Change the urls below when everything is moved to new repo
-    tag=$(curl -s https://api.github.com/repos/StrangeRanger/Bull/releases/latest \
-        | grep -oP '"tag_name": "\K(.*)(?=")')
-    latest_release="https://github.com/StrangeRanger/Bull/releases/download/${tag}/BulletBot.zip"
     echo "Downloading latest release"
     wget -N $latest_release || {
         echo "${red}Failed to download the latest release${nc}" >&2
@@ -74,7 +87,7 @@ download_bb() {
     echo "Removing BulletBot.zip..."
     rm BulletBot.zip
     
-    # Moves 'bot-config.json' to where it belongs ('out/')
+    # Moves 'bot-config.json' back to where it belongs ('out/')
     if [ -f tmp/bot-config.json ]; then
         mv tmp/bot-config.json out/ || {
             echo "${red}Failed to move 'bot-config.json' to 'out/'" >&2
@@ -83,6 +96,26 @@ download_bb() {
         rm -r tmp/
     fi
 
+    # Either creates or updates bulletbot.service
+    echo "Creating/updating bulletbot.service..."
+    echo "[Unit]
+Description=A service to start BulletBot after a crash or server reboot
+After=network.target mongod.service
+
+[Service]
+User=bulletbot
+ExecStart=/usr/bin/node /home/bulletbot/out/index.js
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service 
+
+    if ($start_script_exists && $start_service_exists) &>/dev/null; then
+        echo "Updating startup script and service..."
+        bash installers/linux/setup/autorestart-setup.sh
+    fi
+    
     echo "Changing ownership of installed files..."
     chown bulletbot:admin -R *
     echo -e "\n${green}Finished downloading and updating BulletBot${nc}"
@@ -92,6 +125,9 @@ download_bb() {
 }
 
 
+# --------- #
+# MAIN CODE #
+# --------- #
 echo -e "Welcome to the BulletBot installer\n"
 cd "$execution_path"
 export green
@@ -100,12 +136,6 @@ export red
 export nc
 
 while true; do
-    start_script_exists=$(find . -path installers -prune -o -print | grep \
-       -i "bullet-mongo-start.sh" &>/dev/null; echo $?)
-    bullet_service_exists=$(systemctl list-units --full --all | grep -Fq \
-        "bulletbot.service" &>/dev/null; echo $?)
-    start_service_exists=$(systemctl list-units --full --all | grep -Fq \
-        "bullet-mongo-start.service" &>/dev/null; echo $?)
     # Contains all the possible files/directories that are associated with
     # BulletBot (only files/directories located in the BulletBot root directory)
     files=("installers/" "linux-master-installer.sh" "package-lock.json" \
@@ -135,7 +165,7 @@ while true; do
         cd /home/bulletbot
     fi
 
-    # Checks to see if uncompiled code for BulletBot in current directory
+    # Checks to see if it is necessary to download BulletBot
     if [[ -d src || ! -d out ]]; then
         if [[ -d src && ! -d out ]]; then
             echo "${cyan}The uncompiled code for BulletBot is currently on your" \
@@ -167,7 +197,7 @@ while true; do
     # If any of the prerequisites are not installed or set up, it will require the
     # user to do so
     elif (! hash mongod || ! hash nodejs || ! hash node || ! hash npm || [[ ! -f \
-            out/bot-config.json || ! -d $(npm root -g) ]]) &>/dev/null; then
+            out/bot-config.json || ! -d node_modules ]]) &>/dev/null; then
         echo "${cyan}Some or all prerequisites are not installed. Due to this, all" \
             "options to run BulletBot have been hidden until the prerequisites are" \
             "installed and setup.${nc}"
@@ -181,13 +211,16 @@ while true; do
         fi
         
         if (! hash nodejs || ! hash node || ! hash npm) &>/dev/null; then
-            echo "3. Install npm and nodejs ${red}(Not installed)${nc}"
+            echo "3. Install npm and nodejs (will also perform the same actions option" \
+            "4) ${red}(Not installed)${nc}"
         else
-            echo "3. Install npm and nodejs ${green}(Already installed)${nc}"
+            echo "3. Install npm and nodejs (will also perform the same actions option" \
+            "4) ${green}(Already installed)${nc}"
         fi
 
-        if [[ ! -d $(npm root -g) ]] &>/dev/null; then
-            echo "4. Install packages and dependencies with npm ${red}(Not installed)${nc}"
+        if [[ ! -d node_modules ]] &>/dev/null; then
+            echo "4. Install packages and dependencies with npm ${red}(Not" \
+                "installed)${nc}"
         else
             echo "4. Install packages and dependencies with npm ${green}(Already" \
                 "installed)${nc}"
@@ -213,14 +246,17 @@ while true; do
                 clear
                 ;;
             3)
+                export option
                 bash installers/linux/nodejs-installer.sh
                 clear
                 ;;
             4)
+                export option
                 bash installers/linux/nodejs-installer.sh
                 clear
                 ;;
             5)
+                export tag
                 bash installers/linux/setup/bot-config-setup.sh
                 clear
                 ;;
@@ -242,7 +278,8 @@ while true; do
         echo "2. Run BulletBot in background"
         echo "3. Run BulletBot in current session"
         echo "4. Run BulletBot in background with auto restart"
-        echo "5. Stop and exit script"
+        echo "5. Create new bot config file (replaces current config file)"
+        echo "6. Stop and exit script"
         read option
         case $option in
             1)
@@ -262,6 +299,10 @@ while true; do
                 clear
                 ;;
             5)
+                export tag
+                bash installers/linux/setup/bot-config-setup.sh
+                ;;
+            6)
                 exit 0
                 ;;
             *)
@@ -278,7 +319,8 @@ while true; do
         echo "2. Run BulletBot in background"
         echo "3. Run BulletBot in current session"
         echo "4. Setup auto restart"
-        echo "5. Stop and exit script"
+        echo "5. Create new bot config file (replaces current config file)"
+        echo "6. Stop and exit script"
         read option
         case $option in
             1)
@@ -297,7 +339,11 @@ while true; do
                 bash installers/linux/setup/autorestart-setup.sh
                 clear
                 ;;
-            5) 
+            5)
+                export tag
+                bash installers/linux/setup/bot-config-setup.sh
+                ;;
+            6)
                 exit 0
                 ;;
             *)
