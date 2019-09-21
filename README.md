@@ -42,4 +42,4 @@ Original:
 
 Vectorized:
 
-![vector avatar](media/BulletBot.png "Vectorized Avatar")
+![vector avatar](media/BulletBot.svg "Vectorized Avatar")
