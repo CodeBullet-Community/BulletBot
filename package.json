@@ -1,37 +1,39 @@
 {
-  "name": "bulletbot",
-  "version": "1.2.0",
-  "description": "",
-  "main": "out/index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Jet132/BulletBot.git"
-  },
-  "author": "Jet",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Jet132/BulletBot/issues"
-  },
-  "homepage": "https://github.com/Jet132/BulletBot#readme",
-  "dependencies": {
-    "@types/dateformat": "^3.0.0",
-    "@types/express": "^4.17.0",
-    "@types/mongodb": "^3.1.30",
-    "@types/mongoose": "^5.5.11",
-    "@types/node": "^11.13.18",
-    "@types/request": "^2.48.2",
-    "console-stamp": "^0.2.9",
-    "dateformat": "^3.0.3",
-    "discord.js": "^11.5.1",
-    "exit-hook": "^2.2.0",
-    "express": "^4.17.1",
-    "googleapis": "^39.2.0",
-    "lmgtfy": "^1.2.0",
-    "mongoose": "^5.6.6",
-    "request": "^2.88.0",
-    "xml2js": "^0.4.19"
-  }
+    "name": "bulletbot",
+    "version": "1.2.3",
+    "description": "a general purpose discord bot",
+    "main": "out/index.js",
+    "scripts": {
+        "run": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Jet132/BulletBot.git"
+    },
+    "author": "BulletBot Dev Team",
+    "license": "GNU AGPLv3",
+    "bugs": {
+        "url": "https://github.com/Jet132/BulletBot/issues"
+    },
+    "homepage": "https://github.com/Jet132/BulletBot",
+    "dependencies": {
+        "console-stamp": "^0.2.9",
+        "dateformat": "^3.0.3",
+        "discord.js": "^11.5.1",
+        "exit-hook": "^2.2.0",
+        "express": "^4.17.1",
+        "googleapis": "^39.2.0",
+        "lmgtfy": "^1.2.0",
+        "mongoose": "^5.7.1",
+        "request": "^2.88.0",
+        "xml2js": "^0.4.22"
+    },
+    "devDependencies": {
+        "@types/dateformat": "^3.0.0",
+        "@types/express": "^4.17.1",
+        "@types/mongodb": "^3.3.2",
+        "@types/mongoose": "^5.5.17",
+        "@types/node": "^11.13.20",
+        "@types/request": "^2.48.3"
+    }
 }
