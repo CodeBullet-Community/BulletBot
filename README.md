@@ -1,140 +1,45 @@
 # BulletBot
 
-This is a bot for the [Code Bullet and Co](https://discord.gg/7Z5d4HF) discord server. It was originally made to fix a webhook role mentioning problem, but the goal was extended to replacing all bots in the server. (Which it currently can't)
+This is a general-purpose Discord bot that originated from a webhook problem in the [Code Bullet and Co](https://discord.gg/4dsf8ZY) server. During the prelaunch development time, the main creator [Codec](https://github.com/Jet132) decided to extend this project to replacing every bot in the server. Until now, I only replaced one entire bot but also some functions from other bots.
 
-## Coding style
+## Getting Started
 
-When planning a feature, keep in mind, that the bot should be stateless. AKA all data should be stored in the database, so the bot can crash or shutdown at any time and resume it's work later like before.
+There are two types of guides in the [wiki](https://github.com/Jet132/BulletBot/wiki). One is for actually running the bot on a server 24/7 and the other one is for setting up a development environment for your self.
 
-### General guide
+- Server Setup (Running 24/7):
+  - [Linux](https://github.com/Jet132/BulletBot/wiki/Linux-Server-Setup-Guide)
+  - No Windows guide (You can add one if you like)
+- Development Setup:
+  - [Windows](https://github.com/Jet132/BulletBot/wiki/Windows-Dev-Setup-Guide)
+  - [Linux](https://github.com/Jet132/BulletBot/wiki/Linux-Dev-Setup-Guide)
 
-As a style guide we use [this](https://github.com/basarat/typescript-book/blob/master/docs/styleguide/styleguide.md) guide from basarat and his typescript book.
+## Built With
 
-### Arguments in Utils and Database
+- [Node.js](https://nodejs.org) - the JS Engine this bot runs on
+- [MongoDB](https://www.mongodb.com) - NoSQL database used for storing bot data (duhhh)
+- [TypeScript](https://www.typescriptlang.org/) - Language the bot is written in (typed superset of JavaScript)
+- [Discord.js](https://discord.js.org) - Node.js module used as interface for the Discord API
 
-All arguments in utils functions and database functions (so all functions defined in `/utils` and `/database`) should have their arguments ordered in a following way:
+## Contributing
 
- 1. guild / guildID
- 2. user / userID
- 3. member / memberID
- 4. role / roleID
- 5. channel / channelID
- 6. message / messageID
- 7. others
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on  the process for submitting pull requests to us.
 
-## Build Docs
+## Versioning
 
-install typedoc with `npm install --global typedoc` and then run 
-```
-typedoc --out [path to output folder] .\src\ --tsconfig .\tsconfig.json --mode file --name BulletBot --readme .\README.md --media .\media\
-```
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/Jet132/BulletBot/tags).
 
-## How to run the bot
+## License
 
-Codec is using Typescript 3.4.1 but any version will probably work if you use the `tsconfig.json`. The bot also needs a `bot-config.json` file in `src\` and respectively `out/`. The json structure is the following:
-
-```JSON
-{
-    "version": "v1.0", //the version of the current build
-    "botToken": "[bot token here]",
-    "cluster": {
-        "url": "mongodb://localhost", // url to mongo cluster
-        "suffix": "?authSource=admin" // string that comes after the full url (for example for auth)
-    },
-    "googleAPIKey": "[google api key for youtube_v3]",
-    "bugForm": { // google form for suggestions
-        "url": "https://docs.google.com/forms/d/e/1FAIpQLScWsqLDncKzqSgmZuFhuwenqexzmKSr0K_B4GSOgoF6fEBcMA/formResponse",
-        "serverID": 668269162,
-        "serverName": 1681307100,
-        "userID": 939179046,
-        "userName": 1772634886,
-        "messageID": 2084912430,
-        "channelID": 1743035358,
-        "bug": 110649897
-    },
-    "suggestionForm": { // google form for suggestions
-        "url": "https://docs.google.com/forms/d/e/1FAIpQLSee3V4--MxBJqPjoDgfUIw2u22NG-4GBlT92Bbj10-R1ScuHA/formResponse",
-        "serverID": 668269162,
-        "serverName": 1681307100,
-        "userID": 939179046,
-        "userName": 1772634886,
-        "messageID": 2084912430,
-        "channelID": 1743035358,
-        "suggestion": 110649897
-    },
-    "globalUpdateInterval": 10000,
-    "cleanInterval": 60000,
-    "pActionsInterval": 1000,
-    "crashProof": {
-        "file": "../crashProof.time", // the bot will write the current timestamp to this file
-        "interval": 10000
-    },
-    "callback": {
-        "URL": "[callback ip address for webhook]",
-        "port": 8080, // port in callback ip
-        "path": "/webhooks", // results in http://[ip]:[port]/webhooks/[service]
-    },
-    "youtube": {
-        "logo": "https://www.android-user.de/wp-content/uploads/2018/07/icon-youtobe.png",
-        "color": 16711680,
-        "name": "YouTube"
-    }
-}
-```
-
-There also needs to be a mongoDB cluster running. The minimal data in the cluster is in database `settings` in collection `settings` there should be a document with following data.
-
-```JSON
-{
-   "prefix":"?!",
-   "presence":{
-      "status":"online",
-      "game":{
-         "name":"something",
-         "type":"WATCHING"
-      }
-   },
-   "embedColors":{
-      "default":8311585,
-      "help":8311585,
-      "neutral":4868682,
-      "negative":15805477,
-      "warn":16086051,
-      "positive":8311585
-   },
-   "botMasters":[
-      "[a bot masters user id]"
-   ],
-   "commands":{
-      "animal":{
-         "apis":{
-            "cat":"https://some-random-api.ml/img/cat",
-            "dog":"https://some-random-api.ml/img/dog",
-            "fox":"https://some-random-api.ml/img/fox",
-            "panda":"https://some-random-api.ml/img/panda",
-            "red-panda":"https://some-random-api.ml/img/red_panda",
-            "bird":"https://some-random-api.ml/img/birb",
-            "pikachu":"https://some-random-api.ml/pikachuimg"
-         }
-      },
-      "purge":{
-         "maxMessages": 1000
-      }
-   },
-   "filters":{
-
-   }
-}
-```
+This project is licensed under the (to be defined) License - see the [LICENSE.md](LICENSE.md) file for details
 
 ## Logo/PFP
 
-The original logo/PFP was a fanart from @Aster#4205.
+The original logo/PFP was a fanart from @Aster#4205 and was later vectorized by [Codec](https://github.com/Jet132/).
 
 Original:
 
 ![original avatar](https://cdn.discordapp.com/attachments/427060301863583755/542077128087437322/5827f828-28ba-11e9-bff2-d5367668f050.png "Original Avatar")
 
-Vectorised:
+Vectorized:
 
-![vector avatar](media/BulletBot.png "Vectorised Avatar")
+![vector avatar](media/BulletBot.png "Vectorized Avatar")
