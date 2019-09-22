@@ -15,6 +15,10 @@ start_service_exists=$(systemctl list-units --full --all | grep -Fq \
 tag=$(curl -s https://api.github.com/repos/StrangeRanger/Bull/releases/latest \
     | grep -oP '"tag_name": "\K(.*)(?=")')
 latest_release="https://github.com/StrangeRanger/Bull/releases/download/${tag}/BulletBot.zip"
+# Contains all the possible files/directories that are associated with
+# BulletBot (only files/directories located in the BulletBot root directory)
+files=("installers/" "linux-master-installer.sh" "package-lock.json" \
+    "package.json" "tsconfig.json" "src/" "media/" "README.md" "out/")
 
 # Checks to see if this script was executed with root privilege, and if not,
 # stops the script
@@ -84,7 +88,7 @@ download_bb() {
     
     echo "Unzipping BulletBot.zip..."
     unzip -o BulletBot.zip
-    echo "Removing BulletBot.zip..."
+    echo "Removing BulletBot.zsip..."
     rm BulletBot.zip
     
     # Moves 'bot-config.json' back to where it belongs ('out/')
@@ -135,12 +139,17 @@ export cyan
 export red
 export nc
 
+if ! hash jq; then
+    echo "${red}jq is not installed${nc}" >&2
+    echo "Installing jq..."
+    apt -y install jq || {
+        echo "${red}Failed to install jq${nc}" >&2
+        echo -e "\nExiting..."
+        exit 1
+    }
+fi
+
 while true; do
-    # Contains all the possible files/directories that are associated with
-    # BulletBot (only files/directories located in the BulletBot root directory)
-    files=("installers/" "linux-master-installer.sh" "package-lock.json" \
-        "package.json" "tsconfig.json" "src/" "media/" "README.md" "out/")
-    
     # Creates a system user named 'bulletbot' if it does not exists, then creates a 
     # home directory for it
     if ! id -u bulletbot &>/dev/null; then
@@ -256,7 +265,6 @@ while true; do
                 clear
                 ;;
             5)
-                export tag
                 bash installers/linux/setup/bot-config-setup.sh
                 clear
                 ;;
@@ -272,8 +280,8 @@ while true; do
         esac
     # If all required files/services for BulletBot to start/run in the background
     # with auot restart...
-    elif ($start_script_exists && $bullet_service_exists &&
-            $start_service_exists) 2>/dev/null; then
+    elif [[ $start_script_exists -eq 0 && $bullet_service_exists -eq 0 &&
+            $start_service_exists -eq 0 ]]  2>/dev/null; then 
         echo "1. Download/update BulletBot and auto restart files/services"
         echo "2. Run BulletBot in background"
         echo "3. Run BulletBot in current session"
@@ -299,7 +307,6 @@ while true; do
                 clear
                 ;;
             5)
-                export tag
                 bash installers/linux/setup/bot-config-setup.sh
                 ;;
             6)
@@ -340,7 +347,6 @@ while true; do
                 clear
                 ;;
             5)
-                export tag
                 bash installers/linux/setup/bot-config-setup.sh
                 ;;
             6)

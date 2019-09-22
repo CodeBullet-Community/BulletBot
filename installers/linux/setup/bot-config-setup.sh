@@ -39,8 +39,15 @@ if [[ -z $mongodb_url_suffix ]]; then mongodb_url_suffix=""; fi
 echo "MongoDB url suffix: $mongodb_url_suffix"
 echo -e "-------------\n"
 
+if ! hash jq &>/dev/null; then
+    echo "${red}jq is not installed${nc}" >&2
+    echo "Installing jq..."
+    apt install jq
+fi
+
+bot_version=$(jq .version package.json)
 json="{
-    \"version\": \"$tag\",
+    \"version\": \"$bot_version\",
     \"botToken\": \"$bot_token\",
     \"cluster\": {
         \"url\": \"$mongodb_url\",
@@ -87,15 +94,9 @@ json="{
     }
 }"
 
-if ! hash python3 &>/dev/null; then 
-    echo "${red}python3 is not installed${nc}" >&2
-    echo "Installing python3..."
-    apt install python3
-fi
-
 if [ ! -f out/bot-config.json ]; then
     echo "Creating 'bot-config.json'..."
-    echo $json | python3 -m json.tool > out/bot-config.json || {
+    echo $json | jq . > out/bot-config.json || {
         echo "${red}Failed to create 'bot-config.json' with human-readable JSON" \
             "format${nc}" >&2
         echo "Creating 'bot-config.json' wihtout human-readable JSON format..."
@@ -112,7 +113,7 @@ else
         case $option in
             1)
                 echo "Overwriting 'bot-config.json'..."
-                echo $json | python3 -m json.tool > out/bot-config.json || {
+                echo $json | jq . > out/bot-config.json || {
                     echo "${red}Failed to overwrite 'bot-config.json' with human-readable JSON" \
                         "format${nc}" >&2
                     echo "Overwriting 'bot-config.json' without human-readable JSON format..."
@@ -121,7 +122,7 @@ else
                 break
                 ;;
             2)
-                echo $json | python3 -m json.tool > tmp.json || {
+                echo $json | jq . > tmp.json || {
                     echo "${red}Failed to create 'tmp.json' with human-readable JSON" \
                         "format${nc}" >&2
                     echo "Creating 'tmp.json' without human-readable JSON format..."
