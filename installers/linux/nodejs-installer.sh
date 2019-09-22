@@ -17,7 +17,7 @@ install_node_module_pkgs() {
     while true; do
         if hash npm &>/dev/null; then
             echo "Installing packages and dependencies..."
-            npm install || {
+            npm install --only=prod || {
                 echo "${red}Failed to install packages and dependencies${nc}" >&2
                 exit 1
             }
