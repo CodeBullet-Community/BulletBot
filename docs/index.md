@@ -4,9 +4,9 @@ This is the documentation for contributors. It contains the code structure and M
 
 ## Index
 
-1. [Code Structure](code-structure.md)
+1. [Code / File / Folder Structure](structure.md)
 2. Databases Doc Definitions
-    1. [main](database/main.md)
-    2. [mStats](database/mStats.md)
-    3. [webhooks](database/webhooks.md)
-    4. [settings](database/settings.md)
+    - [main Database](database/main.md)
+    - [mStats Database](database/mStats.md)
+    - [webhooks Database](database/webhooks.md)
+    - [settings Database](database/settings.md)
