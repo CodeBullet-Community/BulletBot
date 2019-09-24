@@ -204,7 +204,7 @@ export class YTWebhookManager {
      */
     private async subToChannel(YTChannelID: string, subscribe: boolean) {
         return new Promise((resolve, reject) => {
-            request.post('https://pubsubhubbub.appspot.com/subscribe', {
+            request.post('https://pubsubhubbub.appspot.com/subscribe', { // uses the pubsubhubbub protocol to subscribe to the channel
                 form: {
                     'hub.mode': subscribe ? 'subscribe' : 'unsubscribe',
                     'hub.callback': `http://${callback.URL}:${callback.port}${callback.path}/youtube`, // uses in bot-config specified callback URL
@@ -234,7 +234,7 @@ export class YTWebhookManager {
     async createWebhook(guildID: string, channelID: string, YTChannelID: string, message: string) {
         var sameFeedWebhook = await this.webhooks.findOne({ feed: YTChannelID }); // searches for a webhook with same feed to know if it should sub to subpubhubbub
         if (sameFeedWebhook && sameFeedWebhook.guild == guildID && sameFeedWebhook.channel == channelID) return undefined; // checks if similar webhook already exists and if so then return
-        if (!sameFeedWebhook) {
+        if (!sameFeedWebhook) { // sub to channel when the bot hasn't already
             try {
                 this.subToChannel(YTChannelID, true);
             } catch (e) {

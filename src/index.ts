@@ -35,12 +35,14 @@ require('console-stamp')(console, {
     pattern: 'dd/mm/yyyy HH:MM:ss.l'
 });
 
+// catches uncaught exceptions
 process.on('uncaughtException', (error) => {
     if (Bot.mStats)
         Bot.mStats.logError(error);
     console.error(error);
 });
 
+// catches unhandled promise rejections
 process.on('unhandledRejection', async (reason, promise) => {
     var error = new Error('Unhandled Rejection. Reason: ' + reason);
     if (Bot.mStats)
@@ -96,6 +98,7 @@ export class Bot {
     }
 }
 
+// init all modules
 var mStats = new MStats(cluster);
 var database = new Database(cluster);
 var logger = new Logger(cluster);
@@ -108,6 +111,7 @@ let pActions = new PActions(cluster);
 var caseLogger = new CaseLogger(cluster);
 Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger, pActions, caseLogger);
 
+// when bot shuts down save the mStats cache
 exitHook(() => {
     console.log('Saving cached data...');
     Bot.mStats.saveHour(Bot.mStats.hourly);
@@ -116,13 +120,17 @@ exitHook(() => {
     console.log("cached data saved");
 });
 
+// write the current timestamp to a file. This can be used to determine if the bot has crashed or is disconnected.
 setInterval(() => {
     if (client.status === 0) {
         fs.writeFileSync(crashProof.file, Date.now());
     }
 }, crashProof.interval);
 
+/* for events below check the discord.js docs */
+
 client.on('ready', async () => {
+    // updates the database with guilds he left and joined while offline.
     let existingGuilds = await Bot.database.mainDB.guilds.distinct('guild').exec();
     let guildsToRemove = existingGuilds.filter(x => !client.guilds.get(x));
     let guildsToAdd = client.guilds.filter(x => !existingGuilds.includes(x.id));
@@ -133,6 +141,7 @@ client.on('ready', async () => {
     for (const guild of guildsToAdd.array()) { // adds all guilds that the bot joined while it was down
         Bot.database.addGuild(guild.id);
     }
+
     Bot.client.user.setActivity('I\'m ready!');
     console.log('I\'m ready!');
 });
@@ -140,6 +149,7 @@ client.on('ready', async () => {
 client.on('error', async (error: any) => {
     Bot.mStats.logError(error);
     console.error('from client.on():', error);
+    // this is just some temporary code to debug a certain problem we can't recreate. Probably will be removed soon as that error never occurred again
     if (error.target) {
         console.log('error.target', error.target);
         if (error.target._events) {
@@ -155,15 +165,15 @@ client.on('error', async (error: any) => {
 });
 
 client.on('message', async message => {
-    if (message.author.id != client.user.id) cacheAttachment(message);
+    if (message.author.id != client.user.id) cacheAttachment(message); // megalog attachment caches the message
     if (message.author.bot) return;
     var requestTime = process.hrtime(); //  gets timestamp to calculate the response time 
     Bot.mStats.logMessageReceived();
     var dm = false; // checks if it's from a dm
-    if (!message.guild) {
+    if (!message.guild)
         dm = true;
-    }
 
+    // get command cache if there is one
     let commandCache = await Bot.database.getCommandCache(message.channel, message.author);
 
     // if message is only a mention of the bot, he dms help
@@ -181,7 +191,7 @@ client.on('message', async message => {
         permLevel = await getPermLevel(message.member);
     }
 
-    if (commandCache) {
+    if (commandCache) { // directly calls command when command cache exists
         Bot.commands.runCachedCommand(message, commandCache, permLevel, dm, requestTime);
         return;
     }
@@ -246,7 +256,7 @@ client.on('channelCreate', async channel => {
 client.on('channelDelete', async channel => {
     if (channel instanceof discord.GuildChannel)
         logChannelToggle(channel, false);
-    if (channel instanceof discord.TextChannel) {
+    if (channel instanceof discord.TextChannel) { // if guild channel was deleted clean all data form the database regarding it
         var youtubeWebhookDocs = await Bot.youtube.webhooks.find({ guild: channel.guild.id, channel: channel.id }); // looks if webhooks for the deleted channel exist if it's a text channel
         for (const webhookDoc of youtubeWebhookDocs) {
             Bot.youtube.deleteWebhook(channel.guild.id, channel.id, webhookDoc.toObject().feed);
@@ -303,6 +313,7 @@ client.on('guildMemberAdd', async member => {
 client.on('guildMemberRemove', async member => {
     if (member.user.id != client.user.id)
         logMember(member, false);
+    // delete all references of this member in the database (ofc not entire user doc)
     var permLevel = await getPermLevel(member); // removes guild member from ranks if he/She was assigned any
     if (permLevel == permLevels.admin) {
         Bot.database.removeFromRank(member.guild.id, 'admins', undefined, member.id);
