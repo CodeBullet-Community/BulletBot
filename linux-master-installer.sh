@@ -4,7 +4,8 @@ green=$'\033[0;32m'
 cyan=$'\033[0;36m'
 red=$'\033[1;31m'
 nc=$'\033[0m'
-execution_path="$(dirname $0)"
+home="/home/bulletbot"
+bullet_status=$(systemctl is-active bulletbot.service)
 start_script_exists=$(find . -path installers -prune -o -print | grep \
     -i "bullet-mongo-start.sh" &>/dev/null; echo $?)
 bullet_service_exists=$(systemctl list-units --full --all | grep -Fq \
@@ -108,7 +109,7 @@ After=network.target mongod.service
 
 [Service]
 User=bulletbot
-ExecStart=/usr/bin/node /home/bulletbot/out/index.js
+ExecStart=/usr/bin/node ${home}/out/index.js
 Restart=always
 RestartSec=3
 
@@ -117,13 +118,13 @@ WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service
 
     if ($start_script_exists && $start_service_exists) &>/dev/null; then
         echo "Updating startup script and service..."
-        bash installers/linux/setup/autorestart-setup.sh
+        bash installers/linux/autorestart/autorestart-updater.sh
     fi
     
     echo "Changing ownership of installed files..."
     chown bulletbot:admin -R *
     echo -e "\n${green}Finished downloading and updating BulletBot${nc}"
-    read -p "Press 'Enter' to apply any existing changes to 'linux-master-installer.sh'"
+    read -p "Press [Enter] to apply any existing changes to 'linux-master-installer.sh'"
     clear
     source linux-master-installer.sh
 }
@@ -133,7 +134,7 @@ WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service
 # MAIN CODE #
 # --------- #
 echo -e "Welcome to the BulletBot installer\n"
-cd "$execution_path"
+cd "$(dirname $0)"
 export green
 export cyan
 export red
@@ -159,19 +160,19 @@ while true; do
             echo "${red}Failed to create 'bulletbot'${nc}" >&2
             exit 1
         }
-        echo "Moving files/directories associated to BulletBot to '/home/bulletbot'..."
-        mv -f "${files[@]}" /home/bulletbot 2>/dev/null
-        chown bulletbot:admin -R /home/bulletbot
-        cd /home/bulletbot
+        echo "Moving files/directories associated to BulletBot to '${home}'..."
+        mv -f "${files[@]}" ${home} 2>/dev/null
+        chown bulletbot:admin -R ${home}
+        cd ${home}
     # Creates bulletbot's home directory if it does not exist
-    elif [ ! -d /home/bulletbot ]; then
+    elif [ ! -d ${home} ]; then
         echo "${red}bulletbot's home directory does not exists${nc}" >&2
-        echo "Creating '/home/bulletbot'..."
-        mkdir /home/bulletbot
-        echo "Moving files/directories associated to BulletBot to '/home/bulletbot'..."
-        mv -f "${files[@]}" /home/bulletbot 2>/dev/null
-        chown bulletbot:admin -R /home/bulletbot
-        cd /home/bulletbot
+        echo "Creating '${home}'..."
+        mkdir ${home}
+        echo "Moving files/directories associated to BulletBot to '${home}'..."
+        mv -f "${files[@]}" ${home} 2>/dev/null
+        chown bulletbot:admin -R ${home}
+        cd ${home}
     fi
 
     # Checks to see if it is necessary to download BulletBot
@@ -278,16 +279,28 @@ while true; do
                 continue
                 ;;
         esac
-    # If all required files/services for BulletBot to start/run in the background
-    # with auot restart...
-    elif [[ $start_script_exists -eq 0 && $bullet_service_exists -eq 0 &&
-            $start_service_exists -eq 0 ]]  2>/dev/null; then 
+    #elif [[ $start_script_exists -eq 0 && $bullet_service_exists -eq 0 &&
+    #        $start_service_exists -eq 0 ]]  2>/dev/null; then 
+    else 
         echo "1. Download/update BulletBot and auto restart files/services"
-        echo "2. Run BulletBot in background"
-        echo "3. Run BulletBot in current session"
-        echo "4. Run BulletBot in background with auto restart"
-        echo "5. Create new bot config file (replaces current config file)"
-        echo "6. Stop and exit script"
+        if [[ $start_script_exists -eq 0 && $start_service_exists -eq 0 && $bullet_status = "active" ]]; then
+            echo "2. Run BulletBot in background ${green}(Currently set up to use this)${nc}"
+            echo "3. Run BulletBot in background with auto restart"
+        elif [[ $start_script_exists -eq 0 && $start_service_exists -eq 0 && $bullet_status != "active" ]]; then
+            echo "2. Run BulletBot in background ${green}(Option in use)${nc}"
+            echo "3. Run BulletBot in background with auto restart"
+        elif [[ $start_service_exists -ne 0 && $bullet_status = "active" ]]; then
+            echo "2. Run BulletBot in background"
+            echo "3. Run BulletBot in background with auto restart ${green}(Option in use)${nc}"
+        else [[ $start_service_exists -ne 0 && $bullet_status != "active" ]]; then
+            echo "2. Run BulletBot in background"
+            echo "3. Run BulletBot in background with auto restart ${green}(Currently set up to use this)${nc}"
+        else
+            echo "2. Run BulletBot in background"
+            echo "3. Run BulletBot in background with auto restart"
+        fi
+        echo "4. Create new bot config file (replaces current config file)"
+        echo "5. Stop and exit script"
         read option
         case $option in
             1)
@@ -295,61 +308,22 @@ while true; do
                 clear
                 ;;
             2)
+                export bullet_status
+                export start_script_exists
+                export start_service_exists
                 bash installers/linux/bb-start-modes/run-in-background.sh
                 clear
                 ;;
             3)
-                bash installers/linux/bb-start-modes/run-in-current-session.sh
-                clear
-                ;;
-            4)
+                export bullet_status
                 bash installers/linux/bb-start-modes/run-in-background-autorestart.sh
                 clear
                 ;;
-            5)
-                bash installers/linux/setup/bot-config-setup.sh
-                ;;
-            6)
-                exit 0
-                ;;
-            *)
-                clear
-                echo "${red}Invalid input: '$option' is not a valid option${nc}" >&2
-                continue
-                ;;
-        esac
-    else
-        echo "${cyan}The required files to run BulletBot with auto restart" \
-            "on server reboot are not setup. Due to this, that option has been" \
-            "hidden until it is set up${nc}"
-        echo "1. Download/update BulletBot"
-        echo "2. Run BulletBot in background"
-        echo "3. Run BulletBot in current session"
-        echo "4. Setup auto restart"
-        echo "5. Create new bot config file (replaces current config file)"
-        echo "6. Stop and exit script"
-        read option
-        case $option in
-            1)
-                download_bb
-                clear
-                ;;
-            2)
-                bash installers/linux/bb-start-modes/run-in-background.sh
-                clear
-                ;;
-            3)
-                bash installers/linux/bb-start-modes/run-in-current-session.sh
-                clear
-                ;;
             4)
-                bash installers/linux/setup/autorestart-setup.sh
+                bash installers/linux/setup/bot-config-setup.sh
                 clear
                 ;;
             5)
-                bash installers/linux/setup/bot-config-setup.sh
-                ;;
-            6)
                 exit 0
                 ;;
             *)
