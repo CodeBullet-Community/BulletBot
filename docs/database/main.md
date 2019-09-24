@@ -297,7 +297,7 @@ one doc for each pending action
 }
 ```
 
-## Pending Actions Info
+### Pending Actions Info
 
 `mute`:
 
