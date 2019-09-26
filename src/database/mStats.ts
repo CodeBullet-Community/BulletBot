@@ -315,6 +315,7 @@ export class MStats {
             mergedDoc.errorsTotal += doc.errorsTotal;
             mergedDoc.commandTotal += doc.commandTotal;
 
+            // command stats
             for (const cmd in doc.commands) {
                 if (!mergedDoc.commands[cmd]) {
                     mergedDoc.commands[cmd] = { _errors: 0, _resp: 0 };
@@ -328,6 +329,7 @@ export class MStats {
                 }
             }
 
+            // filter stats
             for (const filter in doc.filters) {
                 if (!mergedDoc.filters[filter]) {
                     mergedDoc.filters[filter] = doc.filters[filter];
@@ -336,6 +338,7 @@ export class MStats {
                 }
             }
 
+            // webhook stats
             for (const service in doc.webhooks) {
                 if (!mergedDoc.webhooks[service]) {
                     mergedDoc.webhooks[service] = doc.webhooks[service];
@@ -346,6 +349,7 @@ export class MStats {
                 }
             }
 
+            // ping stats
             mergedDoc.ping.clientAPI += doc.ping.clientAPI;
             mergedDoc.ping.cluster += doc.ping.cluster;
 
@@ -353,12 +357,14 @@ export class MStats {
                 for (const megalogFunction in doc.megalog.logged)
                     mergedDoc.megalog.logged[megalogFunction] += doc.megalog.logged[megalogFunction];
         }
+        // divide by number of documents to get the average
         for (const command in mergedDoc.commands) {
             mergedDoc.commands[command]._resp /= docs.length;
         }
         mergedDoc.ping.clientAPI /= docs.length;
         mergedDoc.ping.cluster /= docs.length;
 
+        // set total properties
         mergedDoc.guildsTotal = newestDoc.guildsTotal;
         for (const service in mergedDoc.webhooks) {
             if (newestDoc.webhooks[service] && newestDoc.webhooks[service].total) {
@@ -367,7 +373,7 @@ export class MStats {
                 mergedDoc.webhooks[service].total = 0;
             }
         }
-        if (newestDoc.megalog) // old mStats doc don't have this property
+        if (newestDoc.megalog) // old mStats doc don't have this property, so we have to check if it exists
             mergedDoc.megalog.enabled = Object.assign({}, newestDoc.megalog.enabled);
 
         return mergedDoc;
@@ -439,6 +445,7 @@ export class MStats {
     async logError(error: Error, command?: string) {
         if (!this.hourly) return;
         this.hourly.doc.errorsTotal += 1;
+        // if command is specified also log it in the command stats
         if (command) {
             if (!this.hourly.doc.commands) {
                 this.hourly.doc.commands = {};
@@ -450,9 +457,10 @@ export class MStats {
             }
         }
 
+        // log error in errors collection
         let date = new Date();
         var stringifiedError = JSON.stringify(error, Object.getOwnPropertyNames(error));
-        var md5 = crypto.createHash('md5').update(stringifiedError).digest('hex');
+        var md5 = crypto.createHash('md5').update(stringifiedError).digest('hex'); // this hash is used to look if error has already once been logged
         let errorDoc = await this.errors.findOne({ md5: md5 }).exec();
         if (!errorDoc) {
             errorDoc = new this.errors({

@@ -83,6 +83,7 @@ export class Database {
      * @memberof Database
      */
     constructor(clusterInfo: { url: string, suffix: string }) {
+        // create connection with main database
         var mainCon = mongoose.createConnection(clusterInfo.url + '/main' + clusterInfo.suffix, { useNewUrlParser: true });
         mainCon.on('error', error => {
             console.error('connection error:', error);
@@ -92,6 +93,7 @@ export class Database {
             console.log('connected to /main database');
         });
 
+        // setup model (doc definition) for every collection
         this.mainDB = {
             connection: mainCon,
             guilds: mainCon.model('guild', guildSchema, 'guilds'),
@@ -107,15 +109,17 @@ export class Database {
             pActions: mainCon.model('pActions', pActionSchema, 'pAction')
         }
 
+        // create connection with settings database
         var settingsCon = mongoose.createConnection(clusterInfo.url + '/settings' + clusterInfo.suffix, { useNewUrlParser: true })
         settingsCon.on('error', error => {
             console.error('connection error:', error);
             Bot.mStats.logError(error);
         });
         settingsCon.once('open', function () {
-            console.log('connected to /settings database')
+            console.log('connected to /settings database');
         });
 
+        // setup model for model for settings collection
         this.settingsDB = {
             connection: settingsCon,
             settings: settingsCon.model('globalSettings', globalSettingsSchema, 'settings'),
@@ -123,8 +127,11 @@ export class Database {
         }
         this.updateGlobalSettings(this.settingsDB);
 
+        // update global settings cache at a certain interval 
         setInterval(() => this.updateGlobalSettings(this.settingsDB), globalUpdateInterval);
         console.info(`updating global cache every ${globalUpdateInterval}ms`);
+
+        // clean unused data from database at a certain interval
         setInterval(async () => {
             await this.cleanGuilds();
             this.cleanCommandCaches();
@@ -166,6 +173,8 @@ export class Database {
         }
 
         var settingsObject: globalSettingsObject = settingsDoc.toObject()
+
+        // set new presence if it changed
         if (settingsDB.cache && (settingsObject.presence != settingsDB.cache.presence || !settingsObject.presence)) {
             if (settingsObject.presence && (settingsObject.presence.status || settingsObject.presence.game || settingsObject.presence.afk)) {
                 Bot.client.user.setPresence(settingsObject.presence);
@@ -376,6 +385,8 @@ export class Database {
     async addToRank(guildID: string, rank: 'admins' | 'mods' | 'immune', roleID?: string, userID?: string) {
         if (!roleID && !userID) return true;
         var staffDoc = await this.findStaffDoc(guildID);
+
+        // incase the doc wasn't created yet
         if (!staffDoc) {
             staffDoc = new this.mainDB.staff({
                 guild: guildID, admins: { roles: [], users: [] },
@@ -384,6 +395,8 @@ export class Database {
             });
             await staffDoc.save();
         }
+
+        // add role/user to rank
         if (roleID && !staffDoc[rank].roles.includes(roleID)) {
             staffDoc[rank].roles.push(roleID);
         } else if (userID && !staffDoc[rank].users.includes(userID)) {
@@ -683,6 +696,7 @@ export class Database {
      * @memberof Database
      */
     async cleanMegalogs() {
+        // delete functions set to undefined
         let deleteQuery = {};
         for (const func of megalogFunctions.all) {
             deleteQuery[func] = { $exists: false };
@@ -694,11 +708,11 @@ export class Database {
             let modified = false;
             let megalogObject: megalogObject = megalogDoc.toObject();
             let guild = Bot.client.guilds.get(megalogObject.guild);
-            if (!guild) {
+            if (!guild) { // if guild was deleted
                 megalogDoc.remove();
                 continue;
             }
-            for (const func of megalogFunctions.all) {
+            for (const func of megalogFunctions.all) { // check if the channels for the functions still exist
                 if (megalogObject[func] && !guild.channels.get(megalogObject[func])) {
                     megalogDoc[func] = undefined;
                     modified = true;
