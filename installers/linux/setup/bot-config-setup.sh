@@ -2,7 +2,6 @@
 
 clear
 echo "We will now set up bot-config.json"
-echo "Make sure you have read the ___ config setup setup in the repo wiki"
 read -p "NOTE: This setup will only have you input the configurations that are \
 required for BulletBot to work. Any other settings/configurations must be added \
 manually (i.e. Google API Key)."
