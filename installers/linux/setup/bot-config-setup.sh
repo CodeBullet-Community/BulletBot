@@ -1,11 +1,13 @@
 #!/bin/bash
 
 clear
-echo "We will now setup bot-config.json" 
-read -p "NOTE: This setup will only be adding the required parts of the config that makes the bot work."
-echo ""
+echo "We will now set up bot-config.json"
+echo "Make sure you have read the ___ config setup setup in the repo wiki"
+read -p "NOTE: This setup will only have you input the configurations that are \
+required for BulletBot to work. Any other settings/configurations must be added \
+manually (i.e. Google API Key)."
 
-echo "-------------"
+echo -e "\n-------------"
 while true; do
     read -p "Enter bot token: " bot_token
     if [[ ! -z $bot_token ]]; then 
@@ -33,17 +35,11 @@ echo -e "-------------\n"
 
 echo "-------------"
 echo "${cyan}NOTE: Depending on how MongoDB was set up (i.e. Authorization is" \
-    "used) this can be left empty${nc}"
+    "used), this field CAN be left empty${nc}"
 read -p "Enter the suffix to the MongoDB url (i.e. ?authSource=admin): " mongodb_url_suffix
 if [[ -z $mongodb_url_suffix ]]; then mongodb_url_suffix=""; fi
 echo "MongoDB url suffix: $mongodb_url_suffix"
 echo -e "-------------\n"
-
-if ! hash jq &>/dev/null; then
-    echo "${red}jq is not installed${nc}" >&2
-    echo "Installing jq..."
-    apt install jq
-fi
 
 bot_version=$(jq .version package.json)
 json="{
@@ -108,23 +104,24 @@ else
         echo "Would you like to:"
         echo "1. Overwrite existing 'bot-config.json'"
         echo "2. Compare the two side by side"
-        echo "3. Stop and go back"
+        echo "3. Stop and return to master installer menu"
         read option
         case $option in
             1)
                 echo "Overwriting 'bot-config.json'..."
                 echo $json | jq . > out/bot-config.json || {
-                    echo "${red}Failed to overwrite 'bot-config.json' with human-readable JSON" \
-                        "format${nc}" >&2
-                    echo "Overwriting 'bot-config.json' without human-readable JSON format..."
+                    echo "${red}Failed to overwrite 'bot-config.json' with" \
+                        "human-readable JSON format${nc}" >&2
+                    echo "Overwriting 'bot-config.json' without human-readable" \
+                        "JSON format..."
                     echo $json > out/bot-config.json
                 }
                 break
                 ;;
             2)
                 echo $json | jq . > tmp.json || {
-                    echo "${red}Failed to create 'tmp.json' with human-readable JSON" \
-                        "format${nc}" >&2
+                    echo "${red}Failed to create 'tmp.json' with human-readable" \
+                        "JSON format${nc}" >&2
                     echo "Creating 'tmp.json' without human-readable JSON format..."
                     echo $json > tmp.json
                 }
@@ -134,7 +131,7 @@ else
                 clear
                 ;;
             3)
-                echo -e "\nExiting to setup menu..."
+                echo -e "\nReturning to master installer menu..."
                 exit 0
                 ;;
             *)
@@ -148,5 +145,5 @@ fi
 
 echo "Changing ownership of files added to the home directory..."
 chown bulletbot:admin -R *
-echo ""
-read -p "${green}Finished setting up 'bot-config.json'${nc}"
+echo -e "\n${green}Finished setting up 'bot-config.json'${nc}"
+read -p "Press [Enter] to continue to master installer menu"

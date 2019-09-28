@@ -22,7 +22,8 @@ fi
 
 echo "Starting bullebot.service..."
 systemctl start bulletbot.service || {
-    echo "${red}Failed to start bulletbot.service${nc}"
+    echo "${red}Failed to start bulletbot.service${nc}" >&2
+    echo -e "\nExiting..."
     exit 1
 }
 # Waits in order to give bulletbot.service enough time to start
@@ -43,4 +44,4 @@ echo -e "Please check the logs above to make sure that there aren't any errors,"
 
 echo "${green}BulletBot is now running in the background with auto restart on" \
     "server reboot${nc}"
-read -p "Press [Enter] to continue to main installer menu"
+read -p "Press [Enter] to continue to the master installer menu"

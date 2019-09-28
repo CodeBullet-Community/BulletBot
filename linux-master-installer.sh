@@ -25,6 +25,7 @@ files=("installers/" "linux-master-installer.sh" "package-lock.json" \
 # stops the script
 if [[ $EUID -ne 0 ]]; then 
     echo "${red}Please run this script as root or with root privilege${nc}"
+    echo -e "\nExiting..."
     exit 1
 fi
 
@@ -33,17 +34,28 @@ fi
 # FUNCTION USED ALL THROUGHOUT SCRIPT #
 # ----------------------------------- #
 # This function deals with downloading BulletBot (the latest release from github)
-# then replaces the existing the existing BulletBot code with it, if there is any
+# then replaces/updating the existing BulletBot code (if there is any) with it
 download_bb() {
     clear
     read -p "We will now download the compiled version of the newest release"
     
+    if [[ $bullet_service_exists -eq 0 && $bullet_status = "active" ]]; then
+        exists="true"
+        echo "Stopping 'bulletbot.service'..."
+        systemctl stop bulletbot.service || {
+            echo "${red}Failed to stop 'bulletbot.service'" >&2
+            echo "Manually stop bulletbot.service before continuing${nc}"
+            echo -e "\nExiting..."
+            exit 1
+        }
+    fi
+    
     # Installs wget on system if it isn't already
     if ! hash wget &>/dev/null; then
-        echo "${red}wget is not installed${nc}"
-        echo "Installing wget..."
+        echo "${red}'wget' is not installed${nc}"
+        echo "Installing 'wget'..."
         apt -y install wget || {
-            echo "${red}Failed to install wget${nc}" >&2
+            echo "${red}Failed to install 'wget'${nc}" >&2
             echo -e "\nExiting..."
             exit 1
         }
@@ -60,7 +72,7 @@ download_bb() {
         }
     fi
 
-    # If uncompiled code exists instead of the compiled code
+    # A.1. If uncompiled code exists instead of the compiled code...
     if [ -d src ]; then
         # Moves/saves 'bot-config.json', if it exists, to 'tmp/'
         if [ -f src/bot-config.json ]; then
@@ -73,7 +85,6 @@ download_bb() {
             }
         fi
 
-        # Removes unneeded files
         echo "Removing unneeded files..."
         if [ -d src ]; then rm -r src/; fi
         if [ -d media ]; then rm -r media/; fi
@@ -89,9 +100,10 @@ download_bb() {
     
     echo "Unzipping BulletBot.zip..."
     unzip -o BulletBot.zip
-    echo "Removing BulletBot.zsip..."
+    echo "Removing BulletBot.zip..."
     rm BulletBot.zip
-    
+
+    # A.1.
     # Moves 'bot-config.json' back to where it belongs ('out/')
     if [ -f tmp/bot-config.json ]; then
         mv tmp/bot-config.json out/ || {
@@ -101,7 +113,6 @@ download_bb() {
         rm -r tmp/
     fi
 
-    # Either creates or updates bulletbot.service
     echo "Creating/updating bulletbot.service..."
     echo "[Unit]
 Description=A service to start BulletBot after a crash or server reboot
@@ -116,14 +127,22 @@ RestartSec=3
 [Install]
 WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service 
 
-    if ($start_script_exists && $start_service_exists) &>/dev/null; then
+    if [[ $start_script_exists -eq 0 && $start_service_exists -eq 0 ]] \
+            2>/dev/null; then 
         echo "Updating startup script and service..."
         bash installers/linux/autorestart/autorestart-updater.sh
     fi
     
-    echo "Changing ownership of installed files..."
+    echo "Changing ownership of files added to the home directory..."
     chown bulletbot:admin -R *
     echo -e "\n${green}Finished downloading and updating BulletBot${nc}"
+
+    if $exists; then
+        echo "${cyan}NOTE: 'bulletbot.service' was stopped to update BulletBot" \
+            "and has to be started using the run modes in the master installer" \
+            "menu${nc}"
+    fi
+
     read -p "Press [Enter] to apply any existing changes to 'linux-master-installer.sh'"
     clear
     source linux-master-installer.sh
@@ -133,7 +152,7 @@ WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service
 # --------- #
 # MAIN CODE #
 # --------- #
-echo -e "Welcome to the BulletBot installer\n"
+echo -e "Welcome to the BulletBot master installer\n"
 cd "$(dirname $0)"
 export green
 export cyan
@@ -141,10 +160,10 @@ export red
 export nc
 
 if ! hash jq; then
-    echo "${red}jq is not installed${nc}" >&2
-    echo "Installing jq..."
+    echo "${red}'jq' is not installed${nc}" >&2
+    echo "Installing 'jq'..."
     apt -y install jq || {
-        echo "${red}Failed to install jq${nc}" >&2
+        echo "${red}Failed to install 'jq'${nc}" >&2
         echo -e "\nExiting..."
         exit 1
     }
@@ -160,19 +179,19 @@ while true; do
             echo "${red}Failed to create 'bulletbot'${nc}" >&2
             exit 1
         }
-        echo "Moving files/directories associated to BulletBot to '${home}'..."
-        mv -f "${files[@]}" ${home} 2>/dev/null
-        chown bulletbot:admin -R ${home}
-        cd ${home}
+        echo "Moving files/directories associated to BulletBot to '$home'..."
+        mv -f "${files[@]}" $home 2>/dev/null
+        chown bulletbot:admin -R $home
+        cd $home
     # Creates bulletbot's home directory if it does not exist
-    elif [ ! -d ${home} ]; then
+    elif [ ! -d $home ]; then
         echo "${red}bulletbot's home directory does not exists${nc}" >&2
-        echo "Creating '${home}'..."
-        mkdir ${home}
-        echo "Moving files/directories associated to BulletBot to '${home}'..."
-        mv -f "${files[@]}" ${home} 2>/dev/null
-        chown bulletbot:admin -R ${home}
-        cd ${home}
+        echo "Creating '$home'..."
+        mkdir $home
+        echo "Moving files/directories associated to BulletBot to '$home'..."
+        mv -f "${files[@]}" $home 2>/dev/null
+        chown bulletbot:admin -R $home
+        cd $home
     fi
 
     # Checks to see if it is necessary to download BulletBot
@@ -180,8 +199,8 @@ while true; do
         if [[ -d src && ! -d out ]]; then
             echo "${cyan}The uncompiled code for BulletBot is currently on your" \
                 "system. The master installer does not compile typescript into" \
-                "JS, so in order to continue, please download the compiled code" \
-                "using option 1.${nc}"
+                "javascript. In order to continue, please download the compiled" \
+                "code using option 1.${nc}"
         elif [[ ! -d src && ! -d out ]]; then
             echo "${cyan}BulletBot has not been downloaded. In order to continue," \
                 "please download BulletBot using option 1.${nc}"
@@ -216,16 +235,16 @@ while true; do
         if ! hash mongod &>/dev/null; then
             echo "2. Install MongoDB ${red}(Not installed and setup)${nc}"
         else
-            echo "2. Install MongoDB ${green}(Already installed but it might" \
+            echo "2. Install MongoDB ${green}(Already installed but might" \
                 "not be set up)${nc}"
         fi
         
         if (! hash nodejs || ! hash node || ! hash npm) &>/dev/null; then
-            echo "3. Install npm and nodejs (will also perform the same actions option" \
-            "4) ${red}(Not installed)${nc}"
+            echo "3. Install npm and nodejs (will also perform the same actions as" \
+            "option 4) ${red}(Not installed)${nc}"
         else
-            echo "3. Install npm and nodejs (will also perform the same actions option" \
-            "4) ${green}(Already installed)${nc}"
+            echo "3. Install npm and nodejs (will also perform the same actions as" \
+            "option 4) ${green}(Already installed)${nc}"
         fi
 
         if [[ ! -d node_modules ]] &>/dev/null; then
@@ -241,7 +260,7 @@ while true; do
                 "(Not setup)${nc}"
         else
             echo "5. Setup BulletBot config file (contains bot key, etc.)${green}" \
-                "(Already installed)${nc}"
+                "(Already setup)${nc}"
         fi
 
         echo "6. Stop and exit script"
@@ -279,22 +298,25 @@ while true; do
                 continue
                 ;;
         esac
-    #elif [[ $start_script_exists -eq 0 && $bullet_service_exists -eq 0 &&
-    #        $start_service_exists -eq 0 ]]  2>/dev/null; then 
     else 
         echo "1. Download/update BulletBot and auto restart files/services"
-        if [[ $start_script_exists -eq 0 && $start_service_exists -eq 0 && $bullet_status = "active" ]]; then
-            echo "2. Run BulletBot in background ${green}(Currently set up to use this)${nc}"
+        if [[ $start_script_exists -eq 0 && $start_service_exists -eq 0 && 
+                $bullet_status = "active" ]]; then
+            echo "2. Run BulletBot in background ${green}(Currently set up to use" \
+                "this)${nc}"
             echo "3. Run BulletBot in background with auto restart"
-        elif [[ $start_script_exists -eq 0 && $start_service_exists -eq 0 && $bullet_status != "active" ]]; then
+        elif [[ $start_script_exists -eq 0 && $start_service_exists -eq 0 && 
+                $bullet_status != "active" ]]; then
             echo "2. Run BulletBot in background ${green}(Option in use)${nc}"
             echo "3. Run BulletBot in background with auto restart"
         elif [[ $start_service_exists -ne 0 && $bullet_status = "active" ]]; then
             echo "2. Run BulletBot in background"
-            echo "3. Run BulletBot in background with auto restart ${green}(Option in use)${nc}"
-        else [[ $start_service_exists -ne 0 && $bullet_status != "active" ]]; then
+            echo "3. Run BulletBot in background with auto restart ${green}" \
+                "(Option in use)${nc}"
+        elif [[ $start_service_exists -ne 0 && $bullet_status != "active" ]]; then
             echo "2. Run BulletBot in background"
-            echo "3. Run BulletBot in background with auto restart ${green}(Currently set up to use this)${nc}"
+            echo "3. Run BulletBot in background with auto restart ${green}" \
+                "(Currently set up to use this)${nc}"
         else
             echo "2. Run BulletBot in background"
             echo "3. Run BulletBot in background with auto restart"
