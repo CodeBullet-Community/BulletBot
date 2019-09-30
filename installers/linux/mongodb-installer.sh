@@ -19,5 +19,9 @@ echo "Updating packages..."
 apt update
 echo "Installing latest stable version of MongoDB..."
 apt -y install mongodb-org
+echo "Enabling 'mongod.service'..."
+systemctl enable mongod.sergice
+echo "Starting 'mongod.service'..."
+systemctl start mongod.service
 echo -e "\n${green}Finished installing MongoDB${nc}"
 read -p "Press [Enter] to continue to the master installer menu"
