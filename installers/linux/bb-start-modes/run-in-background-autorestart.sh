@@ -30,7 +30,7 @@ fi
 
 # Waits in order to give bulletbot.service enough time to start
 echo "Waiting 20 seconds for bulletbot.service to start..."
-while (($timer >= 0)); do
+while (($timer > 0)); do
     echo -en "\r$timer seconds left"
     sleep 1
     ((timer-=1))
