@@ -1,31 +1,33 @@
 #!/bin/bash
 
-yellow=$'\033[1;33m'
 timer=20
 
 clear
 read -p "We will now run Bulletbot in the background"
 
-if [[ $start_script_exists -eq 0 || $start_service_exists -eq 0 ]]; then
+if [[ -f $start_script_exists || -f $start_service_exists ]]; then
     echo "Removing file(s) used to run BulletBot with auto restart..."
     rm /home/bulletbot/bullet-mongo-start.sh 2>/dev/null
-    rm /lib/systemd/system/bullet-mongo-start.sh 2>/dev/null
+    rm /lib/systemd/system/bullet-mongo-start.service 2>/dev/null
+    systemctl daemon-reload
 fi
 
 if [[ $bullet_status = "active" ]]; then
-    echo "${yellow}WARN: bulletbot.service is already running${nc}"
-    echo -e "Skipped starting bulletbot\n"
-    echo "${green}BulletBot is now set to run in the background${nc}"
-    read -p "Press [Enter] to continue to main installer menu"
-    exit 0
+    echo "Restarting bulletbot.service..."
+    systemctl restart bulletbot.service || {
+        echo "${red}Failed to restart bulletbot.service${nc}" >&2
+        echo -e "\nExiting..."
+        exit 1
+    }
+else
+    echo "Starting bullebot.service..."
+    systemctl start bulletbot.service || {
+        echo "${red}Failed to start bulletbot.service${nc}" >&2
+        echo -e "\nExiting..."
+        exit 1
+    }
 fi
 
-echo "Starting bullebot.service..."
-systemctl start bulletbot.service || {
-    echo "${red}Failed to start bulletbot.service${nc}" >&2
-    echo -e "\nExiting..."
-    exit 1
-}
 # Waits in order to give bulletbot.service enough time to start
 echo "Waiting 20 seconds for bulletbot.service to start..."
 while (($timer >= 0)); do

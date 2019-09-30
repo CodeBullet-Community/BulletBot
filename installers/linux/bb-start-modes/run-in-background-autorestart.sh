@@ -1,31 +1,33 @@
 #!/bin/bash
 
-yellow=$'\033[1;33m'
 timer=20
 
 clear
-read -p "We will now run BulletBot in the background with auto restart on server" \
-    "reboot"
-echo "Creating files required to run Bulletbot with auto restart..."
-bash /home/bulletbot/installers/linux/autorestart/autorestart-updater.sh
-echo "Changing ownership of files added to the home directory..."
-chown bulletbot:admin -R *
+read -p "We will now run BulletBot in the background with auto restart on server reboot"
 
-if [[ $bullet_status = "active" ]]; then
-    echo "${yellow}WARN: bulletbot.service is already running${nc}"
-    echo -e "Skipped starting bulletbot\n"
-    echo "${green}BulletBot is now set to run in the background with auto restart" \
-        "on server reboot${nc}"
-    read -p "Press [Enter] to continue to main installer menu"
-    exit 0
+if [[ ! -f $start_script_exists || ! -f $start_service_exists ]]; then
+    echo "Creating files required to run Bulletbot with auto restart..."
+    bash /home/bulletbot/installers/linux/autorestart/autorestart-updater.sh
+    echo "Changing ownership of files added to the home directory..."
+    chown bulletbot:admin -R *
 fi
 
-echo "Starting bullebot.service..."
-systemctl start bulletbot.service || {
-    echo "${red}Failed to start bulletbot.service${nc}" >&2
-    echo -e "\nExiting..."
-    exit 1
-}
+if [[ $bullet_status = "active" ]]; then
+    echo "Restarting bulletbot.service..."
+    systemctl restart bulletbot.service || {
+        echo "${red}Failed to restart bulletbot.service${nc}" >&2
+        echo -e "\nExiting..."
+        exit 1
+    }
+else
+    echo "Starting bullebot.service..."
+    systemctl start bulletbot.service || {
+        echo "${red}Failed to start bulletbot.service${nc}" >&2
+        echo -e "\nExiting..."
+        exit 1
+    }
+fi
+
 # Waits in order to give bulletbot.service enough time to start
 echo "Waiting 20 seconds for bulletbot.service to start..."
 while (($timer >= 0)); do
