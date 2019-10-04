@@ -65,6 +65,7 @@ out/
 
 # auth stuff
 bot-config.json
+bot-config.json.old
 
 # crash proof system
 crashProof.time
