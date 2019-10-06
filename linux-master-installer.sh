@@ -1,17 +1,14 @@
 #!/bin/bash
 
+yellow=$'\033[1;33m'
 green=$'\033[0;32m'
 cyan=$'\033[0;36m'
 red=$'\033[1;31m'
 nc=$'\033[0m'
 home="/home/bulletbot"
-bullet_status=$(systemctl is-active bulletbot.service)
-start_script_exists=$(find . -path installers -prune -o -print | grep \
-    -i "bullet-mongo-start.sh" &>/dev/null; echo $?)
-bullet_service_exists=$(systemctl list-units --full --all | grep -Fq \
-    "bulletbot.service" &>/dev/null; echo $?)
-start_service_exists=$(systemctl list-units --full --all | grep -Fq \
-    "bullet-mongo-start.service" &>/dev/null; echo $?)
+start_script_exists="/home/bulletbot/bullet-mongo-start.sh"
+bullet_service_exists="/lib/systemd/system/bulletbot.service"
+start_service_exists="/lib/systemd/system/bullet-mongo-start.service"
 # TODO: Change the urls below when everything is moved to new repo
 tag=$(curl -s https://api.github.com/repos/StrangeRanger/Bull/releases/latest \
     | grep -oP '"tag_name": "\K(.*)(?=")')
@@ -39,7 +36,7 @@ download_bb() {
     clear
     read -p "We will now download the compiled version of the newest release"
     
-    if [[ $bullet_service_exists -eq 0 && $bullet_status = "active" ]]; then
+    if [[ $bullet_status = "active" ]]; then
         exists="true"
         echo "Stopping 'bulletbot.service'..."
         systemctl stop bulletbot.service || {
@@ -127,8 +124,7 @@ RestartSec=3
 [Install]
 WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service 
 
-    if [[ $start_script_exists -eq 0 && $start_service_exists -eq 0 ]] \
-            2>/dev/null; then 
+    if [[ -f $start_script_exists && -f $start_service_exists ]] 2>/dev/null; then
         echo "Updating startup script and service..."
         bash installers/linux/autorestart/autorestart-updater.sh
     fi
@@ -136,8 +132,10 @@ WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service
     echo "Changing ownership of files added to the home directory..."
     chown bulletbot:admin -R *
     echo -e "\n${green}Finished downloading and updating BulletBot${nc}"
-
-    if $exists; then
+    
+    # If statement uses double brackets because '$exists' is only declared under
+    # certain conditions (single quotes and no quotes do not work)
+    if [[ $exists ]]; then
         echo "${cyan}NOTE: 'bulletbot.service' was stopped to update BulletBot" \
             "and has to be started using the run modes in the master installer" \
             "menu${nc}"
@@ -154,6 +152,9 @@ WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service
 # --------- #
 echo -e "Welcome to the BulletBot master installer\n"
 cd "$(dirname $0)"
+# The variables exported are used all throughout this script and the other
+# sub-scripts/installers
+export yellow
 export green
 export cyan
 export red
@@ -170,6 +171,8 @@ if ! hash jq; then
 fi
 
 while true; do
+    bullet_status=$(systemctl is-active bulletbot.service)
+
     # Creates a system user named 'bulletbot' if it does not exists, then creates a 
     # home directory for it
     if ! id -u bulletbot &>/dev/null; then
@@ -256,11 +259,11 @@ while true; do
         fi
 
         if [ ! -f out/bot-config.json ]; then
-            echo "5. Setup BulletBot config file (contains bot key, etc.)${red}" \
-                "(Not setup)${nc}"
+            echo "5. Setup BulletBot config file (only do this after you've set up" \
+                "MongoDB) ${red}(Not setup)${nc}"
         else
-            echo "5. Setup BulletBot config file (contains bot key, etc.)${green}" \
-                "(Already setup)${nc}"
+            echo "5. Setup BulletBot config file (only do this after you've set up" \
+                "MongoDB) ${green}(Already setup)${nc}"
         fi
 
         echo "6. Stop and exit script"
@@ -271,7 +274,7 @@ while true; do
                 clear
                 ;;
             2)
-                bash installers/linux/setup/mongodb-setup.sh
+                bash installers/linux/setup/mongodb-installer.sh
                 clear
                 ;;
             3)
@@ -285,6 +288,7 @@ while true; do
                 clear
                 ;;
             5)
+                export bullet_status
                 bash installers/linux/setup/bot-config-setup.sh
                 clear
                 ;;
@@ -299,29 +303,35 @@ while true; do
                 ;;
         esac
     else 
-        echo "1. Download/update BulletBot and auto restart files/services"
-        if [[ $start_script_exists -eq 0 && $start_service_exists -eq 0 && 
-                $bullet_status = "active" ]]; then
-            echo "2. Run BulletBot in background ${green}(Currently set up to use" \
-                "this)${nc}"
-            echo "3. Run BulletBot in background with auto restart"
-        elif [[ $start_script_exists -eq 0 && $start_service_exists -eq 0 && 
-                $bullet_status != "active" ]]; then
-            echo "2. Run BulletBot in background ${green}(Option in use)${nc}"
-            echo "3. Run BulletBot in background with auto restart"
-        elif [[ $start_service_exists -ne 0 && $bullet_status = "active" ]]; then
+        if [[ -f $start_script_exists && -f $start_service_exists &&
+                -f $bullet_service_exists && $bullet_status = "active" ]]; then
+            echo "1. Download/update BulletBot and auto restart files/services"
             echo "2. Run BulletBot in background"
-            echo "3. Run BulletBot in background with auto restart ${green}" \
-                "(Option in use)${nc}"
-        elif [[ $start_service_exists -ne 0 && $bullet_status != "active" ]]; then
+            echo "3. Run BulletBot in background with auto restart${green}" \
+                "(Running in this mode)${nc}"
+        elif [[ -f $start_script_exists && -f $start_service_exists &&
+                -f $bullet_service_exists && $bullet_status != "active" ]]; then
+            echo "1. Download/update BulletBot and auto restart files/services"
             echo "2. Run BulletBot in background"
-            echo "3. Run BulletBot in background with auto restart ${green}" \
-                "(Currently set up to use this)${nc}"
+            echo "3. Run BulletBot in background with auto restart${yellow}" \
+                "(Set up to use this mode)${nc}"
+        elif [[ -f $bullet_service_exists && $bullet_status = "active" ]]; then
+            echo "1. Download/update BulletBot"
+            echo "2. Run BulletBot in background ${green}(Running in this mode)${nc}"
+            echo "3. Run BulletBot in background with auto restart"
+        elif [[ -f $bullet_service_exists && $bullet_status != "active" ]]; then
+            echo "1. Download/update BulletBot"
+            echo "2. Run BulletBot in background ${yellow} (Set up to use this" \
+                "mode)${nc}"
+            echo "3. Run BulletBot in background with auto restart"
+        # If this were to ever occure, something went wrong or something wierd
+        # is happening
         else
+            echo "1. Download/update BulletBot"
             echo "2. Run BulletBot in background"
             echo "3. Run BulletBot in background with auto restart"
         fi
-        echo "4. Create new bot config file (replaces current config file)"
+        echo "4. Create new/update BulletBot config file"
         echo "5. Stop and exit script"
         read option
         case $option in
@@ -332,16 +342,19 @@ while true; do
             2)
                 export bullet_status
                 export start_script_exists
-                export start_service_exists
+                export bullet_service_exists
                 bash installers/linux/bb-start-modes/run-in-background.sh
                 clear
                 ;;
             3)
                 export bullet_status
+                export start_script_exists
+                export start_service_exists
                 bash installers/linux/bb-start-modes/run-in-background-autorestart.sh
                 clear
                 ;;
             4)
+                export bullet_status
                 bash installers/linux/setup/bot-config-setup.sh
                 clear
                 ;;
