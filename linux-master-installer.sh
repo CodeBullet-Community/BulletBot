@@ -60,7 +60,7 @@ download_bb() {
 
     # Installs unzip on system if it isn't already
     if ! hash unzip &>/dev/null; then
-        echo "${red}unzip is not installed on system${nc}"
+        echo "${red}unzip is not installed${nc}"
         echo "Installing unzip..."
         apt -y install unzip || {
             echo "${red}Failed to install unzip${nc}" >&2
@@ -236,34 +236,31 @@ while true; do
         echo "1. Download/update BulletBot"
 
         if ! hash mongod &>/dev/null; then
-            echo "2. Install MongoDB ${red}(Not installed and setup)${nc}"
+            echo "2. Install MongoDB ${red}(Neither installed or setup)${nc}"
         else
-            echo "2. Install MongoDB ${green}(Already installed but might" \
-                "not be set up)${nc}"
+            echo "2. Install MongoDB ${green}(Already installed)${nc}"
         fi
         
         if (! hash nodejs || ! hash node || ! hash npm) &>/dev/null; then
-            echo "3. Install npm and nodejs (will also perform the same actions as" \
-            "option 4) ${red}(Not installed)${nc}"
+            echo "3. Install NodeJS (will also perform the actions of option 4)" \
+               "${red}(Not installed)${nc}"
         else
-            echo "3. Install npm and nodejs (will also perform the same actions as" \
-            "option 4) ${green}(Already installed)${nc}"
+            echo "3. Install NodeJS (will also perform the actions of option 4)" \
+                "${green}(Already installed)${nc}"
         fi
 
         if [[ ! -d node_modules ]] &>/dev/null; then
-            echo "4. Install packages and dependencies with npm ${red}(Not" \
+            echo "4. Install required packages and dependencies ${red}(Not" \
                 "installed)${nc}"
         else
-            echo "4. Install packages and dependencies with npm ${green}(Already" \
+            echo "4. Install required packages and dependencies ${green}(Already" \
                 "installed)${nc}"
         fi
 
         if [ ! -f out/bot-config.json ]; then
-            echo "5. Setup BulletBot config file (only do this after you've set up" \
-                "MongoDB) ${red}(Not setup)${nc}"
+            echo "5. Setup BulletBot config file ${red}(Not setup)${nc}"
         else
-            echo "5. Setup BulletBot config file (only do this after you've set up" \
-                "MongoDB) ${green}(Already setup)${nc}"
+            echo "5. Setup BulletBot config file ${green}(Already setup)${nc}"
         fi
 
         echo "6. Stop and exit script"
@@ -274,7 +271,7 @@ while true; do
                 clear
                 ;;
             2)
-                bash installers/linux/setup/mongodb-installer.sh
+                bash installers/linux/mongodb-installer.sh
                 clear
                 ;;
             3)
