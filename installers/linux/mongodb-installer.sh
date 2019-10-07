@@ -20,7 +20,7 @@ apt update
 echo "Installing latest stable version of MongoDB..."
 apt -y install mongodb-org
 echo "Enabling 'mongod.service'..."
-systemctl enable mongod.sergice
+systemctl enable mongod.service
 echo "Starting 'mongod.service'..."
 systemctl start mongod.service
 echo -e "\n${green}Finished installing MongoDB${nc}"
