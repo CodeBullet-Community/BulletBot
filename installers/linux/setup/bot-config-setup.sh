@@ -4,41 +4,33 @@ clear
 read -p "We will now set up 'bot-config.json'"
 
 echo -e "\n-------------"
+echo "${cyan}This is a required field and cannot be left blank${nc}"
 while true; do
     read -p "Enter bot token: " bot_token
     if [[ ! -z $bot_token ]]; then 
         break
-    else
-        echo "${red}Bot token can not be empty${nc}"
-        continue
     fi
 done
 echo "Bot token: $bot_token"
 echo -e "-------------\n"
 
 echo "-------------"
-while true; do
-    read -p "Enter the MongoDB url (i.e. mongodb://localhost:[port]): " mongodb_url
-    if [[ ! -z $bot_token ]]; then 
-        break
-    else
-        echo "${red}MongoDB url can not be empty${nc}"
-        continue
-    fi
-done
+echo "${cyan}If this field is left blank, the default mongodb url will be used:" \
+    "mongodb://localhost:27017${nc}"
+read -p "Enter the MongoDB url (i.e. mongodb://localhost:[port]): " mongodb_url
+if [[ ! -z $bot_token ]]; then mongodb_url="mongodb://localhost:27017"; fi
 echo "MongoDB url: $mongodb_url"
 echo -e "-------------\n"
 
 echo "-------------"
-echo "${cyan}NOTE: Depending on how MongoDB was set up (i.e. Authorization is" \
-    "used), this field CAN be left empty${nc}"
+echo "${cyan}Depending on how MongoDB was set up (i.e. Authorization is used)," \
+    "this field shouldn't be left empty${nc}"
 read -p "Enter the suffix to the MongoDB url (i.e. ?authSource=admin): " mongodb_url_suffix
 echo "MongoDB url suffix: $mongodb_url_suffix"
 if [[ -z $mongodb_url_suffix ]]; then mongodb_url_suffix=""; fi
 echo -e "-------------\n"
 
 echo "-------------"
-echo "${cyan}NOTE: Can be left empty${nc}"
 read -p "Enter the Google API Key: " google_api_key
 echo "Google API Key: $google_api_key"
 if [[ -z $google_api_key ]]; then
