@@ -6,6 +6,15 @@ import { permToString } from '../../utils/parsers';
 import { permLevels } from '../../utils/permissions';
 import { commandsObject, logTypes, filtersObject } from '../../database/schemas';
 
+/**
+ * sends a list of filters with their short description
+ *
+ * @param {Guild} guild guild to get the prefix from
+ * @param {Message} message message it should reply to
+ * @param {*} strucObject structure Object with filters and subcategories it should list
+ * @param {string} path the path to that structure Object
+ * @param {[number, number]} requestTime when the list was requested to measure response time
+ */
 async function sendFilterList(guild: Guild, message: Message, strucObject: any, path: string, requestTime: [number, number]) {
     var output = new RichEmbed();
     output.setAuthor('Filter List:', Bot.client.user.displayAvatarURL);
@@ -36,27 +45,29 @@ var command: commandInterface = { name: undefined, path: undefined, dm: undefine
 command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
     try {
         var argIndex = 0;
-        if (args.length == 0) {
+        if (args.length == 0) { // send help embed if no arguments provided
             message.channel.send(await command.embedHelp(message.guild));
             Bot.mStats.logMessageSend();
             return false;
         }
-        var argsArray = args.split(' ').filter(x => x.length != 0);
+        var argsArray = args.split(' ').filter(x => x.length != 0); // split arguments string by spaces
 
-        switch (argsArray[argIndex]) {
+        switch (argsArray[argIndex]) { // the different actions
             case 'list':
                 argIndex++;
-                if (argsArray[argIndex] == 'enabled') {
+                if (argsArray[argIndex] == 'enabled') { // if it should only show enabled filters
                     var filtersDoc = await Bot.database.findFiltersDoc(message.guild.id);
-                    if (!filtersDoc) {
+                    if (!filtersDoc) { // if the filters doc doesn't exist, no command can be enabled
                         Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send('There aren\'t any enabled filters.');
                         Bot.mStats.logMessageSend();
                     } else {
+                        // build embed
                         var output = new RichEmbed();
                         output.setAuthor('Enabled Filters:', Bot.client.user.displayAvatarURL);
                         output.setColor(Bot.database.settingsDB.cache.embedColors.help);
 
+                        // add enabled filters
                         var filtersObject: filtersObject = filtersDoc.toObject();
                         for (const filterName in filtersObject.filters) {
                             if (!filtersObject.filters[filterName]._enabled) continue;
@@ -64,6 +75,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                             output.addField(cmd.name, cmd.shortHelp);
                         }
 
+                        // send embed or say there aren't any enabled filters
                         Bot.mStats.logResponseTime(command.name, requestTime);
                         if (output.fields.length == 0) {
                             message.channel.send('There aren\'t any enabled filters.');
@@ -76,8 +88,9 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     }
                 }
 
+                // gets the structure object to list
                 var strucObject = Bot.filters.structure;
-                if (argsArray[argIndex]) {
+                if (argsArray[argIndex]) { // search subcategories if one was defined
                     var keys = args.toLocaleLowerCase().split('/');
                     for (var i = 0; i < keys.length; i++) {
                         if (typeof (strucObject[keys[i]]) === 'undefined') {
@@ -93,22 +106,23 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 break;
             case 'enable':
                 argIndex++;
-                if (!argsArray[argIndex]) {
+                if (!argsArray[argIndex]) { // check if filter is specified
                     message.channel.send('Please input a filter');
                     Bot.mStats.logMessageSend();
                     return false;
                 }
                 var filter = Bot.filters.get(argsArray[argIndex].toLowerCase());
-                if (!filter) {
+                if (!filter) { // check if filter exists
                     message.channel.send(`That isn't a filter.`);
                     Bot.mStats.logMessageSend();
                     return false;
                 }
 
+                // load filter settings
                 var filtersDoc = await Bot.database.findFiltersDoc(message.guild.id);
                 var filterSettings = await Bot.database.getFilterSettings(message.guild.id, filter.name, filtersDoc);
                 if (filterSettings) {
-                    if (filterSettings._enabled) {
+                    if (filterSettings._enabled) { // if the filter is already enabled
                         Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send(`The \`${filter.name}\` filter is already enabled.`);
                         Bot.mStats.logMessageSend();
@@ -118,23 +132,27 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     filterSettings = {};
                 }
 
+                // enable filter
                 filterSettings._enabled = true;
                 Bot.database.setFilterSettings(message.guild.id, filter.name, filterSettings, filtersDoc);
+
+                // send message that it was successfully enabled
                 Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(`Succesfully enabled the \`${filter.name}\` filter.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'enable');
+                // log that the filter was enabled
                 Bot.logger.logFilter(message.guild, message.member, filter, logTypes.add);
                 break;
             case 'disable':
                 argIndex++;
-                if (!argsArray[argIndex]) {
+                if (!argsArray[argIndex]) { // check if filter is specified
                     message.channel.send('Please input a filter');
                     Bot.mStats.logMessageSend();
                     return false;
                 }
                 var filter = Bot.filters.get(argsArray[argIndex].toLowerCase());
-                if (!filter) {
+                if (!filter) { // check if filter exists
                     message.channel.send(`That isn't a filter.`);
                     Bot.mStats.logMessageSend();
                     return false;
@@ -142,34 +160,39 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
 
                 var filtersDoc = await Bot.database.findFiltersDoc(message.guild.id);
                 var filterSettings = await Bot.database.getFilterSettings(message.guild.id, filter.name, filtersDoc);
-                if (!filterSettings || !filterSettings._enabled) {
+                if (!filterSettings || !filterSettings._enabled) { // check if filter is already disabled
                     Bot.mStats.logResponseTime(filter.name, requestTime);
                     message.channel.send(`The \`${filter.name}\` filter is already disabled.`);
                     Bot.mStats.logMessageSend();
                     return false;
                 }
 
+                // disable the filter
                 filterSettings._enabled = false;
                 Bot.database.setFilterSettings(message.guild.id, filter.name, filterSettings, filtersDoc);
+                
+                // send message that it was successfully disabled
                 Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(`Succesfully disabled the \`${filter.name}\` filter.`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'disable');
+                // log that the filter was disabled
                 Bot.logger.logFilter(message.guild, message.member, filter, logTypes.remove);
                 break;
             default:
-                if (!argsArray[argIndex]) {
-                    message.channel.send('Filter name isn\'t given');
+                if (!argsArray[argIndex]) { // check if filter was specified
+                    message.channel.send('Either that filter doesn\'t exist or ');
                     Bot.mStats.logMessageSend();
                     return false;
                 }
                 var filter = Bot.filters.get(argsArray[argIndex]);
-                if (!filter) {
+                if (!filter) { // check if filter exists
                     message.channel.send('That isn\'t a filter');
                     Bot.mStats.logMessageSend();
                     return false;
                 }
 
+                // send help embed of filter
                 Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(await filter.embedHelp(message.guild));
                 Bot.mStats.logCommandUsage(command.name, 'help');

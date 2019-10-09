@@ -63,17 +63,18 @@ var command: commandInterface = {
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
-            if (args.length == 0) {
+            if (args.length == 0) { // send help embed if no arguments provided
                 message.channel.send(await command.embedHelp(message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
             let argIndex = 0;
-            let argsArray = args.split(' ').filter(x => x.length != 0);
+            let argsArray = args.split(' ').filter(x => x.length != 0); // split arguments string by spaces
             let megalogDoc = await Bot.database.getMegalogDoc(message.guild.id);
-            switch (argsArray[argIndex]) {
+            switch (argsArray[argIndex]) { // the different actions
                 case 'list':
                     {
+                        // load all functions and their channels into a string
                         let functionsText = '';
                         let megalogObject: megalogObject = megalogDoc.toObject();
                         for (const func in megalogObject) {
@@ -81,6 +82,8 @@ var command: commandInterface = {
                                 functionsText += `${func}: ${message.guild.channels.get(megalogObject[func])}\n`;
                             }
                         }
+
+                        // send embed
                         Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send({
                             "embed": {
@@ -110,10 +113,10 @@ var command: commandInterface = {
                 case 'enable':
                 case 'disable':
                     let functions = megalogFunctions[argsArray[argIndex + 1]];
-                    if (!functions || megalogFunctions.all.includes(argsArray[argIndex + 1])) {
+                    if (!functions || megalogFunctions.all.includes(argsArray[argIndex + 1])) { // when the argument wasn't a category but a single function
                         functions = [argsArray[argIndex + 1]];
                     }
-                    if (!functions || !functions[0]) {
+                    if (!functions || !functions[0]) { // if nor a single function or a category was found
                         message.channel.send('The specified group/function doesn\'t exist');
                         Bot.mStats.logMessageSend();
                         return false;
@@ -123,19 +126,19 @@ var command: commandInterface = {
                             {
                                 argIndex += 2;
                                 let channel = stringToChannel(message.guild, argsArray[argIndex]);
-                                if (!channel) {
+                                if (!channel) { // check if specified channel was found
                                     message.channel.send('Coudn\'t find specified channel');
                                     Bot.mStats.logMessageSend();
                                     return false;
                                 }
-                                if (!(channel instanceof TextChannel)) {
+                                if (!(channel instanceof TextChannel)) { // check if the channel is a text channel
                                     message.channel.send('Specified channel isn\'t a text channel');
                                     Bot.mStats.logMessageSend();
                                     return false;
                                 }
 
-                                let text = '';
-                                let enabledFunctions: string[] = [];
+                                let text = ''; // string containing all enabled functions
+                                let enabledFunctions: string[] = []; // list of enabled functions
                                 for (const func of functions) {
                                     if (megalogDoc[func] == channel.id) continue; // skip over those already toggled
                                     enabledFunctions.push(func);
@@ -143,7 +146,7 @@ var command: commandInterface = {
                                     text += '**' + func + '**, ';
                                 }
 
-                                if (enabledFunctions.length == 0) {
+                                if (enabledFunctions.length == 0) { // if no functions were enabled
                                     Bot.mStats.logResponseTime(command.name, requestTime);
                                     message.channel.send(`No functions were changed`);
                                     Bot.mStats.logMessageSend();
@@ -151,9 +154,13 @@ var command: commandInterface = {
                                     return true;
                                 }
 
+                                // save changes to database
                                 await megalogDoc.save();
+                                // log that the functions have been enabled
                                 await Bot.logger.logMegalog(message.guild, message.member, logTypes.add, enabledFunctions, channel);
-                                text = text.slice(0, -2);
+
+                                // send confirmation message
+                                text = text.slice(0, -2); // cut of ", " at the end
                                 Bot.mStats.logResponseTime(command.name, requestTime);
                                 message.channel.send(`Successfully enabled function(-s) ${text} in ${channel}`);
                                 Bot.mStats.logCommandUsage(command.name, 'enable');
@@ -162,15 +169,16 @@ var command: commandInterface = {
                             }
                         case 'disable':
                             {
-                                let text = '';
-                                let disabledFunctions: string[] = [];
+                                let text = ''; // string containing all disabled functions
+                                let disabledFunctions: string[] = []; // list of disabled functions
                                 for (const func of functions) {
                                     if (!megalogDoc[func]) continue; // skip over those already undefined
                                     disabledFunctions.push(func);
                                     megalogDoc[func] = undefined;
                                     text += '**' + func + '**, ';
                                 }
-                                if (disabledFunctions.length == 0) {
+
+                                if (disabledFunctions.length == 0) { // if no functions were disabled
                                     Bot.mStats.logResponseTime(command.name, requestTime);
                                     message.channel.send(`No functions were changed`);
                                     Bot.mStats.logMessageSend();
@@ -178,9 +186,13 @@ var command: commandInterface = {
                                     return true;
                                 }
 
+                                // save changes to database
                                 await megalogDoc.save();
+                                // log that the functions have been disabled
                                 await Bot.logger.logMegalog(message.guild, message.member, logTypes.remove, disabledFunctions);
-                                text = text.slice(0, -2);
+
+                                // send confirmation message
+                                text = text.slice(0, -2); // cut of ", " at the end
                                 Bot.mStats.logResponseTime(command.name, requestTime);
                                 message.channel.send(`Successfully disabled function(-s) ${text}`);
                                 Bot.mStats.logCommandUsage(command.name, 'disable');
@@ -192,12 +204,12 @@ var command: commandInterface = {
                 case 'ignore':
                 case 'unignore':
                     let channel = stringToChannel(message.guild, argsArray[argIndex + 1]);
-                    if (!channel) {
+                    if (!channel) { // check if specified channel was found
                         message.channel.send('Coudn\'t find specified channel');
                         Bot.mStats.logMessageSend();
                         return false;
                     }
-                    if (!(channel instanceof TextChannel)) {
+                    if (!(channel instanceof TextChannel)) { // check if the channel is a text channel
                         message.channel.send('Specified channel isn\'t a text channel');
                         Bot.mStats.logMessageSend();
                         return false;
@@ -205,7 +217,8 @@ var command: commandInterface = {
                     switch (argsArray[argIndex]) {
                         case 'ignore':
                             {
-                                if (!megalogDoc.ignoreChannels) megalogDoc.ignoreChannels = [];
+                                if (!megalogDoc.ignoreChannels) megalogDoc.ignoreChannels = []; // if the property hasn't been added yet
+                                // add channel to ignore list if it isn't already ignored else send fail message
                                 if (!megalogDoc.ignoreChannels.includes(channel.id)) {
                                     megalogDoc.ignoreChannels.push(channel.id);
                                 } else {
@@ -213,8 +226,12 @@ var command: commandInterface = {
                                     Bot.mStats.logMessageSend();
                                     return false;
                                 }
+                                // save changes
                                 await megalogDoc.save();
+                                // log that the channel has been ignored
                                 Bot.logger.logMegalogIgnore(message.guild, message.member, logTypes.add, channel);
+
+                                // send confirmation message
                                 Bot.mStats.logResponseTime(command.name, requestTime);
                                 message.channel.send(`Successfully added ${channel} to the ignored channels`);
                                 Bot.mStats.logCommandUsage(command.name, 'ignore');
@@ -223,6 +240,7 @@ var command: commandInterface = {
                             }
                         case 'unignore':
                             {
+                                // remove channel from ignore list if it is in there else send fail message
                                 if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(channel.id)) {
                                     megalogDoc.ignoreChannels.splice(megalogDoc.ignoreChannels.indexOf(channel.id), 1);
                                 } else {
@@ -230,8 +248,12 @@ var command: commandInterface = {
                                     Bot.mStats.logMessageSend();
                                     return false;
                                 }
+                                // save changes
                                 await megalogDoc.save();
+                                // log that the channel has be unignored
                                 Bot.logger.logMegalogIgnore(message.guild, message.member, logTypes.remove, channel);
+
+                                // send confirmation message
                                 Bot.mStats.logResponseTime(command.name, requestTime);
                                 message.channel.send(`Successfully removed ${channel} from the ignored channels`);
                                 Bot.mStats.logCommandUsage(command.name, 'unignore');
@@ -241,6 +263,7 @@ var command: commandInterface = {
                     }
                     break;
                 default:
+                    // if action doesn't exist
                     message.channel.send('unknown action. Use list, enable, disable, ignore or unignore');
                     Bot.mStats.logMessageSend();
                     return false;
