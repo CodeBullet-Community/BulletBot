@@ -63,11 +63,13 @@ var command: commandInterface = {
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
-            if (args.length == 0) {
+            if (args.length == 0) { // send help embed if no arguments provided
                 message.channel.send(await command.embedHelp(message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
+
+            // send suggestion to google form
             let form = {};
             form['entry.' + suggestionForm.serverID] = (!dm ? message.guild.id : undefined);
             form['entry.' + suggestionForm.serverName] = (!dm ? message.guild.name : undefined);
@@ -79,6 +81,8 @@ var command: commandInterface = {
             request.post('https://docs.google.com/forms/d/e/1FAIpQLSee3V4--MxBJqPjoDgfUIw2u22NG-4GBlT92Bbj10-R1ScuHA/formResponse', {
                 form: form
             });
+            
+            // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send('Suggestion was logged. Thanks for making one.');
             Bot.mStats.logMessageSend();
