@@ -178,8 +178,9 @@ while true; do
     if ! id -u bulletbot &>/dev/null; then
         echo "${red}System user 'bulletbot' does not exists${nc}" >&2
         echo "Creating system user 'bulletbot'..."
-        adduser --system bulletbot --ingroup admin || {
+        adduser --system --group bulletbot || {
             echo "${red}Failed to create 'bulletbot'${nc}" >&2
+            echo -e "\nExiting..."
             exit 1
         }
         echo "Moving files/directories associated to BulletBot to '$home'..."
@@ -236,7 +237,7 @@ while true; do
         echo "1. Download/update BulletBot"
 
         if ! hash mongod &>/dev/null; then
-            echo "2. Install MongoDB ${red}(Neither installed or setup)${nc}"
+            echo "2. Install MongoDB ${red}(Not installed)${nc}"
         else
             echo "2. Install MongoDB ${green}(Already installed)${nc}"
         fi
@@ -318,7 +319,7 @@ while true; do
             echo "3. Run BulletBot in background with auto restart"
         elif [[ -f $bullet_service_exists && $bullet_status != "active" ]]; then
             echo "1. Download/update BulletBot"
-            echo "2. Run BulletBot in background ${yellow} (Set up to use this" \
+            echo "2. Run BulletBot in background ${yellow}(Set up to use this" \
                 "mode)${nc}"
             echo "3. Run BulletBot in background with auto restart"
         # If this were to ever occure, something went wrong or something wierd
