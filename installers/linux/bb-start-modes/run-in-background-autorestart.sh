@@ -10,6 +10,7 @@ if [[ ! -f $start_script_exists || ! -f $start_service_exists ]]; then
     bash /home/bulletbot/installers/linux/autorestart/autorestart-updater.sh
     echo "Changing ownership of files added to the home directory..."
     chown bulletbot:admin -R *
+    systemctl daemon-reload
 fi
 
 if [[ $bullet_status = "active" ]]; then
