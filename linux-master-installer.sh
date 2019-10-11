@@ -58,6 +58,17 @@ download_bb() {
         }
     fi
 
+    # Installs curl on system if it isn't already
+    if ! hash curl &>/dev/null; then
+        echo "${red}'curl' is not installed${nc}"
+        echo "Installing 'curl'..."
+        apt -y install curl || {
+            echo "${red}Failed to install 'curl'${nc}" >&2
+            echo -e "\nExiting..."
+            exit 1
+        }
+    fi
+
     # Installs unzip on system if it isn't already
     if ! hash unzip &>/dev/null; then
         echo "${red}unzip is not installed${nc}"
@@ -130,7 +141,7 @@ WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service
     fi
     
     echo "Changing ownership of files added to the home directory..."
-    chown bulletbot:admin -R *
+    chown bulletbot:bulletbot -R *
     echo -e "\n${green}Finished downloading and updating BulletBot${nc}"
     
     # If statement uses double brackets because '$exists' is only declared under
@@ -185,7 +196,7 @@ while true; do
         }
         echo "Moving files/directories associated to BulletBot to '$home'..."
         mv -f "${files[@]}" $home 2>/dev/null
-        chown bulletbot:admin -R $home
+        chown bulletbot:bulletbot -R $home
         cd $home
     # Creates bulletbot's home directory if it does not exist
     elif [ ! -d $home ]; then
@@ -194,7 +205,7 @@ while true; do
         mkdir $home
         echo "Moving files/directories associated to BulletBot to '$home'..."
         mv -f "${files[@]}" $home 2>/dev/null
-        chown bulletbot:admin -R $home
+        chown bulletbot:bulletbot -R $home
         cd $home
     fi
 
