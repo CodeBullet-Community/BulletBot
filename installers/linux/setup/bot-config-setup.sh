@@ -35,7 +35,8 @@ read -p "Enter the Google API Key: " google_api_key
 echo "Google API Key: $google_api_key"
 if [[ -z $google_api_key ]]; then
     google_api_key=""
-    echo "${yellow}You will not be able to use commands that require access to google${nc}"
+    echo "${yellow}You will not be able to use commands that require access to" \
+        "google products${nc}"
 fi
 echo -e "-------------\n"
 
@@ -73,7 +74,7 @@ json="{
     \"pActionsInterval\": 1000,
     \"YTResubInterval\": 259200000,
     \"crashProof\": {
-        \"file\": \"home/bulletbot/crashProof.time\",
+        \"file\": \"/home/bulletbot/crashProof.time\",
         \"interval\": 10000
     },
     \"callback\": {
