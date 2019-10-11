@@ -357,6 +357,7 @@ while true; do
                 clear
                 ;;
             5)
+                echo -e "\nExiting..."
                 exit 0
                 ;;
             *)
