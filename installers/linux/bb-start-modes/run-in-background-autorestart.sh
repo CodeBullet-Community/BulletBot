@@ -9,7 +9,7 @@ if [[ ! -f $start_script_exists || ! -f $start_service_exists ]]; then
     echo "Creating files required to run Bulletbot with auto restart..."
     bash /home/bulletbot/installers/linux/autorestart/autorestart-updater.sh
     echo "Changing ownership of files added to the home directory..."
-    chown bulletbot:admin -R *
+    chown bulletbot:bulletbot -R *
     systemctl daemon-reload
 fi
 

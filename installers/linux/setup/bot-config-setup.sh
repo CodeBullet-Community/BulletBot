@@ -149,7 +149,7 @@ else
 fi
 
 echo "Changing ownership of files added to the home directory..."
-chown bulletbot:admin -R *
+chown bulletbot:bulletbot -R *
 echo -e "\n${green}Finished setting up 'bot-config.json'${nc}"
 
 if [[ $bullet_status = "active" ]]; then

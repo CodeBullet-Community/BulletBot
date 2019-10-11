@@ -48,14 +48,14 @@ if [[ $option -eq 3 ]]; then
     install_nodejs
     install_node_module_pkgs
     echo "Changing ownership of files added to the home directory..."
-    chown bulletbot:admin -R *
+    chown bulletbot:bulletbot -R *
     echo -e "\n${green}Finished downloading and installing nodejs and any required" \
         "packages${nc}"
 else
     read -p "We will now install required packages and dependencies via npm"
     install_node_module_pkgs
     echo "Changing ownership of files added to the home directory..."
-    chown bulletbot:admin -R *
+    chown bulletbot:bulletbot -R *
     echo -e "\n${green}Finished installing required packages and dependencies${nc}"
 fi
 
