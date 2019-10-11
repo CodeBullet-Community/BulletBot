@@ -9,10 +9,6 @@ home="/home/bulletbot"
 start_script_exists="/home/bulletbot/bullet-mongo-start.sh"
 bullet_service_exists="/lib/systemd/system/bulletbot.service"
 start_service_exists="/lib/systemd/system/bullet-mongo-start.service"
-# TODO: Change the urls below when everything is moved to new repo
-tag=$(curl -s https://api.github.com/repos/StrangeRanger/Bull/releases/latest \
-    | grep -oP '"tag_name": "\K(.*)(?=")')
-latest_release="https://github.com/StrangeRanger/Bull/releases/download/${tag}/BulletBot.zip"
 # Contains all the possible files/directories that are associated with
 # BulletBot (only files/directories located in the BulletBot root directory)
 files=("installers/" "linux-master-installer.sh" "package-lock.json" \
@@ -46,6 +42,22 @@ download_bb() {
             exit 1
         }
     fi
+    
+    # Installs curl on system if it isn't already
+    if ! hash curl &>/dev/null; then
+        echo "${red}'curl' is not installed${nc}"
+        echo "Installing 'curl'..."
+        apt -y install curl || {
+            echo "${red}Failed to install 'curl'${nc}" >&2
+            echo -e "\nExiting..."
+            exit 1
+        }
+    fi
+    
+    # TODO: Change the urls below when everything is moved to new repo
+    tag=$(curl -s https://api.github.com/repos/StrangeRanger/Bull/releases/latest \
+        | grep -oP '"tag_name": "\K(.*)(?=")')
+    latest_release="https://github.com/StrangeRanger/Bull/releases/download/${tag}/BulletBot.zip"
     
     # Installs wget on system if it isn't already
     if ! hash wget &>/dev/null; then
@@ -99,7 +111,7 @@ download_bb() {
         if [ -f tsconfig.json ]; then rm tsconfig.json; fi
     fi
     
-    echo "Downloading latest release"
+    echo "Downloading latest release..."
     wget -N $latest_release || {
         echo "${red}Failed to download the latest release${nc}" >&2
         echo -e "\nExiting..."
@@ -200,7 +212,7 @@ while true; do
         cd $home
     # Creates bulletbot's home directory if it does not exist
     elif [ ! -d $home ]; then
-        echo "${red}bulletbot's home directory does not exists${nc}" >&2
+        echo "${red}bulletbot's home directory does not exist${nc}" >&2
         echo "Creating '$home'..."
         mkdir $home
         echo "Moving files/directories associated to BulletBot to '$home'..."
@@ -208,6 +220,13 @@ while true; do
         chown bulletbot:bulletbot -R $home
         cd $home
     fi
+
+    if [[ $PWD != "/home/bulletbot" ]]; then
+        echo "Moving files/directories associated to BulletBot to '$home'..."
+        mv -f "${files[@]}" $home 2>/dev/null
+        chown bulletbot:bulletbot -R $home
+        cd $home
+    fi   
 
     # Checks to see if it is necessary to download BulletBot
     if [[ -d src || ! -d out ]]; then
