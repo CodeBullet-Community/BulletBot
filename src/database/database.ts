@@ -90,22 +90,29 @@ export class Database {
         });
         mainCon.once('open', function () {
             console.log('connected to /main database');
+            Bot.database.mainDB = {
+                connection: mainCon,
+                guilds: mainCon.model('guild', guildSchema, 'guilds'),
+                staff: mainCon.model('staff', staffSchema, 'staff'),
+                prefix: mainCon.model('prefix', prefixSchema, 'prefix'),
+                commands: mainCon.model('commands', commandsSchema, 'commands'),
+                filters: mainCon.model('filters', filtersSchema, 'filters'),
+                logs: mainCon.model('log', logSchema, 'logs'),
+                commandCache: mainCon.model('commandCache', commandCacheSchema, 'commandCaches'),
+                users: mainCon.model('user', userSchema, 'users'),
+                megalogs: mainCon.model('megalogSettings', megalogSchema, 'megalogs'),
+                cases: mainCon.model('cases', caseSchema, 'cases'),
+                pActions: mainCon.model('pActions', pActionSchema, 'pAction')
+            }
+            setInterval(async () => {
+                await Bot.database.cleanGuilds();
+                Bot.database.cleanCommandCaches();
+                Bot.database.cleanUsers();
+                Bot.database.cleanMegalogs();
+                //console.log('cleaned database');
+            }, cleanInterval);
+            console.info(`cleaning database every ${cleanInterval}ms`);
         });
-
-        this.mainDB = {
-            connection: mainCon,
-            guilds: mainCon.model('guild', guildSchema, 'guilds'),
-            staff: mainCon.model('staff', staffSchema, 'staff'),
-            prefix: mainCon.model('prefix', prefixSchema, 'prefix'),
-            commands: mainCon.model('commands', commandsSchema, 'commands'),
-            filters: mainCon.model('filters', filtersSchema, 'filters'),
-            logs: mainCon.model('log', logSchema, 'logs'),
-            commandCache: mainCon.model('commandCache', commandCacheSchema, 'commandCaches'),
-            users: mainCon.model('user', userSchema, 'users'),
-            megalogs: mainCon.model('megalogSettings', megalogSchema, 'megalogs'),
-            cases: mainCon.model('cases', caseSchema, 'cases'),
-            pActions: mainCon.model('pActions', pActionSchema, 'pAction')
-        }
 
         var settingsCon = mongoose.createConnection(clusterInfo.url + '/settings' + clusterInfo.suffix, { useNewUrlParser: true })
         settingsCon.on('error', error => {
@@ -113,26 +120,17 @@ export class Database {
             Bot.mStats.logError(error);
         });
         settingsCon.once('open', function () {
-            console.log('connected to /settings database')
+            console.log('connected to /settings database');
+
+            Bot.database.settingsDB = {
+                connection: settingsCon,
+                settings: settingsCon.model('globalSettings', globalSettingsSchema, 'settings'),
+                cache: undefined
+            }
+            Bot.database.updateGlobalSettings(Bot.database.settingsDB);
+            setInterval(() => Bot.database.updateGlobalSettings(Bot.database.settingsDB), globalUpdateInterval);
+            console.info(`updating global cache every ${globalUpdateInterval}ms`);
         });
-
-        this.settingsDB = {
-            connection: settingsCon,
-            settings: settingsCon.model('globalSettings', globalSettingsSchema, 'settings'),
-            cache: undefined
-        }
-        this.updateGlobalSettings(this.settingsDB);
-
-        setInterval(() => this.updateGlobalSettings(this.settingsDB), globalUpdateInterval);
-        console.info(`updating global cache every ${globalUpdateInterval}ms`);
-        setInterval(async () => {
-            await this.cleanGuilds();
-            this.cleanCommandCaches();
-            this.cleanUsers();
-            this.cleanMegalogs();
-            //console.log('cleaned database');
-        }, cleanInterval);
-        console.info(`cleaning database every ${cleanInterval}ms`);
     }
 
     /**

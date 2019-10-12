@@ -77,6 +77,7 @@ export function addYoutubeCatcher(app: express.Application) {
     app.post(callback.path + '/youtube', function (req, res) {
         // parse xml body
         xmlParser.parseString(req.body, async (error, result) => {
+            if (!Bot.youtube.webhooks) return;
             // checks if error occurred and if so return a 422 code 
             if (error) {
                 res.status(422).json({ code: 'xml_parse_error', details: "Something went wrong while parsing the XML", error });
@@ -165,8 +166,8 @@ export class YTWebhookManager {
         });
         this.connection.once('open', function () {
             console.log('connected to /webhooks database');
+            Bot.youtube.webhooks = Bot.youtube.connection.model("youtubeWebhook", webhookSchema, "youtube");
         });
-        this.webhooks = this.connection.model("youtubeWebhook", webhookSchema, "youtube");
     }
 
     /**
