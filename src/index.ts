@@ -280,6 +280,20 @@ client.on('guildCreate', async guild => {
 });
 
 client.on('guildDelete', async guild => {
+    // ensure modmail doesn't error when server doesn't exist
+    let leftGuild = await Bot.database.mainDB.guilds.findOne({"guild": guild.id}).exec();
+    if (leftGuild.isModmailGuild) {
+        let mainServer = await Bot.database.mainDB.guilds.findOne({"guild": leftGuild.linkedGuild}).exec();
+        mainServer.modmailConnected = false;
+        mainServer.linkedGuild = '';
+        mainServer.save();
+    } else if (leftGuild.modmailConnected) {
+        let modmailServer = await Bot.database.mainDB.guilds.findOne({"guild": leftGuild.linkedGuild}).exec();
+        modmailServer.isModmailGuild = false;
+        modmailServer.linkedGuild = '';
+        modmailServer.modmailConnected = false;
+        modmailServer.save();
+    }
     Bot.database.removeGuild(guild.id); // removes all guild related things in database if the bot leaves a guild
 });
 

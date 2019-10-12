@@ -10,6 +10,10 @@ export interface guildObject {
     totalCases: number;
     logs: mongoose.Schema.Types.ObjectId[];
     staff: mongoose.Schema.Types.ObjectId;
+    isModmailGuild: boolean,
+    modmailConnected: boolean,
+    linkedGuild: string,
+    modmailSecret: string,
     modmailChannel: string,
     webhooks: {
         // key is service name
@@ -30,6 +34,10 @@ export const guildSchema = new mongoose.Schema({
     logChannel: String,
     caseChannel: String,
     totalCases: Number,
+    isModmailGuild: Boolean,
+    modmailConnected: Boolean,
+    linkedGuild: String,
+    modmailSecret: String,
     modmailChannel: String,
     logs: [mongoose.Schema.Types.ObjectId],
     staff: mongoose.Schema.Types.ObjectId,
