@@ -55,13 +55,13 @@ var command: commandInterface = {
                     },
                     {
                         'name': 'Usage:', // all possible inputs to the guild, the arguments should be named
-                        'value': '{command}\n{command} set [channel]'.replace(/\{command\}/g, prefix + command.name)
+                        'value': '{command}\n{command} set [channel]\n{command} r [message]\n{command} endsession\n{command} getsecret\n{command} getserver\n{command} setserver [modmail server ID] [modmail server secret]\n{command} decouple [linked server\'s secret]'.replace(/\{command\}/g, prefix + command.name)
                     },
                     {
                         'name': 'Example:',
-                        'value': '{command} // this will start a chat session\n{command} link \n{command} set #modmail'.replace(/\{command\}/g, prefix + command.name)
+                        'value': '{command} // this will start a chat session\n{command} link \n{command} set #modmail\n{command} setserver 109284029384 asdf12@3'.replace(/\{command\}/g, prefix + command.name)
                     }
-                ]
+		]
             }
         }
     },
