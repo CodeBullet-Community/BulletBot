@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# ---------------------------------------- #
+# VARIABLES USED ALL THROUGHOUT THE SCRIPT #
+# ---------------------------------------- #
 yellow=$'\033[1;33m'
 green=$'\033[0;32m'
 cyan=$'\033[0;36m'
@@ -9,13 +12,12 @@ home="/home/bulletbot"
 start_script_exists="/home/bulletbot/bullet-mongo-start.sh"
 bullet_service_exists="/lib/systemd/system/bulletbot.service"
 start_service_exists="/lib/systemd/system/bullet-mongo-start.service"
-# Contains all the possible files/directories that are associated with
-# BulletBot (only files/directories located in the BulletBot root directory)
+# Contains all of the files/directories that are associated with BulletBot
+# (only files/directories located in the BulletBot root directory)
 files=("installers/" "linux-master-installer.sh" "package-lock.json" \
     "package.json" "tsconfig.json" "src/" "media/" "README.md" "out/")
 
-# Checks to see if this script was executed with root privilege, and if not,
-# stops the script
+# Checks to see if this script was executed with root privilege
 if [[ $EUID -ne 0 ]]; then 
     echo "${red}Please run this script as root or with root privilege${nc}"
     echo -e "\nExiting..."
@@ -27,25 +29,26 @@ fi
 # FUNCTION USED ALL THROUGHOUT SCRIPT #
 # ----------------------------------- #
 # This function deals with downloading BulletBot (the latest release from github)
-# then replaces/updating the existing BulletBot code (if there is any) with it
+# and replacing/updating the existing code for BulletBot (if there is any)
 download_bb() {
     clear
-    read -p "We will now download the compiled version of the newest release"
+    printf "We will now download the compiled version of the newest release. "
+    read -p "Press [Enter] to begin."
     
     if [[ $bullet_status = "active" ]]; then
         exists="true"
         echo "Stopping 'bulletbot.service'..."
         systemctl stop bulletbot.service || {
             echo "${red}Failed to stop 'bulletbot.service'" >&2
-            echo "Manually stop bulletbot.service before continuing${nc}"
+            echo "${cyan}Manually stop bulletbot.service before continuing${nc}"
             echo -e "\nExiting..."
             exit 1
         }
     fi
     
-    # Installs curl on system if it isn't already
+    # Installs curl if it isn't already
     if ! hash curl &>/dev/null; then
-        echo "${red}'curl' is not installed${nc}"
+        echo "${yellow}'curl' is not installed${nc}"
         echo "Installing 'curl'..."
         apt -y install curl || {
             echo "${red}Failed to install 'curl'${nc}" >&2
@@ -59,9 +62,9 @@ download_bb() {
         | grep -oP '"tag_name": "\K(.*)(?=")')
     latest_release="https://github.com/StrangeRanger/Bull/releases/download/${tag}/BulletBot.zip"
     
-    # Installs wget on system if it isn't already
+    # Installs wget if it isn't already
     if ! hash wget &>/dev/null; then
-        echo "${red}'wget' is not installed${nc}"
+        echo "${yellow}'wget' is not installed${nc}"
         echo "Installing 'wget'..."
         apt -y install wget || {
             echo "${red}Failed to install 'wget'${nc}" >&2
@@ -70,9 +73,9 @@ download_bb() {
         }
     fi
 
-    # Installs curl on system if it isn't already
+    # Installs curl if it isn't already
     if ! hash curl &>/dev/null; then
-        echo "${red}'curl' is not installed${nc}"
+        echo "${yellow}'curl' is not installed${nc}"
         echo "Installing 'curl'..."
         apt -y install curl || {
             echo "${red}Failed to install 'curl'${nc}" >&2
@@ -83,7 +86,7 @@ download_bb() {
 
     # Installs unzip on system if it isn't already
     if ! hash unzip &>/dev/null; then
-        echo "${red}unzip is not installed${nc}"
+        echo "${yellow}unzip is not installed${nc}"
         echo "Installing unzip..."
         apt -y install unzip || {
             echo "${red}Failed to install unzip${nc}" >&2
@@ -99,7 +102,7 @@ download_bb() {
             mkdir tmp
             mv src/bot-config.json tmp/ || {
                 echo "${red}Failed to move 'bot-config.json' to 'tmp/'" >&2
-                echo "Please move it manually before continuing${nc}"
+                echo "${cyan}Please move it manually before continuing${nc}"
                 echo -e "\nExiting..."
                 exit 1
             }
@@ -124,18 +127,19 @@ download_bb() {
     rm BulletBot.zip
 
     # A.1.
-    # Moves 'bot-config.json' back to where it belongs ('out/')
+    # Moves 'bot-config.json' to 'out/'
     if [ -f tmp/bot-config.json ]; then
         mv tmp/bot-config.json out/ || {
             echo "${red}Failed to move 'bot-config.json' to 'out/'" >&2
-            echo "Before starting the bot, you will have to manually move it${nc}"
+            echo "${cyan}Before starting the BulletBot, you will have to manually" \
+                "move 'bot-config.json' from 'tmp/' to 'out/'${nc}"
         }
         rm -r tmp/
     fi
 
     echo "Creating/updating bulletbot.service..."
     echo "[Unit]
-Description=A service to start BulletBot after a crash or server reboot
+Description=A service to start BulletBot after a crash or system reboot
 After=network.target mongod.service
 
 [Service]
@@ -152,8 +156,8 @@ WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service
         bash installers/linux/autorestart/autorestart-updater.sh
     fi
     
-    echo "Changing ownership of files added to the home directory..."
-    chown bulletbot:bulletbot -R *
+    echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
+    chown bulletbot:bulletbot -R $home
     echo -e "\n${green}Finished downloading and updating BulletBot${nc}"
     
     # If statement uses double brackets because '$exists' is only declared under
@@ -184,7 +188,7 @@ export red
 export nc
 
 if ! hash jq; then
-    echo "${red}'jq' is not installed${nc}" >&2
+    echo "${yellow}'jq' is not installed${nc}" >&2
     echo "Installing 'jq'..."
     apt -y install jq || {
         echo "${red}Failed to install 'jq'${nc}" >&2
@@ -199,7 +203,7 @@ while true; do
     # Creates a system user named 'bulletbot' if it does not exists, then creates a 
     # home directory for it
     if ! id -u bulletbot &>/dev/null; then
-        echo "${red}System user 'bulletbot' does not exists${nc}" >&2
+        echo "${yellow}System user 'bulletbot' does not exist${nc}" >&2
         echo "Creating system user 'bulletbot'..."
         adduser --system --group bulletbot || {
             echo "${red}Failed to create 'bulletbot'${nc}" >&2
@@ -208,15 +212,17 @@ while true; do
         }
         echo "Moving files/directories associated to BulletBot to '$home'..."
         mv -f "${files[@]}" $home 2>/dev/null
+        echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
         chown bulletbot:bulletbot -R $home
         cd $home
     # Creates bulletbot's home directory if it does not exist
     elif [ ! -d $home ]; then
-        echo "${red}bulletbot's home directory does not exist${nc}" >&2
+        echo "${yellow}bulletbot's home directory does not exist${nc}" >&2
         echo "Creating '$home'..."
         mkdir $home
         echo "Moving files/directories associated to BulletBot to '$home'..."
         mv -f "${files[@]}" $home 2>/dev/null
+        echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
         chown bulletbot:bulletbot -R $home
         cd $home
     fi
@@ -224,6 +230,7 @@ while true; do
     if [[ $PWD != "/home/bulletbot" ]]; then
         echo "Moving files/directories associated to BulletBot to '$home'..."
         mv -f "${files[@]}" $home 2>/dev/null
+        echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
         chown bulletbot:bulletbot -R $home
         cd $home
     fi   
@@ -258,7 +265,7 @@ while true; do
                 ;;
         esac
     # If any of the prerequisites are not installed or set up, it will require the
-    # user to do so
+    # user to install them using the options below
     elif (! hash mongod || ! hash nodejs || ! hash node || ! hash npm || [[ ! -f \
             out/bot-config.json || ! -d node_modules ]]) &>/dev/null; then
         echo "${cyan}Some or all prerequisites are not installed. Due to this, all" \

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "[Unit]
-Description=A service to execute bullet-mongo-start.sh on server reboot
+Description=A service to execute bullet-mongo-start.sh on system reboot
 
 [Service]
 ExecStart=/bin/bash /home/bulletbot/bullet-mongo-start.sh
