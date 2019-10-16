@@ -53,10 +53,10 @@ export class Logger {
         });
         mainCon.once('open', function () {
             console.log('logger connected to /main database');
+            Bot.logger.guilds = mainCon.model('guild', guildSchema, 'guilds');
+            Bot.logger.logs = mainCon.model('log', logSchema, 'logs');
         });
         this.connection = mainCon;
-        this.guilds = mainCon.model('guild', guildSchema, 'guilds');
-        this.logs = mainCon.model('log', logSchema, 'logs');
     }
 
     /**

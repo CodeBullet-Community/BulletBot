@@ -40,11 +40,11 @@ export class PActions {
         });
         this.connection.once('open', function () {
             console.log('pActions connected to /main database');
+            Bot.pActions.pActions = Bot.pActions.connection.model('pAction', pActionSchema, 'pActions');
+            setInterval(() => {
+                Bot.pActions.executeActions();
+            }, pActionsInterval);
         });
-        this.pActions = this.connection.model('pAction', pActionSchema, 'pActions');
-        setInterval(() => {
-            this.executeActions();
-        }, pActionsInterval);
     }
 
     /**
