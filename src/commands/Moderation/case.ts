@@ -55,20 +55,22 @@ var command: commandInterface = {
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
-            if (args.length === 0) {
+            if (args.length === 0) { // send help embed if no arguments provided
                 message.channel.send(await command.embedHelp(message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
             let argIndex = 0;
-            let argsArray = args.split(' ').filter(x => x.length != 0);
+            let argsArray = args.split(' ').filter(x => x.length != 0); // split arguments string by spaces
 
+            // if member wants to list cases
             if (argsArray[argIndex] == 'list') {
                 argIndex++;
-                let embed;
+                // if no further arguments were provided send a list of all cases
                 if (!argsArray[argIndex]) {
-                    embed = await createTotalEmbed(message.guild);
+                    let embed = await createTotalEmbed(message.guild);
                     let detailEmbeds = await createDetailEmbeds(message.guild);
+
                     Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send(embed);
                     for (let i = 0; detailEmbeds.length > i; i++) {
@@ -79,12 +81,15 @@ var command: commandInterface = {
                     return true;
                 }
                 if (argsArray[argIndex]) {
+                    // parse member which to get cases of
                     let caseMember = await stringToMember(message.guild, args.substr(4));
                     if (!caseMember) {
                         message.channel.send(`Cannot find user '${args.substr(4).replace('@', '')}'`);
                         Bot.mStats.logMessageSend();
                         return false;
                     }
+
+                    // generate embeds and send them
                     let totalEmbed = await createTotalEmbed(message.guild, caseMember);
                     let detailEmbeds = await createDetailEmbeds(message.guild, caseMember);
                     Bot.mStats.logResponseTime(command.name, requestTime);
@@ -98,6 +103,7 @@ var command: commandInterface = {
                 }
             }
 
+            // if requester want to view details of a case
             if (argsArray[argIndex] == 'view') {
                 argIndex++;
                 if (!argsArray[argIndex] || isNaN(Number(argsArray[argIndex]))) {
@@ -121,9 +127,14 @@ var command: commandInterface = {
     }
 };
 
+/**
+ * creates a embed with a summary of all cases
+ *
+ * @param {Guild} guild guild to get cases from 
+ * @param {GuildMember} [member] optional query parameter, so it only lists cases of a certain user
+ * @returns
+ */
 async function createTotalEmbed(guild: Guild, member?: GuildMember) {
-    let embed = new RichEmbed();
-
     let subject;
     let id: string;
     let name: string;
@@ -131,6 +142,7 @@ async function createTotalEmbed(guild: Guild, member?: GuildMember) {
     let query;
     let cases;
 
+    // get values of either member or whole guild
     if (member) {
         subject = member;
         id = member.id;
@@ -147,6 +159,8 @@ async function createTotalEmbed(guild: Guild, member?: GuildMember) {
         subject = guild.name;
     }
 
+    // create embed
+    let embed = new RichEmbed();
     embed.setAuthor(name, avatar);
     embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
     embed.setDescription(`All cases for ${subject}`);
@@ -157,6 +171,12 @@ async function createTotalEmbed(guild: Guild, member?: GuildMember) {
     return embed;
 }
 
+/**
+ * counts the different case actions from the result of a query
+ *
+ * @param {*} query result of query
+ * @returns
+ */
 function resolveTotalCases(query) {
     var caseResolved = { unmute: 0, mute: 0, unban: 0, ban: 0, kick: 0, warn: 0, softban: 0, total: 0 };
     for (let i = 0; query.length > i; i++) {
@@ -174,9 +194,16 @@ function resolveTotalCases(query) {
     return caseResolved;
 }
 
+/**
+ * returns an array of embeds with each max 10 cases listed
+ *
+ * @param {Guild} guild guild to get cases from 
+ * @param {GuildMember} [member] optional query parameter, so it only lists cases of a certain user
+ * @returns
+ */
 async function createDetailEmbeds(guild: Guild, member?: GuildMember) {
     let cases: caseDoc[]
-    if (member) {
+    if (member) { // get either all cases from a member or the whole guild
         cases = await Bot.caseLogger.findByMember(guild.id, member.id);
     } else {
         cases = await Bot.caseLogger.findByGuild(guild.id);
@@ -189,9 +216,10 @@ async function createDetailEmbeds(guild: Guild, member?: GuildMember) {
     let tempMember;
     let embed;
 
-    while ((cases.length - caseIndex) > 0) {
+    while ((cases.length - caseIndex) > 0) { // runs until there are no cases left
         embed = new RichEmbed();
         embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
+        // puts 10 cases into an embed
         for (let i = 0; i < 10 && numOfCases > i; i++) {
             tempCase = cases[caseIndex];
             let date = new Date(tempCase.timestamp);
@@ -214,26 +242,37 @@ async function createDetailEmbeds(guild: Guild, member?: GuildMember) {
 
 }
 
+/**
+ * creates a embed with details about a single case
+ *
+ * @param {Guild} guild guild to get case from
+ * @param {string} caseID case ID
+ * @returns
+ */
 async function createSpecificEmbed(guild: Guild, caseID: string) {
+    // get case
     let tempCase = await Bot.caseLogger.findByCase(guild.id, caseID);
-
     if (!tempCase) {
         return 'Case not found';
     }
 
     let embed = new RichEmbed();
 
+    // get user affected by the action
     let user: GuildMember | string;
     user = await stringToMember(guild, tempCase.user);
     if (!user) user = tempCase.user;
 
+    // get mod that requested the action
     let mod;
     mod = await stringToMember(guild, tempCase.mod);
     if (!mod) mod = tempCase.mod;
 
+    // get color
     let color = resolveColor(tempCase.action);
     let date = new Date(tempCase.timestamp);
 
+    // create embed
     embed.setAuthor(`Case ${caseID} | ${capitalizeFirstLetter(tempCase.action)} | ${user instanceof GuildMember ? user.user.tag : user}`, user instanceof GuildMember ? user.user.displayAvatarURL : undefined);
     embed.setTimestamp(date);
     embed.setColor(color);
@@ -245,10 +284,22 @@ async function createSpecificEmbed(guild: Guild, caseID: string) {
     return embed;
 }
 
+/**
+ * capitalizes first letter of sting
+ *
+ * @param {*} string
+ * @returns
+ */
 function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+/**
+ * returns one of the pre set colors depending on the action
+ *
+ * @param {string} action
+ * @returns
+ */
 function resolveColor(action: string) {
     switch (action) {
         case caseActions.warn: return Bot.database.settingsDB.cache.embedColors.warn;

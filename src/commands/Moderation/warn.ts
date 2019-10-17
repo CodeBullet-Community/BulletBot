@@ -61,23 +61,27 @@ var command: commandInterface = {
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
-            if (args.length == 0) {
+            if (args.length == 0) { // send help embed if no arguments provided
                 message.channel.send(await command.embedHelp(message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
 
             let user = await stringToMember(message.guild, args.slice(0, args.indexOf(' ')), false, false, false);
-            if (!user) {
+            if (!user) { // check if it found the specified member
                 message.channel.send('Couldn\'t find specified member');
                 Bot.mStats.logMessageSend();
                 return false;
             }
 
+            // get the reason
             let reason = args.slice(args.indexOf(' ')).trim();
+            // make a case
             Bot.caseLogger.logWarn(message.guild, user, message.member, reason);
+            // dm to member that they has been warned
             user.send(`You were warned in **${message.guild.name}** for:\n${reason}`);
 
+            // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send(`:white_check_mark: **${user.user.tag} has been warned, ${reason}**`);
             Bot.mStats.logCommandUsage(command.name);

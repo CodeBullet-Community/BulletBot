@@ -230,6 +230,7 @@ export class Logger {
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
 
+        // create text about what the bot did with the caught message
         var actionsString = actionToString(actions[0]);
         var deleted = false;
         if (actions[0].type == filterActions.delete) deleted = true;

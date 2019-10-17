@@ -5,11 +5,23 @@ import { Bot } from '..';
 import { sendError } from '../utils/messages';
 import { permToString } from '../utils/parsers';
 
+/**
+ * sends a list of commands with their short description
+ *
+ * @param {Guild} guild guild to get the prefix from
+ * @param {Message} message message it should reply to
+ * @param {*} strucObject structure Object with commands and subcategories it should list
+ * @param {string} path the path to that structure Object
+ * @param {[number, number]} requestTime when the list was requested to measure response time
+ */
 async function sendCommandList(guild: Guild, message: Message, strucObject: any, path: string, requestTime: [number, number]) {
+    // create embed and set basic information
     var output = new RichEmbed();
     output.setAuthor('Command List:', Bot.client.user.displayAvatarURL);
     if (path) output.setFooter('Path: ~' + path);
     output.setColor(Bot.database.settingsDB.cache.embedColors.help);
+
+    // list subcategories
     var categories = Object.keys(strucObject).filter(x => strucObject[x]._categoryName);
     if (categories.length != 0) {
         var cat_text = strucObject[categories[0]]._categoryName;
@@ -19,12 +31,15 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
         output.addField('Subcategories:', cat_text);
     }
 
+    // list commands
     var commands = Object.keys(strucObject).filter(x => strucObject[x].shortHelp);
     for (var i = 0; i < commands.length; i++) {
         var f = Bot.commands.get(commands[i]);
-        if (f.permLevel == permLevels.botMaster) continue;
+        if (f.permLevel == permLevels.botMaster) continue; // ignores commands only for bot masters
         output.addField((await Bot.database.getPrefix(guild)) + f.name, f.shortHelp);
     }
+
+    // send embed
     Bot.mStats.logResponseTime(command.name, requestTime);
     message.channel.send(output);
     Bot.mStats.logMessageSend();
@@ -39,8 +54,9 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             sendCommandList(message.guild, message, Bot.commands.structure, undefined, requestTime);
             return false;
         }
+
         var command = Bot.commands.get(args.toLowerCase());
-        if (command == undefined) {
+        if (command == undefined) { // if it can't find the command search if it is a subcategory
             if (typeof (Bot.commands.structure[args.split('/')[0].toLowerCase()]) != 'undefined') {
                 var strucObject = Bot.commands.structure;
                 var keys = args.split('/');
@@ -61,6 +77,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 return false;
             }
         }
+        // if it found the command, respond with the help embed of the message
         Bot.mStats.logResponseTime(command.name, requestTime);
         message.channel.send(await command.embedHelp(message.guild));
         Bot.mStats.logMessageSend();

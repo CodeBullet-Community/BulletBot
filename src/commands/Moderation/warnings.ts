@@ -6,14 +6,21 @@ import { sendError } from '../../utils/messages';
 import { permToString, durationToString, stringToMember } from '../../utils/parsers';
 import { caseDoc, caseActions } from '../../database/schemas';
 
+/**
+ * creates a array of embeds with each max 10 warnings
+ *
+ * @param {Guild} guild
+ * @param {GuildMember} [member]
+ * @returns {Promise<RichEmbed[]>}
+ */
 async function createWarningsEmbeds(guild: Guild, member?: GuildMember): Promise<RichEmbed[]> {
     let cases: caseDoc[]
-    if (member) {
+    if (member) { // either get the  warnings for the member or the whole guild
         cases = await Bot.caseLogger.cases.find({ guild: guild.id, user: member.id, action: caseActions.warn }).exec();
     } else {
         cases = await Bot.caseLogger.cases.find({ guild: guild.id, action: caseActions.warn }).exec();
     }
-    if (!cases.length) return [];
+    if (!cases.length) return []; // incase no warn cases were found
     let detailEmbedArray: RichEmbed[] = [];
     let caseIndex = 0;
     let numOfCases = cases.length;
@@ -22,9 +29,10 @@ async function createWarningsEmbeds(guild: Guild, member?: GuildMember): Promise
     let tempMember;
     let embed;
 
-    while ((cases.length - caseIndex) > 0) {
+    while ((cases.length - caseIndex) > 0) { // runs until there are no warn cases left
         embed = new RichEmbed();
         embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
+        // puts 10 warnings into an embed
         for (let i = 0; i < 10 && numOfCases > i; i++) {
             tempCase = cases[caseIndex];
             let date = new Date(tempCase.timestamp);
@@ -43,6 +51,7 @@ async function createWarningsEmbeds(guild: Guild, member?: GuildMember): Promise
         numOfCases -= 10;
         detailEmbedArray.push(embed);
     }
+    // set title only on the first embed
     detailEmbedArray[0].setAuthor(`Warnings for ${member ? member.user.tag : guild.name} | ${cases.length} Warning${cases.length == 1 ? '' : 's'}`);
     return detailEmbedArray;
 }
@@ -98,19 +107,21 @@ var command: commandInterface = {
         try {
 
             let member: GuildMember;
-            if (args.length) {
+            if (args.length) { // if member was specified
                 member = await stringToMember(message.guild, args);
-                if (!member) {
+                if (!member) { // check if it found the specified member
                     message.channel.send('Couldn\'t find specified member');
                     Bot.mStats.logMessageSend();
                     return false;
                 }
             }
 
+            // get embeds with warnings
             let embeds = await createWarningsEmbeds(message.guild, member);
             Bot.mStats.logResponseTime(command.name, requestTime);
             Bot.mStats.logCommandUsage(command.name);
 
+            // either send all embeds or say that no warnings were found
             if (embeds.length) {
                 for (const embed of embeds) {
                     message.channel.send(embed);

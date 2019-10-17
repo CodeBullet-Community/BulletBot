@@ -83,6 +83,7 @@ export class Database {
      * @memberof Database
      */
     constructor(clusterInfo: { url: string, suffix: string }) {
+        // create connection with main database
         var mainCon = mongoose.createConnection(clusterInfo.url + '/main' + clusterInfo.suffix, { useNewUrlParser: true });
         mainCon.on('error', error => {
             console.error('connection error:', error);
@@ -90,6 +91,7 @@ export class Database {
         });
         mainCon.once('open', function () {
             console.log('connected to /main database');
+            // setup model (doc definition) for every collection
             Bot.database.mainDB = {
                 connection: mainCon,
                 guilds: mainCon.model('guild', guildSchema, 'guilds'),
@@ -104,6 +106,8 @@ export class Database {
                 cases: mainCon.model('cases', caseSchema, 'cases'),
                 pActions: mainCon.model('pActions', pActionSchema, 'pAction')
             }
+          
+            // clean unused data from database at a certain interval
             setInterval(async () => {
                 await Bot.database.cleanGuilds();
                 Bot.database.cleanCommandCaches();
@@ -114,6 +118,7 @@ export class Database {
             console.info(`cleaning database every ${cleanInterval}ms`);
         });
 
+        // create connection with settings database
         var settingsCon = mongoose.createConnection(clusterInfo.url + '/settings' + clusterInfo.suffix, { useNewUrlParser: true })
         settingsCon.on('error', error => {
             console.error('connection error:', error);
@@ -121,13 +126,15 @@ export class Database {
         });
         settingsCon.once('open', function () {
             console.log('connected to /settings database');
-
+            // setup model for model for settings collection
             Bot.database.settingsDB = {
                 connection: settingsCon,
                 settings: settingsCon.model('globalSettings', globalSettingsSchema, 'settings'),
                 cache: undefined
             }
             Bot.database.updateGlobalSettings(Bot.database.settingsDB);
+      
+            // update global settings cache at a certain interval
             setInterval(() => Bot.database.updateGlobalSettings(Bot.database.settingsDB), globalUpdateInterval);
             console.info(`updating global cache every ${globalUpdateInterval}ms`);
         });
@@ -164,6 +171,8 @@ export class Database {
         }
 
         var settingsObject: globalSettingsObject = settingsDoc.toObject()
+
+        // set new presence if it changed
         if (settingsDB.cache && (settingsObject.presence != settingsDB.cache.presence || !settingsObject.presence)) {
             if (settingsObject.presence && (settingsObject.presence.status || settingsObject.presence.game || settingsObject.presence.afk)) {
                 Bot.client.user.setPresence(settingsObject.presence);
@@ -374,6 +383,8 @@ export class Database {
     async addToRank(guildID: string, rank: 'admins' | 'mods' | 'immune', roleID?: string, userID?: string) {
         if (!roleID && !userID) return true;
         var staffDoc = await this.findStaffDoc(guildID);
+
+        // incase the doc wasn't created yet
         if (!staffDoc) {
             staffDoc = new this.mainDB.staff({
                 guild: guildID, admins: { roles: [], users: [] },
@@ -382,6 +393,8 @@ export class Database {
             });
             await staffDoc.save();
         }
+
+        // add role/user to rank
         if (roleID && !staffDoc[rank].roles.includes(roleID)) {
             staffDoc[rank].roles.push(roleID);
         } else if (userID && !staffDoc[rank].users.includes(userID)) {
@@ -681,6 +694,7 @@ export class Database {
      * @memberof Database
      */
     async cleanMegalogs() {
+        // delete functions set to undefined
         let deleteQuery = {};
         for (const func of megalogFunctions.all) {
             deleteQuery[func] = { $exists: false };
@@ -692,11 +706,11 @@ export class Database {
             let modified = false;
             let megalogObject: megalogObject = megalogDoc.toObject();
             let guild = Bot.client.guilds.get(megalogObject.guild);
-            if (!guild) {
+            if (!guild) { // if guild was deleted
                 megalogDoc.remove();
                 continue;
             }
-            for (const func of megalogFunctions.all) {
+            for (const func of megalogFunctions.all) { // check if the channels for the functions still exist
                 if (megalogObject[func] && !guild.channels.get(megalogObject[func])) {
                     megalogDoc[func] = undefined;
                     modified = true;

@@ -29,15 +29,19 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
             mentions.push([wholeMatch, role]);
         }
     }
+
+    // makes all roles mentionable
     var changedRoles: Role[] = [];
     var managePerm = guild.me.hasPermission('MANAGE_ROLES');
-    for (const obj of mentions) { // makes all roles mentionable
+    for (const obj of mentions) {
         if (typeof (obj[1]) != 'string' && !obj[1].mentionable && managePerm) {
             await obj[1].setMentionable(true, 'BulletBot mention');
             changedRoles.push(obj[1]);
         }
         content = content.replace(obj[0], obj[1].toString());
     }
+
+    // send message
     if (requestTime) Bot.mStats.logResponseTime(commandName, requestTime);
     if (!/^\s*$/.test(content)) {
         if(embed) {
@@ -50,7 +54,9 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
             await channel.send(content, embed);
         }
     }
-    for (const role of changedRoles) { // resets all mentionable properties
+
+    // resets all mentionable properties
+    for (const role of changedRoles) { 
         role.setMentionable(false, 'BulletBot mention revert').catch((reason) => {
             console.error('error while reverting mentionable property:', reason);
             Bot.mStats.logError(new Error('error while reverting mentionable property:' + reason));

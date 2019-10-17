@@ -6,17 +6,32 @@ import { permToString } from '../../utils/parsers';
 import { permLevels } from '../../utils/permissions';
 import request = require("request");
 
+/**
+ * selects a random element of a array
+ *
+ * @param {any[]} array
+ * @returns
+ */
 function selectRandom(array: any[]) {
     return array[Math.floor(Math.random() * Math.floor(array.length))];
 }
 
+/**
+ * sends a embed with a random image that the given api returned
+ *
+ * @param {Message} message messages to reply to
+ * @param {string} API API which to ask for a image from
+ * @param {[number,number]} requestTime when image was requested to measure response time
+ */
 function sendRandomImage(message: Message, API: string, requestTime: [number,number]) {
     new Promise<RichEmbed>((resolve, reject) => {
         request.get(API, (error, response, body) => {
             if (error) reject(error);
             if (response.statusCode != 200) {
                 reject('Invalid status code <' + response.statusCode + '>');
+            
             }
+            // build embed
             var setname = message.author.username;
             if (message.member.nickname != null) {
                 setname = message.member.nickname;
@@ -25,6 +40,8 @@ function sendRandomImage(message: Message, API: string, requestTime: [number,num
             embed.setAuthor('requested by: ' + setname + ' (' + message.author.tag + ')', message.author.displayAvatarURL);
             embed.setImage(JSON.parse(body).link);
             embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
+
+            // send embed
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send(embed);
             Bot.mStats.logMessageSend();
@@ -38,20 +55,21 @@ var command: commandInterface = { name: undefined, path: undefined, dm: undefine
 
 command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number,number]) => {
     try {
-        if (args.length == 0) {
+        if (args.length == 0) { // if no argument was given send the help embed
             message.channel.send(await command.embedHelp(message.guild));
             Bot.mStats.logMessageSend();
             return false;
         }
         args = args.toLowerCase();
 
-        var apis = Bot.database.settingsDB.cache.commands[command.name].apis;
+        var apis = Bot.database.settingsDB.cache.commands[command.name].apis; // get api urls
         var animals = Object.keys(apis);
-        if (args == 'random') {
+
+        if (args == 'random') { // when it should randomly choose a animal
             await sendRandomImage(message, apis[selectRandom(animals)], requestTime);
             Bot.mStats.logCommandUsage(command.name, 'random');
         } else {
-            if (animals.includes(args)) {
+            if (animals.includes(args)) { // if a api for the animal is specified
                 await sendRandomImage(message, apis[args], requestTime);
                 Bot.mStats.logCommandUsage(command.name, args);
             } else {

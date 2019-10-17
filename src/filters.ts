@@ -6,6 +6,13 @@ import { filterAction, executeActions } from "./utils/filters";
 import { sendError } from "./utils/messages";
 import { filtersObject } from "./database/schemas";
 
+/* ------------NOTE--------------*/
+/*  
+    This module was in the prototype version of the bot and so was also implemented in this version. 
+    Because it's never used and we plan to make a better system when we implement 
+    a auto mod this modules will probably be removed in the future.
+*/
+
 /**
  * what every filter will output if he finds something
  *
@@ -114,6 +121,7 @@ export class Filters {
                 console.error("no filters to load in " + dir);
                 return;
             }
+
             console.info(`loading ${filters.length} filters in ${dir}`);
             filters.forEach((f, i) => {
                 var props = require(dir + f).default;
@@ -148,6 +156,7 @@ export class Filters {
             var filtersDoc = await Bot.database.findFiltersDoc(message.guild.id);// loads filter doc to see which filters are active
             if (!filtersDoc) return;
             var filterObject: filtersObject = filtersDoc.toObject();
+
             for (const filter of this.filters.array()) {
                 if (!filterObject.filters[filter.name] || !filterObject.filters[filter.name]._enabled) continue;
                 var output = await filter.run(message); // runs filter

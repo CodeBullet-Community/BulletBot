@@ -18,6 +18,12 @@ async function getJoinRank(ID: string, guild: Guild) { // Call it with the ID of
     }
 }
 
+/**
+ * addes the suffic to numbers (like 1st, 2nd, etc.)
+ *
+ * @param {number} i number to add suffix to
+ * @returns
+ */
 function ordinalSuffixOf(i: number) {
     var j = i % 10,
         k = i % 100;
@@ -42,8 +48,18 @@ function getPresenceColor(member: GuildMember) {
     }
 }
 
+/**
+ * returns a embed with infos about a member
+ *
+ * @param {GuildMember} member member to list infos of
+ * @param {number} permLevel the permission level of the member
+ * @param {number} requesterPermLevel the permission level of the info requester
+ * @returns
+ */
 async function createMemberEmbed(member: GuildMember, permLevel: number, requesterPermLevel: number) {
     var date = new Date();
+
+    // lists all role in a string (only first 40, so the field size doesn't reach the discord field size limit)
     var roles = '';
     var roleArray = member.roles.array();
     var roleCount = member.roles.array().length - 1;
@@ -56,12 +72,15 @@ async function createMemberEmbed(member: GuildMember, permLevel: number, request
         roles = 'member has no roles';
     }
 
+    // get join rank of member
     var joinRank: any = (await getJoinRank(member.id, member.guild)) + 1;
     if (joinRank == 1) {
         joinRank = 'oldest member';
     } else {
         joinRank = ordinalSuffixOf(joinRank) + ' oldest member';
     }
+
+    // creates embed
     let embed: any = {
         "embed": {
             "description": member.toString(),
@@ -115,6 +134,8 @@ async function createMemberEmbed(member: GuildMember, permLevel: number, request
             ]
         }
     };
+
+    // if the requester is a mod or higher, it also adds the case counts
     if (requesterPermLevel >= permLevels.mod) {
         let caseDocs = await Bot.caseLogger.cases.find({ user: member.id, guild: member.guild.id }, ['action']).exec();
         let summary = { unmute: 0, mute: 0, unban: 0, ban: 0, kick: 0, warn: 0, softban: 0 };
@@ -126,9 +147,19 @@ async function createMemberEmbed(member: GuildMember, permLevel: number, request
             "value": `Total: ${caseDocs.length} | Warn: ${summary.warn} | Mute: ${summary.mute} | Kick: ${summary.kick} | Softban: ${summary.softban} | Ban: ${summary.ban} | Unmute: ${summary.unmute} | Unban: ${summary.unban}`
         });
     }
+
     return embed;
 }
 
+/**
+ * send the output of the createMemberEmbed function
+ *
+ * @param {Message} message message to reply to
+ * @param {GuildMember} member member to get info of
+ * @param {number} permLevel permission level of the member
+ * @param {number} requesterPermLevel the permission level of the info requester
+ * @param {[number, number]} requestTime when the info was requested to measure response time
+ */
 async function sendMemberInfo(message: Message, member: GuildMember, permLevel: number, requesterPermLevel: number, requestTime: [number, number]) {
     var embed = await createMemberEmbed(member, permLevel, requesterPermLevel)
     Bot.mStats.logResponseTime(command.name, requestTime);
@@ -141,11 +172,12 @@ var command: commandInterface = { name: undefined, path: undefined, dm: undefine
 
 command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
     try {
-        if (args.length === 0) {
+        if (args.length === 0) { // send info of requester if no arguments provided
             await sendMemberInfo(message, message.member, permLevel, permLevel, requestTime);
             return;
         }
 
+        // get member which to send info of
         var member = await stringToMember(message.guild, args);
         if (!member) {
             message.channel.send('Couldn\'t member with that name/id');
