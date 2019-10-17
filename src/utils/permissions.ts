@@ -56,7 +56,7 @@ export async function getPermLevel(member: GuildMember) {
         }
     }
 
-    // check if member is mod
+    // check if member is mod or higher
     if (staffObject.mods.users.includes(member.user.id)) {
         return permLevels.mod;
     }

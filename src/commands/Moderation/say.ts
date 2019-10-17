@@ -11,22 +11,25 @@ var command: commandInterface = { name: undefined, path: undefined, dm: undefine
 command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
     try {
         var argIndex = 0;
-        if (args.length == 0) {
+        if (args.length == 0) { // send help embed if no arguments provided
             message.channel.send(await command.embedHelp(message.guild));
             Bot.mStats.logMessageSend();
             return;
         }
-        var argsArray = args.split(" ").filter(x => x.length != 0);
+        var argsArray = args.split(" ").filter(x => x.length != 0); // split arguments string by spaces
 
+        // get channel to send it in
         var channel: any = stringToChannel(message.guild, argsArray[argIndex], false, false);
         if (!channel) {
             channel = message.channel;
         } else {
+            // check if requester has permission to write in the channel
             if (!channel.permissionsFor(message.member).has("SEND_MESSAGES")) {
                 message.channel.send("You don't have permission to write in " + channel);
                 Bot.mStats.logMessageSend();
                 return false;
             }
+            // check if channel is a voice channel
             if (!channel.send) {
                 message.channel.send("I can't write in a voice channel");
                 Bot.mStats.logMessageSend();
@@ -34,19 +37,22 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             }
             argIndex++;
         }
+        // check if bot has permission to write in the channel
         if (!channel.permissionsFor(message.guild.me).has("SEND_MESSAGES")) {
             message.channel.send("I don't have permission to write in " + channel);
             Bot.mStats.logMessageSend();
             return false;
         }
 
+        // if requester wants to edit a message
         let editMessage: Message;
         if (argsArray[argIndex] == 'edit') {
-            if (isNaN(Number(argsArray[argIndex + 1]))) {
+            if (isNaN(Number(argsArray[argIndex + 1]))) { // if provided message id was invalid
                 message.channel.send(`Couldn't parse the message id`);
                 Bot.mStats.logMessageSend();
                 return false;
             } else {
+                // try to get the message to be edited
                 try {
                     editMessage = await channel.fetchMessage(argsArray[argIndex + 1]);
                 } catch (e) {
@@ -54,6 +60,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     Bot.mStats.logMessageSend();
                     return false;
                 }
+                // check if the message is from BulletBot
                 if (editMessage.author.id != Bot.client.user.id) {
                     message.channel.send(`The specified message isn't my message`);
                     Bot.mStats.logMessageSend();
@@ -63,12 +70,14 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             }
         }
 
+        // if user wants to send a embed
         var embed = false;
         if (argsArray[argIndex] == "embed") {
             embed = true;
             argIndex++;
         }
 
+        // get text / embed
         var processedArgs = "";
         for (var i = 0; i < argIndex; i++) {
             processedArgs += argsArray[i] + " ";
@@ -76,6 +85,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
         var text = args.slice(processedArgs.length);
 
         var content = text;
+        // parse text to embed
         var embedObject;
         if (embed) {
             embedObject = stringToEmbed(text);
@@ -87,20 +97,23 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             content = embedObject.content;
         }
 
+        // check if requester can mention everyone and if so, allow everyone mention
         let mentionEveryone = permLevel >= permLevels.admin ? true : false;
         if (!mentionEveryone) mentionEveryone = message.member.hasPermission('MENTION_EVERYONE');
 
         try {
-            if (content && content.includes("{{role:")) {
+            if (content && content.includes("{{role:")) { // if content contains unmentioned role mentions
                 await sendMentionMessage(message.guild, channel, content, !mentionEveryone, embedObject, editMessage, requestTime, command.name);
             } else {
                 Bot.mStats.logResponseTime(command.name, requestTime);
+                // disable everyone mention if needed
                 if (embedObject) {
                     embedObject.disableEveryone = !mentionEveryone;
                 } else {
                     embedObject = { disableEveryone: !mentionEveryone };
                 }
 
+                // send or edit message
                 if (editMessage) {
                     if (!embedObject.embed) embedObject.embed = {};
                     await editMessage.edit(content, embedObject);
@@ -113,6 +126,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
             return false;
         }
         Bot.mStats.logMessageSend();
+        // log command usage
         if (editMessage) {
             Bot.mStats.logCommandUsage(command.name, embed ? "editEmbed" : "editNormal");
         } else {

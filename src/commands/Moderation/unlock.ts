@@ -61,12 +61,13 @@ var command: commandInterface = {
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
-            if (args.length == 0) {
+            if (args.length == 0) { // send help embed if no arguments provided
                 message.channel.send(await command.embedHelp(message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
 
+            // check if the bot has permission to manage channels
             if (!message.guild.me.hasPermission('MANAGE_CHANNELS')) {
                 message.channel.send('I don\'t have the `Manage Channels` permission');
                 Bot.mStats.logMessageSend();
@@ -86,35 +87,43 @@ var command: commandInterface = {
                 return false;
             }
 
+            // create query to check if channel is locked
             let query = { guild: message.guild.id };
             query[`locks.${channel.id}`] = { $exists: true };
             let guildDoc = await Bot.database.mainDB.guilds.findOne(query, [`locks.${channel.id}.allowOverwrites`, `locks.${channel.id}.neutralOverwrites`]).exec();
-            if (!guildDoc) {
+            if (!guildDoc) { // if no guild with the locked channel was found
                 message.channel.send('The channel isn\'t locked by the bot');
                 Bot.mStats.logMessageSend();
                 return false;
             }
 
+            // remove pending unlock action
             Bot.pActions.removeLockChannel(message.guild.id, channel.id);
+            // reset allow overwrites
             for (const id of guildDoc.toObject().locks[channel.id].allowOverwrites)
                 await channel.overwritePermissions(id, { SEND_MESSAGES: true }, `Manual unlock by ${message.author.tag} (${message.author.id})`);
+            // reset neutral overwrites
             for (const id of guildDoc.toObject().locks[channel.id].neutralOverwrites) {
                 await channel.overwritePermissions(id, { SEND_MESSAGES: null }, `Manual unlock by ${message.author.tag} (${message.author.id})`);
 
+                // if the overwrites for the ID are completely neutral delete the overwrite
                 let permOverwrite = channel.permissionOverwrites.get(id);
                 if (permOverwrite && !permOverwrite.allow && !permOverwrite.allow)
                     permOverwrite.delete();
             }
 
+            // delete the locked channel from the database
             delete guildDoc.locks[channel.id];
             guildDoc.markModified(`locks.${channel.id}`);
             guildDoc.save();
-
+            
+            // send a unlock message to the channel
             if (channel.id != message.channel.id) {
                 channel.send('Channel is unlocked now');
                 Bot.mStats.logMessageSend();
             }
 
+            // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send(`:white_check_mark: **Successfully unlocked ${channel}**`);
             Bot.mStats.logCommandUsage(command.name);

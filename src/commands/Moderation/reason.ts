@@ -61,14 +61,14 @@ var command: commandInterface = {
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
-            if (args.length == 0) {
+            if (args.length == 0) { // send help embed if no arguments provided
                 message.channel.send(await command.embedHelp(message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
+            let argsArray = args.split(' ').filter(x => x.length != 0); // split arguments string by spaces
 
-            let argsArray = args.split(' ').filter(x => x.length != 0);
-
+            // check if specified case ID 
             if(isNaN(Number(argsArray[0]))){
                 message.channel.send("You need to specify a valid caseID");
                 Bot.mStats.logMessageSend();
@@ -80,14 +80,17 @@ var command: commandInterface = {
                 return false
             }
 
+            // get the reason
             let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length).trim();
 
+            // changes reason
             if(!await Bot.caseLogger.editReason(message.guild.id, argsArray[0], reason)){
                 message.channel.send("Couldn't find specified case");
                 Bot.mStats.logMessageSend();
                 return false
             }
 
+            // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send(`:white_check_mark: **the reason of case ${argsArray[0].replace("@", "")} has been changed to ${reason.replace("@", "")}**`);
             Bot.mStats.logCommandUsage(command.name);

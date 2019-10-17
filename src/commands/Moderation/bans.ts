@@ -93,6 +93,7 @@ var command: commandInterface = {
             }
             if (!permBannedString.length) permBannedString = '*None*';
 
+            // send information
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send({
                 "embed": {

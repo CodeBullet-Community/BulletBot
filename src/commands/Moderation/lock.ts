@@ -7,46 +7,64 @@ import { permToString, durationToString, stringToDuration, stringToChannel } fro
 import { durations } from '../../utils/time';
 import { staffObject, guildObject } from '../../database/schemas';
 
+/**
+ * returns the IDs that it has to overwrite and in what state they were
+ *
+ * @param {TextChannel} channel channel to get overwrites for
+ * @returns
+ */
 async function getIDsToOverwrite(channel: TextChannel) {
-    let denyIDs: string[] = [];
-    let allowIDs: string[] = [];
+    let denyIDs: string[] = []; // IDs that need to be denied
+    let allowIDs: string[] = []; // IDs that specifically have to be allowed
 
+    // add every ID overwrite from the channel to the deny list
     for (const overwrite of channel.permissionOverwrites.array()) {
         denyIDs.push(overwrite.id);
     }
 
+    // load staff document
     let staffDoc = await Bot.database.findStaffDoc(channel.guild.id);
     if (staffDoc) {
         let staffObject: staffObject = staffDoc.toObject();
+        // add all staff IDs to the allow list
         allowIDs = allowIDs.concat(staffObject.admins.users)
             .concat(staffObject.mods.users)
             .concat(staffObject.immune.users)
             .concat(staffObject.admins.roles)
             .concat(staffObject.mods.roles)
             .concat(staffObject.immune.roles);
+        // removed IDs from the deny list that are in the allowed list
         denyIDs = denyIDs.filter(id => !allowIDs.includes(id));
     }
 
     let allowOverwrites: string[] = []; // ids that originally had a allow overwrite for sending messages
     let neutralOverwrites: string[] = []; // ids that originally had a neutral overwrite for sending messages
 
+    // check all allow IDs
     for (let i = 0; i < allowIDs.length;) {
+        // get permission overwrite for the ID
         let permOverwrite = channel.permissionOverwrites.get(allowIDs[i]);
+        // if the id already has a overwrite (also if it's on deny, because then the member/ID shoudn't see the channel anyway)
         if (permOverwrite && (permOverwrite.allowed.has('SEND_MESSAGES') || permOverwrite.denied.has('SEND_MESSAGES'))) {
             allowIDs.splice(i, 1);
         } else {
+            // else add it to the neutral overwrites
             neutralOverwrites.push(allowIDs[i]);
             i++;
         }
     }
 
+    // check all deny IDs
     for (let i = 0; i < denyIDs.length;) {
+        // get permission overwrite for the ID
         let permOverwrite = channel.permissionOverwrites.get(denyIDs[i]);
+        // check if ID is already denied
         if (permOverwrite && permOverwrite.denied.has('SEND_MESSAGES')) {
             denyIDs.splice(i, 1);
             continue;
         }
 
+        // either add to the neutral or the allow overwrites
         if (permOverwrite && permOverwrite.allowed.has('SEND_MESSAGES')) {
             allowOverwrites.push(denyIDs[i]);
         } else {
@@ -199,6 +217,7 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
             }
 
+            // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
             if (existingLock) {
                 message.channel.send(`:white_check_mark: **Lock time for ${channel} has been changed to ${timeString}**`);
