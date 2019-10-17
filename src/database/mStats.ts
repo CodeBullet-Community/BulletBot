@@ -63,11 +63,11 @@ export class MStats {
         });
         this.connection.once('open', function () {
             console.log('connected to /mStats database');
+            Bot.mStats.allTime = Bot.mStats.connection.model('allTime', mStatsAllTimeSchema, 'allTime');
+            Bot.mStats.daily = Bot.mStats.connection.model('day', mStatsDaySchema, 'daily');
+            Bot.mStats.errors = Bot.mStats.connection.model('error', errorSchema, 'errors');
+            Bot.mStats.init();
         });
-        this.allTime = this.connection.model('allTime', mStatsAllTimeSchema, 'allTime');
-        this.daily = this.connection.model('day', mStatsDaySchema, 'daily');
-        this.errors = this.connection.model('error', errorSchema, 'errors');
-        this.init();
     }
 
     /**

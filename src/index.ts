@@ -39,7 +39,7 @@ require('console-stamp')(console, {
 process.on('uncaughtException', (error) => {
     if (Bot.mStats)
         Bot.mStats.logError(error);
-    console.error(error);
+    //console.error(error);
 });
 
 // catches unhandled promise rejections
@@ -113,6 +113,7 @@ Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger, 
 
 // when bot shuts down save the mStats cache
 exitHook(() => {
+    if (!Bot.mStats.hourly) return;
     console.log('Saving cached data...');
     Bot.mStats.saveHour(Bot.mStats.hourly);
     var until = new Date().getTime() + durations.second;
@@ -382,18 +383,21 @@ client.on('warn', async info => {
     console.warn(info);
 });
 
-setTimeout(() => {
-    client.login(botToken); // logs into discord after 2 seconds
-
-    // enforce presence every hour
-    setInterval(() => {
-        if (Bot.database.settingsDB.cache) {
-            if (Bot.database.settingsDB.cache.presence && (Bot.database.settingsDB.cache.presence.status || Bot.database.settingsDB.cache.presence.game || Bot.database.settingsDB.cache.presence.afk)) {
-                Bot.client.user.setPresence(Bot.database.settingsDB.cache.presence);
-            } else {
-                Bot.client.user.setActivity(undefined);
-                Bot.client.user.setStatus('online');
-            }
-        }
-    }, durations.hour);
+let loginInterval = setInterval(() => {
+    if (!Bot.database.mainDB) return; // if not connected to cluster
+    Bot.client.login(botToken); // logs into discord after 2 seconds
+    clearInterval(loginInterval);
 }, 2000);
+
+// enforce presence every hour
+setInterval(() => {
+    if (Bot.client.status != 0) return;
+    if (Bot.database.settingsDB.cache) {
+        if (Bot.database.settingsDB.cache.presence && (Bot.database.settingsDB.cache.presence.status || Bot.database.settingsDB.cache.presence.game || Bot.database.settingsDB.cache.presence.afk)) {
+            Bot.client.user.setPresence(Bot.database.settingsDB.cache.presence);
+        } else {
+            Bot.client.user.setActivity(undefined);
+            Bot.client.user.setStatus('online');
+        }
+    }
+}, durations.hour);

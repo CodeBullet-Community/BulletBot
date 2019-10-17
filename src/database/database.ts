@@ -91,23 +91,32 @@ export class Database {
         });
         mainCon.once('open', function () {
             console.log('connected to /main database');
+            // setup model (doc definition) for every collection
+            Bot.database.mainDB = {
+                connection: mainCon,
+                guilds: mainCon.model('guild', guildSchema, 'guilds'),
+                staff: mainCon.model('staff', staffSchema, 'staff'),
+                prefix: mainCon.model('prefix', prefixSchema, 'prefix'),
+                commands: mainCon.model('commands', commandsSchema, 'commands'),
+                filters: mainCon.model('filters', filtersSchema, 'filters'),
+                logs: mainCon.model('log', logSchema, 'logs'),
+                commandCache: mainCon.model('commandCache', commandCacheSchema, 'commandCaches'),
+                users: mainCon.model('user', userSchema, 'users'),
+                megalogs: mainCon.model('megalogSettings', megalogSchema, 'megalogs'),
+                cases: mainCon.model('cases', caseSchema, 'cases'),
+                pActions: mainCon.model('pActions', pActionSchema, 'pAction')
+            }
+          
+            // clean unused data from database at a certain interval
+            setInterval(async () => {
+                await Bot.database.cleanGuilds();
+                Bot.database.cleanCommandCaches();
+                Bot.database.cleanUsers();
+                Bot.database.cleanMegalogs();
+                //console.log('cleaned database');
+            }, cleanInterval);
+            console.info(`cleaning database every ${cleanInterval}ms`);
         });
-
-        // setup model (doc definition) for every collection
-        this.mainDB = {
-            connection: mainCon,
-            guilds: mainCon.model('guild', guildSchema, 'guilds'),
-            staff: mainCon.model('staff', staffSchema, 'staff'),
-            prefix: mainCon.model('prefix', prefixSchema, 'prefix'),
-            commands: mainCon.model('commands', commandsSchema, 'commands'),
-            filters: mainCon.model('filters', filtersSchema, 'filters'),
-            logs: mainCon.model('log', logSchema, 'logs'),
-            commandCache: mainCon.model('commandCache', commandCacheSchema, 'commandCaches'),
-            users: mainCon.model('user', userSchema, 'users'),
-            megalogs: mainCon.model('megalogSettings', megalogSchema, 'megalogs'),
-            cases: mainCon.model('cases', caseSchema, 'cases'),
-            pActions: mainCon.model('pActions', pActionSchema, 'pAction')
-        }
 
         // create connection with settings database
         var settingsCon = mongoose.createConnection(clusterInfo.url + '/settings' + clusterInfo.suffix, { useNewUrlParser: true })
@@ -117,29 +126,18 @@ export class Database {
         });
         settingsCon.once('open', function () {
             console.log('connected to /settings database');
+            // setup model for model for settings collection
+            Bot.database.settingsDB = {
+                connection: settingsCon,
+                settings: settingsCon.model('globalSettings', globalSettingsSchema, 'settings'),
+                cache: undefined
+            }
+            Bot.database.updateGlobalSettings(Bot.database.settingsDB);
+      
+            // update global settings cache at a certain interval
+            setInterval(() => Bot.database.updateGlobalSettings(Bot.database.settingsDB), globalUpdateInterval);
+            console.info(`updating global cache every ${globalUpdateInterval}ms`);
         });
-
-        // setup model for model for settings collection
-        this.settingsDB = {
-            connection: settingsCon,
-            settings: settingsCon.model('globalSettings', globalSettingsSchema, 'settings'),
-            cache: undefined
-        }
-        this.updateGlobalSettings(this.settingsDB);
-
-        // update global settings cache at a certain interval 
-        setInterval(() => this.updateGlobalSettings(this.settingsDB), globalUpdateInterval);
-        console.info(`updating global cache every ${globalUpdateInterval}ms`);
-
-        // clean unused data from database at a certain interval
-        setInterval(async () => {
-            await this.cleanGuilds();
-            this.cleanCommandCaches();
-            this.cleanUsers();
-            this.cleanMegalogs();
-            //console.log('cleaned database');
-        }, cleanInterval);
-        console.info(`cleaning database every ${cleanInterval}ms`);
     }
 
     /**

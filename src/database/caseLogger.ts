@@ -44,10 +44,10 @@ export class CaseLogger {
         });
         mainCon.once('open', function () {
             console.log('caseLogger connected to /main database');
+            Bot.caseLogger.guilds = mainCon.model('guild', guildSchema, 'guilds');
+            Bot.caseLogger.cases = mainCon.model('cases', caseSchema, 'cases');
         });
         this.connection = mainCon;
-        this.guilds = mainCon.model('guild', guildSchema, 'guilds');
-        this.cases = mainCon.model('cases', caseSchema, 'cases');
     }
 
     /**
