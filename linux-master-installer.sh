@@ -305,7 +305,16 @@ while true; do
             exit 1
         }
         echo "Moving files/directories associated to BulletBot to '$home'..."
-        mv -f "${files[@]}" $home 2>/dev/null
+        for dir in "${files[@]}"; do
+            # C.1. If two directories with the same name exist in 'home' and the
+            # current dir...
+            if [[ -d "${home}/${dir}" && -d $dir ]]; then
+                # D.1. Removes the directory in 'home' because an error would
+                # occure otherwise when moving 'i' to 'home'
+                rm -rf "${home}/${dir}"
+            fi
+            mv -f $dir $home 2>/dev/null
+        done
         echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
         chown bulletbot:bulletbot -R $home
         cd $home
@@ -315,7 +324,14 @@ while true; do
         echo "Creating '$home'..."
         mkdir $home
         echo "Moving files/directories associated to BulletBot to '$home'..."
-        mv -f "${files[@]}" $home 2>/dev/null
+        for dir in "${files[@]}"; do
+            # C.1.
+            if [[ -d "${home}/${dir}" && -d $dir ]]; then
+                # D.1.
+                rm -rf "${home}/${dir}"
+            fi
+            mv -f $dir $home 2>/dev/null
+        done
         echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
         chown bulletbot:bulletbot -R $home
         cd $home
@@ -323,7 +339,14 @@ while true; do
 
     if [[ $PWD != "/home/bulletbot" ]]; then
         echo "Moving files/directories associated to BulletBot to '$home'..."
-        mv -f "${files[@]}" $home 2>/dev/null
+        for dir in "${files[@]}"; do
+            # C.1.
+            if [[ -d "${home}/${dir}" && -d $dir ]]; then
+                # D.1.
+                rm -rf "${home}/${dir}"
+            fi
+            mv -f $dir $home 2>/dev/null
+        done
         echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
         chown bulletbot:bulletbot -R $home
         cd $home
