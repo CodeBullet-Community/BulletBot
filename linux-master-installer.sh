@@ -15,7 +15,8 @@ start_service_exists="/lib/systemd/system/bullet-mongo-start.service"
 # Contains all of the files/directories that are associated with BulletBot
 # (only files/directories located in the BulletBot root directory)
 files=("installers/" "linux-master-installer.sh" "package-lock.json" \
-    "package.json" "tsconfig.json" "src/" "media/" "README.md" "out/")
+    "package.json" "tsconfig.json" "src/" "media/" "README.md" "out/" \
+    "CODE_OF_CONDUCT.md" "CONTRIBUTING.md" "LICENSE")
 
 # Checks to see if this script was executed with root privilege
 if [[ $EUID -ne 0 ]]; then 
@@ -23,6 +24,50 @@ if [[ $EUID -ne 0 ]]; then
     echo -e "\nExiting..."
     exit 1
 fi
+
+
+# ------------------------------------------------- #
+# FUNCTION ONLY USED AT THE BEGINNING OF THE SCRIPT #
+# ------------------------------------------------- #
+# Identify the operating system, version number, architecture, and bit type
+# (32 or 64)
+detect_os_ver_arch_bits() {
+    arch=$(uname -m | sed 's/x86_//;s/i[3-6]86/32/')
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        os=$ID
+        # Version: x.x.x...
+        ver=$VERSION_ID
+        # Version: x
+        sver=$(echo $ver | grep -oP "[0-9]+" | head -1 )
+        codename=$VERSION_CODENAME
+    else
+        os=$(uname -s)
+        ver=$(uname -r)
+    fi
+    case $(uname -m) in
+	x86_64)
+	    bits="64"
+	    ;;
+	i*86)
+	    bits="32"
+	    ;;
+	armv*)
+	    bits="32"
+	    ;;
+	*)
+	    bits="?"
+	    ;;
+	esac
+	case $(uname -m) in
+	x86_64)
+	    arch="x64"  # or AMD64 or Intel64 or whatever
+	    ;;
+	i*86)
+	    arch="x86"  # or IA32 or Intel32 or whatever
+	    ;;
+	esac
+} 
 
 
 # ----------------------------------- #
@@ -174,6 +219,55 @@ WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service
 }
 
 
+
+# ------------------------------------------------------------- #
+# DETECTS WHETHER BULLETBOT AND INSTALLER CAN BE USED ON THE OS #
+# ------------------------------------------------------------- #
+detect_os_ver_arch_bits
+
+export os ver arch bits codename
+
+if [[ $os = "ubuntu" ]]; then
+    case $ver in
+        16.04)
+            # B.1. MongoDB only works on 64 bit versions of Ubuntu
+            if [[ $bits = 64 ]]; then
+                supported=true
+            else
+                supported=false
+            fi
+            ;;
+        18.04)
+            # B.1.
+            if [[ $bits = 64 ]]; then
+                supported=true
+            else
+                supported=false
+            fi
+            ;;
+        # As of MongoDB 4.2, support for Ubuntu 14.04 has been removed
+        *)
+            supported=false
+            ;;
+    esac
+else
+    supported=false
+fi
+
+if [[ $supported = false ]]; then
+    echo "SYSTEM INFO"
+    echo "Bit type: $bits"
+    echo "Architecture: $arch"
+    echo "Operating System: $os"
+    echo "Operating System Version: $ver"
+    echo -e "\n${red}Your operating system does not support the installation," \
+        "setup, and/or use of BulletBot${nc}"
+    echo -e "\nExiting..."
+    exit 1
+fi
+
+
+
 # --------- #
 # MAIN CODE #
 # --------- #
@@ -211,7 +305,16 @@ while true; do
             exit 1
         }
         echo "Moving files/directories associated to BulletBot to '$home'..."
-        mv -f "${files[@]}" $home 2>/dev/null
+        for dir in "${files[@]}"; do
+            # C.1. If two directories with the same name exist in 'home' and the
+            # current dir...
+            if [[ -d "${home}/${dir}" && -d $dir ]]; then
+                # D.1. Removes the directory in 'home' because an error would
+                # occure otherwise when moving 'i' to 'home'
+                rm -rf "${home}/${dir}"
+            fi
+            mv -f $dir $home 2>/dev/null
+        done
         echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
         chown bulletbot:bulletbot -R $home
         cd $home
@@ -221,7 +324,14 @@ while true; do
         echo "Creating '$home'..."
         mkdir $home
         echo "Moving files/directories associated to BulletBot to '$home'..."
-        mv -f "${files[@]}" $home 2>/dev/null
+        for dir in "${files[@]}"; do
+            # C.1.
+            if [[ -d "${home}/${dir}" && -d $dir ]]; then
+                # D.1.
+                rm -rf "${home}/${dir}"
+            fi
+            mv -f $dir $home 2>/dev/null
+        done
         echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
         chown bulletbot:bulletbot -R $home
         cd $home
@@ -229,7 +339,14 @@ while true; do
 
     if [[ $PWD != "/home/bulletbot" ]]; then
         echo "Moving files/directories associated to BulletBot to '$home'..."
-        mv -f "${files[@]}" $home 2>/dev/null
+        for dir in "${files[@]}"; do
+            # C.1.
+            if [[ -d "${home}/${dir}" && -d $dir ]]; then
+                # D.1.
+                rm -rf "${home}/${dir}"
+            fi
+            mv -f $dir $home 2>/dev/null
+        done
         echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
         chown bulletbot:bulletbot -R $home
         cd $home

@@ -3,8 +3,8 @@
 timer=20
 
 clear
-read -p "We will now run BulletBot in the background with auto restart on system" \
-    "reboot. Press [Enter] to begin."
+read -p "We will now run BulletBot in the background with auto restart on system \
+reboot. Press [Enter] to begin."
 
 # Both variables are exported from the master installer
 if [[ ! -f $start_script_exists || ! -f $start_service_exists ]]; then
