@@ -93,6 +93,7 @@ This document is the base of all documents in nearly all collections. Each colle
             voiceDeaf: number;
         };
     }
+}
 ```
 
 ## allTime Collection Document
