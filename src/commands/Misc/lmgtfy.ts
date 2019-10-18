@@ -4,8 +4,6 @@ import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, durationToString } from '../../utils/parsers';
-import { durations } from '../../utils/time';
-import lmgtfy from 'lmgtfy';
 
 var command: commandInterface = {
     name: 'lmgtfy',
@@ -63,7 +61,8 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false; // was unsuccessful
             }
-            let content = lmgtfy(args);
+            
+            let content = "https://lmgtfy.com/?q=" + encodeURIComponent(args);
 
             Bot.mStats.logResponseTime(command.name, requestTime);
 
