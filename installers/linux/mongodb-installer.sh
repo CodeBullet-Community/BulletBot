@@ -8,13 +8,18 @@ wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add 
     echo -e "\nExiting..."
     exit 1
 }
-echo "Creating MongoDB list file..."
-echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2" \
-    "multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list || {
-        echo "${red}Failed to create MongoDB list file${nc}" >&2
-        echo -e "\nExiting..."
-        exit 1
-    }
+echo "Creating MongoDB source list file..."
+# Will get the source files for ubuntu based operating systems
+# 'os' is exported from the master installer
+if [[ $os = "ubuntu" ]]; then
+    # 'codename' is exported from the master installer
+    echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu ${codename}/mongodb-org/4.2" \
+        "multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list || {
+            echo "${red}Failed to create MongoDB source list file${nc}" >&2
+            echo -e "\nExiting..."
+            exit 1
+        }
+fi
 echo "Updating packages..."
 apt update
 echo "Installing the latest stable version of MongoDB..."

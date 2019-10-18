@@ -46,7 +46,7 @@ export async function getPermLevel(member: GuildMember) {
     }
     var staffObject: staffObject = staffDoc.toObject();
 
-    // admins
+    // check if member is admin
     if (staffObject.admins.users.includes(member.user.id)) {
         return permLevels.admin;
     }
@@ -56,7 +56,7 @@ export async function getPermLevel(member: GuildMember) {
         }
     }
 
-    // mods
+    // check if member is mod or higher
     if (staffObject.mods.users.includes(member.user.id)) {
         return permLevels.mod;
     }
@@ -66,7 +66,7 @@ export async function getPermLevel(member: GuildMember) {
         }
     }
 
-    // immune 
+    // check if member is immune
     if (staffObject.immune.users.includes(member.user.id)) {
         return permLevels.immune;
     }

@@ -186,6 +186,15 @@ export class CaseLogger {
         return false;
     }
 
+    /**
+     * changes the reason of an existing case
+     *
+     * @param {string} guildID id of guild in which case is in
+     * @param {string} caseID id of case that should be edited
+     * @param {string} reason new reason
+     * @returns
+     * @memberof CaseLogger
+     */
     async editReason(guildID: string, caseID: string, reason: string) {
         let success = false;
         if (!isNaN(Number(caseID))) {
@@ -229,11 +238,13 @@ export class CaseLogger {
             reason: reason
         };
 
+        // save case to database
         let caseDoc = new this.cases(caseObject);
         await caseDoc.save();
         guildDoc.totalCases = totalCases + 1;
         await guildDoc.save();
 
+        // send case log in case log channel
         if (caseChannel) {
             let caseEmbed = this.createCaseEmbed(user, mod, caseObject.caseID, action, color, duration, reason);
             // @ts-ignore

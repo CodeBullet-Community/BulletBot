@@ -79,18 +79,21 @@ function editDistance(s1: string, s2: string) {
  * @returns
  */
 export async function stringToMember(guild: Guild, text: string, byUsername = true, byNickname = true, bySimilar: boolean = true) {
+    // extract id form mention
     if (/<@(\d*)>/g.test(text)) {
         var result = /<@(\d*)>/g.exec(text);
         if (result != null) {
             text = result[1];
         }
     }
+    // extract id form mention of a user with a nickname
     if (/<@!(\d*)>/g.test(text)) {
         var result = /<@!(\d*)>/g.exec(text);
         if (result != null) {
             text = result[1];
         }
     }
+    // extract the name from "example#1234"
     if (/([^#@:]{2,32})#\d{4}/g.test(text)) {
         var result = /([^#@:]{2,32})#\d{4}/g.exec(text);
         if (result != null) {
@@ -147,12 +150,14 @@ export function stringToRole(guild: Guild, text: string, byName = true, bySimila
         return '@everyone';
     }
 
+    // extract id from role mention
     if (/<@&(\d*)>/g.test(text)) {
         var result = /<@&(\d*)>/g.exec(text);
         if (result != null) {
             text = result[1];
         }
     }
+
     // by id
     var role = guild.roles.get(text);
     if (!role && byName) {
@@ -186,6 +191,7 @@ export function stringToRole(guild: Guild, text: string, byName = true, bySimila
  */
 export function stringToChannel(guild: Guild, text: string, byName = true, bySimilar = true) {
     if (!guild) return null;
+    // extract id from channel mention
     if (/<#(\d*)>/g.test(text)) {
         var result = /<#(\d*)>/g.exec(text);
         if (result != null) {

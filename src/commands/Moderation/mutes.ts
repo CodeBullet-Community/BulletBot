@@ -95,6 +95,7 @@ var command: commandInterface = {
             }
             if (!permMutedString.length) permMutedString = '*None*';
 
+            // send information
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send({
                 "embed": {

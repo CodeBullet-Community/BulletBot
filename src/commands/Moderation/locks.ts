@@ -79,9 +79,10 @@ var command: commandInterface = {
                 (lockedChannel.until ? tempLockedArray : permLockedArray).push(lockedChannel);
             }
 
+            // put permanently locked channels into a string
             let permLockedString = '';
             for (let i = 0; i < permLockedArray.length; i++) {
-                if (i < 20 || permLockedArray.length == 20) {
+                if (i < 20 || permLockedArray.length == 20) { // check to only list 20 channels
                     permLockedString += `${message.guild.channels.get(permLockedArray[i].channel)}\n`;
                 } else {
                     permLockedString += `and ${permLockedArray.length - 19} more...`;
@@ -90,9 +91,10 @@ var command: commandInterface = {
             }
             if (!permLockedString.length) permLockedString = '*None*';
 
+            // put temporary locked channels into a string
             let tempLockedString = '';
             for (let i = 0; i < tempLockedArray.length; i++) {
-                if (i < 20 || tempLockedArray.length == 20) {
+                if (i < 20 || tempLockedArray.length == 20) { // check to only list 20 channels
                     tempLockedString += `${message.guild.channels.get(tempLockedArray[i].channel)} until ${dateFormat(tempLockedArray[i].until, timeFormat)}\n`;
                 } else {
                     tempLockedString += `and ${tempLockedArray.length - 19} more...`;
@@ -101,6 +103,7 @@ var command: commandInterface = {
             }
             if (!tempLockedString.length) tempLockedString = '*None*';
 
+            // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send({
                 "embed": {

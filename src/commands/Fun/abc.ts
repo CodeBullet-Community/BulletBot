@@ -60,15 +60,18 @@ var command: commandInterface = {
             Bot.mStats.logResponseTime(command.name, requestTime);
             Bot.mStats.logCommandUsage(command.name);
             if (!commandCache) {
+                // when command is first called
                 message.channel.send('Ok let\'s do the alphabet. I start:');
                 Bot.mStats.logMessageSend();
                 message.channel.send(abc[0]);
                 Bot.mStats.logMessageSend();
-                let commandCache = new CommandCache(undefined, message.channel, message.author, command.name, 10000, { index: 0 });
+                // create command cache for user
+                new CommandCache(undefined, message.channel, message.author, command.name, 10000, { index: 0 });
             } else {
-                if (abc[commandCache.cache.index + 1] == args.toLocaleLowerCase()) {
+                if (abc[commandCache.cache.index + 1] == args.toLocaleLowerCase()) { // if user replied with the correct character
                     commandCache.cache.index += 2;
-                    if (abc[commandCache.cache.index]) {
+
+                    if (abc[commandCache.cache.index]) { // if alphabet is finished or not
                         message.channel.send(abc[commandCache.cache.index]);
                         Bot.mStats.logMessageSend();
                         commandCache.save(10000);

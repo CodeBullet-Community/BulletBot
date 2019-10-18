@@ -56,18 +56,17 @@ var command: commandInterface = {
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             args = args.trim();
-            if (args.length == 0) {
+            if (args.length == 0) { // send help embed if no arguments provided
                 message.channel.send(await command.embedHelp(message.guild));
                 Bot.mStats.logMessageSend();
                 return false; // was unsuccessful
             }
-            
+          
             let content = "https://lmgtfy.com/?q=" + encodeURIComponent(args);
 
+            // send lmgtfy link
             Bot.mStats.logResponseTime(command.name, requestTime);
-
-            message.channel.send(content);
-
+            message.channel.send(lmgtfy(args));
             Bot.mStats.logMessageSend();
             Bot.mStats.logCommandUsage(command.name);
             return true; // was successful

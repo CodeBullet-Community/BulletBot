@@ -68,27 +68,33 @@ var command: commandInterface = {
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
-            if (args.length == 0) {
+            if (args.length == 0) { // send help embed if no arguments provided
                 message.channel.send(await command.embedHelp(message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            let argsArray = args.split(' ').filter(x => x.length != 0);
+            let argsArray = args.split(' ').filter(x => x.length != 0); // split arguments string by spaces
 
             let user = await getBannedUser(message.guild, argsArray[0]);
-            if (!user) {
-                message.channel.send('Couldn\'t find specified member');
+            if (!user) {  // check if it found the specified user
+                message.channel.send('Couldn\'t find specified user');
                 Bot.mStats.logMessageSend();
                 return false;
             }
 
+            // get the reason
             let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length).trim();
+            // make a case
             Bot.caseLogger.logUnban(message.guild, user, message.member, reason);
+            // dm to user that he has been unbanned
             user.send(`You were unbanned in **${message.guild.name}**${reason ? ' for:\n' + reason : ''}`).catch(error => { });
 
+            // unban user
             message.guild.unban(user);
+            // removed a pending unban if there was one
             Bot.pActions.removeBan(message.guild.id, user.id);
 
+            // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send(`:white_check_mark: **${user.tag} has been unbanned${reason ? ', ' + reason : ''}**`);
             Bot.mStats.logCommandUsage(command.name);

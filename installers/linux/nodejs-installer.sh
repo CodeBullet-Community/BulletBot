@@ -44,8 +44,8 @@ clear
 
 # 'option' is exported from the master installer
 if [[ $option -eq 3 ]]; then
-    read -p "We will now download and install nodejs and any required packages." \
-        "Press [Enter] to begin."
+    printf "We will now download and install nodejs and any required packages. "
+    read -p "Press [Enter] to begin."
     install_nodejs
     install_node_module_pkgs
     echo "Changing ownership of the files added to '/home/bulletbot'..."
@@ -53,8 +53,8 @@ if [[ $option -eq 3 ]]; then
     echo -e "\n${green}Finished downloading and installing nodejs and any required" \
         "packages${nc}"
 else
-    read -p "We will now install required packages and dependencies. Press [Enter]" \
-        "to begin."
+    printf "We will now install required packages and dependencies. " 
+    read -p "Press [Enter] to begin."
     install_node_module_pkgs
     echo "Changing ownership of the files added to '/home/bulletbot'..."
     chown bulletbot:bulletbot -R /home/bulletbot

@@ -14,10 +14,13 @@ import dateFormat = require('dateformat');
  */
 export async function logChannelToggle(channel: GuildChannel, created: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(channel.guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(channel.id)) return;
     if (!megalogDoc.channelCreate && created) return;
     if (!megalogDoc.channelDelete && !created) return;
+
+    // send actual log
     let logChannel = channel.guild.channels.get(created ? megalogDoc.toObject().channelCreate : megalogDoc.toObject().channelDelete);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
@@ -53,12 +56,15 @@ export async function logChannelToggle(channel: GuildChannel, created: boolean) 
  */
 export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: GuildChannel) {
     let megalogDoc = await Bot.database.findMegalogDoc(newChannel.guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(newChannel.id)) return;
     if (!megalogDoc.channelUpdate) return;
+
+    // sends actual log
     let logChannel = newChannel.guild.channels.get(megalogDoc.toObject().channelUpdate);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    if (oldChannel.name != newChannel.name) { // name change
+    if (oldChannel.name != newChannel.name) { // if name was changed
         await logChannel.send({
             "embed": {
                 "description": `**Channel name changed of ${newChannel.toString()}**`,
@@ -86,7 +92,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
             }
         });
         Bot.mStats.logMessageSend();
-    } if (oldChannel instanceof TextChannel && newChannel instanceof TextChannel && oldChannel.topic != newChannel.topic) { // topic change
+    } if (oldChannel instanceof TextChannel && newChannel instanceof TextChannel && oldChannel.topic != newChannel.topic) { // if topic was changed
         await logChannel.send({
             "embed": {
                 "description": `**Channel topic changed of ${newChannel.toString()}**`,
@@ -143,6 +149,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
             }
         };
         for (const permID of permDiff.keys()) { // add a field for changed role or member
+            // load both overwrites into variables
             let oldPerm: any = oldChannel.permissionOverwrites.get(permID) || {};
             let newPerm: any = newChannel.permissionOverwrites.get(permID) || {};
             let oldBitfields = {
@@ -154,6 +161,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
                 denied: newPerm.denied ? newPerm.denied.bitfield : 0
             };
 
+            // load roles / guildmember for that overwrite
             var role: Role;
             var member: GuildMember;
             if (oldPerm.type == 'role' || newPerm.type == 'role')
@@ -161,6 +169,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
             if (oldPerm.type == 'member' || newPerm.type == 'member')
                 member = await newChannel.guild.fetchMember(newPerm.id || oldPerm.id);
 
+            // make text about what changed
             let value = '';
             if (oldBitfields.allowed !== newBitfields.allowed) {
                 value += `Allowed Perms: \`${oldBitfields.allowed}\` to \`${newBitfields.allowed}\`\n`;
@@ -170,6 +179,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
             }
             if (!value.length) value = 'Overwrite got deleted';
 
+            // add field to embed
             embed.embed.fields.push({
                 "name": role ? role.name + ` (ID: ${role.id}):` : member.user.username + ` (ID: ${member.id}):`,
                 "value": value
@@ -193,8 +203,11 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
  */
 export async function logBan(guild: Guild, user: User, banned: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if ((!megalogDoc.ban && banned) || (!megalogDoc.unban && !banned)) return;
+
+    // send log
     let logChannel = guild.channels.get(banned ? megalogDoc.toObject().ban : megalogDoc.toObject().unban);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
@@ -229,8 +242,11 @@ export async function logBan(guild: Guild, user: User, banned: boolean) {
  */
 export async function logMember(member: GuildMember, joined: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(member.guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if ((!megalogDoc.memberJoin && joined) || (!megalogDoc.memberLeave && !joined)) return;
+
+    // send log
     let logChannel = member.guild.channels.get(joined ? megalogDoc.toObject().memberJoin : megalogDoc.toObject().memberLeave);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     let embed: any = {
@@ -250,7 +266,7 @@ export async function logMember(member: GuildMember, joined: boolean) {
             }
         }
     };
-    if (!joined) {
+    if (!joined) { // if the member left also add when he joined
         embed.embed.fields = [{
             "name": "Joined At",
             "value": dateFormat(member.joinedAt, timeFormat) + ` (${getDayDiff(member.joinedTimestamp, Date.now())} days ago)`
@@ -273,8 +289,11 @@ export async function logMember(member: GuildMember, joined: boolean) {
 export async function logNickname(oldMember: GuildMember, newMember: GuildMember) {
     if (oldMember.nickname == newMember.nickname) return;
     let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if (!megalogDoc.nicknameChange) return;
+
+    // send log
     let logChannel = newMember.guild.channels.get(megalogDoc.nicknameChange);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
@@ -317,19 +336,24 @@ export async function logNickname(oldMember: GuildMember, newMember: GuildMember
  * @memberof megalogger
  */
 export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMember) {
+    // check if member roles even were changed
     let rolesAdded = newMember.roles.filter(x => !oldMember.roles.get(x.id));
     let rolesRemoved = oldMember.roles.filter(x => !newMember.roles.get(x.id));
     if (rolesAdded.size == 0 && rolesRemoved.size == 0) return;
+
     let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if (!megalogDoc.memberRolesChange) return;
+
+    // create and send log
     let logChannel = newMember.guild.channels.get(megalogDoc.memberRolesChange);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
-    let roleAddedString = '';
+    let roleAddedString = ''; // which roles were added from the member
     for (const role of rolesAdded.array()) {
         roleAddedString += role.toString();
     }
-    let roleRemovedString = '';
+    let roleRemovedString = ''; // which roles were removed from the member
     for (const role of rolesRemoved.array()) {
         roleRemovedString += role.toString();
     }
@@ -375,8 +399,11 @@ export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMem
 export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
     if (oldGuild.name == newGuild.name) return;
     let megalogDoc = await Bot.database.findMegalogDoc(newGuild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if (!megalogDoc.guildNameChange) return;
+
+    // send log
     let logChannel = newGuild.channels.get(megalogDoc.guildNameChange);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
@@ -420,18 +447,23 @@ export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
 export async function logMessageDelete(message: Message) {
     if (message.channel instanceof DMChannel) return;
     let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
+    // check megalog settings if this should get logged
+    if (!megalogDoc) return;
     if (!megalogDoc) return;
     if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(message.channel.id)) return;
     if (!megalogDoc.messageDelete) return;
-    if (message.channel.id == megalogDoc.messageDelete) return;
+    if (message.channel.id == megalogDoc.messageDelete) return; // check if deleted message isn't a megalog message
     let logChannel = message.guild.channels.get(megalogDoc.messageDelete);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
+
+    // shorten message if it's longer then 1024
     let shortened = false;
     let content = message.content;
     if (content.length > 1024) {
         content = content.slice(0, 1020) + '...';
         shortened = true;
     }
+
     let embed: any = {
         "embed": {
             "description": `**Message from ${message.author.toString()} deleted in ${message.channel.toString()}**`,
@@ -452,6 +484,8 @@ export async function logMessageDelete(message: Message) {
             ]
         }
     };
+    
+    // get attachments from attachment cache
     if (message.attachments.size > 0) {
         let attachments = '';
         for (const attachment of message.attachments)
@@ -478,6 +512,7 @@ export async function logMessageDelete(message: Message) {
         });
         embed.files = cachedArray;
     }
+
     await logChannel.send(embed);
     Bot.mStats.logMessageSend();
     Bot.mStats.logMegalogLog('messageDelete');
@@ -494,12 +529,17 @@ export async function logMessageDelete(message: Message) {
 export async function logMessageBulkDelete(messages: Collection<string, Message>) {
     if (messages.first().channel instanceof DMChannel) return;
     let megalogDoc = await Bot.database.findMegalogDoc(messages.first().guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(messages.first().channel.id)) return;
     if (!megalogDoc.messageDelete) return;
-    if (messages.first().channel.id == megalogDoc.messageDelete) return;
+    if (messages.first().channel.id == megalogDoc.messageDelete) return; // check if deleted messages aren't megalog messages
+
+    // create and send log
     let logChannel = messages.first().guild.channels.get(megalogDoc.messageDelete);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
+
+    // create attachment file with  deleted messages, needs to be with a certain format so https://txt.discord.website/ can show it correctly
     //@ts-ignore
     let humanLog = `**Deleted Messages from #${messages.first().channel.name} (${messages.first().channel.id}) in ${messages.first().guild.name} (${messages.first().guild.id})**`;
     for (const message of messages.array().reverse()) {
@@ -517,7 +557,9 @@ export async function logMessageBulkDelete(messages: Collection<string, Message>
             }
         }
     }
-    let attachment = new Attachment(Buffer.from(humanLog, 'utf-8'), 'DeletedMessages.txt');
+    let attachment = new Attachment(Buffer.from(humanLog, 'utf-8'), 'DeletedMessages.txt'); // send attachment
+
+    // send actual log with the attachment as input for https://txt.discord.website/
     //@ts-ignore
     let logMessage: Message = await logChannel.send(attachment);
     logMessage.edit({
@@ -563,8 +605,8 @@ export async function logMessageBulkDelete(messages: Collection<string, Message>
 async function getAttachmentCache(message: Message, cacheChannelID: string, timerange = 3000) {
     let cacheChannel = message.guild.channels.get(cacheChannelID);
     if (!cacheChannel || !(cacheChannel instanceof TextChannel)) return;
-    var cache = await cacheChannel.fetchMessages({ limit: 20, around: message.id });
-    var cacheMessage = cache.find(x => x.content.includes(`BulletBotCacheTagThing: ${message.url}`));
+    var cache = await cacheChannel.fetchMessages({ limit: 20, around: message.id }); // loads 20 messages that were send around that time
+    var cacheMessage = cache.find(x => x.content.includes(`BulletBotCacheTagThing: ${message.url}`)); // get attachment cache with the specific id
     if (!cacheMessage || !cacheMessage.attachments.size) return;
     return cacheMessage.attachments;
 }
@@ -579,11 +621,14 @@ async function getAttachmentCache(message: Message, cacheChannelID: string, time
  */
 export async function cacheAttachment(message: Message) {
     if (message.channel instanceof DMChannel) return;
-    if (message.attachments.size == 0) return;
+    if (message.attachments.size == 0) return; // check if message has even attachments
     let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
+    // check megalog settings if this should get cached
     if (!megalogDoc) return;
     if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(message.channel.id)) return;
     if (!megalogDoc.attachmentCache) return;
+
+    // send attachment cache
     let logChannel = message.guild.channels.get(megalogDoc.attachmentCache);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     let attachments: string[] = [];
@@ -613,14 +658,20 @@ export async function cacheAttachment(message: Message) {
  */
 export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
     if (newMessage.channel instanceof DMChannel) return;
-    if (oldMessage.content == newMessage.content) return;
+    if (oldMessage.content == newMessage.content) return; // check if content even changed
+
     let megalogDoc = await Bot.database.findMegalogDoc(newMessage.guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(newMessage.channel.id)) return;
     if (!megalogDoc.messageEdit) return;
-    if (megalogDoc.messageDelete == newMessage.channel.id && newMessage.author.id == Bot.client.user.id) return;
+    if (megalogDoc.messageDelete == newMessage.channel.id && newMessage.author.id == Bot.client.user.id) return; // check if it isn't a megalog that was edited
+
+    // create and send log
     let logChannel = newMessage.guild.channels.get(megalogDoc.messageEdit);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
+
+    // shorten both messages when the content is larger then 1024 chars
     let oldShortened = false;
     let oldContent = oldMessage.content;
     if (oldContent.length > 1024) {
@@ -633,6 +684,8 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
         newContent = newContent.slice(0, 1020) + '...';
         newShortened = true;
     }
+
+    // send log
     await logChannel.send({
         "embed": {
             "description": `**Message of ${newMessage.author.toString()} edited in ${newMessage.channel.toString()}** [Jump to Message](${newMessage.url})`,
@@ -675,9 +728,12 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
 export async function logReactionToggle(reaction: MessageReaction, user: User, reacted: boolean) {
     if (reaction.message.channel instanceof DMChannel) return;
     let megalogDoc = await Bot.database.findMegalogDoc(reaction.message.guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(reaction.message.channel.id)) return;
     if ((reacted && !megalogDoc.reactionAdd) || (!reacted && !megalogDoc.reactionRemove)) return;
+
+    // send log
     let logChannel = reaction.message.guild.channels.get(reacted ? megalogDoc.reactionAdd : megalogDoc.reactionRemove);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
@@ -709,9 +765,12 @@ export async function logReactionToggle(reaction: MessageReaction, user: User, r
 export async function logReactionRemoveAll(message: Message) {
     if (message.channel instanceof DMChannel) return;
     let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(message.channel.id)) return;
     if (!megalogDoc.reactionRemove) return;
+
+    // send log
     let logChannel = message.guild.channels.get(megalogDoc.reactionRemove);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
@@ -743,8 +802,11 @@ export async function logReactionRemoveAll(message: Message) {
  */
 export async function logRoleToggle(role: Role, created: boolean) {
     let megalogDoc = await Bot.database.findMegalogDoc(role.guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if ((created && !megalogDoc.roleCreate) || (!created && !megalogDoc.roleDelete)) return;
+
+    // send log
     let logChannel = role.guild.channels.get(created ? megalogDoc.roleCreate : megalogDoc.roleDelete);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     try {
@@ -781,12 +843,15 @@ export async function logRoleToggle(role: Role, created: boolean) {
 export async function logRoleUpdate(oldRole: Role, newRole: Role) {
     if ((oldRole.name == newRole.name) && (oldRole.color == newRole.color) && (oldRole.permissions == newRole.permissions)) return;
     let megalogDoc = await Bot.database.findMegalogDoc(newRole.guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if (!megalogDoc.roleUpdate) return;
+
+    // send logs
     let logChannel = newRole.guild.channels.get(megalogDoc.roleUpdate);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     let date = new Date();
-    if (oldRole.name != newRole.name) {
+    if (oldRole.name != newRole.name) { // if name was changed
         await logChannel.send({
             "embed": {
                 "description": `**Role name of ${newRole} (${newRole.name}) changed**`,
@@ -813,7 +878,7 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
         });
         Bot.mStats.logMessageSend();
     }
-    if (oldRole.color != newRole.color) {
+    if (oldRole.color != newRole.color) { // if color was changed
         await logChannel.send({
             "embed": {
                 "description": `**Role color of ${newRole} (${newRole.name}) changed**`,
@@ -840,7 +905,7 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
         });
         Bot.mStats.logMessageSend();
     }
-    if (oldRole.permissions != newRole.permissions) {
+    if (oldRole.permissions != newRole.permissions) { // if permissions were changed
         await logChannel.send({
             "embed": {
                 "description": `**Role permissions of ${newRole} (${newRole.name}) changed**\n[What those numbers mean](https://discordapp.com/developers/docs/topics/permissions)`,
@@ -882,8 +947,11 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
 export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildMember) {
     if (oldMember.voiceChannelID == newMember.voiceChannelID) return;
     let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if (!megalogDoc.voiceTransfer) return;
+
+    // send log
     let logChannel = newMember.guild.channels.get(megalogDoc.voiceTransfer);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
@@ -914,10 +982,13 @@ export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildM
  * @memberof megalogger
  */
 export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMember) {
-    if (oldMember.mute == newMember.mute) return;
+    if (oldMember.mute == newMember.mute) return; // check if member mute state changed
     let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if (!megalogDoc.voiceMute) return;
+
+    // send log
     let logChannel = newMember.guild.channels.get(megalogDoc.voiceMute);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
@@ -948,10 +1019,13 @@ export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMembe
  * @memberof megalogger
  */
 export async function logVoiceDeaf(oldMember: GuildMember, newMember: GuildMember) {
-    if (oldMember.deaf == newMember.deaf) return;
+    if (oldMember.deaf == newMember.deaf) return; // changed if member deaf state changed
     let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
+    // check megalog settings if this should get logged
     if (!megalogDoc) return;
     if (!megalogDoc.voiceDeaf) return;
+
+    // send log
     let logChannel = newMember.guild.channels.get(megalogDoc.voiceDeaf);
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
