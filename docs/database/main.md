@@ -10,7 +10,7 @@ one document for each guild
 {
     guild: string; //guild id
     logChannel: string; // log channel id
-    logs: []; // oldest to newest logdocument id
+    logs: []; // oldest to newest log document id
     staff: string; // staff document id
     cases: number; // total number of cases
     webhooks: {
