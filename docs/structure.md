@@ -20,7 +20,7 @@ This file contains a simple overview of what code for what purpose is placed whe
 |   |   ├── caseLogger.ts   - contains class that manages cases on db
 |   |   ├── database.ts     - contains main simple database interface
 |   |   ├── logger.ts       - contains class that logs normal server logs
-|   |   ├── mStats.ts       - managment statistics module
+|   |   ├── mStats.ts       - management statistics module
 |   |   ├── pActions.ts     - pending actions module
 |   |   └── schemas.ts      - contains all document definitions for the database
 |   |
