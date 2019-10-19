@@ -3,13 +3,8 @@ import { commandInterface } from '../../commands';
 import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString, stringToChannel, stringToMember } from '../../utils/parsers';
-import { durations } from '../../utils/time';
-import { guildSchema, CommandCache } from '../../database/schemas';
-import { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } from 'constants';
-import { content } from 'googleapis/build/src/apis/content';
-import { Database } from '../../database/database';
-import { truncateSync } from 'fs';
+import { permToString, stringToChannel } from '../../utils/parsers';
+import { CommandCache, guildDoc } from '../../database/schemas';
 
 enum modmailModes {
     serversListed = 0,
@@ -91,7 +86,8 @@ var command: commandInterface = {
 
                     for (let i = 0; i < guildsarray.length; i++) {
                         if (await guildsarray[i].fetchMember(message.author)) {
-                            if (guildsarray[i].channels.keyArray().includes((await Bot.database.mainDB.guilds.findOne({"guild": guildsarray[i].id}).exec()).modmailChannel))
+                            let sharedGuild: guildDoc = await Bot.database.mainDB.guilds.findOne({"guild": guildsarray[i].id}).exec()
+                            if (guildsarray[i].channels.keyArray().includes(sharedGuild.modmailChannel) || sharedGuild.modmailConnected)
                                     serverList.push(guildsarray[i]);
                         }
                     }
@@ -154,7 +150,8 @@ var command: commandInterface = {
 
                         for (let i = 0; i < guildsarray.length; i++) {
                             if (await guildsarray[i].fetchMember(message.author)) {
-                                if (guildsarray[i].channels.keyArray().includes((await Bot.database.mainDB.guilds.findOne({"guild": guildsarray[i].id}).exec()).modmailChannel))
+                                let sharedGuild: guildDoc = await Bot.database.mainDB.guilds.findOne({"guild": guildsarray[i].id}).exec()
+                                if (guildsarray[i].channels.keyArray().includes(sharedGuild.modmailChannel) || sharedGuild.modmailConnected)
                                         serverList.push(guildsarray[i]);
                             }
                         }
@@ -268,7 +265,7 @@ var command: commandInterface = {
                     } else {
 
                         if (message.content.trim() == 'end session') {
-
+                            // TODO: perhaps remove or move to an 'archive' category and delete some when required?
                             let modmailChannel = Bot.client.channels.get(commandCache.cache.channel) as TextChannel;
                             await commandCache.remove();
 
@@ -348,7 +345,7 @@ var command: commandInterface = {
                               "fields": [
                                 {
                                   "name": "Moderation team response:",
-                                  "value": message.content
+                                  "value": message.content.split(' ').slice(2).join(" ")
                                 }
                               ]
                             }
@@ -362,6 +359,7 @@ var command: commandInterface = {
                         return false;
                     }
                 }
+                // TODO: perhaps remove or move to an 'archive' category and delete some when required?
                 if (argslist[0] == 'endsession') {
                     let channelTopic = (message.channel as TextChannel).topic.split(';');
                     if (channelTopic.length != 2) {
