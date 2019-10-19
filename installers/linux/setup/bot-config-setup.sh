@@ -36,7 +36,7 @@ echo "Google API Key: $google_api_key"
 if [[ -z $google_api_key ]]; then
     google_api_key=""
     echo "${yellow}You will not be able to use commands that require access to" \
-        "google products${nc}"
+        "Google products${nc}"
 fi
 echo -e "-------------\n"
 
