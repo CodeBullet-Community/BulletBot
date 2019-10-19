@@ -102,7 +102,7 @@ download_bb() {
         }
     fi
     
-    # TODO: Change the urls below when everything is moved to new repo
+    # TODO: Change the URLs below when everything is moved to a new repo
     tag=$(curl -s https://api.github.com/repos/StrangeRanger/Bull/releases/latest \
         | grep -oP '"tag_name": "\K(.*)(?=")')
     latest_release="https://github.com/StrangeRanger/Bull/releases/download/${tag}/BulletBot.zip"
@@ -129,7 +129,7 @@ download_bb() {
         }
     fi
 
-    # Installs unzip on system if it isn't already
+    # Installs unzip if it isn't already
     if ! hash unzip &>/dev/null; then
         echo "${yellow}unzip is not installed${nc}"
         echo "Installing unzip..."
@@ -273,7 +273,7 @@ fi
 # --------- #
 echo -e "Welcome to the BulletBot master installer\n"
 cd "$(dirname $0)"
-# The variables exported are used all throughout this script and the other
+# The variables exported are used throughout this script and the other
 # sub-scripts/installers
 export yellow
 export green
@@ -294,7 +294,7 @@ fi
 while true; do
     bullet_status=$(systemctl is-active bulletbot.service)
 
-    # Creates a system user named 'bulletbot' if it does not exists, then creates a 
+    # Creates a system user named 'bulletbot' if it does not exist, then creates a 
     # home directory for it
     if ! id -u bulletbot &>/dev/null; then
         echo "${yellow}System user 'bulletbot' does not exist${nc}" >&2
@@ -310,7 +310,7 @@ while true; do
             # current dir...
             if [[ -d "${home}/${dir}" && -d $dir ]]; then
                 # D.1. Removes the directory in 'home' because an error would
-                # occure otherwise when moving 'i' to 'home'
+                # occur otherwise when moving 'i' to 'home'
                 rm -rf "${home}/${dir}"
             fi
             mv -f $dir $home 2>/dev/null
@@ -360,7 +360,7 @@ while true; do
                 "javascript. In order to continue, please download the compiled" \
                 "code using option 1.${nc}"
         elif [[ ! -d src && ! -d out ]]; then
-            echo "${cyan}BulletBot has not been downloaded. In order to continue," \
+            echo "${cyan}BulletBot has not been downloaded. To continue," \
                 "please download BulletBot using option 1.${nc}"
         fi
         echo "1. Download BulletBot"
@@ -413,9 +413,9 @@ while true; do
         fi
 
         if [ ! -f out/bot-config.json ]; then
-            echo "5. Setup BulletBot config file ${red}(Not setup)${nc}"
+            echo "5. Set up BulletBot config file ${red}(Not setup)${nc}"
         else
-            echo "5. Setup BulletBot config file ${green}(Already setup)${nc}"
+            echo "5. Set up BulletBot config file ${green}(Already setup)${nc}"
         fi
 
         echo "6. Stop and exit script"
@@ -457,31 +457,31 @@ while true; do
     else 
         if [[ -f $start_script_exists && -f $start_service_exists &&
                 -f $bullet_service_exists && $bullet_status = "active" ]]; then
-            echo "1. Download/update BulletBot and auto restart files/services"
-            echo "2. Run BulletBot in background"
-            echo "3. Run BulletBot in background with auto restart${green}" \
+            echo "1. Download/update BulletBot and auto-restart files/services"
+            echo "2. Run BulletBot in the background"
+            echo "3. Run BulletBot in the background with auto-restart${green}" \
                 "(Running in this mode)${nc}"
         elif [[ -f $start_script_exists && -f $start_service_exists &&
                 -f $bullet_service_exists && $bullet_status != "active" ]]; then
-            echo "1. Download/update BulletBot and auto restart files/services"
-            echo "2. Run BulletBot in background"
-            echo "3. Run BulletBot in background with auto restart${yellow}" \
-                "(Set up to use this mode)${nc}"
+            echo "1. Download/update BulletBot and auto-restart files/services"
+            echo "2. Run BulletBot in the background"
+            echo "3. Run BulletBot in the background with auto-restart${yellow}" \
+                "(Setup to use this mode)${nc}"
         elif [[ -f $bullet_service_exists && $bullet_status = "active" ]]; then
             echo "1. Download/update BulletBot"
-            echo "2. Run BulletBot in background ${green}(Running in this mode)${nc}"
-            echo "3. Run BulletBot in background with auto restart"
+            echo "2. Run BulletBot in the background ${green}(Running in this mode)${nc}"
+            echo "3. Run BulletBot in the background with auto-restart"
         elif [[ -f $bullet_service_exists && $bullet_status != "active" ]]; then
             echo "1. Download/update BulletBot"
-            echo "2. Run BulletBot in background ${yellow}(Set up to use this" \
+            echo "2. Run BulletBot in the background ${yellow}(Setup to use this" \
                 "mode)${nc}"
-            echo "3. Run BulletBot in background with auto restart"
-        # If this were to ever occure, something went wrong or something wierd
+            echo "3. Run BulletBot in the background with auto-restart"
+        # If this were to ever occur, something went wrong or something weird
         # is happening
         else
             echo "1. Download/update BulletBot"
-            echo "2. Run BulletBot in background"
-            echo "3. Run BulletBot in background with auto restart"
+            echo "2. Run BulletBot in the background"
+            echo "3. Run BulletBot in the background with auto-restart"
         fi
         echo "4. Create new/update BulletBot config file"
         echo "5. Stop and exit script"
