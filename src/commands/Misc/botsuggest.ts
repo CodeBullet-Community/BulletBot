@@ -27,7 +27,7 @@ var command: commandInterface = {
                 'fields': [
                     {
                         'name': 'Description:',
-                        'value': 'Make a suggestion for the bot. Be as descriptive as you can'
+                        'value': 'Make a suggestion for the bot. Be as descriptive as you can.'
                     },
                     {
                         'name': 'Need to be:',
@@ -51,11 +51,11 @@ var command: commandInterface = {
                     },
                     {
                         'name': 'Usage:', // all possible inputs to the guild, the arguments should be named
-                        'value': '{command} [bug]'.replace(/\{command\}/g, prefix + command.name)
+                        'value': '{command} [suggestion]'.replace(/\{command\}/g, prefix + command.name)
                     },
                     {
                         'name': 'Example:', // example use of the command
-                        'value': '{command} This feature doesn\'t work with that'.replace(/\{command\}/g, prefix + command.name)
+                        'value': '{command} Add a command that converts Fahrenheit to Celcius and vise versa'.replace(/\{command\}/g, prefix + command.name)
                     }
                 ]
             }
