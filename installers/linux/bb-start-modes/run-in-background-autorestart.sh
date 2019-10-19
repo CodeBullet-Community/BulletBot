@@ -3,7 +3,7 @@
 timer=20
 
 clear
-read -p "We will now run BulletBot in the background with auto restart on system \
+read -p "We will now run BulletBot in the background with auto-restart on system \
 reboot. Press [Enter] to begin."
 
 # Both variables are exported from the master installer
