@@ -413,9 +413,9 @@ while true; do
         fi
 
         if [ ! -f out/bot-config.json ]; then
-            echo "5. Setup BulletBot config file ${red}(Not setup)${nc}"
+            echo "5. Set up BulletBot config file ${red}(Not setup)${nc}"
         else
-            echo "5. Setup BulletBot config file ${green}(Already setup)${nc}"
+            echo "5. Set up BulletBot config file ${green}(Already setup)${nc}"
         fi
 
         echo "6. Stop and exit script"
@@ -466,14 +466,14 @@ while true; do
             echo "1. Download/update BulletBot and auto restart files/services"
             echo "2. Run BulletBot in background"
             echo "3. Run BulletBot in background with auto restart${yellow}" \
-                "(Set up to use this mode)${nc}"
+                "(Setup to use this mode)${nc}"
         elif [[ -f $bullet_service_exists && $bullet_status = "active" ]]; then
             echo "1. Download/update BulletBot"
             echo "2. Run BulletBot in background ${green}(Running in this mode)${nc}"
             echo "3. Run BulletBot in background with auto restart"
         elif [[ -f $bullet_service_exists && $bullet_status != "active" ]]; then
             echo "1. Download/update BulletBot"
-            echo "2. Run BulletBot in background ${yellow}(Set up to use this" \
+            echo "2. Run BulletBot in background ${yellow}(Setup to use this" \
                 "mode)${nc}"
             echo "3. Run BulletBot in background with auto restart"
         # If this were to ever occure, something went wrong or something wierd
