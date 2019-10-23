@@ -420,8 +420,8 @@ async function DeleteLastXmessages(numberOfMessages: number, channel: TextChanne
             }
             
             // update the last message checked in this loop
-            // so we can cintinue with the next 100 messages
-            latest = rms.last().id;
+            // so we can continue with the next 100 messages
+            latest = selectedMessages.last().id;
             if (messages.length != 0) {
                 found = true;
                 await channel.bulkDelete(messages, true); // 'true' checks whether it's deleteable
