@@ -4,14 +4,14 @@ This is a general-purpose Discord bot that originated from a webhook problem in 
 
 ## Getting Started
 
-There are two types of guides in the [wiki](https://github.com/Jet132/BulletBot/wiki). One is for actually running the bot on a server 24/7 and the other one is for setting up a development environment for your self.
+There are two types of guides in the [wiki](https://github.com/CodeBullet-Community/BulletBot/wiki). One is for actually running the bot on a server 24/7 and the other one is for setting up a development environment for your self.
 
 - Server Setup (Running 24/7):
-  - [Linux](https://github.com/Jet132/BulletBot/wiki/Linux-Server-Setup-Guide)
+  - [Linux](https://github.com/CodeBullet-Community/BulletBot/wiki/Linux-Server-Setup-Guide)
   - No Windows guide (You can add one if you like)
 - Development Setup:
-  - [Windows](https://github.com/Jet132/BulletBot/wiki/Windows-Dev-Setup-Guide)
-  - [Linux](https://github.com/Jet132/BulletBot/wiki/Linux-Dev-Setup-Guide)
+  - [Windows](https://github.com/CodeBullet-Community/BulletBot/wiki/Windows-Dev-Setup-Guide)
+  - [Linux](https://github.com/CodeBullet-Community/BulletBot/wiki/Linux-Dev-Setup-Guide)
 
 ## Built With
 
@@ -26,7 +26,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on  the process for s
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/Jet132/BulletBot/tags).
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/CodeBullet-Community/BulletBot/tags).
 
 ## License
 

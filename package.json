@@ -8,14 +8,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Jet132/BulletBot.git"
+        "url": "git+https://github.com/CodeBullet-Community/BulletBot.git"
     },
     "author": "BulletBot Dev Team",
     "license": "GNU AGPLv3",
     "bugs": {
-        "url": "https://github.com/Jet132/BulletBot/issues"
+        "url": "https://github.com/CodeBullet-Community/BulletBot/issues"
     },
-    "homepage": "https://github.com/Jet132/BulletBot",
+    "homepage": "https://github.com/CodeBullet-Community/BulletBot",
     "dependencies": {
         "console-stamp": "^0.2.9",
         "dateformat": "^3.0.3",
