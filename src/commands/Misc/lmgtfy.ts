@@ -66,7 +66,7 @@ var command: commandInterface = {
 
             // send lmgtfy link
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send(lmgtfy(args));
+            message.channel.send(content);
             Bot.mStats.logMessageSend();
             Bot.mStats.logCommandUsage(command.name);
             return true; // was successful
