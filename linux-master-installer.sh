@@ -102,10 +102,9 @@ download_bb() {
         }
     fi
     
-    # TODO: Change the URLs below when everything is moved to a new repo
     tag=$(curl -s https://api.github.com/repos/StrangeRanger/Bull/releases/latest \
         | grep -oP '"tag_name": "\K(.*)(?=")')
-    latest_release="https://github.com/StrangeRanger/Bull/releases/download/${tag}/BulletBot.zip"
+    latest_release="https://github.com/CodeBullet-Community/BulletBot/releases/download/${tag}/BulletBot.zip"
     
     # Installs wget if it isn't already
     if ! hash wget &>/dev/null; then
