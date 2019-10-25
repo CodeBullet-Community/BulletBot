@@ -1,6 +1,6 @@
 {
     "name": "bulletbot",
-    "version": "1.2.3",
+    "version": "1.2.5",
     "description": "a general purpose discord bot",
     "main": "out/index.js",
     "scripts": {
