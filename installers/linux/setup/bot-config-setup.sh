@@ -18,7 +18,7 @@ echo "-------------"
 echo "${cyan}If this field is left blank, the default MongoDB url will be used:" \
     "mongodb://localhost:27017${nc}"
 read -p "Enter the MongoDB url (i.e. mongodb://localhost:[port]): " mongodb_url
-if [[ ! -z $bot_token ]]; then mongodb_url="mongodb://localhost:27017"; fi
+if [[ -z $bot_token ]]; then mongodb_url="mongodb://localhost:27017"; fi
 echo "MongoDB url: $mongodb_url"
 echo -e "-------------\n"
 
