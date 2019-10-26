@@ -102,7 +102,7 @@ download_bb() {
         }
     fi
     
-    tag=$(curl -s https://api.github.com/repos/StrangeRanger/Bull/releases/latest \
+    tag=$(curl -s https://api.github.com/repos/CodeBullet-Community/BulletBot/releases/latest \
         | grep -oP '"tag_name": "\K(.*)(?=")')
     latest_release="https://github.com/CodeBullet-Community/BulletBot/releases/download/${tag}/BulletBot.zip"
     
