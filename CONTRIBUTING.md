@@ -1,6 +1,6 @@
 # Contributing
 
-When contributing to this repository, please select a task/feature from the project of your choice. If you want to add a new feature you can create a new issue and add it to the project. Same goes with bugs. Most contributors will probably be active in the [Code Bullet and Co](https://discord.gg/4dsf8ZY) Discord server, so maybe consider joining it.
+When contributing to this repository, please select a task/feature from the project of your choice. If you want to add a new feature you can create a new issue and add it to the project. Same goes with bugs. Most contributors will probably be active in the [BulletBot](https://discord.gg/74py7yd) [Code Bullet and Co](https://discord.gg/3wTEZkh) Discord server, so maybe consider joining it.
 
 Please note we have a [code of conduct](CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
 

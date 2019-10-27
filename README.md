@@ -1,6 +1,12 @@
 # BulletBot
 
-This is a general-purpose Discord bot that originated from a webhook problem in the [Code Bullet and Co](https://discord.gg/4dsf8ZY) server. During the prelaunch development time, the main creator [Codec](https://github.com/Jet132) decided to extend this project to replacing every bot in the server. Until now, I only replaced one entire bot but also some functions from other bots.
+This is a general-purpose Discord bot that originated from a webhook problem in the [Code Bullet and Co](https://discord.gg/3wTEZkh) server. During the prelaunch development time, the main creator [Codec](https://github.com/Jet132) decided to extend this project to replacing every bot in the server. Until now, I only replaced one entire bot but also some functions from other bots.
+
+## Our Discord server
+
+As this is Discord bot all contributors are on Discord. We have a server only for the bot, which you can join here:
+
+<iframe src="https://discordapp.com/widget?id=630139225869647913&theme=dark" width="350" height="500" allowtransparency="true" frameborder="0"></iframe>
 
 ## Getting Started
 
@@ -13,6 +19,8 @@ There are two types of guides in the [wiki](https://github.com/CodeBullet-Commun
   - [Windows](https://github.com/CodeBullet-Community/BulletBot/wiki/Windows-Dev-Setup-Guide)
   - [Linux](https://github.com/CodeBullet-Community/BulletBot/wiki/Linux-Dev-Setup-Guide)
 
+If you need help you can ask on the Discord server.
+
 ## Built With
 
 - [Node.js](https://nodejs.org) - the JS Engine this bot runs on
@@ -22,7 +30,7 @@ There are two types of guides in the [wiki](https://github.com/CodeBullet-Commun
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on  the process for submitting pull requests to us.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on the process for submitting pull requests to us.
 
 ## Versioning
 
