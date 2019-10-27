@@ -24,7 +24,7 @@ If you need help you can ask on the Discord server.
 ## Built With
 
 - [Node.js](https://nodejs.org) - the JS Engine this bot runs on
-- [MongoDB](https://www.mongodb.com) - NoSQL database used for storing bot data (duhhh)
+- [MongoDB](https://www.mongodb.com) - NoSQL database used for storing bot data
 - [TypeScript](https://www.typescriptlang.org/) - Language the bot is written in (typed superset of JavaScript)
 - [Discord.js](https://discord.js.org) - Node.js module used as interface for the Discord API
 
