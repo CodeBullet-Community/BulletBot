@@ -6,7 +6,7 @@ This is a general-purpose Discord bot that originated from a webhook problem in 
 
 As this is Discord bot all contributors are on Discord. We have a server only for the bot, which you can join here:
 
-![Discord Banner 2](https://discordapp.com/api/guilds/630139225869647913/widget.png?style=banner2)
+[![Discord Banner 2](https://discordapp.com/api/guilds/630139225869647913/widget.png?style=banner2)](https://discord.gg/74py7yd)
 
 ## Getting Started
 
