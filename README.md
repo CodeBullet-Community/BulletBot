@@ -46,7 +46,7 @@ The original logo/PFP was a fanart from @Aster#4205 and was later vectorized by 
 
 Original:
 
-![original avatar](media\Pixelart-BulletBot.png "Original Avatar")
+![original avatar](media/Pixelart-BulletBot.png "Original Avatar")
 
 Vectorized:
 
