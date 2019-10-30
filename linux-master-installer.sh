@@ -249,6 +249,18 @@ if [[ $os = "ubuntu" ]]; then
             supported=false
             ;;
     esac
+elif [[ $os = "debian" ]]; then
+    case $sver in
+        9)
+            supported=true
+            ;;
+        10)
+            supported=false # not tested yet
+            ;;
+        *)
+            supported=false
+            ;;
+    esac
 else
     supported=false
 fi

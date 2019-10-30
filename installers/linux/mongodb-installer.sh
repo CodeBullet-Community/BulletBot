@@ -12,9 +12,17 @@ echo "Creating MongoDB source list file..."
 # Will get the source files for ubuntu based operating systems
 # 'os' is exported from the master installer
 if [[ $os = "ubuntu" ]]; then
-    # 'codename' is exported from the master installer
+    # A.1. 'codename' is exported from the master installer
     echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu ${codename}/mongodb-org/4.2" \
         "multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list || {
+            echo "${red}Failed to create MongoDB source list file${nc}" >&2
+            echo -e "\nExiting..."
+            exit 1
+        }
+elif [[ $os = "debian" ]]; then
+    # A.1.
+    echo "deb http://repo.mongodb.org/apt/debian ${codename}/mongodb-org/4.2 main" |
+        sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list || {
             echo "${red}Failed to create MongoDB source list file${nc}" >&2
             echo -e "\nExiting..."
             exit 1
