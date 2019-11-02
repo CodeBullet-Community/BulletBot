@@ -24,6 +24,7 @@
         "express": "^4.17.1",
         "googleapis": "^44.0.0",
         "mongoose": "^5.7.1",
+        "pjson": "^1.0.9",
         "request": "^2.88.0",
         "xml2js": "^0.4.22"
     },

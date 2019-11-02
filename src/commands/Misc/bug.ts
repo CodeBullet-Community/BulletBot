@@ -4,9 +4,7 @@ import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, durationToString } from '../../utils/parsers';
-import request = require('request');
 import { durations, getDurationDiff } from '../../utils/time';
-import { bugForm } from '../../bot-config.json';
 
 var command: commandInterface = {
     name: 'bug',
@@ -69,18 +67,8 @@ var command: commandInterface = {
                 return false;
             }
 
-            // send suggestion to google form
-            let form = {};
-            form['entry.' + bugForm.serverID] = (!dm ? message.guild.id : undefined);
-            form['entry.' + bugForm.serverName] = (!dm ? message.guild.name : undefined);
-            form['entry.' + bugForm.userID] = message.author.id;
-            form['entry.' + bugForm.userName] = message.author.username;
-            form['entry.' + bugForm.messageID] = message.id;
-            form['entry.' + bugForm.channelID] = message.channel.id;
-            form['entry.' + bugForm.bug] = args;
-            request.post('https://docs.google.com/forms/d/e/1FAIpQLScWsqLDncKzqSgmZuFhuwenqexzmKSr0K_B4GSOgoF6fEBcMA/formResponse', {
-                form: form
-            });
+            // log bug
+            await Bot.mStats.logBug(message, args);
 
             // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
