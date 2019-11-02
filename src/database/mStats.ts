@@ -1,8 +1,9 @@
 import mongoose = require('mongoose');
-import { mStatsAllTimeDoc, mStatsDayDoc, mStatsHourDoc, mStatsAllTimeSchema, mStatsDaySchema, mStatsHourSchema, mStatsHourObject, mStatsObject, errorDoc, errorSchema, mStatsDayObject, megalogFunctions, createEmptyMStatsObject } from './schemas';
+import { mStatsAllTimeDoc, mStatsDayDoc, mStatsHourDoc, mStatsAllTimeSchema, mStatsDaySchema, mStatsHourSchema, mStatsHourObject, mStatsObject, errorDoc, errorSchema, mStatsDayObject, megalogFunctions, createEmptyMStatsObject, bugDoc, botSuggestionDoc, bugSchema, botSuggestionSchema } from './schemas';
 import { Bot } from '..';
 import { durations, toNano } from '../utils/time';
 import crypto = require('crypto');
+import { Message } from 'discord.js';
 
 /**
  * Manages all connections and documents in the mStats database. It's a very independent class with only minimal actual input (besides the action logging) required.
@@ -47,6 +48,20 @@ export class MStats {
      * @memberof MStats
      */
     errors: mongoose.Model<errorDoc>;
+    /**
+     * model for bugs collection
+     *
+     * @type {mongoose.Model<bugDoc>}
+     * @memberof MStats
+     */
+    bugs: mongoose.Model<bugDoc>;
+    /**
+     * model for suggestions collection
+     *
+     * @type {mongoose.Model<botSuggestionDoc>}
+     * @memberof MStats
+     */
+    suggestions: mongoose.Model<botSuggestionDoc>;
 
     /**
      * Creates an instance of MStats, connects to the database and starts all timers. It calls the private async init function.
@@ -66,6 +81,8 @@ export class MStats {
             Bot.mStats.allTime = Bot.mStats.connection.model('allTime', mStatsAllTimeSchema, 'allTime');
             Bot.mStats.daily = Bot.mStats.connection.model('day', mStatsDaySchema, 'daily');
             Bot.mStats.errors = Bot.mStats.connection.model('error', errorSchema, 'errors');
+            Bot.mStats.bugs = Bot.mStats.connection.model('bug', bugSchema, 'bugs');
+            Bot.mStats.suggestions = Bot.mStats.connection.model('suggestion', botSuggestionSchema, 'suggestions');
             Bot.mStats.init();
         });
     }
@@ -312,7 +329,11 @@ export class MStats {
             mergedDoc.logs += doc.logs;
             mergedDoc.guildsJoined += doc.guildsJoined;
             mergedDoc.guildsLeft += doc.guildsLeft;
-            mergedDoc.errorsTotal += doc.errorsTotal;
+            // ifs for backwards compatibility
+            if (mergedDoc.bugs)
+                mergedDoc.bugs += doc.bugs;
+            if (mergedDoc.botSuggestions)
+                mergedDoc.botSuggestions += doc.botSuggestions;
             mergedDoc.commandTotal += doc.commandTotal;
 
             // command stats
@@ -593,6 +614,40 @@ export class MStats {
             this.hourly.doc.megalog.logged[megalogFunction] += 1;
         }
 
+    }
+
+    /**
+     * logs a bug and saves it to the database
+     *
+     * @param {Message} message message that reported the bug
+     * @returns
+     * @memberof MStats
+     */
+    logBug(message: Message) {
+        if (!this.hourly) return;
+        this.hourly.doc.bugs ++;
+        return new this.bugs({
+            user: message.author.id,
+            guild: message.guild ? message.guild.id : undefined,
+            bug: message.content
+        }).save();
+    }
+
+    /**
+     * logs a suggestion and saves it to the database
+     *
+     * @param {Message} message message that suggested the suggestion
+     * @returns
+     * @memberof MStats
+     */
+    logBotSuggestion(message: Message) {
+        if (!this.hourly) return;
+        this.hourly.doc.botSuggestions ++;
+        return new this.suggestions({
+            user: message.author.id,
+            guild: message.guild ? message.guild.id : undefined,
+            suggestion: message.content
+        }).save();
     }
 
 }

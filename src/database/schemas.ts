@@ -622,6 +622,8 @@ export interface mStatsObject {
     guildsLeft: number;
     guildsTotal: number;
     errorsTotal: number;
+    bugs: number; // total bugs reported
+    botSuggestions: number; // total bot suggestions made
     commandTotal: number; // total used
     commands: {
         // key is command name, usage data
@@ -708,6 +710,8 @@ export function createEmptyMStatsObject(): mStatsObject {
         guildsLeft: 0,
         guildsTotal: 0,
         errorsTotal: 0,
+        bugs: 0,
+        botSuggestions: 0,
         commandTotal: 0,
         commands: {},
         filters: {},
@@ -774,6 +778,8 @@ const mStatsSchemaStruc = {
     guildsLeft: Number,
     guildsTotal: Number,
     errorsTotal: Number,
+    bugs: Number,
+    botSuggestions: Number,
     commandTotal: Number,
     commands: mongoose.Schema.Types.Mixed,
     filters: mongoose.Schema.Types.Mixed,
@@ -878,7 +884,33 @@ export const errorSchema = new mongoose.Schema({
     md5: String,
     count: Number,
     error: mongoose.Schema.Types.Mixed
-})
+});
+
+// bug
+export interface bugObject {
+    guild?: string; // guild ID where it was reported (optional)
+    user: string; // user ID which reported it
+    bug: string; // bug description
+}
+export interface bugDoc extends mongoose.Document, bugObject { }
+export const bugSchema = new mongoose.Schema({
+    guild: { type: String, required: false },
+    user: String,
+    bug: String,
+});
+
+// suggestion
+export interface botSuggestionObject {
+    guild?: string; // guild ID where it was suggested (optional)
+    user: string; // user ID which suggested it
+    suggestion: string; // suggestion description
+}
+export interface botSuggestionDoc extends mongoose.Document, botSuggestionObject { }
+export const botSuggestionSchema = new mongoose.Schema({
+    guild: { type: String, required: false },
+    user: String,
+    bug: String,
+});
 
 // youtube webhook
 export interface webhookObject {
@@ -898,7 +930,7 @@ export const webhookSchema = new mongoose.Schema({
 // global settings
 export interface globalSettingsObject {
     prefix: string;
-    presence: PresenceData;    
+    presence: PresenceData;
     embedColors: {
         default: number;
         help: number;

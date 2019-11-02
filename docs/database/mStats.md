@@ -14,7 +14,9 @@ This document is the base of all documents in the `allTime`, `daily` and `hourly
     guildsJoined: number;
     guildsLeft: number;
     guildsTotal: number;
-    errors: number;
+    errorsTotal: number;
+    bugs: number; // total bugs reported
+    botSuggestions: number; // total bot suggestions made
     commandTotal: number; // total used
     commands: {
         // key is command name, usage data
