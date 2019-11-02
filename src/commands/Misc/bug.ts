@@ -4,9 +4,7 @@ import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, durationToString } from '../../utils/parsers';
-import request = require('request');
 import { durations, getDurationDiff } from '../../utils/time';
-import { bugForm } from '../../bot-config.json';
 
 var command: commandInterface = {
     name: 'bug',
