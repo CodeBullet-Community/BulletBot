@@ -4,7 +4,7 @@ import { permLevels } from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
 import { permToString } from '../utils/parsers';
-import { version } from '../bot-config.json';
+import { version } from 'pjson';
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
 
@@ -25,12 +25,23 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                 },
                 "author": {
                     "name": "BulletBot",
-                    "icon_url": Bot.client.user.displayAvatarURL
+                    "icon_url": Bot.client.user.displayAvatarURL,
+                    "url": "https://github.com/CodeBullet-Community/BulletBot"
                 },
                 "fields": [
                     {
+                        "name": "Github Repo:",
+                        "value": "[CodeBullet-Community/BulletBot](https://github.com/CodeBullet-Community/BulletBot)",
+                        "inline": true
+                    },
+                    {
+                        "name": "Discord Server:",
+                        "value": "[BulletBot](https://discord.gg/74py7yd)",
+                        "inline": true
+                    },
+                    {
                         "name": "My Creators:",
-                        "value": "Codec#1167 (Planning/Coding)\nBark Ranger#0985(Main Hosting)\nanAlius#7139 (Coding)\nLucavon#2154 (Dev Hosting)\nMontori#4707 (Coding)\n2 others",
+                        "value": "Codec#1167\nBark Ranger#0985\nanAlius#7139\nMontori#4707\n2 others",
                         "inline": true
                     },
                     {
