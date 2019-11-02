@@ -620,16 +620,17 @@ export class MStats {
      * logs a bug and saves it to the database
      *
      * @param {Message} message message that reported the bug
+     * @param {string} bug description of the bug
      * @returns
      * @memberof MStats
      */
-    logBug(message: Message) {
+    logBug(message: Message, bug:string) {
         if (!this.hourly) return;
         this.hourly.doc.bugs ++;
         return new this.bugs({
             user: message.author.id,
             guild: message.guild ? message.guild.id : undefined,
-            bug: message.content
+            bug: bug
         }).save();
     }
 
@@ -637,16 +638,17 @@ export class MStats {
      * logs a suggestion and saves it to the database
      *
      * @param {Message} message message that suggested the suggestion
+     * @param {suggestion} suggestion suggestion description
      * @returns
      * @memberof MStats
      */
-    logBotSuggestion(message: Message) {
+    logBotSuggestion(message: Message, suggestion: string) {
         if (!this.hourly) return;
         this.hourly.doc.botSuggestions ++;
         return new this.suggestions({
             user: message.author.id,
             guild: message.guild ? message.guild.id : undefined,
-            suggestion: message.content
+            suggestion: suggestion
         }).save();
     }
 

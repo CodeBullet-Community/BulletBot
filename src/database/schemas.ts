@@ -909,7 +909,7 @@ export interface botSuggestionDoc extends mongoose.Document, botSuggestionObject
 export const botSuggestionSchema = new mongoose.Schema({
     guild: { type: String, required: false },
     user: String,
-    bug: String,
+    suggestion: String,
 });
 
 // youtube webhook
