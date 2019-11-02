@@ -4,7 +4,7 @@ This file contains the definitions for all documents in all collections in the m
 
 ## Base Document
 
-This document is the base of all documents in nearly all collections. Each collection adds other stuff to it, but always the same base document.
+This document is the base of all documents in the `allTime`, `daily` and `hourly` collections. Each collection adds other stuff to it, but always the same base document.
 
 ```Typescript
 {
@@ -130,7 +130,6 @@ one document for each hour of one day with the base document as base
 
 ## errors Collection Document
 
-THIS COLLECTION DOES NOT USE THE BASE DOCUMENT.
 One document for each error (same errors count as one error)
 
 ```Typescript
@@ -140,5 +139,29 @@ One document for each error (same errors count as one error)
     md5: hash; // md5 hash to check if the error is the same
     count: number; // how many times it was thrown
     error: any; // error object
+}
+```
+
+## bugs Collection Document
+
+One document for each bug.
+
+```Typescript
+{
+    guild?: string; // guild ID where it was reported (optional)
+    user: string; // user ID which reported it
+    bug: string; // bug description
+}
+```
+
+## suggestions Collection Document
+
+One document for each suggestion.
+
+```Typescript
+{
+    guild?: string; // guild ID where it was suggested (optional)
+    user: string; // user ID which suggested it
+    suggestion: string; // suggestion description
 }
 ```
