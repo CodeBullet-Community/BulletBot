@@ -191,6 +191,16 @@ if ! hash jq; then
     }
 fi
 
+if ! hash gpg2; then
+    echo "${yellow}'gpg2' is not installed${nc}" >&2
+    echo "Installing 'gpg2'..."
+    apt -y install gnupg2 || {
+        echo "${red}Failed to install 'gpg2'${nc}" >&2
+        echo -e "\nExiting..."
+        exit 1
+    }
+fi
+
 while true; do
     bullet_status=$(systemctl is-active bulletbot.service)
 
