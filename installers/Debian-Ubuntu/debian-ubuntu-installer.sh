@@ -164,7 +164,7 @@ WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service
 
     read -p "Press [Enter] to apply any existing changes to the master installer"
     clear
-    source installers/Debian-Ubuntu/debian-ubuntu-master-installer.sh
+    source installers/Debian-Ubuntu/debian-ubuntu-installer.sh
 }
 
 
