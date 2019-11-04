@@ -255,7 +255,7 @@ elif [[ $os = "debian" ]]; then
             supported=true
             ;;
         10)
-            supported=false # not tested yet
+            supported=true
             ;;
         *)
             supported=false
@@ -297,6 +297,16 @@ if ! hash jq; then
     echo "Installing 'jq'..."
     apt -y install jq || {
         echo "${red}Failed to install 'jq'${nc}" >&2
+        echo -e "\nExiting..."
+        exit 1
+    }
+fi
+
+if ! hash gpg2; then
+    echo "${yellow}'gpg2' is not installed${nc}" >&2
+    echo "Installing 'gpg2'..."
+    apt -y install gnupg2 || {
+        echo "${red}Failed to install 'gpg2'${nc}" >&2
         echo -e "\nExiting..."
         exit 1
     }
