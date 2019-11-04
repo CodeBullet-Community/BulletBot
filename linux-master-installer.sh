@@ -59,10 +59,8 @@ detect_os_ver_arch_bits() {
 # ------------------------------------------------------------- #
 # DETECTS WHETHER BULLETBOT AND INSTALLER CAN BE USED ON THE OS #
 # ------------------------------------------------------------- #
-declare os ver sver arch bits
-
+declare os ver arch bits codename
 detect_os_ver_arch_bits
-
 export os ver arch bits codename
 
 echo "SYSTEM INFO"
@@ -78,7 +76,7 @@ if [[ $os = "ubuntu" ]]; then
             # B.1. MongoDB only works on 64 bit versions of Ubuntu
             if [[ $bits = 64 ]]; then
                 supported=true
-                installers/Debian-Ubuntu/debian-ubuntu-master-installer.sh
+                installers/Debian-Ubuntu/debian-ubuntu-installer.sh
             else
                 supported=false
             fi
@@ -87,7 +85,7 @@ if [[ $os = "ubuntu" ]]; then
             # B.1.
             if [[ $bits = 64 ]]; then
                 supported=true
-                installers/Debian-Ubuntu/debian-ubuntu-master-installer.sh
+                installers/Debian-Ubuntu/debian-ubuntu-installer.sh
             else
                 supported=false
             fi
@@ -101,11 +99,33 @@ elif [[ $os = "debian" ]]; then
     case $sver in
         9)
             supported=true
-            installers/Debian-Ubuntu/debian-ubuntu-master-installer.sh
+            installers/Debian-Ubuntu/debian-ubuntu-installer.sh
             ;;
         10)
             supported=true
-            installers/Debian-Ubuntu/debian-ubuntu-master-installer.sh
+            installers/Debian-Ubuntu/debian-ubuntu-installer.sh
+            ;;
+        *)
+            supported=false
+            ;;
+    esac
+elif [[ $os = "rhel" ]]; then
+    case $sver in
+        7)
+            # C.1. MongoDB only works on 64 bit versions of RHEL
+            if [[ $bits = 64 ]]; then
+                supported=false # has not been tested yet
+            else
+                supported=false
+            fi
+            ;;
+        8)
+            # C.1.
+            if [[ $bits = 64 ]]; then
+                supported=false # has not been tested yet
+            else
+                supported=false
+            fi
             ;;
         *)
             supported=false
