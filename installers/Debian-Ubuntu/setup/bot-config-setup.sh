@@ -40,9 +40,7 @@ if [[ -z $google_api_key ]]; then
 fi
 echo -e "-------------\n"
 
-bot_version=$(jq .version package.json)
 json="{
-    \"version\": $bot_version,
     \"botToken\": \"$bot_token\",
     \"cluster\": {
         \"url\": \"$mongodb_url\",
