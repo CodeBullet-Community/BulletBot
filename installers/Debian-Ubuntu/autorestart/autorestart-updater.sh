@@ -9,4 +9,4 @@ ExecStart=/bin/bash /home/bulletbot/bullet-mongo-start.sh
 [Install]
 WantedBy=multi-user.target" > /lib/systemd/system/bullet-mongo-start.service
 systemctl enable bullet-mongo-start.service
-cp /home/bulletbot/installers/linux/autorestart/bullet-mongo-start.sh /home/bulletbot
+cp /home/bulletbot/installers/Debian-Ubuntu/autorestart/bullet-mongo-start.sh /home/bulletbot
