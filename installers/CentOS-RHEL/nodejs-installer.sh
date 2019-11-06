@@ -3,16 +3,16 @@
 install_nodejs() {
         echo "Downloading Node.js repo installer and adding the key to the" \
             "system..."
-        curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash - || {
+        curl -sL https://rpm.nodesource.com/setup_12.x | bash - || {
             echo "${red}Failed to either download the Node.js repo installer or" \
-                "add the apt key to the system" >&2
+                "add the yum key to the system${nc}" >&2
             echo "${cyan}The apt key must be added to the system to install \
                 Node.js${nc}"
             read -p "Press [Enter] to return to the master installer menu"
             exit 1
         }
         echo "Installing 'nodejs'..."
-        apt -y install nodejs
+        yum -y install nodejs
 }
 
 install_node_module_pkgs() {

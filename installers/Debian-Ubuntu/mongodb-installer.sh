@@ -4,8 +4,10 @@ clear
 read -p "We will now download and install MongoDB. Press [Enter] to begin."
 echo "Importing public key..."
 wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add - || {
-    echo "${red}Failed to import public key${nc}" >&2
-    echo -e "\nExiting..."
+    echo "${red}Failed to import public key" >&2
+    echo "${cyan}The public key must be imported in order to download and install \
+        MongoDB${nc}"
+    read -p "Press [Enter] to return to the master installer menu"
     exit 1
 }
 echo "Creating MongoDB source list file..."
@@ -15,16 +17,20 @@ if [[ $os = "ubuntu" ]]; then
     # A.1. 'codename' is exported from the master installer
     echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu ${codename}/mongodb-org/4.2" \
         "multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list || {
-            echo "${red}Failed to create MongoDB source list file${nc}" >&2
-            echo -e "\nExiting..."
+            echo "${red}Failed to create MongoDB source list file" >&2
+            echo "${cyan}The source list file has to be created in order to" \
+                "download and install MongoDB${nc}"
+            read -p "Press [Enter] to return to the master installer menu"
             exit 1
         }
 elif [[ $os = "debian" ]]; then
     # A.1.
-    echo "deb http://repo.mongodb.org/apt/debian ${codename}/mongodb-org/4.2 main" |
-        sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list || {
-            echo "${red}Failed to create MongoDB source list file${nc}" >&2
-            echo -e "\nExiting..."
+    echo "deb http://repo.mongodb.org/apt/debian ${codename}/mongodb-org/4.2" \
+        "main" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list || {
+            echo "${red}Failed to create MongoDB source list file" >&2
+            echo "${cyan}The source list file has to be created in order to" \
+                "download and install MongoDB${nc}"
+            read -p "Press [Enter] to return to the master installer menu"
             exit 1
         }
 fi

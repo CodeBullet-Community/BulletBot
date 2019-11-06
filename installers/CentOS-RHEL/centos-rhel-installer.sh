@@ -40,7 +40,7 @@ download_bb() {
     if ! hash curl &>/dev/null; then
         echo "${yellow}'curl' is not installed${nc}"
         echo "Installing 'curl'..."
-        apt -y install curl || {
+        yum -y install curl || {
             echo "${red}Failed to install 'curl'${nc}" >&2
             echo -e "\nExiting..."
             exit 1
@@ -55,7 +55,7 @@ download_bb() {
     if ! hash wget &>/dev/null; then
         echo "${yellow}'wget' is not installed${nc}"
         echo "Installing 'wget'..."
-        apt -y install wget || {
+        yum -y install wget || {
             echo "${red}Failed to install 'wget'${nc}" >&2
             echo -e "\nExiting..."
             exit 1
@@ -66,7 +66,7 @@ download_bb() {
     if ! hash curl &>/dev/null; then
         echo "${yellow}'curl' is not installed${nc}"
         echo "Installing 'curl'..."
-        apt -y install curl || {
+        yum -y install curl || {
             echo "${red}Failed to install 'curl'${nc}" >&2
             echo -e "\nExiting..."
             exit 1
@@ -77,7 +77,7 @@ download_bb() {
     if ! hash unzip &>/dev/null; then
         echo "${yellow}unzip is not installed${nc}"
         echo "Installing unzip..."
-        apt -y install unzip || {
+        yum -y install unzip || {
             echo "${red}Failed to install unzip${nc}" >&2
             echo -e "\nExiting..."
             exit 1
@@ -159,7 +159,7 @@ WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service
 
     read -p "Press [Enter] to apply any existing changes to the master installer"
     clear
-    source installers/Debian-Ubuntu/debian-ubuntu-installer.sh
+    source installers/CentOS-RHEL/centos-rhel-installer.sh
 }
 
 
@@ -171,8 +171,10 @@ echo -e "Welcome to the BulletBot master installer\n"
 
 if ! hash jq &>/dev/null; then
     echo "${yellow}'jq' is not installed${nc}" >&2
+    echo "Installing Extra Packages for Enterprise Linux..."
+    yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm    
     echo "Installing 'jq'..."
-    apt -y install jq || {
+    yum -y install jq || {
         echo "${red}Failed to install 'jq'${nc}" >&2
         echo -e "\nExiting..."
         exit 1
@@ -182,7 +184,7 @@ fi
 if ! hash gpg2 &>/dev/null; then
     echo "${yellow}'gpg2' is not installed${nc}" >&2
     echo "Installing 'gpg2'..."
-    apt -y install gnupg2 || {
+    yum -y install gnupg2 || {
         echo "${red}Failed to install 'gpg2'${nc}" >&2
         echo -e "\nExiting..."
         exit 1
@@ -197,7 +199,7 @@ while true; do
     if ! id -u bulletbot &>/dev/null; then
         echo "${yellow}System user 'bulletbot' does not exist${nc}" >&2
         echo "Creating system user 'bulletbot'..."
-        adduser --system --group bulletbot || {
+        useradd --system -Um -k /dev/null bulletbot || {
             echo "${red}Failed to create 'bulletbot'${nc}" >&2
             echo -e "\nExiting..."
             exit 1
@@ -324,17 +326,17 @@ while true; do
                 clear
                 ;;
             2)
-                ./installers/Debian-Ubuntu/mongodb-installer.sh
+                ./installers/CentOS-RHEL/mongodb-installer.sh
                 clear
                 ;;
             3)
                 export option
-                ./installers/Debian-Ubuntu/nodejs-installer.sh
+                ./installers/CentOS-RHEL/nodejs-installer.sh
                 clear
                 ;;
             4)
                 export option
-                ./installers/Debian-Ubuntu/nodejs-installer.sh
+                ./installers/CentOS-RHEL/nodejs-installer.sh
                 clear
                 ;;
             5)

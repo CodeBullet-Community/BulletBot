@@ -1,5 +1,21 @@
 #!/bin/bash
 
+# ############################################################################ #
+#                                                                              #
+# linux-master-installer.sh                                                    #
+# -------------------------                                                    #
+# This master installer looks at the operating system, architecture, bit type, #
+# etc., to determine whether or not BulletBot and/or the master installer can  #
+# be executed/is compatible...                                                 #
+#                                                                              #
+# ############################################################################ #
+
+yellow=$'\033[1;33m'
+green=$'\033[0;32m'
+cyan=$'\033[0;36m'
+red=$'\033[1;31m'
+nc=$'\033[0m'
+
 # Checks to see if this script was executed with root privilege
 if [[ $EUID -ne 0 ]]; then 
     echo "${red}Please run this script as root or with root privilege${nc}"
@@ -7,11 +23,9 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+# Changes the active directory to that of where the executed script is located
 cd "$(dirname $0)"
 
-# ------------------------------------------------- #
-# FUNCTION ONLY USED AT THE BEGINNING OF THE SCRIPT #
-# ------------------------------------------------- #
 # Identify the operating system, version number, architecture, and bit type
 # (32 or 64)
 detect_os_ver_arch_bits() {
@@ -56,12 +70,12 @@ detect_os_ver_arch_bits() {
 }
 
 
-# ------------------------------------------------------------- #
-# DETECTS WHETHER BULLETBOT AND INSTALLER CAN BE USED ON THE OS #
-# ------------------------------------------------------------- #
-declare os ver arch bits codename
+# --------- #
+# MAIN CODE #
+# --------- #
 detect_os_ver_arch_bits
-export os ver arch bits codename
+export os sver ver arch bits codename
+export yellow green cyan red nc
 
 echo "SYSTEM INFO"
 echo "Bit type: $bits"
@@ -76,7 +90,7 @@ if [[ $os = "ubuntu" ]]; then
             # B.1. MongoDB only works on 64 bit versions of Ubuntu
             if [[ $bits = 64 ]]; then
                 supported=true
-                installers/Debian-Ubuntu/debian-ubuntu-installer.sh
+                ./installers/Debian-Ubuntu/debian-ubuntu-installer.sh
             else
                 supported=false
             fi
@@ -85,7 +99,7 @@ if [[ $os = "ubuntu" ]]; then
             # B.1.
             if [[ $bits = 64 ]]; then
                 supported=true
-                installers/Debian-Ubuntu/debian-ubuntu-installer.sh
+                ./installers/Debian-Ubuntu/debian-ubuntu-installer.sh
             else
                 supported=false
             fi
@@ -99,30 +113,23 @@ elif [[ $os = "debian" ]]; then
     case $sver in
         9)
             supported=true
-            installers/Debian-Ubuntu/debian-ubuntu-installer.sh
+            ./installers/Debian-Ubuntu/debian-ubuntu-installer.sh
             ;;
         10)
             supported=true
-            installers/Debian-Ubuntu/debian-ubuntu-installer.sh
+            ./installers/Debian-Ubuntu/debian-ubuntu-installer.sh
             ;;
         *)
             supported=false
             ;;
     esac
-elif [[ $os = "rhel" ]]; then
+elif [[ $os = "rhel" || $os = "centos" ]]; then
     case $sver in
         7)
-            # C.1. MongoDB only works on 64 bit versions of RHEL
+            # C.1. MongoDB only works on 64 bit versions of RHEL and CentOS
             if [[ $bits = 64 ]]; then
-                supported=false # has not been tested yet
-            else
-                supported=false
-            fi
-            ;;
-        8)
-            # C.1.
-            if [[ $bits = 64 ]]; then
-                supported=false # has not been tested yet
+                supported=true # has not been tested yet
+	        ./installers/CentOS-RHEL/centos-rhel-installer.sh
             else
                 supported=false
             fi
