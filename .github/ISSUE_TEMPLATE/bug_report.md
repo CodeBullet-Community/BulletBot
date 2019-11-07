@@ -27,7 +27,7 @@ If applicable, add screenshots to help explain your problem.
  - OS: [e.g. Ubuntu]
  - Node.js Version: [e.g. 6.9.0]
  - MongoDB Version; [e.g. 4.2.0]
- - Version [e.g. 22]
+ - Release Version [e.g. 1.2.7]
 
 **Additional context**
 Add any other context about the problem here.
