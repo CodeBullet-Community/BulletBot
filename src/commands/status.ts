@@ -4,7 +4,7 @@ import { permLevels } from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
 import { permToString } from '../utils/parsers';
-import { getDurationDiff, timeFormat, durations, getDayDiff } from '../utils/time';
+import { getDurationDiff, timeFormat, durations, getDistributedDuration } from '../utils/time';
 import dateFormat = require('dateformat');
 
 var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
@@ -14,9 +14,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
     try {
         Bot.mStats.logResponseTime(command.name, requestTime);
         const m: any = await message.channel.send("Pong");
-        var days: number = Math.floor(Bot.client.uptime / durations.day);
-        var hours: number = Math.round((Bot.client.uptime % durations.day) / durations.hour);
-        var minutes: number = Math.round((Bot.client.uptime % durations.hour) / durations.minute);
+        let uptime = getDistributedDuration(Bot.client.uptime);
         m.edit({
             "embed": {
                 "color": Bot.database.settingsDB.cache.embedColors.default,
@@ -53,7 +51,7 @@ command.run = async (message: Message, args: string, permLevel: number, dm: bool
                     },
                     {
                         "name": "Online Since:",
-                        "value": dateFormat(Bot.client.readyAt, timeFormat) + `\n(${days}d ${hours}h ${minutes}m)`,
+                        "value": dateFormat(Bot.client.readyAt, timeFormat) + `\n(${uptime.days}d ${uptime.hours}h ${uptime.minutes}m)`,
                         "inline": true
                     }
                 ]

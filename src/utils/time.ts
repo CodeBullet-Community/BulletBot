@@ -41,6 +41,23 @@ export function getDayDiff(timestamp0: number, timestamp1: number) {
 }
 
 /**
+ * calculates time difference between two dates in days, hours, minutes, seconds, milliseconds
+ *
+ * @export
+ * @param {number} msDuration duration in milliseconds
+ * @returns
+ */
+export function getDistributedDuration(msDuration: number) {
+    msDuration = Math.abs(msDuration);
+    let days = Math.floor(msDuration / durations.day);
+    let hours = Math.floor(msDuration / durations.hour) % 24;
+    let minutes = Math.floor(msDuration / durations.minute) % 60;
+    let seconds = Math.floor(msDuration / durations.second) % 60;
+    let milliseconds = msDuration % 1000;
+    return { days, hours, minutes, seconds, milliseconds };
+}
+
+/**
  * converts process.hrtime into an nano seconds
  *
  * @export

@@ -1,14 +1,11 @@
 // purge.ts: this file defines the ?!purge command and implements its features
 // TODO: add a since [message ID]  subcommand
-import { Message, Guild, TextChannel, MessageAttachment, User } from 'discord.js';
+import { Message, Guild, TextChannel, SnowflakeUtil } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToChannel, stringToMember } from '../../utils/parsers';
-import { durations } from '../../utils/time';
-import { Collection } from 'mongoose';
-import { commandCacheSchema } from '../../database/schemas';
 
 /**
  * An enum which describes the possible types of messages that can be filtered
@@ -105,7 +102,7 @@ var command: commandInterface = {
                 return false; // was unsuccessful
             }
             let argsArray = args.split(' ').filter(x => x.length != 0);
-            
+
             // checks whether there is a maximum purge number. if not, it will use
             // 1000 as the default and warn you about it being unconfigured
             let maxMessages = 1000;
@@ -114,124 +111,53 @@ var command: commandInterface = {
             } else {
                 console.warn(`WARNINGS: PLEASE SET THE 'maxMessages' PROPERTY FOR THE PURGE COMMAND IN THE GLOBAL DOC`);
             }
-            
+
+            // we know that the number of messages will always be the last element
+            let numberOfMessages = parseInt(argsArray[argsArray.length - 1]);
+            // type checking and bounds checking
+            if (!Number.isInteger(numberOfMessages)) {
+                message.channel.send(`Invalid argument for number of messages to delete`);
+                Bot.mStats.logMessageSend();
+                return false; // was unsuccessful
+            }
+            if (numberOfMessages > maxMessages) {
+                message.channel.send(`You can only delete a maximum of ${maxMessages} messages`);
+                Bot.mStats.logMessageSend();
+                return false; // was unsuccessful
+            }
+            if (numberOfMessages <= 0) {
+                message.channel.send(`The number of messages must be greater than 0`);
+                Bot.mStats.logMessageSend();
+                return false; // was unsuccessful
+            }
+
             // the only possible argument is a number
             if (argsArray.length == 1) {
-                // ensures we don't delete 'mentions' etc. messages
-                if (!Number.isInteger(parseInt(argsArray[0]))) {
-                    message.channel.send(`Malformed command.`);
-                    Bot.mStats.logMessageSend();
-                    return false; // was unsuccessful
-                }
-                
-                let numberOfMessages = parseInt(argsArray[0]);
-                
-                // checks whether it excedes the maximum or not greater than 0
-                if (numberOfMessages > maxMessages) {
-                    message.channel.send(`You can only delete a maximum of ${maxMessages} messages.`);
-                    Bot.mStats.logMessageSend();
-                    return false; // was unsuccessful
-                }
-                if (numberOfMessages <= 0) {
-                    message.channel.send(`The number of messages must be greater than 0.`);
-                    Bot.mStats.logMessageSend();
-                    return false;
-                }
-                
-                // delete the ?!purge command
-                await message.delete();
-                
-                // this is due to the cast from a guildchannel to a textchannel
-                // TODO: cast this rather than resorting to unsafe code
-                //@ts-ignore
-                let found = await DeleteLastXmessages(numberOfMessages, message.channel); // find and delete
-                Bot.mStats.logResponseTime(command.name, requestTime);
-                
-                // checks whether any were deleted
-                if (!found) {
-                    message.channel.send(`I couldn't find any messages based on your criteria/range.`);
-                    Bot.mStats.logMessageSend();
-                }
-                Bot.mStats.logCommandUsage(command.name);
+                executeBulkDeletion(message, numberOfMessages, requestTime);
                 return true;
             }
-            
+
             // 2 arguments forces it to be a user-specific deletion
             else if (argsArray.length == 2) { // [user] [num messages]
-                
+
                 let user = await stringToMember(message.guild, argsArray[0], false, false, false);
                 if (!user) {
-                    message.channel.send(`Malformed command.`);
+                    message.channel.send(`Malformed command`);
                     Bot.mStats.logMessageSend();
                     return false;
                 }
-                
+
                 // set up our 'parameter pack'
                 let criteria: purgeCommandCriteria = {
                     userID: user.id
                 }
-                
-                // type checking and bounds checking
-                if (!Number.isInteger(parseInt(argsArray[1]))) {
-                    message.channel.send(`Malformed command.`);
-                    Bot.mStats.logMessageSend();
-                    return false; // was unsuccessful
-                }
 
-                let numberOfMessages = parseInt(argsArray[1]);
-                if (numberOfMessages > maxMessages) {
-                    message.channel.send(`You can only delete a maximum of ${maxMessages} messages.`);
-                    Bot.mStats.logMessageSend();
-                    return false; // was unsuccessful
-                }
-                if (numberOfMessages <= 0) {
-                    message.channel.send(`The number of messages must be greater than 0.`);
-                    Bot.mStats.logMessageSend();
-                    return false;
-                }
-                
-                // delete the ?!purge command
-                await message.delete();
-                
-                // delete messages
-                // TODO: cast this rather than resorting to unsafe code
-                //@ts-ignore
-                let found: boolean = await DeleteLastXmessages(numberOfMessages, message.channel, criteria);
-                Bot.mStats.logResponseTime(command.name, requestTime);
-                
-                if (!found) {
-                    message.channel.send(`I couldn't find any messages based on your criteria/range.`);
-                    Bot.mStats.logMessageSend();
-                }
-                Bot.mStats.logCommandUsage(command.name, `user`);
+                executeBulkDeletion(message, numberOfMessages, requestTime, criteria, 'user');
                 return true;
             }
             else {
-                // TS does not permit us to reuse variables in separate cases of a switch statement
-                // we know that the number of messages will always be the last element
-                let numMessages = parseInt(argsArray[argsArray.length - 1]);
-                if (!Number.isInteger(numMessages)) {
-                    message.channel.send(`Malformed command.`);
-                    Bot.mStats.logMessageSend();
-                    return false; // was unsuccessful
-                }
-                
-                if (numMessages > maxMessages) {
-                    message.channel.send(`You can only delete a maximum of ${maxMessages} messages.`);
-                    Bot.mStats.logMessageSend();
-                    return false; // was unsuccessful
-                }
-                if (numMessages <= 0) {
-                    message.channel.send(`The number of messages must be greater than 0.`);
-                    Bot.mStats.logMessageSend();
-                    return false;
-                }
-
-                message.delete();
-                
                 // switching between the different subfunctions
-                let commandWord: string = argsArray[0];
-                switch (commandWord) {
+                switch (argsArray[0]) {
                     case 'mentions':
                         {
                             // parse the userID
@@ -240,96 +166,53 @@ var command: commandInterface = {
                                 type: messageTypes.mention,
                                 value: user
                             };
-                            
-                            // Delete messages
-                            // TODO: cast this rather than resorting to unsafe code
-                            //@ts-ignore
-                            let found = await DeleteLastXmessages(numMessages, message.channel, criteria);
-                            Bot.mStats.logResponseTime(command.name, requestTime);
-                            
-                            if (!found) {
-                                message.channel.send(`I couldn't find any messages based on your criteria/range.`);
-                                Bot.mStats.logMessageSend();
-                            }
-                            Bot.mStats.logCommandUsage(command.name, commandWord);
+
+                            executeBulkDeletion(message, numberOfMessages, requestTime, criteria, argsArray[0]);
                             return true;
                         }
                     case 'startswith':
                         {
                             // takes the string from the function arguments, allows spaces.
                             let startingString: string = argsArray.slice(1, argsArray.length - 1).join(" ");
-                            
                             let criteria: purgeCommandCriteria = {
                                 value: startingString,
                                 location: substringLocation.beginning // 'startswith'
                             };
-                            
-                            // Delete messages
-                            // TODO: cast this rather than resorting to unsafe code
-                            //@ts-ignore
-                            let found = await DeleteLastXmessages(numMessages, message.channel, criteria);
-                            Bot.mStats.logResponseTime(command.name, requestTime);
-                            
-                            if (!found) {
-                                message.channel.send(`I couldn't find any messages based on your criteria/range.`);
-                                Bot.mStats.logMessageSend();
-                            }
-                            Bot.mStats.logCommandUsage(command.name, commandWord);
+
+                            executeBulkDeletion(message, numberOfMessages, requestTime, criteria, argsArray[0]);
                             return true;
                         }
                     case 'endswith':
                         {
                             // Takes the string, allowing for spaces
                             let endingString: string = argsArray.slice(1, argsArray.length - 1).join(" ");
-                            
+
                             let criteria: purgeCommandCriteria = {
                                 value: endingString,
                                 location: substringLocation.end // 'endswith'
                             };
-                            
-                            // Delete messages
-                            // TODO: cast this rather than resorting to unsafe code
-                            //@ts-ignore
-                            let found = await DeleteLastXmessages(numMessages, message.channel, criteria);
-                            Bot.mStats.logResponseTime(command.name, requestTime);
-                            
-                            if (!found) {
-                                message.channel.send(`I couldn't find any messages based on your criteria/range.`);
-                                Bot.mStats.logMessageSend();
-                            }
-                            Bot.mStats.logCommandUsage(command.name, commandWord);
+
+                            executeBulkDeletion(message, numberOfMessages, requestTime, criteria, argsArray[0]);
                             return true;
                         }
                     case 'contains':
                         {
                             // Takes the string, allowing for spaces.
                             let stringToFind: string = argsArray.slice(1, argsArray.length - 1).join(" ");
-                            
+
                             let criteria: purgeCommandCriteria = {
                                 value: stringToFind,
                                 location: substringLocation.anywhere
                             };
-                            
-                            // Delete messages
-                            // TODO: cast this rather than resorting to unsafe code
-                            //@ts-ignore
-                            let found = await DeleteLastXmessages(numMessages, message.channel, criteria);
-                            Bot.mStats.logResponseTime(command.name, requestTime);
-                            
-                            if (!found) {
-                                message.channel.send(`I couldn't find any messages based on your criteria/range.`);
-                                Bot.mStats.logMessageSend();
-                            }
+
+                            executeBulkDeletion(message, numberOfMessages, requestTime, criteria, argsArray[0]);
                             return true;
                         }
                     case 'has':
                         {
-                            let subCommandWord: string = argsArray[1]; // switching on sub sub functiom
-                            commandWord += ` ` + subCommandWord; // for logging purposes
                             let criteria: purgeCommandCriteria = {};
-                            let validOption = true; // whether or not to abort (not using an if...else if..else chain
-                            
-                            switch (subCommandWord) {
+                            // switching on sub sub function
+                            switch (argsArray[1]) {
                                 case 'text':
                                     criteria.type = messageTypes.text;
                                     break;
@@ -349,28 +232,13 @@ var command: commandInterface = {
                                 // case 'botmessage':
                                 //     criteria.type = messageTypes.botMessage;
                                 default:
-                                    validOption = false;
-                                    break;
-                            }
-                            
-                            if (!validOption) {
-                                message.channel.send(`Malformed command.`);
-                                Bot.mStats.logMessageSend();
-                                return false;
-                            } else {
-                                // Delete messages
-                                // TODO: cast this rather than resorting to unsafe code
-                                //@ts-ignore
-                                let found = await DeleteLastXmessages(numMessages, message.channel, criteria);
-                                Bot.mStats.logResponseTime(command.name, requestTime);
-                                
-                                if (!found) {
-                                    message.channel.send(`I couldn't find any messages based on your criteria/range.`);
+                                    message.channel.send(`Malformed command`);
                                     Bot.mStats.logMessageSend();
-                                }
-                                Bot.mStats.logCommandUsage(command.name, commandWord);
-                                return true;
+                                    return false;
                             }
+
+                            executeBulkDeletion(message, numberOfMessages, requestTime, criteria, argsArray[0] + ` ` + argsArray[1]);
+                            return true;
                         }
                     // TS requires it.
                     default:
@@ -386,6 +254,24 @@ var command: commandInterface = {
     }
 };
 
+async function executeBulkDeletion(message: Message, numberOfMessages: number, requestTime: [number, number], criteria?: purgeCommandCriteria, subCommand?: string) {
+    // delete the ?!purge command
+    await message.delete();
+
+    // so the TS compiler doesn't complain that it's not a TextChannel
+    if (!(message.channel instanceof TextChannel)) return;
+
+    // delete messages
+    let found: boolean = await DeleteLastXMessages(numberOfMessages, message.channel, message.id, criteria);
+    Bot.mStats.logResponseTime(command.name, requestTime);
+
+    if (!found) {
+        message.channel.send(`I couldn't find any messages based on your criteria/range`);
+        Bot.mStats.logMessageSend();
+    }
+    Bot.mStats.logCommandUsage(command.name, subCommand);
+}
+
 /**
  * Will find take the last X messages from a TextChannel and check 
  * whether they meet the criteria provided, these are then returned
@@ -397,57 +283,65 @@ var command: commandInterface = {
  * @param {purgeCommandCriteria} criteria    sets out the criteria that we would like to filter by
  * @param {number} numberOfMessages    number of messages we should take from the channel (including those we can't delete / don't meet criteria)
  * @param {TextChannel} channel the    channel we should take the messages from
+ * @param {string} requestSnowflake ID of the message that requested it
  * @returns {boolean}    whether any messages were deleted or not
  */
-async function DeleteLastXmessages(numberOfMessages: number, channel: TextChannel, criteria?: purgeCommandCriteria): Promise<boolean> {
+async function DeleteLastXMessages(numberOfMessages: number, channel: TextChannel, requestSnowflake: string, criteria?: purgeCommandCriteria): Promise<boolean> {
     let found: boolean = false;
-    let latest: string = ""
-    
+    let lastSnowflake = requestSnowflake; // only delete messages before the purge was requested
+
     // we can delete up to 100 at a time
-    for (let i = 0; i < Math.floor(numberOfMessages / 100); i++) {
+
+    while (numberOfMessages != 0) {
+        let nMessages = numberOfMessages % 100 ? numberOfMessages % 100 : 100; // how many messages to delete in this iteration
+
         if (!criteria) { // speeding up...
-            channel.bulkDelete(100, true); // 'true' filters those we can't delete
+            numberOfMessages -= (await channel.bulkDelete(nMessages, true)).size; // 'true' filters those we can't delete
             found = true;
         } else {
-            let messages: Message[] = [];
-            // used when we go backwards every 100.. latest is a message ID.
-            let selectedMessages = latest == "" ? await channel.fetchMessages({ limit: 100 }) : await channel.fetchMessages({ limit: 100, before: latest });
-            
-            // iterates through the past x messages checking whether it meets the criteria
-            // if so, it adds its ID to a list to be deleted
-            for (const m of selectedMessages) {
-                if (valid(m[1], criteria)) messages.push(m[1]);
-            }
-            
-            // update the last message checked in this loop
-            // so we can continue with the next 100 messages
-            latest = selectedMessages.last().id;
-            if (messages.length != 0) {
-                found = true;
-                await channel.bulkDelete(messages, true); // 'true' checks whether it's deleteable
-            }
+            let result = await bulkDeleteByCriteria(channel, nMessages, criteria, lastSnowflake);
+            if (!result.found) break; // if it hasn't found anything another iteration is unnecessary
+            found = true; 
+            lastSnowflake = result.lastSnowflake;
+            numberOfMessages -= result.nMessages;
         }
     }
-    if (numberOfMessages % 100 == 0) { // (if we dont need to do another loop)
-        return found;
-    } else if (!criteria) { // speed up
-        channel.bulkDelete(numberOfMessages % 100, true);
-        return true
-    } else {
-        // similar procedure to above.
-        let messages: Message[] = [];
-        let rms = await channel.fetchMessages({ limit: numberOfMessages % 100 });
-        for (const rm of rms) {
-            if (valid(rm[1], criteria)) messages.push(rm[1]);
-        }
-        if (messages.length != 0) {
-            found = true;
-            await channel.bulkDelete(messages, true);
-        }
-    }
+
     return found;
 }
 
+/**
+ * bulk deletes messages match criteria
+ *
+ * @param {TextChannel} channel channel to bulk delete messages from
+ * @param {number} nMessages number of messages to delete
+ * @param {purgeCommandCriteria} criteria criteria for message to be deleted
+ * @param {string} [beforeSnowflake] optional ID of message. It will only bulk delete older messages if this argument is set
+ * @returns
+ */
+async function bulkDeleteByCriteria(channel: TextChannel, nMessages: number, criteria: purgeCommandCriteria, beforeSnowflake?: string) {
+    nMessages = nMessages > 100 ? 100 : nMessages; // you can't query more than 100 messages
+    beforeSnowflake = beforeSnowflake || undefined;
+
+    // get (max 100) messages which (optional) are older then another message
+    let returnedMessages = await channel.fetchMessages({ limit: nMessages, before: beforeSnowflake });
+
+    // iterates through the past x messages checking whether it meets the criteria
+    // if so, it adds its ID to a list to be deleted
+    let messages: Message[] = [];
+    for (const message of returnedMessages) {
+        if (valid(message[1], criteria)) messages.push(message[1]);
+    }
+
+    let found = false;
+    // delete found message if there are any
+    if (messages.length != 0) {
+        if ((await channel.bulkDelete(messages, true)).size > 0) // 'true' filters those we can't delete
+            found = true;
+    }
+
+    return { found: found, nMessages: messages.length, lastSnowflake: returnedMessages.last() ? returnedMessages.last().id : undefined };
+}
 
 /**
  * Checks whether a message meets the given criteria and can be deleted

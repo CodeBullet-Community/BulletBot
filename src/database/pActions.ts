@@ -4,6 +4,7 @@ import { Bot } from '..';
 import { pActionsInterval, YTResubInterval } from '../bot-config.json';
 import { Guild, GuildMember, TextChannel } from 'discord.js';
 import { durationToString } from '../utils/parsers';
+import { durations } from '../utils/time';
 
 /**
  * Manages pending actions and the connection to the pAction collection
@@ -38,12 +39,19 @@ export class PActions {
             console.error('connection error:', error);
             Bot.mStats.logError(error);
         });
-        this.connection.once('open', function () {
+        this.connection.once('open', async () => {
             console.log('pActions connected to /main database');
             Bot.pActions.pActions = Bot.pActions.connection.model('pAction', pActionSchema, 'pActions');
             setInterval(() => {
                 Bot.pActions.executeActions();
             }, pActionsInterval);
+
+            // automatically add YouTube Webhook Resub task if there isn't one already
+            if (!(await Bot.pActions.pActions.findOne({ action: pActionActions.resubWebhook, 'info.service': 'youtube' }).exec())) {
+                let resubTimestamp = Date.now() + pActionsInterval;
+                Bot.pActions.addWebhookResub('youtube', resubTimestamp);
+                console.info(`Added YouTube Webhook Resub task for ${new Date(resubTimestamp).toISOString()}`);
+            }
         });
     }
 
