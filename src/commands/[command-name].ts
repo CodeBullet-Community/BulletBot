@@ -8,7 +8,7 @@ import { sendError } from '../utils/messages';
 import { permToString, durationToString } from '../utils/parsers';
 import { durations } from '../utils/time';
 
-var command: commandInterface = {
+let command: commandInterface = {
     name: '[command name]', // command name must be lowercase letters with no spaces
     path: '[path]', // if you don't want any path defined just do ''. example path 'cate/subcate'
     dm: false, // if this command can be used in dms
@@ -16,68 +16,34 @@ var command: commandInterface = {
     togglable: false, // if the command can be disabled by the commands command
     cooldownLocal: durations.second * 10, // local cooldown in ms, if the command shouldn't have any local cooldown, remove the property
     cooldownGlobal: durations.second * 10, // global cooldown in ms, if the command shouldn't have any global cooldown, remove the property
-    shortHelp: '[short desc]', // very short desc of what the command does
-    embedHelp: async function (guild: Guild) {
-        let prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': '[detailed desc]' // more detailed desc
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    { // remove this if the command doesn't have local cooldown
-                        'name': 'Local Cooldown:',
-                        'value': durationToString(command.cooldownLocal),
-                        'inline': true
-                    },
-                    { // remove this if the command doesn't have global cooldown
-                        'name': 'Global Cooldown:',
-                        'value': durationToString(command.cooldownGlobal),
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:', // all possible inputs to the guild, the arguments should be named
-                        'value': '{command} [arg]\n{command}'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:', // example use of the command
-                        'value': '{command} fish\n{command}'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
+    help: {
+        shortDescription: '[short description]', // a short description of the command does
+        longDescription: '[long description]', // a long description of the command does and also maybe how to use it and how it works
+        usages: [ // array of different ways to use the command
+            '{command} [arg]'
+        ],
+        examples: [ // array of examples. They don't have to directly correspond to the usages but it's recommended
+            '{command} fish'
+        ],
+        additionalFields: [ // array of additional fields that will be added under the desc
+            {
+                name: '[additional field name]',
+                value: '[content]',
+                inline: true // optional
             }
-        }
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             // REMEMBER: return true if the command was successfully executed (meaning the users intention where fulfilled)
             //           return false if the command execution was unsuccessful (then the cooldown doesn't get started)
 
-            // IMPORTANT: never repsond with "x isn't correct" (or something that the user can define through inputing), because then he could input @everyone or @here
+            // IMPORTANT: never respond with "x isn't correct" (or something that the user can define through inputing), because then he could input @everyone or @here
 
             // only put this here when the command always requires arguments
             // if no argument is given then it will send the embed help
             if (args.length == 0) {
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false; // was unsuccessful
             }

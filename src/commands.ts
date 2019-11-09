@@ -100,7 +100,7 @@ export interface commandInterface {
          * Array of additional fields that should be added in the help embed.
          *
          */
-        additionalFields: {
+        additionalFields?: {
             name: string;
             value: string;
             inline?: boolean;
@@ -215,7 +215,7 @@ export class Commands {
         var cmd = this.commands.get(command);
         if (!cmd) return; // returns if it can't find the command
         if (!cmd.dm && dm) { // sends the embed help if the request is from a dm and the command doesn't support dms
-            message.reply(cmd.embedHelp());
+            message.channel.send(this.getHelpEmbed(cmd));
             return;
         }
         if (permLevel < cmd.permLevel && !dm) return; //  returns if the member doesn't have enough perms
@@ -291,14 +291,14 @@ export class Commands {
      * @returns
      * @memberof Commands
      */
-    getHelpEmbed(command: string | commandInterface, guild?: string | Guild) {
+    async getHelpEmbed(command: string | commandInterface, guild?: string | Guild) {
         if (typeof command === "string")
             command = this.commands.get(command);
         if (!command)
             throw new Error("Command was not set or found. Value of command: " + command);
         if (guild instanceof Guild) guild = guild.id;
 
-        let prefix = Bot.database.getPrefix(undefined, guild);
+        let prefix = await Bot.database.getPrefix(undefined, guild);
         let embed = {
             color: Bot.database.settingsDB.cache.embedColors.help,
             author: {
@@ -326,11 +326,11 @@ export class Commands {
                 },
                 {
                     name: 'Usage:',
-                    value: command.help.usages.join('/n').replace(/\{command\}/g, prefix + command.name)
+                    value: command.help.usages.join('\n').replace(/\{command\}/g, prefix + command.name)
                 },
                 {
                     name: 'Example:',
-                    value: command.help.examples.join('/n').replace(/\{command\}/g, prefix + command.name)
+                    value: command.help.examples.join('\n').replace(/\{command\}/g, prefix + command.name)
                 }
             ]
         };
@@ -348,11 +348,12 @@ export class Commands {
                 inline: true
             });
 
-        for (const field of command.help.additionalFields.reverse())
-            // @ts-ignore
-            embed.fields.splice(1, 0, field);
+        if (command.help.additionalFields)
+            for (const field of command.help.additionalFields.reverse())
+                // @ts-ignore
+                embed.fields.splice(1, 0, field);
 
-        return embed;
+        return { embed };
     }
 
 }

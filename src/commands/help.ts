@@ -32,11 +32,11 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
     }
 
     // list commands
-    var commands = Object.keys(strucObject).filter(x => strucObject[x].shortHelp);
+    var commands = Object.keys(strucObject).filter(x => strucObject[x].help);
     for (var i = 0; i < commands.length; i++) {
         var f = Bot.commands.get(commands[i]);
         if (f.permLevel == permLevels.botMaster) continue; // ignores commands only for bot masters
-        output.addField((await Bot.database.getPrefix(guild)) + f.name, f.shortHelp);
+        output.addField((await Bot.database.getPrefix(guild)) + f.name, f.help.shortDescription);
     }
 
     // send embed
@@ -46,91 +46,61 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
     Bot.mStats.logCommandUsage(command.name, 'commandList');
 }
 
-var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
-
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
-    try {
-        if (args.length == 0) {
-            sendCommandList(message.guild, message, Bot.commands.structure, undefined, requestTime);
-            return false;
-        }
-
-        var command = Bot.commands.get(args.toLowerCase());
-        if (command == undefined) { // if it can't find the command search if it is a subcategory
-            if (typeof (Bot.commands.structure[args.split('/')[0].toLowerCase()]) != 'undefined') {
-                var strucObject = Bot.commands.structure;
-                var keys = args.split('/');
-                for (var i = 0; i < keys.length; i++) {
-                    if (typeof (strucObject[keys[i].toLowerCase()]) === 'undefined') {
-                        message.channel.send('Couldn\'t find specified category');
-                        Bot.mStats.logMessageSend();
-                        return false;
-                    } else {
-                        strucObject = strucObject[keys[i].toLowerCase()];
-                    }
-                }
-                sendCommandList(message.guild, message, strucObject, args, requestTime);
-                return false;
-            } else {
-                message.channel.send('Couldn\'t find specified command');
-                Bot.mStats.logMessageSend();
+var command: commandInterface = {
+    name: 'help',
+    path: '',
+    dm: false,
+    permLevel: permLevels.member,
+    togglable: false,
+    help: {
+        shortDescription: 'gives a command list and help',
+        longDescription: 'lists all commands/categories and can get detailed help for command',
+        usages: [
+            '{command}',
+            '{command} [command name/category]\nuse `category/subcategory` to get list from subcategory'
+        ],
+        examples: [
+            '{command}',
+            '{command} whois'
+        ]
+    },
+    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+        try {
+            if (args.length == 0) {
+                sendCommandList(message.guild, message, Bot.commands.structure, undefined, requestTime);
                 return false;
             }
-        }
-        // if it found the command, respond with the help embed of the message
-        Bot.mStats.logResponseTime(command.name, requestTime);
-        message.channel.send(await command.embedHelp(message.guild));
-        Bot.mStats.logMessageSend();
-        Bot.mStats.logCommandUsage('help', 'commandHelp');
-    } catch (e) {
-        sendError(message.channel, e);
-        Bot.mStats.logError(e, command.name);
-    }
-}
 
-command.name = 'help';
-command.path = '';
-command.dm = true;
-command.permLevel = permLevels.member;
-command.togglable = false;
-command.shortHelp = 'gives a command list and help';
-command.embedHelp = async function (guild: Guild) {
-    var prefix = await Bot.database.getPrefix(guild);
-    return {
-        'embed': {
-            'color': Bot.database.settingsDB.cache.embedColors.help,
-            'author': {
-                'name': 'Command: ' + prefix + command.name
-            },
-            'fields': [
-                {
-                    'name': 'Description:',
-                    'value': 'lists all commands/categories and can get detailed help for command'
-                },
-                {
-                    'name': 'Need to be:',
-                    'value': permToString(command.permLevel),
-                    'inline': true
-                },
-                {
-                    'name': 'DM capable:',
-                    'value': command.dm,
-                    'inline': true
-                },
-                {
-                    'name': 'Togglable:',
-                    'value': command.togglable,
-                    'inline': true
-                },
-                {
-                    'name': 'Usage:',
-                    'value': '{command}\n{command} [command name/category]\nuse `category/subcategory` to get list from subcategory'.replace(/\{command\}/g, prefix + command.name)
-                },
-                {
-                    'name': 'Example:',
-                    'value': '{command}\n{command} mention'.replace(/\{command\}/g, prefix + command.name)
+            var command = Bot.commands.get(args.toLowerCase());
+            if (command == undefined) { // if it can't find the command search if it is a subcategory
+                if (typeof (Bot.commands.structure[args.split('/')[0].toLowerCase()]) != 'undefined') {
+                    var strucObject = Bot.commands.structure;
+                    var keys = args.split('/');
+                    for (var i = 0; i < keys.length; i++) {
+                        if (typeof (strucObject[keys[i].toLowerCase()]) === 'undefined') {
+                            message.channel.send('Couldn\'t find specified category');
+                            Bot.mStats.logMessageSend();
+                            return false;
+                        } else {
+                            strucObject = strucObject[keys[i].toLowerCase()];
+                        }
+                    }
+                    sendCommandList(message.guild, message, strucObject, args, requestTime);
+                    return false;
+                } else {
+                    message.channel.send('Couldn\'t find specified command');
+                    Bot.mStats.logMessageSend();
+                    return false;
                 }
-            ]
+            }
+            // if it found the command, respond with the help embed of the message
+            Bot.mStats.logResponseTime(command.name, requestTime);
+            message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
+            Bot.mStats.logMessageSend();
+            Bot.mStats.logCommandUsage('help', 'commandHelp');
+        } catch (e) {
+            sendError(message.channel, e);
+            Bot.mStats.logError(e, command.name);
         }
     }
 };
