@@ -13,52 +13,21 @@ var command: commandInterface = {
     dm: false,
     permLevel: permLevels.member,
     togglable: false,
-    shortHelp: 'gives a description of a channel',
-    embedHelp: async function (guild: Guild) {
-        var prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'gives a description of a channel'
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:', // all possible inputs to the guild, the arguments should be named
-                        'value': `${prefix + command.name} [channel]`
-                    },
-                    {
-                        'name': 'Example:', // example use of the command
-                        'value': `${prefix + command.name} bot-commands`
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'returns infos about a channel',
+        longDescription: 'returns infos about a channel',
+        usages: [
+            '{command} [channel]'
+        ],
+        examples: [
+            '{command} #bot-commands'
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
 
             if (args.length === 0) { // send help embed if no arguments provided
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
