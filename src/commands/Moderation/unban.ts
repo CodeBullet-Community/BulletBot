@@ -20,56 +20,20 @@ var command: commandInterface = {
     permLevel: permLevels.mod,
     togglable: false,
     cooldownLocal: durations.second,
-    shortHelp: 'Unban users',
-    embedHelp: async function (guild: Guild) {
-        let prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'Unban users' // more detailed desc
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Local Cooldown:',
-                        'value': durationToString(command.cooldownLocal),
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:',
-                        'value': '{command} [user] [reason]'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:',
-                        'value': '{command} 418112403419430915 didn\'t steal my ice cream after all'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'Unban users',
+        longDescription: 'Unban users',
+        usages: [
+            '{command} [user] [reason]'
+        ],
+        examples: [
+            '{command} 418112403419430915 didn\'t steal my ice cream after all'
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             if (args.length == 0) { // send help embed if no arguments provided
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }

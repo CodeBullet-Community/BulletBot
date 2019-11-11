@@ -58,56 +58,22 @@ var command: commandInterface = {
     permLevel: permLevels.mod,
     togglable: false,
     cooldownLocal: durations.second,
-    shortHelp: 'Mute members',
-    embedHelp: async function (guild: Guild) {
-        let prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'Mute members for a certain or indefinite time. You can also change the mute time after a user was already muted'
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Local Cooldown:',
-                        'value': durationToString(command.cooldownLocal),
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:',
-                        'value': '{command} [member] [reason]\n{command} [member] [duration] [reason]'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:',
-                        'value': '{command} @jeff#1234 spamming\n{command} @jeff#1234 1d12h20m1s requesting a very specific muting duration'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'Mute members',
+        longDescription: 'Mute members for a certain or indefinite time. You can also change the mute time after a user was already muted',
+        usages: [
+            '{command} [member] [reason]',
+            '{command} [member] [duration] [reason]'
+        ],
+        examples: [
+            '{command} @jeff#1234 spamming',
+            '{command} @jeff#1234 1d12h20m1s requesting a very specific muting duration'
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             if (args.length == 0) {
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false; // was unsuccessful
             }

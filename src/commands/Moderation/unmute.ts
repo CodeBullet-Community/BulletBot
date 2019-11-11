@@ -13,56 +13,21 @@ var command: commandInterface = {
     permLevel: permLevels.mod,
     togglable: false,
     cooldownLocal: durations.second,
-    shortHelp: 'Unmute members',
-    embedHelp: async function (guild: Guild) {
-        let prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'Unmute muted members'
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Local Cooldown:',
-                        'value': durationToString(command.cooldownLocal),
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:',
-                        'value': '{command} [member] [reason]'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:',
-                        'value': '{command} @jeff#1234\n{command} @jeff#1234 accidentally muted him'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'Unmute members',
+        longDescription: 'Unmute muted members',
+        usages: [
+            '{command} [member] [reason]'
+        ],
+        examples: [
+            '{command} @jeff#1234',
+            '{command} @jeff#1234 accidentally muted him'
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             if (args.length == 0) { // send help embed if no arguments provided
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }

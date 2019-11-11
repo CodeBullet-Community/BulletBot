@@ -13,56 +13,22 @@ var command: commandInterface = {
     permLevel: permLevels.mod,
     togglable: false,
     cooldownLocal: durations.second,
-    shortHelp: 'Unlocks a by the bot locked channel',
-    embedHelp: async function (guild: Guild) {
-        let prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'Unlocks a specified channel that was perviously locked by the bot'
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Local Cooldown:',
-                        'value': durationToString(command.cooldownLocal),
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:',
-                        'value': '{command} [channel]\n{command}'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:',
-                        'value': '{command} #general'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'Unlocks a channel locked by the bot',
+        longDescription: 'Unlocks a specified channel that was perviously locked by the bot',
+        usages: [
+            '{command} [channel]',
+            '{command}'
+        ],
+        examples: [
+            '{command}',
+            '{command} #general'
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             if (args.length == 0) { // send help embed if no arguments provided
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
@@ -116,7 +82,7 @@ var command: commandInterface = {
             delete guildDoc.locks[channel.id];
             guildDoc.markModified(`locks.${channel.id}`);
             guildDoc.save();
-            
+
             // send a unlock message to the channel
             if (channel.id != message.channel.id) {
                 channel.send('Channel is unlocked now');

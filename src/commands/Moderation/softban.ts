@@ -14,56 +14,22 @@ var command: commandInterface = {
     permLevel: permLevels.mod,
     togglable: false,
     cooldownLocal: durations.second,
-    shortHelp: 'Kick members and delete all their messages/reactions',
-    embedHelp: async function (guild: Guild) {
-        let prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'Ban and then immediately unban a member. This will kick the member and also delete all their reactions and messages from the last 7 days.' // more detailed desc
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Local Cooldown:',
-                        'value': durationToString(command.cooldownLocal),
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:',
-                        'value': '{command} [member]\n{command} [member] [reason]'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:',
-                        'value': '{command} @jeff#1234\n{command} @jeff#1234 for not being a good boi'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'Kick members and delete all their messages/reactions',
+        longDescription: 'Ban and then immediately unban a member. This will kick the member and also delete all their reactions and messages from the last 7 days.',
+        usages: [
+            '{command} [member]',
+            '{command} [member] [reason]'
+        ],
+        examples: [
+            '{command} @jeff#1234',
+            '{command} @jeff#1234 for not being a good boi'
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             if (args.length == 0) { // send help embed if no arguments provided
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
