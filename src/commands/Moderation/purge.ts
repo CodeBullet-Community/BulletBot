@@ -53,51 +53,32 @@ var command: commandInterface = {
     dm: false,
     permLevel: permLevels.mod,
     togglable: false,
-    shortHelp: 'Command deletes last x messages',
-    embedHelp: async function (guild: Guild) {
-        let prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'Command deletes last x messages that match a certain criteria in the current channel for moderation purposes'
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:',
-                        'value': '{command} [n messages]\n{command} [user] [n messages]\n{command} mentions [user] [n messages]\n{command} endswith [content] [n messages]\n{command} startswith [content] [n messages]\n{command} contains [content] [n messages]\n{command} has [img | text | file | link | invite] [n messages]'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:', // TODO: add more examples and potentially explanations
-                        'value': '{command} 3'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'Command deletes last x messages',
+        longDescription: 'Command deletes last x messages that match a certain criteria in the current channel.',
+        usages: [
+            '{command} [n messages]',
+            '{command} [user] [n messages]',
+            '{command} mentions [user] [n messages]',
+            '{command} endswith [content] [n messages]',
+            '{command} startswith [content] [n messages]',
+            '{command} contains [content] [n messages]',
+            '{command} has [img | text | file | link | invite] [n messages]'
+        ],
+        examples: [
+            '{command} 30',
+            '{command} @jeff#1234 20',
+            '{command} mentions @jeff#1234 23',
+            '{command} endswith goodbye 500',
+            '{command} startswith hello there 20',
+            '{command} contains general kenobi 16',
+            '{command} has invite 3',
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             if (args.length == 0) {
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false; // was unsuccessful
             }
@@ -301,7 +282,7 @@ async function DeleteLastXMessages(numberOfMessages: number, channel: TextChanne
         } else {
             let result = await bulkDeleteByCriteria(channel, nMessages, criteria, lastSnowflake);
             if (!result.found) break; // if it hasn't found anything another iteration is unnecessary
-            found = true; 
+            found = true;
             lastSnowflake = result.lastSnowflake;
             numberOfMessages -= result.nMessages;
         }

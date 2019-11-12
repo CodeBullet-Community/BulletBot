@@ -12,59 +12,39 @@ var command: commandInterface = {
     dm: false,
     permLevel: permLevels.admin,
     togglable: false,
-    shortHelp: 'let\'s you change megalog settings', // very short desc of what the command does
-    embedHelp: async function (guild: Guild) {
-        var prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'Let\'s you enable and disable megalog functions.\nThe megalogger is divided in functions. Each function logs certain events. To make it easier to enable several at once, the functions are also grouped.\nYou can enable functions separately or use the groups to enable several at once.\nYou can also make the megalogger ignore certain channels.'
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Groups:',
-                        'value': 'all, channels, members, roles, voice, messages, reactions'
-                    },
-                    {
-                        'name': 'Functions:',
-                        'value': megalogFunctions.all.join(', ')
-                    },
-                    {
-                        'name': 'Usage:',
-                        'value': '{command} list\n{command} enable [group/function] [channel]\n{command} disable [group/function]\n{command} ignore [channel]\n{command} unignore [channel]'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:',
-                        'value': '{command} list\n{command} enable channelCreate #channelCreates\n{command} enable messages #message-logs\n{command} disable channelCreate\n{command} ignore #admin-chat\n{command} unignore #admin-chat'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
+    help: {
+        shortDescription: 'let\'s you change megalog settings',
+        longDescription: 'Let\'s you enable and disable megalog functions.\nThe megalogger is divided in functions. Each function logs certain events. To make it easier to enable several at once, the functions are also grouped.\nYou can enable functions separately or use the groups to enable several at once.\nYou can also make the megalogger ignore certain channels.',
+        usages: [
+            '{command} list',
+            '{command} enable [group/function] [channel]',
+            '{command} disable [group/function]',
+            '{command} ignore [channel]',
+            '{command} unignore [channel]'
+        ],
+        examples: [
+            '{command} list',
+            '{command} enable channelCreate #channelCreates',
+            '{command} enable messages #message-logs',
+            '{command} disable channelCreate',
+            '{command} ignore #admin-chat',
+            '{command} unignore #admin-chat'
+        ],
+        additionalFields: [
+            {
+                'name': 'Groups:',
+                'value': Object.keys(megalogFunctions).join(', ')
+            },
+            {
+                'name': 'Functions:',
+                'value': megalogFunctions.all.join(', ')
             }
-        }
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             if (args.length == 0) { // send help embed if no arguments provided
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }

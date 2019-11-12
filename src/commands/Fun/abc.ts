@@ -14,46 +14,15 @@ var command: commandInterface = {
     dm: true,
     permLevel: permLevels.member,
     togglable: true,
-    shortHelp: 'Does the abc with you',
-    embedHelp: async function (guild: Guild) {
-        var prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'This command will make the bot follow the abc with you'
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:',
-                        'value': '{command}'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:',
-                        'value': '{command}'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'Does the abc with you',
+        longDescription: 'This command will make the bot follow the abc with you',
+        usages: [
+            '{command}'
+        ],
+        examples: [
+            '{command}'
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number], commandCache?: CommandCache) => {
         try {

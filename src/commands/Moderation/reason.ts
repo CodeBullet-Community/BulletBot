@@ -13,68 +13,32 @@ var command: commandInterface = {
     permLevel: permLevels.mod,
     togglable: false,
     cooldownLocal: durations.second,
-    shortHelp: 'Change reason of case',
-    embedHelp: async function (guild: Guild) {
-        let prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'Change or add a reason to a case'
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Local Cooldown:',
-                        'value': durationToString(command.cooldownLocal),
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:',
-                        'value': `${prefix + command.name} [caseID] [reason]`
-                    },
-                    {
-                        'name': 'Example:',
-                        'value': `${prefix + command.name} 538 a totally legit reason`
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'Change reason of case',
+        longDescription: 'Change or add a reason to a case',
+        usages: [
+            '{command} [caseID] [reason]'
+        ],
+        examples: [
+            '{command} 14 a totally legit reason`'
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             if (args.length == 0) { // send help embed if no arguments provided
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
             let argsArray = args.split(' ').filter(x => x.length != 0); // split arguments string by spaces
 
             // check if specified case ID 
-            if(isNaN(Number(argsArray[0]))){
+            if (isNaN(Number(argsArray[0]))) {
                 message.channel.send("You need to specify a valid caseID");
                 Bot.mStats.logMessageSend();
                 return false
             }
-            if(!argsArray[1]){
+            if (!argsArray[1]) {
                 message.channel.send("You need to specify a reason");
                 Bot.mStats.logMessageSend();
                 return false
@@ -84,7 +48,7 @@ var command: commandInterface = {
             let reason = args.slice(args.indexOf(argsArray[0]) + argsArray[0].length).trim();
 
             // changes reason
-            if(!await Bot.caseLogger.editReason(message.guild.id, argsArray[0], reason)){
+            if (!await Bot.caseLogger.editReason(message.guild.id, argsArray[0], reason)) {
                 message.channel.send("Couldn't find specified case");
                 Bot.mStats.logMessageSend();
                 return false

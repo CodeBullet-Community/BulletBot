@@ -13,56 +13,20 @@ var command: commandInterface = {
     permLevel: permLevels.member,
     togglable: false,
     cooldownGlobal: durations.second * 20,
-    shortHelp: 'reports a bug to the devs',
-    embedHelp: async function (guild: Guild) {
-        var prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'reports a bug to the dev. Be as descriptive as you can'
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Global Cooldown:',
-                        'value': durationToString(command.cooldownGlobal),
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:', // all possible inputs to the guild, the arguments should be named
-                        'value': '{command} [bug]'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:', // example use of the command
-                        'value': '{command} This feature doesn\'t work with that'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'reports a bug to the devs',
+        longDescription: 'reports a bug to the dev. Be as descriptive as you can',
+        usages: [
+            '{command} [bug]'
+        ],
+        examples: [
+            '{command} This feature doesn\'t work with that'
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             if (args.length == 0) { // send help embed if no arguments provided
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }

@@ -62,46 +62,17 @@ var command: commandInterface = {
     dm: false,
     permLevel: permLevels.mod,
     togglable: false,
-    shortHelp: 'List warnings of guild/members',
-    embedHelp: async function (guild: Guild) {
-        let prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'List warnings of entire guild or a specific member' // more detailed desc
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:',
-                        'value': '{command}\n{command} [member]'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:',
-                        'value': '{command}\n{command} @jeff#1234'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'List warnings of guild/members',
+        longDescription: 'List warnings of entire guild or a specific member',
+        usages: [
+            '{command}',
+            '{command} [member]'
+        ],
+        examples: [
+            '{command}',
+            '{command} @jeff#1234'
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {

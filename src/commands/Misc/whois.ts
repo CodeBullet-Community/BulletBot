@@ -168,74 +168,44 @@ async function sendMemberInfo(message: Message, member: GuildMember, permLevel: 
     Bot.mStats.logMessageSend();
 }
 
-var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
+var command: commandInterface = {
+    name: 'whois',
+    path: '',
+    dm: false,
+    permLevel: permLevels.member,
+    togglable: false,
+    help: {
+        shortDescription: 'returns infos about a user',
+        longDescription: 'returns infos about a user',
+        usages: [
+            '{command}',
+            '{command} [member]'
+        ],
+        examples: [
+            '{command}',
+            '{command} @Bullet Bot#1234'
+        ]
+    },
+    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+        try {
+            if (args.length === 0) { // send info of requester if no arguments provided
+                await sendMemberInfo(message, message.member, permLevel, permLevel, requestTime);
+                return;
+            }
 
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
-    try {
-        if (args.length === 0) { // send info of requester if no arguments provided
-            await sendMemberInfo(message, message.member, permLevel, permLevel, requestTime);
-            return;
+            // get member which to send info of
+            var member = await stringToMember(message.guild, args);
+            if (!member) {
+                message.channel.send('Couldn\'t member with that name/id');
+                Bot.mStats.logMessageSend();
+                return false;
+            }
+            await sendMemberInfo(message, member, await getPermLevel(member), permLevel, requestTime);
+        } catch (e) {
+            sendError(message.channel, e);
+            Bot.mStats.logError(e, command.name);
         }
-
-        // get member which to send info of
-        var member = await stringToMember(message.guild, args);
-        if (!member) {
-            message.channel.send('Couldn\'t member with that name/id');
-            Bot.mStats.logMessageSend();
-            return false;
-        }
-        await sendMemberInfo(message, member, await getPermLevel(member), permLevel, requestTime);
-    } catch (e) {
-        sendError(message.channel, e);
-        Bot.mStats.logError(e, command.name);
     }
 }
-
-command.name = 'whois';
-command.path = '';
-command.dm = false;
-command.permLevel = permLevels.member;
-command.togglable = false;
-command.shortHelp = 'gives a description of a user';
-command.embedHelp = async function (guild: Guild) {
-    var prefix = await Bot.database.getPrefix(guild);
-    return {
-        'embed': {
-            'color': Bot.database.settingsDB.cache.embedColors.help,
-            'author': {
-                'name': 'Command: ' + prefix + command.name
-            },
-            'fields': [
-                {
-                    'name': 'Description:',
-                    'value': 'gives a description of a user'
-                },
-                {
-                    'name': 'Need to be:',
-                    'value': permToString(command.permLevel),
-                    'inline': true
-                },
-                {
-                    'name': 'DM capable:',
-                    'value': command.dm,
-                    'inline': true
-                },
-                {
-                    'name': 'Togglable:',
-                    'value': command.togglable,
-                    'inline': true
-                },
-                {
-                    'name': 'Usage:',
-                    'value': `${prefix + command.name}\n${prefix + command.name} [member]`
-                },
-                {
-                    'name': 'Example:',
-                    'value': `${prefix + command.name}\n${prefix + command.name} @Bullet Bot#1234`
-                }
-            ]
-        }
-    }
-};
 
 export default command;

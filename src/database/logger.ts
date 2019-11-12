@@ -384,7 +384,7 @@ export class Logger {
                 'fields': [
                     {
                         'name': 'Description:',
-                        'value': command.shortHelp
+                        'value': command.help.shortDescription
                     },
                     {
                         'name': `${type ? 'Re-enable' : 'Disable'} Command:`,

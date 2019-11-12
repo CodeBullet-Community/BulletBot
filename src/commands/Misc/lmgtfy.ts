@@ -11,57 +11,26 @@ var command: commandInterface = {
     dm: true,
     permLevel: permLevels.member,
     togglable: true,
-    shortHelp: 'Let Me Google That For You link generator',
-    embedHelp: async function (guild: Guild) {
-        let prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'Let Me Google That For You link generator'
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-			            'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:',
-                        'value': '{command} [search term]'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:',
-                        'value': '{command} How do I install node?'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'Let Me Google That For You link generator',
+        longDescription: 'Let Me Google That For You link generator',
+        usages: [
+            '{command} [search term]'
+        ],
+        examples: [
+            '{command} How do I install node?'
+        ]
     },
     // TODO: implement different  search engines such as DDG for bangs and img search etc?
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             args = args.trim();
             if (args.length == 0) { // send help embed if no arguments provided
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false; // was unsuccessful
             }
-          
+
             let content = "https://lmgtfy.com/?q=" + encodeURIComponent(args);
 
             // send lmgtfy link
