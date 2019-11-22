@@ -29,7 +29,8 @@ one document for each guild
     commandChannels:{
         mode: boolean; // false: exclude, true: include
         channels: string[];
-    }
+    };
+    usageLimits: UsageLimits; // defined in the `settings` database docs
 }
 ```
 
