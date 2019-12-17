@@ -53,6 +53,7 @@ detect_distro_ver_arch_bits() {
         # Version: x (short handed version)
         sver=$(echo "$ver" | grep -oP "[0-9]+" | head -1 )
         pname="$PRETTY_NAME"
+        codename="$VERSION_CODENAME"
     else
         distro=$(uname -s)
         ver=$(uname -r)
@@ -91,7 +92,7 @@ detect_distro_ver_arch_bits() {
 # MAIN CODE #
 # --------- #
 detect_distro_ver_arch_bits
-export distro sver ver arch bits
+export distro sver ver arch bits codename
 export yellow green cyan red nc
 
 echo "SYSTEM INFO"
