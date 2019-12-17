@@ -22,13 +22,20 @@ read -p "We will now set up bot-config.json. Press [Enter] to begin."
 if ! hash jq &>/dev/null; then
     echo "${yellow}jq is not installed${nc}" >&2
 
-    # CentOS and RHEL use the yum package manager while Debian and Ubuntu use apt
+    # CentOS and RHEL use the yum/dnf package manager while Debian and Ubuntu use apt
     if [[ $distro = "centos" || $distro = "rhel" ]]; then
-        pkg_manager="yum"
         # EPEL must be installed in order to install jq
-        yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || {
-            echo "${red}Failed to install Extra Packages fro Enterprise Linux${nc}"
-        }
+        if [[ $sver = "7" ]]; then
+            yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || {
+                echo "${red}Failed to install Extra Packages fro Enterprise Linux${nc}"
+            }
+            pkg_manager="yum"
+        else
+            dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm || {
+                echo "${red}Failed to install Extra Packages fro Enterprise Linux${nc}"
+            }
+            pkg_manager="dnf"
+        fi
     else
         pkg_manager="apt"
     fi

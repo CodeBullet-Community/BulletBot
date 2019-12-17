@@ -152,6 +152,15 @@ elif [[ $distro = "rhel" || $distro = "cent" ]]; then
                 supported=false
             fi
             ;;
+        8)
+            # C.1.
+            if [[ $bits = 64 ]]; then
+                supported=true
+	        ./installers/CentOS-RHEL/centos-rhel-installer.sh
+            else
+                supported=false
+            fi
+            ;;
         *)
             supported=false
             ;;
