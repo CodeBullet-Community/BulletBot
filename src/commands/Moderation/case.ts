@@ -12,51 +12,23 @@ var command: commandInterface = {
     dm: false,
     permLevel: permLevels.mod,
     togglable: false,
-    shortHelp: 'lists/deletes all cases of a guild',
-    embedHelp: async function (guild: Guild) {
-        var prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'lists/deletes all cases of a guild'
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:', // all possible inputs to the guild, the arguments should be named
-                        'value': `${prefix + command.name} list [member] \n ${prefix + command.name} view [caseID]`
-                    },
-                    {
-                        'name': 'Example:', // example use of the command
-                        'value': `${prefix + command.name} list\n${prefix + command.name} list Montori`
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'list or view cases',
+        longDescription: 'list or view cases of a guild or member',
+        usages: [
+            '{command} list [member]',
+            '{command} view [caseID]'
+        ],
+        examples: [
+            '{command} list',
+            '{command} list @jeff#1234',
+            '{command} view 32'
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             if (args.length === 0) { // send help embed if no arguments provided
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }

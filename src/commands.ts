@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import { Bot } from '.';
 import { CommandCache, UserWrapper } from './database/schemas';
 import { permLevels } from './utils/permissions';
+import { permToString, durationToString } from './utils/parsers';
 
 /**
  * definition of a command with all it's properties and functions
@@ -66,20 +67,45 @@ export interface commandInterface {
      */
     cooldownGlobal?: number;
     /**
-     * short desc of what command does
+     * contains info about what the command is and how to use it
      *
-     * @type {string}
      * @memberof commandInterface
      */
-    shortHelp: string;
-    /**
-     * embed and long desc of what the command does and how to use it
-     *
-     * @param {Guild} [guild] guild to change the prefix if needed
-     * @returns {Promise<any>}
-     * @memberof commandInterface
-     */
-    embedHelp(guild?: Guild): Promise<any>;
+    help: {
+        /**
+         * a short description of the command does
+         *
+         * @type {string}
+         */
+        shortDescription: string;
+        /**
+         * a long description of the command does and also maybe how to use it and how it works
+         *
+         * @type {string}
+         */
+        longDescription: string;
+        /**
+         * array of different usages
+         *
+         * @type {string[]}
+         */
+        usages: string[];
+        /**
+         * array of examples. They don't have to directly correspond to the usages but it's recommended
+         *
+         * @type {string[]}
+         */
+        examples: string[];
+        /**
+         * Array of additional fields that should be added in the help embed.
+         *
+         */
+        additionalFields?: {
+            name: string;
+            value: string;
+            inline?: boolean;
+        }[];
+    };
     /**
      * function that called if someone uses the command
      *
@@ -189,7 +215,7 @@ export class Commands {
         var cmd = this.commands.get(command);
         if (!cmd) return; // returns if it can't find the command
         if (!cmd.dm && dm) { // sends the embed help if the request is from a dm and the command doesn't support dms
-            message.reply(cmd.embedHelp());
+            message.channel.send(this.getHelpEmbed(cmd));
             return;
         }
         if (permLevel < cmd.permLevel && !dm) return; //  returns if the member doesn't have enough perms
@@ -255,6 +281,79 @@ export class Commands {
      */
     get(command: string) {
         return this.commands.get(command);
+    }
+
+    /**
+     * creates a help embed for a specific command. When guild is specified it also changes the prefix
+     *
+     * @param {(string | commandInterface)} command command of which to create help embed of
+     * @param {(string | Guild)} [guild] guild for which to create help embed for
+     * @returns
+     * @memberof Commands
+     */
+    async getHelpEmbed(command: string | commandInterface, guild?: string | Guild) {
+        if (typeof command === "string")
+            command = this.commands.get(command);
+        if (!command)
+            throw new Error("Command was not set or found. Value of command: " + command);
+        if (guild instanceof Guild) guild = guild.id;
+
+        let prefix = await Bot.database.getPrefix(undefined, guild);
+        let embed = {
+            color: Bot.database.settingsDB.cache.embedColors.help,
+            author: {
+                name: `Command: ${prefix}${command.name}`
+            },
+            fields: [
+                {
+                    name: 'Description:',
+                    value: command.help.longDescription
+                },
+                {
+                    name: 'Need to be:',
+                    value: permToString(command.permLevel),
+                    inline: true
+                },
+                {
+                    name: 'DM capable:',
+                    value: command.dm,
+                    inline: true
+                },
+                {
+                    name: 'Togglable:',
+                    value: command.togglable,
+                    inline: true
+                },
+                {
+                    name: 'Usage:',
+                    value: command.help.usages.join('\n').replace(/\{command\}/g, prefix + command.name)
+                },
+                {
+                    name: 'Example:',
+                    value: command.help.examples.join('\n').replace(/\{command\}/g, prefix + command.name)
+                }
+            ]
+        };
+
+        if (command.cooldownGlobal)
+            embed.fields.splice(4, 0, {
+                name: 'Global Cooldown',
+                value: durationToString(command.cooldownGlobal),
+                inline: true
+            });
+        if (command.cooldownLocal)
+            embed.fields.splice(4, 0, {
+                name: 'Local Cooldown',
+                value: durationToString(command.cooldownLocal),
+                inline: true
+            });
+
+        if (command.help.additionalFields)
+            for (const field of command.help.additionalFields.reverse())
+                // @ts-ignore
+                embed.fields.splice(1, 0, field);
+
+        return { embed };
     }
 
 }

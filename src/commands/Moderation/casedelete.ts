@@ -14,60 +14,32 @@ var command: commandInterface = {
     permLevel: permLevels.mod,
     togglable: false,
     cooldownLocal: durations.second,
-    shortHelp: 'Delete cases from the Database',
-    embedHelp: async function (guild: Guild) {
-        let prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'Let\'s you delete cases from the database'
-                    },
-                    {
-                        'name': 'Types:',
-                        'value': caseActionsArray.join(', ')
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Local Cooldown:',
-                        'value': durationToString(command.cooldownLocal),
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:',
-                        'value': '{command} [case id]\n{command} user [user]\n{command} user [user] [type]\n{command} [type]'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:',
-                        'value': '{command} 23\n{command} user @jeff#1234 \n{command} warn'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
+    help: {
+        shortDescription: 'Delete cases',
+        longDescription: 'Let\'s you delete cases',
+        usages: [
+            '{command} [case id]',
+            '{command} user [user]',
+            '{command} user [user] [type]',
+            '{command} [type]'
+        ],
+        examples: [
+            '{command} 23',
+            '{command} user @jeff#1234',
+            '{command} user @jeff#1234 ban',
+            '{command} warn'
+        ],
+        additionalFields: [
+            {
+                name: 'Types:',
+                value: caseActionsArray.join(', ')
             }
-        }
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             if (args.length == 0) { // send help embed if no arguments provided
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
@@ -139,7 +111,7 @@ var command: commandInterface = {
 
                 // send confirmation message
                 Bot.mStats.logResponseTime(command.name, requestTime);
-                message.channel.send(`:white_check_mark: **Successfully deleted ${result.n} ${type ? type+' ' : ''}case${result.n ? 's' : ''}${userID ? ` from <@${userID}` : ''}>**`);
+                message.channel.send(`:white_check_mark: **Successfully deleted ${result.n} ${type ? type + ' ' : ''}case${result.n ? 's' : ''}${userID ? ` from <@${userID}` : ''}>**`);
                 Bot.mStats.logMessageSend();
                 Bot.mStats.logCommandUsage(command.name, 'id');
             }

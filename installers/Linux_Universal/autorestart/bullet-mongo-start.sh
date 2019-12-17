@@ -1,5 +1,23 @@
 #!/bin/bash
 
+# ########################################################################### #
+#                                                                             #
+# bullet-mongo-start.sh                                                       #
+# ---------------------                                                       #
+# Used in combination with the bullet-mongo-start.service to automatically    #
+# (re)start BulletBot on system reboot. It makes sure that the MongoDB        #
+# service and database has started and is fully initialized before starting   #
+# BulletBot.                                                                  #
+#                                                                             #
+# Script Purpose                                                              #
+# --------------                                                              #
+# For some reason, bulletbot.service, if enabled, will start and connect to   #
+# the MongoDB database before it has fully initialized, which will cause      #
+# problems. This script will give the database and service enough time to     #
+# initialize before attempting to start bulletbot.service.                    #
+#                                                                             #
+# ########################################################################### #
+
 mongo_restart_attempts=0
 
 # A.1. Waits in order to give mongod.service enough time to start (become active)

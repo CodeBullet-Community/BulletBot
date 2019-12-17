@@ -4,9 +4,7 @@ import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, durationToString } from '../../utils/parsers';
-import request = require('request');
 import { durations, getDurationDiff } from '../../utils/time';
-import { suggestionForm } from '../../bot-config.json';
 
 var command: commandInterface = {
     name: 'botsuggest',
@@ -15,73 +13,27 @@ var command: commandInterface = {
     permLevel: permLevels.member,
     togglable: false,
     cooldownGlobal: durations.second * 20,
-    shortHelp: 'make suggestion for bot',
-    embedHelp: async function (guild: Guild) {
-        var prefix = await Bot.database.getPrefix(guild);
-        return {
-            'embed': {
-                'color': Bot.database.settingsDB.cache.embedColors.help,
-                'author': {
-                    'name': 'Command: ' + prefix + command.name
-                },
-                'fields': [
-                    {
-                        'name': 'Description:',
-                        'value': 'Make a suggestion for the bot. Be as descriptive as you can.'
-                    },
-                    {
-                        'name': 'Need to be:',
-                        'value': permToString(command.permLevel),
-                        'inline': true
-                    },
-                    {
-                        'name': 'DM capable:',
-                        'value': command.dm,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Togglable:',
-                        'value': command.togglable,
-                        'inline': true
-                    },
-                    {
-                        'name': 'Global Cooldown:',
-                        'value': durationToString(command.cooldownGlobal),
-                        'inline': true
-                    },
-                    {
-                        'name': 'Usage:', // all possible inputs to the guild, the arguments should be named
-                        'value': '{command} [suggestion]'.replace(/\{command\}/g, prefix + command.name)
-                    },
-                    {
-                        'name': 'Example:', // example use of the command
-                        'value': '{command} Add a command that converts Fahrenheit to Celcius and vise versa'.replace(/\{command\}/g, prefix + command.name)
-                    }
-                ]
-            }
-        }
+    help: {
+        shortDescription: 'make suggestion for bot',
+        longDescription: 'Make a suggestion for the bot. Be as descriptive as you can.',
+        usages: [
+            '{command} [suggestion]'
+        ],
+        examples: [
+            '{command} Add a command that converts Fahrenheit to Celcius and vise versa'
+        ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
         try {
             if (args.length == 0) { // send help embed if no arguments provided
-                message.channel.send(await command.embedHelp(message.guild));
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
                 Bot.mStats.logMessageSend();
                 return false;
             }
 
-            // send suggestion to google form
-            let form = {};
-            form['entry.' + suggestionForm.serverID] = (!dm ? message.guild.id : undefined);
-            form['entry.' + suggestionForm.serverName] = (!dm ? message.guild.name : undefined);
-            form['entry.' + suggestionForm.userID] = message.author.id;
-            form['entry.' + suggestionForm.userName] = message.author.username;
-            form['entry.' + suggestionForm.messageID] = message.id;
-            form['entry.' + suggestionForm.channelID] = message.channel.id;
-            form['entry.' + suggestionForm.suggestion] = args;
-            request.post('https://docs.google.com/forms/d/e/1FAIpQLSee3V4--MxBJqPjoDgfUIw2u22NG-4GBlT92Bbj10-R1ScuHA/formResponse', {
-                form: form
-            });
-            
+            // log suggestion
+            Bot.mStats.logBotSuggestion(message, args);
+
             // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send('Suggestion was logged. Thanks for making one.');

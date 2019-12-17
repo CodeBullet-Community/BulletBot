@@ -6,177 +6,149 @@ import { permToString, stringToChannel, stringToRole, stringToMember } from '../
 import { permLevels } from '../../utils/permissions';
 import { logTypes, staffObject } from '../../database/schemas';
 
-var command: commandInterface = { name: undefined, path: undefined, dm: undefined, permLevel: undefined, togglable: undefined, shortHelp: undefined, embedHelp: undefined, run: undefined };
-
-command.run = async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
-    try {
-        var argIndex = 0;
-        if (args.length == 0) { // send help embed if no arguments provided
-            message.channel.send(await command.embedHelp(message.guild));
-            Bot.mStats.logMessageSend();
-            return false;
-        }
-        var argsArray = args.split(' ').filter(x => x.length != 0); // split arguments string by spaces
-        switch (argsArray[argIndex]) { // the different actions
-            case 'rem':
-            case 'add':
-                argIndex++;
-                if (!argsArray[argIndex]) { // check if user or role is given
-                    message.channel.send('Please enter a user or role.');
-                    Bot.mStats.logMessageSend();
-                    return false;
-                }
-
-                // load either user or role
-                var role = stringToRole(message.guild, argsArray[argIndex], true, false);
-                if (typeof (role) == 'string') {
-                    message.channel.send('You can\'t add everyone or here to a rank.');
-                    Bot.mStats.logMessageSend();
-                    return false;
-                }
-                var user: GuildMember;
-                if (!role) {
-                    user = await stringToMember(message.guild, argsArray[argIndex], true, true, false);
-                    if (!user) {
-                        message.channel.send('There isn\'t a role or user called that way');
+var command: commandInterface = {
+    name: 'immune',
+    path: '',
+    dm: false,
+    permLevel: permLevels.admin,
+    togglable: false,
+    help: {
+        shortDescription: 'manage the immune rank',
+        longDescription: 'let\'s you add, remove and list immune roles and users',
+        usages: [
+            '{command} add [role/user]',
+            '{command} rem [role/user]',
+            '{command} list'
+        ],
+        examples: [
+            '{command} add @immune',
+            '{command} rem @jeff#1234',
+            '{command} list'
+        ]
+    },
+    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+        try {
+            var argIndex = 0;
+            if (args.length == 0) { // send help embed if no arguments provided
+                message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
+                Bot.mStats.logMessageSend();
+                return false;
+            }
+            var argsArray = args.split(' ').filter(x => x.length != 0); // split arguments string by spaces
+            switch (argsArray[argIndex]) { // the different actions
+                case 'rem':
+                case 'add':
+                    argIndex++;
+                    if (!argsArray[argIndex]) { // check if user or role is given
+                        message.channel.send('Please enter a user or role.');
                         Bot.mStats.logMessageSend();
                         return false;
                     }
-                }
 
-                // either add or remove the role/user
-                if (argsArray[0] == 'add') { 
-                    if (await Bot.database.addToRank(message.guild.id, 'immune', (role ? role.id : undefined), (user ? user.id : undefined))) {
-                        Bot.mStats.logResponseTime(command.name, requestTime);
-                        message.channel.send(`Successfully added immunity to ${role ? role.name : user.toString()}`);
-                        // log the staff change
-                        Bot.logger.logStaff(message.guild, message.member, logTypes.add, 'immune', role, (user ? user.user : undefined));
-                    } else {
-                        Bot.mStats.logResponseTime(command.name, requestTime);
-                        message.channel.send(`${role ? role.name : user.toString()} is already immune`);
+                    // load either user or role
+                    var role = stringToRole(message.guild, argsArray[argIndex], true, false);
+                    if (typeof (role) == 'string') {
+                        message.channel.send('You can\'t add everyone or here to a rank.');
+                        Bot.mStats.logMessageSend();
+                        return false;
                     }
-                    Bot.mStats.logCommandUsage(command.name, 'add');
-                } else {
-                    if (await Bot.database.removeFromRank(message.guild.id, 'immune', (role ? role.id : undefined), (user ? user.id : undefined))) {
-                        Bot.mStats.logResponseTime(command.name, requestTime);
-                        message.channel.send(`Successfully removed immunity from ${role ? role.name : user.toString()}`);
-                        // log the staff change
-                        Bot.logger.logStaff(message.guild, message.member, logTypes.remove, 'immune', role, (user ? user.user : undefined));
-                    } else {
-                        Bot.mStats.logResponseTime(command.name, requestTime);
-                        message.channel.send(`${role ? role.name : user.toString()} isn't immune`);
-                    }
-                    Bot.mStats.logCommandUsage(command.name, 'remove');
-                }
-                Bot.mStats.logMessageSend();
-                break;
-            case 'list':
-                // get staff document of the guild    
-                var staffDoc = await Bot.database.findStaffDoc(message.guild.id);
-                
-                // load list into strings
-                var roles = 'No Roles';
-                var users = 'No Users';
-                if (staffDoc) {
-                    var staffObject: staffObject = staffDoc.toObject();
-                    if (staffObject.immune.roles.length > 0) { // add roles to list
-                        roles = '';
-                        for (const roleID of staffObject.immune.roles) {
-                            var roleObject = message.guild.roles.get(roleID);
-                            roles += roleObject.toString() + '\n';
+                    var user: GuildMember;
+                    if (!role) {
+                        user = await stringToMember(message.guild, argsArray[argIndex], true, true, false);
+                        if (!user) {
+                            message.channel.send('There isn\'t a role or user called that way');
+                            Bot.mStats.logMessageSend();
+                            return false;
                         }
                     }
-                    if (staffObject.immune.users.length > 0) { // add users to list
-                        users = '';
-                        for (const roleID of staffObject.immune.users) {
-                            var user = message.guild.members.get(roleID);
-                            users += user.toString() + '\n';
-                        }
-                    }
-                }
 
-                // send embed
-                Bot.mStats.logResponseTime(command.name, requestTime);
-                message.channel.send({
-                    'embed': {
-                        'color': Bot.database.settingsDB.cache.embedColors.default,
-                        'timestamp': new Date().toISOString(),
-                        'author': {
-                            'name': 'Immune:',
-                            'icon_url': Bot.client.user.displayAvatarURL
-                        },
-                        'fields': [
-                            {
-                                'name': 'Roles:',
-                                'value': roles,
-                                'inline': true
-                            },
-                            {
-                                'name': 'Users:',
-                                'value': users,
-                                'inline': true
+                    // either add or remove the role/user
+                    if (argsArray[0] == 'add') {
+                        if (await Bot.database.addToRank(message.guild.id, 'immune', (role ? role.id : undefined), (user ? user.id : undefined))) {
+                            Bot.mStats.logResponseTime(command.name, requestTime);
+                            message.channel.send(`Successfully added immunity to ${role ? role.name : user.toString()}`);
+                            // log the staff change
+                            Bot.logger.logStaff(message.guild, message.member, logTypes.add, 'immune', role, (user ? user.user : undefined));
+                        } else {
+                            Bot.mStats.logResponseTime(command.name, requestTime);
+                            message.channel.send(`${role ? role.name : user.toString()} is already immune`);
+                        }
+                        Bot.mStats.logCommandUsage(command.name, 'add');
+                    } else {
+                        if (await Bot.database.removeFromRank(message.guild.id, 'immune', (role ? role.id : undefined), (user ? user.id : undefined))) {
+                            Bot.mStats.logResponseTime(command.name, requestTime);
+                            message.channel.send(`Successfully removed immunity from ${role ? role.name : user.toString()}`);
+                            // log the staff change
+                            Bot.logger.logStaff(message.guild, message.member, logTypes.remove, 'immune', role, (user ? user.user : undefined));
+                        } else {
+                            Bot.mStats.logResponseTime(command.name, requestTime);
+                            message.channel.send(`${role ? role.name : user.toString()} isn't immune`);
+                        }
+                        Bot.mStats.logCommandUsage(command.name, 'remove');
+                    }
+                    Bot.mStats.logMessageSend();
+                    break;
+                case 'list':
+                    // get staff document of the guild    
+                    var staffDoc = await Bot.database.findStaffDoc(message.guild.id);
+
+                    // load list into strings
+                    var roles = 'No Roles';
+                    var users = 'No Users';
+                    if (staffDoc) {
+                        var staffObject: staffObject = staffDoc.toObject();
+                        if (staffObject.immune.roles.length > 0) { // add roles to list
+                            roles = '';
+                            for (const roleID of staffObject.immune.roles) {
+                                var roleObject = message.guild.roles.get(roleID);
+                                roles += roleObject.toString() + '\n';
                             }
-                        ]
+                        }
+                        if (staffObject.immune.users.length > 0) { // add users to list
+                            users = '';
+                            for (const roleID of staffObject.immune.users) {
+                                var user = message.guild.members.get(roleID);
+                                users += user.toString() + '\n';
+                            }
+                        }
                     }
-                });
-                Bot.mStats.logCommandUsage(command.name, 'list');
-                Bot.mStats.logMessageSend();
-                break;
-            default:
-                // if action doesn't exist
-                message.channel.send('Unkown action. Use list, add or rem');
-                Bot.mStats.logMessageSend();
-                break;
-        }
-    } catch (e) {
-        sendError(message.channel, e);
-        Bot.mStats.logError(e, command.name);
-    }
-}
 
-command.name = 'immune';
-command.path = '';
-command.dm = false;
-command.permLevel = permLevels.admin;
-command.togglable = false;
-command.shortHelp = 'for managing the immune rank';
-command.embedHelp = async function (guild: Guild) {
-    var prefix = await Bot.database.getPrefix(guild);
-    return {
-        'embed': {
-            'color': Bot.database.settingsDB.cache.embedColors.help,
-            'author': {
-                'name': 'Command: ' + prefix + command.name
-            },
-            'fields': [
-                {
-                    'name': 'Description:',
-                    'value': 'let\'s you add, remove and list immune roles and users'
-                },
-                {
-                    'name': 'Need to be:',
-                    'value': permToString(command.permLevel),
-                    'inline': true
-                },
-                {
-                    'name': 'DM capable:',
-                    'value': command.dm,
-                    'inline': true
-                },
-                {
-                    'name': 'Togglable:',
-                    'value': command.togglable,
-                    'inline': true
-                },
-                {
-                    'name': 'Usage:',
-                    'value': '{command} add [role/user]\n{command} rem [role/user]\n{command} list'.replace(/\{command\}/g, prefix + command.name)
-                },
-                {
-                    'name': 'Example:',
-                    'value': '{command} add @immune\n{command} rem @jeff#1234\n{command} list'.replace(/\{command\}/g, prefix + command.name)
-                }
-            ]
+                    // send embed
+                    Bot.mStats.logResponseTime(command.name, requestTime);
+                    message.channel.send({
+                        'embed': {
+                            'color': Bot.database.settingsDB.cache.embedColors.default,
+                            'timestamp': new Date().toISOString(),
+                            'author': {
+                                'name': 'Immune:',
+                                'icon_url': Bot.client.user.displayAvatarURL
+                            },
+                            'fields': [
+                                {
+                                    'name': 'Roles:',
+                                    'value': roles,
+                                    'inline': true
+                                },
+                                {
+                                    'name': 'Users:',
+                                    'value': users,
+                                    'inline': true
+                                }
+                            ]
+                        }
+                    });
+                    Bot.mStats.logCommandUsage(command.name, 'list');
+                    Bot.mStats.logMessageSend();
+                    break;
+                default:
+                    // if action doesn't exist
+                    message.channel.send('Unkown action. Use list, add or rem');
+                    Bot.mStats.logMessageSend();
+                    break;
+            }
+        } catch (e) {
+            sendError(message.channel, e);
+            Bot.mStats.logError(e, command.name);
         }
     }
 };
