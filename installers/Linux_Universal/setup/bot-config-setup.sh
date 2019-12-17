@@ -99,26 +99,6 @@ json="{
         \"suffix\": \"$mongodb_url_suffix\"
     },
     \"googleAPIKey\": \"$google_api_key\",
-    \"bugForm\": {
-        \"url\": \"[url to google form]\",
-        \"serverID\": 123,
-        \"serverName\": 123,
-        \"userID\": 123,
-        \"userName\": 123,
-        \"messageID\": 123,
-        \"channelID\": 123,
-        \"bug\": 123
-    },
-    \"suggestionForm\": {
-        \"url\": \"[url to google form]\",
-        \"serverID\": 123,
-        \"serverName\": 123,
-        \"userID\": 123,
-        \"userName\": 123,
-        \"messageID\": 123,
-        \"channelID\": 123,
-        \"suggestion\": 123
-    },
     \"globalUpdateInterval\": 10000,
     \"cleanInterval\": 600000,
     \"pActionsInterval\": 1000,
