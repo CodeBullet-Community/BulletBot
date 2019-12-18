@@ -202,7 +202,7 @@ if [[ $bullet_status = "active" ]]; then
     # Waits in order to give bulletbot.service enough time to (re)start
     echo "Waiting 20 seconds for bulletbot.service to start..."
     while ((timer > 0)); do
-        echo -en "$timer seconds left \r"
+        echo -en "\r$timer seconds left "
         sleep 1
         ((timer-=1))
     done
