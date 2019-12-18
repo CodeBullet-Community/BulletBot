@@ -8,7 +8,7 @@
 # etc., to determine whether or not BulletBot and/or the installers are        #
 # compatible...                                                                #
 # Once the system is deemed compatible, the appropriate sub-master installer   #
-# will be chosen and executed.                                                 #
+# will be chosen, downloaded (if it isn't already), then executed.             #
 #                                                                              #
 # ############################################################################ #
 
@@ -37,9 +37,9 @@ fi
 cd "$(dirname $0)"
 
 
-# -------- #
-# FUNCTION #
-# -------- #
+# --------- #
+# FUNCTIONS #
+# --------- #
 # Identify the operating system, version number, architecture, and bit type
 # (32 or 64)
 detect_distro_ver_arch_bits() {
@@ -87,6 +87,71 @@ detect_distro_ver_arch_bits() {
     esac
 }
 
+execute_debian_ubuntu_installer() {
+    supported=true
+    ./installers/Debian-Ubuntu/debian-ubuntu-installer.sh || {
+        # A.1. If the sub-master installer doesn't exists... (It will never
+        # exist if it is your first time running the master installer on your system)
+        if [[ ! -f installers/Debian-Ubuntu/debian-ubuntu-installer.sh ]]; then
+            wget -N https://github.com/CodeBullet-Community/BulletBot/releases/latest/download/debian-ubuntu-installer.sh || {
+                echo "${red}Failed to download debian-ubuntu-installer.sh${nc}"
+                # D.1. If wget is not installed...
+                if ! hash wget &>/dev/null; then
+                    echo "${yellow}wget is not installed${nc}"
+                    echo "Installing wget..."
+                    apt -y install wget || {
+                        echo "${red}Failed to install wget" >&2
+                        echo "${cyan}wget must be installed in order to continue${nc}"
+                        echo -e "\nExiting..."
+                        exit 1
+                    }
+                else
+                    echo "${cyan}Either resolve the issue causing the error" \
+                        "or manually download debian-ubuntu-installer.sh from" \
+                        "github${nc}"
+                    echo -e "\nExiting..."
+                    exit 1
+                fi
+            }
+            chmod +x debian-ubuntu-installer.sh
+            ./debian-ubuntu-installer.sh
+            rm debian-ubuntu-installer.sh
+        fi
+    }
+}
+
+execute_centos_rhel_installer() {
+    supported=true
+    ./installers/CentOS-RHEL/centos-rhel-installer.sh || {
+        # A.1.
+        if [[ ! -f installers/CentOS-RHEL/centos-rhel-installer.sh ]]; then
+            wget -N https://github.com/CodeBullet-Community/BulletBot/releases/latest/download/centos-rhel-installer.sh || {
+                echo "${red}Failed to download centos-rhel-installer.sh${nc}"
+                # D.1.
+                if ! hash wget &>/dev/null; then
+                    echo "${yellow}wget is not installed${nc}"
+                    echo "Installing wget..."
+                    apt -y install wget || {
+                        echo "${red}Failed to install wget" >&2
+                        echo "${cyan}wget must be installed in order to continue${nc}"
+                        echo -e "\nExiting..."
+                        exit 1
+                    }
+                else
+                    echo "${cyan}Either resolve the issue causing the error" \
+                        "or manually download centos-rhel-installer.sh from" \
+                        "github${nc}"
+                    echo -e "\nExiting..."
+                    exit 1
+                fi
+            }
+            chmod +x centos-rhel-installer.sh
+            ./centos-rhel-installer.sh
+            rm centos-rhel-installer.sh
+        fi
+    }
+}
+
 
 # --------- #
 # MAIN CODE #
@@ -107,8 +172,7 @@ if [[ $distro = "ubuntu" ]]; then
         16.04)
             # B.1. MongoDB only works on 64 bit versions of Ubuntu
             if [[ $bits = 64 ]]; then
-                supported=true
-                ./installers/Debian-Ubuntu/debian-ubuntu-installer.sh
+                execute_debian_ubuntu_installer
             else
                 supported=false
             fi
@@ -116,8 +180,7 @@ if [[ $distro = "ubuntu" ]]; then
         18.04)
             # B.1.
             if [[ $bits = 64 ]]; then
-                supported=true
-                ./installers/Debian-Ubuntu/debian-ubuntu-installer.sh
+                execute_debian_ubuntu_installer
             else
                 supported=false
             fi
@@ -130,24 +193,21 @@ if [[ $distro = "ubuntu" ]]; then
 elif [[ $distro = "debian" ]]; then
     case "$sver" in
         9)
-            supported=true
-            ./installers/Debian-Ubuntu/debian-ubuntu-installer.sh
+            execute_debian_ubuntu_installer
             ;;
         10)
-            supported=true
-            ./installers/Debian-Ubuntu/debian-ubuntu-installer.sh
+            execute_debian_ubuntu_installer
             ;;
         *)
             supported=false
             ;;
     esac
-elif [[ $distro = "rhel" || $distro = "cent" ]]; then
+elif [[ $distro = "rhel" || $distro = "centos" ]]; then
     case "$sver" in
         7)
             # C.1. MongoDB only works on 64 bit versions of RHEL and CentOS
             if [[ $bits = 64 ]]; then
-                supported=true
-	        ./installers/CentOS-RHEL/centos-rhel-installer.sh
+                execute_centos_rhel_installer
             else
                 supported=false
             fi
@@ -155,8 +215,7 @@ elif [[ $distro = "rhel" || $distro = "cent" ]]; then
         8)
             # C.1.
             if [[ $bits = 64 ]]; then
-                supported=true
-	        ./installers/CentOS-RHEL/centos-rhel-installer.sh
+                execute_centos_rhel_installer
             else
                 supported=false
             fi
