@@ -1,9 +1,10 @@
 import { Message, Collection, Guild } from 'discord.js';
 import * as fs from 'fs';
 import { Bot } from '.';
-import { CommandCache, UserWrapper } from './database/schemas';
+import { CommandCache } from './database/schemas';
 import { permLevels } from './utils/permissions';
 import { permToString, durationToString } from './utils/parsers';
+import { UserWrapper } from './database/userWrapper';
 
 /**
  * definition of a command with all it's properties and functions

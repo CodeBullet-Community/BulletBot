@@ -68,11 +68,11 @@ This Object is used in the `settings` collection document and in the `guilds` co
         disabled: [string]; // which megalog functions can't be used
     };
     logs?: {
-        maxCases?: number; // max amount of logs a guild can have
+        maxLogs?: number; // max amount of logs a guild can have
         storeTime?: number; // time the bot stores the log (defined in milliseconds)
     };
-    guild: {
-        maxInactiveTime: number; // if in the server there haven't been any human activity for a certain amount of time, the bot will automatically leave
+    guild?: {
+        maxInactiveTime?: number; // if in the server there haven't been any human activity for a certain amount of time, the bot will automatically leave
     };
 }
 ```

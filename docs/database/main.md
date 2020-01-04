@@ -30,7 +30,7 @@ one document for each guild
         mode: boolean; // false: exclude, true: include
         channels: string[];
     };
-    usageLimits: UsageLimits; // defined in the `settings` database docs
+    usageLimits?: UsageLimits; // defined in the `settings` database docs
 }
 ```
 

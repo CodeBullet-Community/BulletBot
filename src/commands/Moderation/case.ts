@@ -83,7 +83,7 @@ var command: commandInterface = {
                     Bot.mStats.logMessageSend();
                     return false;
                 }
-                let embed = await createSpecificEmbed(message.guild, argsArray[argIndex]);
+                let embed = await createSpecificEmbed(message.guild, Number(argsArray[argIndex]));
                 Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(embed);
                 Bot.mStats.logMessageSend();
@@ -221,7 +221,7 @@ async function createDetailEmbeds(guild: Guild, member?: GuildMember) {
  * @param {string} caseID case ID
  * @returns
  */
-async function createSpecificEmbed(guild: Guild, caseID: string) {
+async function createSpecificEmbed(guild: Guild, caseID: number) {
     // get case
     let tempCase = await Bot.caseLogger.findByCase(guild.id, caseID);
     if (!tempCase) {

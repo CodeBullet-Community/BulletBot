@@ -20,7 +20,6 @@ import {
     CommandCache,
     userDoc,
     userSchema,
-    UserWrapper,
     megalogDoc,
     megalogSchema,
     megalogFunctions,
@@ -36,6 +35,7 @@ import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
 import { Guild, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
 import { Bot } from '..';
 import { toNano } from '../utils/time';
+import { UserWrapper } from './userWrapper';
 
 /**
  * Manages all connections to the main database and settings database
@@ -106,7 +106,7 @@ export class Database {
                 cases: mainCon.model('cases', caseSchema, 'cases'),
                 pActions: mainCon.model('pActions', pActionSchema, 'pAction')
             }
-          
+
             // clean unused data from database at a certain interval
             setInterval(async () => {
                 await Bot.database.cleanGuilds();
@@ -133,7 +133,7 @@ export class Database {
                 cache: undefined
             }
             Bot.database.updateGlobalSettings(Bot.database.settingsDB);
-      
+
             // update global settings cache at a certain interval
             setInterval(() => Bot.database.updateGlobalSettings(Bot.database.settingsDB), globalUpdateInterval);
             console.info(`updating global cache every ${globalUpdateInterval}ms`);
@@ -377,7 +377,7 @@ export class Database {
      * @param {('admins' | 'mods' | 'immune')} rank in which rank the role/user should be added
      * @param {string} [roleID] id of role (can be undefined)
      * @param {string} [userID] if of user (can be undefined)
-     * @returns
+     * @returns if addition was successful
      * @memberof Database
      */
     async addToRank(guildID: string, rank: 'admins' | 'mods' | 'immune', roleID?: string, userID?: string) {
@@ -414,7 +414,7 @@ export class Database {
      * @param {('admins' | 'mods' | 'immune')} rank in which rank the user/role is
      * @param {string} [roleID] id of role (can be undefined)
      * @param {string} [userID] id of user (can be undefined)
-     * @returns
+     * @returns if removed was successful
      * @memberof Database
      */
     async removeFromRank(guildID: string, rank: 'admins' | 'mods' | 'immune', roleID?: string, userID?: string) {

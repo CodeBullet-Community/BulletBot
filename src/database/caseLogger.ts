@@ -150,7 +150,7 @@ export class CaseLogger {
      * @param guildID ID of the guild where the cases are from
      * @param caseID the ID of the case
      */
-    async findByCase(guildID: string, caseID: string) {
+    async findByCase(guildID: string, caseID: number) {
         return await this.cases.findOne({ guild: guildID, caseID: caseID }).exec();
     }
 
