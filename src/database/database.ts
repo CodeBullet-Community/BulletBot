@@ -64,17 +64,6 @@ export class Database {
         cases: mongoose.Model<caseDoc>;
         pActions: mongoose.Model<pActionDoc>;
     };
-    /**
-     * represents the settings database with the settings collection and the connection. There is also a cache of the settings doc.
-     *
-     * @type {{connection: mongoose.Connection;settings: mongoose.Model<globalSettingsDoc>;cache: globalSettingsObject;}}
-     * @memberof Database
-     */
-    settingsDB: {
-        connection: mongoose.Connection;
-        settings: mongoose.Model<globalSettingsDoc>;
-        cache: globalSettingsObject;
-    };
 
     /**
      * Creates an instance of Database and connections to the main and settings database.
@@ -117,27 +106,6 @@ export class Database {
             }, cleanInterval);
             console.info(`cleaning database every ${cleanInterval}ms`);
         });
-
-        // create connection with settings database
-        var settingsCon = mongoose.createConnection(clusterInfo.url + '/settings' + clusterInfo.suffix, { useNewUrlParser: true })
-        settingsCon.on('error', error => {
-            console.error('connection error:', error);
-            Bot.mStats.logError(error);
-        });
-        settingsCon.once('open', function () {
-            console.log('connected to /settings database');
-            // setup model for model for settings collection
-            Bot.database.settingsDB = {
-                connection: settingsCon,
-                settings: settingsCon.model('globalSettings', globalSettingsSchema, 'settings'),
-                cache: undefined
-            }
-            Bot.database.updateGlobalSettings(Bot.database.settingsDB);
-
-            // update global settings cache at a certain interval
-            setInterval(() => Bot.database.updateGlobalSettings(Bot.database.settingsDB), globalUpdateInterval);
-            console.info(`updating global cache every ${globalUpdateInterval}ms`);
-        });
     }
 
     /**
@@ -150,39 +118,6 @@ export class Database {
         var currentNano = process.hrtime();
         await this.mainDB.connection.db.command({ ping: 1 });
         return toNano(process.hrtime(currentNano));
-    }
-
-    /**
-     * updates cache of global settings
-     *
-     * @param {{connection: mongoose.Connection;settings: mongoose.Model<globalSettingsDoc>;cache: globalSettingsObject;}} settingsDB settings property of class, so this function can also access it in a interval
-     * @returns
-     * @memberof Database
-     */
-    async updateGlobalSettings(settingsDB: {
-        connection: mongoose.Connection;
-        settings: mongoose.Model<globalSettingsDoc>;
-        cache: globalSettingsObject;
-    }) {
-        var settingsDoc = await settingsDB.settings.findOne().exec();
-        if (!settingsDoc) {
-            console.warn('global settings doc not found');
-            return;
-        }
-
-        var settingsObject: globalSettingsObject = settingsDoc.toObject()
-
-        // set new presence if it changed
-        if (settingsDB.cache && (settingsObject.presence != settingsDB.cache.presence || !settingsObject.presence)) {
-            if (settingsObject.presence && (settingsObject.presence.status || settingsObject.presence.game || settingsObject.presence.afk)) {
-                Bot.client.user.setPresence(settingsObject.presence);
-            } else {
-                Bot.client.user.setActivity(undefined);
-                Bot.client.user.setStatus('online');
-            }
-        }
-
-        settingsDB.cache = settingsObject;
     }
 
     /**
@@ -229,9 +164,9 @@ export class Database {
         if (guildID) {
             var prefixDoc = await this.mainDB.prefix.findOne({ guild: guildID }).exec();
             if (prefixDoc) return prefixDoc.toObject().prefix;
-            if (!this.settingsDB.cache) return '!?';
+            if (!Bot.settings) return '!?';
         }
-        return this.settingsDB.cache.prefix;
+        return Bot.settings.prefix;
     }
 
     /**
@@ -241,8 +176,8 @@ export class Database {
      * @memberof Database
      */
     getBotMasters() {
-        if (!this.settingsDB.cache) return [];
-        return this.settingsDB.cache.botMasters;
+        if (!Bot.settings) return [];
+        return Bot.settings.botMasters;
     }
 
     /**
@@ -253,9 +188,9 @@ export class Database {
      * @memberof Database
      */
     getGlobalCommandSettings(command: string) {
-        if (!this.settingsDB.cache || !this.settingsDB.cache.commands[command])
+        if (!Bot.settings || !Bot.settings.commands[command])
             return undefined;
-        return this.settingsDB.cache.commands[command];
+        return Bot.settings.commands[command];
     }
 
     /**
@@ -266,9 +201,9 @@ export class Database {
      * @memberof Database
      */
     getGlobalFilterSettings(filter: string) {
-        if (!this.settingsDB.cache || !this.settingsDB.cache.filters[filter])
+        if (!Bot.settings || !Bot.settings.filters[filter])
             return undefined;
-        return this.settingsDB.cache.filters[filter];
+        return Bot.settings.filters[filter];
     }
 
     /**
@@ -627,36 +562,17 @@ export class Database {
     async cleanUsers() {
         await this.mainDB.users.deleteMany({
             $or: [
-                { commandCooldown: null },
-                { commandCooldown: {} }
+                { commandLastUsed: null },
+                { commandLastUsed: {} }
             ]
         }).exec(); // delete obvious redundant docs
 
-        let userDocs = await this.mainDB.users.find().exec();
-        let now = Date.now();
-        for (const userDoc of userDocs) {
-            let useless = true; // if doc is useless
-            let changed = false; // if some data was deleted
-            for (const scopes in userDoc.commandCooldown) {
-                for (const commands in userDoc.commandCooldown[scopes]) {
-                    if (userDoc.commandCooldown[scopes][commands] < now) {
-                        delete userDoc.commandCooldown[scopes][commands];
-                        changed = true;
-                    } else {
-                        useless = false;
-                    }
-                }
+        // redundant after usage limits update
+        await this.mainDB.users.updateMany({}, {
+            $unset: {
+                commandCooldown: 0
             }
-            if (useless || !await Bot.client.fetchUser(userDoc.toObject().user)) { // if doc is useless or the bot no longer has a relationship with the user
-                userDoc.remove();
-                continue;
-            }
-            if (changed) {
-                userDoc.markModified('commandCooldown');
-                userDoc.save();
-            }
-        }
-
+        });
     }
 
     /**

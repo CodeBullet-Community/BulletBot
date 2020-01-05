@@ -94,7 +94,7 @@ export class PActions {
                         let caseChannel = guild.channels.get(guildDoc.caseChannel);
                         if (!caseChannel || !(caseChannel instanceof TextChannel)) break;
                         //@ts-ignore
-                        caseChannel.send(Bot.caseLogger.createCaseEmbed(member.user, guild.me, actionObject.info.case, caseActions.unmute, Bot.database.settingsDB.cache.embedColors.positive, null, `Auto unmute for case ${actionObject.info.case} after ${durationString}`));
+                        caseChannel.send(Bot.caseLogger.createCaseEmbed(member.user, guild.me, actionObject.info.case, caseActions.unmute, Bot.settings.embedColors.positive, null, `Auto unmute for case ${actionObject.info.case} after ${durationString}`));
                         break;
                     }
                 case pActionActions.ban:
@@ -116,7 +116,7 @@ export class PActions {
                         let caseChannel = guild.channels.get(guildDoc.caseChannel);
                         if (!caseChannel || !(caseChannel instanceof TextChannel)) break;
                         //@ts-ignore
-                        caseChannel.send(Bot.caseLogger.createCaseEmbed(banInfo.user, guild.me, actionObject.info.case, caseActions.unban, Bot.database.settingsDB.cache.embedColors.positive, null, `Auto unban for case ${actionObject.info.case} after ${durationString}`));
+                        caseChannel.send(Bot.caseLogger.createCaseEmbed(banInfo.user, guild.me, actionObject.info.case, caseActions.unban, Bot.settings.embedColors.positive, null, `Auto unban for case ${actionObject.info.case} after ${durationString}`));
                         break;
                     }
                 case pActionActions.lockChannel:

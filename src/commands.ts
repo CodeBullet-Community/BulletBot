@@ -1,10 +1,12 @@
 import { Message, Collection, Guild } from 'discord.js';
 import * as fs from 'fs';
 import { Bot } from '.';
-import { CommandCache } from './database/schemas';
+import { CommandCache, CommandUsageLimits } from './database/schemas';
 import { permLevels } from './utils/permissions';
 import { permToString, durationToString } from './utils/parsers';
-import { UserWrapper } from './database/userWrapper';
+import { getUserWrapper } from './database/userWrapper';
+import { getGuildWrapper } from './database/guildWrapper';
+import { resolveCommandResolvable } from './utils/resolvers';
 
 /**
  * definition of a command with all it's properties and functions
@@ -122,6 +124,9 @@ export interface commandInterface {
     run(message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number], commandCache?: CommandCache): Promise<boolean>;
 }
 
+export type CommandResolvable = string | commandInterface;
+
+
 /**
  * loads all commands and runs all commands
  *
@@ -214,38 +219,43 @@ export class Commands {
      */
     async runCommand(message: Message, args: string, command: string, permLevel: permLevels, dm: boolean, requestTime: [number, number]) {
         var cmd = this.commands.get(command);
-        if (!cmd) return; // returns if it can't find the command
-        if (!cmd.dm && dm) { // sends the embed help if the request is from a dm and the command doesn't support dms
+        // command not found
+        if (!cmd) return false;
+        // sends help embed if command isn't DM capable
+        if (!cmd.dm && dm) {
             message.channel.send(this.getHelpEmbed(cmd));
-            return;
+            return false;
         }
-        if (permLevel < cmd.permLevel && !dm) return; //  returns if the member doesn't have enough perms
-        let user: UserWrapper;
-        if (cmd.cooldownGlobal || cmd.cooldownLocal) {
-            user = await Bot.database.getUser(message.author);
-            if (user) {
-                if (cmd.cooldownLocal && Date.now() < user.getCooldown((dm ? 'dm' : message.guild.id), command))
-                    return;
-                if (cmd.cooldownGlobal && Date.now() < user.getCooldown('global', command))
-                    return;
-            }
+        // member doesn't have permission
+        if (permLevel < cmd.permLevel && !dm) {
+            message.channel.send(`Permission denied. You have to be ${permToString(cmd.permLevel)}`); // returns if the member doesn't have enough perms
+            return false;
         }
+
+        // get command usage limits
+        let commandUsageLimits = Bot.settings.getCommandUsageLimits(command);
+        if (!dm) {
+            let guildWrapper = await getGuildWrapper(message.guild);
+            commandUsageLimits = guildWrapper.getCommandUsageLimits(command);
+        }
+
+        // check if user can use command
+        let scope = (dm ? 'dm' : message.guild.id);
+        let user = await getUserWrapper(message.author, undefined, true);
+        if (!user.canUseCommand(scope, command, commandUsageLimits)) return false;
+
         if (!dm && cmd.togglable) { // check if command is disabled if request is from a guild and the command is togglable
             var commandSettings = await Bot.database.getCommandSettings(message.guild.id, command);
-            if (commandSettings && !commandSettings._enabled) return;
+            if (commandSettings && !commandSettings._enabled) return false;
         }
 
         let output = await cmd.run(message, args, permLevel, dm, requestTime); // run command
 
-        if ((cmd.cooldownGlobal || cmd.cooldownLocal) && output !== false) { // set cooldown if cooldown is defined and command was successful
-            if (!user)
-                user = new UserWrapper(undefined, message.author);
-            if (cmd.cooldownGlobal)
-                user.setCooldown('global', command, message.createdTimestamp + cmd.cooldownGlobal, false);
-            if (cmd.cooldownLocal)
-                user.setCooldown((dm ? 'dm' : message.guild.id), command, Date.now() + cmd.cooldownLocal, false);
-            user.save();
-        }
+        // set cooldown if cooldown is defined and command was successful
+        if ((commandUsageLimits.globalCooldown || commandUsageLimits.localCooldown) && output !== false)
+            await user.setCommandLastUsed(scope, command, message.createdTimestamp);
+
+        return output;
     }
 
     /**
@@ -301,7 +311,7 @@ export class Commands {
 
         let prefix = await Bot.database.getPrefix(undefined, guild);
         let embed = {
-            color: Bot.database.settingsDB.cache.embedColors.help,
+            color: Bot.settings.embedColors.help,
             author: {
                 name: `Command: ${prefix}${command.name}`
             },
@@ -355,6 +365,24 @@ export class Commands {
                 embed.fields.splice(1, 0, field);
 
         return { embed };
+    }
+
+    /**
+     * Merges the provided usage limits provided with those specified in the command
+     *
+     * @param {CommandResolvable} commandResolvable Command for which to get usage limits
+     * @param {CommandUsageLimits} commandUsageLimits Usage limits to merge
+     * @returns {CommandUsageLimits} Merged usage limits
+     * @memberof Commands
+     */
+    getCommandUsageLimits(commandResolvable: CommandResolvable, commandUsageLimits: CommandUsageLimits): CommandUsageLimits {
+        let command = resolveCommandResolvable(commandResolvable);
+
+        return {
+            globalCooldown: commandUsageLimits.globalCooldown || command.cooldownGlobal,
+            localCooldown: commandUsageLimits.localCooldown || command.cooldownLocal,
+            enabled: commandUsageLimits.enabled !== undefined ? commandUsageLimits.enabled : true
+        };
     }
 
 }

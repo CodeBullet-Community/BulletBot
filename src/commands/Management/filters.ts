@@ -19,7 +19,7 @@ async function sendFilterList(guild: Guild, message: Message, strucObject: any, 
     var output = new RichEmbed();
     output.setAuthor('Filter List:', Bot.client.user.displayAvatarURL);
     if (path) output.setFooter('Path: ~' + path);
-    output.setColor(Bot.database.settingsDB.cache.embedColors.help);
+    output.setColor(Bot.settings.embedColors.help);
     var categories = Object.keys(strucObject).filter(x => strucObject[x]._categoryName);
     if (categories.length != 0) {
         var cat_text = strucObject[categories[0]]._categoryName;
@@ -87,7 +87,7 @@ var command: commandInterface = {
                             // build embed
                             var output = new RichEmbed();
                             output.setAuthor('Enabled Filters:', Bot.client.user.displayAvatarURL);
-                            output.setColor(Bot.database.settingsDB.cache.embedColors.help);
+                            output.setColor(Bot.settings.embedColors.help);
 
                             // add enabled filters
                             var filtersObject: filtersObject = filtersDoc.toObject();

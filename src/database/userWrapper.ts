@@ -1,6 +1,28 @@
 import { Bot } from "..";
-import { userDoc, userObject } from "./schemas";
-import { User } from "discord.js";
+import { userDoc, userObject, CommandUsageLimits, userSchema } from "./schemas";
+import { User, UserResolvable, GuildMember, Message, Guild } from "discord.js";
+import { resolveUser } from "../utils/resolvers";
+
+/**
+ * returns a user wrapper.
+ * This function is necessary to ensure that the wrapper is ready when returned
+ *
+ * @export
+ * @param {UserResolvable} userResolvable user that should be wrapped
+ * @param {userDoc} [userDoc] Optional user document (doesn't have to query it if provided)
+ * @param {boolean} [createDoc] If the document should be created if it wasn't found (won't be saved to the database)
+ * @returns
+ */
+export async function getUserWrapper(userResolvable: UserResolvable, userDoc?: userDoc, createDoc?: boolean) {
+    let user = await resolveUser(userResolvable);
+
+    if (!userDoc)
+        userDoc = await Bot.database.findUserDoc(user.id);
+    if (!userDoc && createDoc)
+        userDoc = new Bot.database.mainDB.users({ user: user.id, commandLastUsed: {} });
+
+    return new UserWrapper(userDoc, user);
+}
 
 /**
  * Wrapper for user doc/object. Provides additional functions and easier data handling
@@ -8,16 +30,11 @@ import { User } from "discord.js";
  * @export
  * @class UserWrapper
  */
-export class UserWrapper {
-    user: User;
-    commandCooldown: {
-        // guild id, 'dm' and 'global'
-        [key: string]: {
-            // command name
-            [key: string]: number; // timestamp until it can be reused again
-        };
-    };
+export class UserWrapper implements userObject {
+    userObject: User;
     doc: userDoc;
+    user: string;
+    commandLastUsed: { [key: string]: { [key: string]: number; }; };
 
     /**
      * Creates an instance of UserWrapper with either a existing user doc or a new one (will create one). If userDoc isn't defined it will create one using user. 
@@ -28,31 +45,49 @@ export class UserWrapper {
      * @param {User} [user] user for either new doc or existing one
      * @memberof UserWrapper
      */
-    constructor(userDoc: userDoc, user?: User) {
-        this.user = user;
-        if (userDoc) {
-            this.doc = userDoc;
-            var userObject: userObject = this.doc.toObject();
-            if (!this.user)
-                Bot.client.fetchUser(userObject.user).then(user => this.user)
-            this.commandCooldown = userObject.commandCooldown;
-        } else {
-            if (!user) throw new Error("Both userDoc and user weren't specified");
-
-            this.commandCooldown = {};
-            this.doc = new Bot.database.mainDB.users({ user: user.id, commandCooldown: {} });
-        }
+    constructor(userDoc: userDoc, user: User) {
+        this.doc = userDoc;
+        this.syncWrapperWithDoc();
+        this.userObject = user;
     }
 
     /**
-     * saves changes to doc
+     * updates every value in the wrapper with the value in the document
      *
-     * @returns
+     * @private
+     * @memberof GuildWrapper
+     */
+    private syncWrapperWithDoc() {
+        for (const key in userSchema.obj)
+            this[key] = this.doc[key];
+    }
+
+    /**
+     * Saves changes to doc that were marked as modified
+     *
+     * @param {string} [path] Path that should be specially marked (if provided, document doesn't sync with wrapper)
+     * @returns The saved document
      * @memberof UserWrapper
      */
-    save() {
-        this.doc.commandCooldown = this.commandCooldown;
-        this.doc.markModified('commandCooldown');
+    save(path?: string) {
+        if (path)
+            this.doc.markModified(path);
+        for (const key in userSchema.obj)
+            this.doc[key] = this[key];
+        return this.doc.save();
+    }
+
+    /**
+     * Marks everything as modified and saves it to the database.
+     *
+     * @returns The saved document
+     * @memberof UserWrapper
+     */
+    saveAll() {
+        for (const key in userSchema.obj) {
+            this.doc[key] = this[key];
+            this.doc.markModified(key);
+        }
         return this.doc.save();
     }
 
@@ -67,22 +102,22 @@ export class UserWrapper {
     }
 
     /**
-     * returns the cooldown timestamp of a command. Returns 0 when no cooldown was specified.
+     * returns when the command was last used by the user. returns 0 if it never was used before
      *
      * @param {string} scope guild id / 'dm' / 'global'
      * @param {string} command command name
-     * @returns timestamp, when the command will be useable again
+     * @returns timestamp when the command was last used by the user
      * @memberof UserWrapper
      */
-    getCooldown(scope: string, command: string) {
-        if (!this.commandCooldown || !this.commandCooldown[scope] || !this.commandCooldown[scope][command])
+    getCommandLastUsed(scope: string, command: string) {
+        if (!this.commandLastUsed || !this.commandLastUsed[scope] || !this.commandLastUsed[scope][command])
             return 0;
-        return this.commandCooldown[scope][command];
+        return this.commandLastUsed[scope][command];
     }
 
     /**
-     * sets the cooldown timestamp of a specific command in a specific scope. If save is true (default) it will also save it to the database. 
-     * The save function here more efficient then calling save() afterwards.
+     * Sets when the user last used the command. always also sets in global scope. 
+     * If no timestamp was provided the last used timestamp will be removed
      *
      * @param {string} scope guild id / 'dm' / 'global'
      * @param {string} command command name 
@@ -91,23 +126,23 @@ export class UserWrapper {
      * @returns the changed user doc if save is true
      * @memberof UserWrapper
      */
-    setCooldown(scope: string, command: string, timestamp: number, save: boolean = true) {
+    async setCommandLastUsed(scope: string, command: string, timestamp: number, save: boolean = true) {
         if (isNaN(Number(scope)) && scope != 'dm' && scope != 'global')
             throw new Error("scope should be guild id, 'dm' or 'global' but is '" + scope + "'");
 
-        if (!this.commandCooldown) this.commandCooldown = {}
-        if (!this.commandCooldown[scope]) this.commandCooldown[scope] = {};
-        if (timestamp) {
-            this.commandCooldown[scope][command] = timestamp;
-        } else {
-            delete this.commandCooldown[scope][command];
-        }
+        if (!this.commandLastUsed[scope]) this.commandLastUsed[scope] = {};
+        if (timestamp)
+            this.commandLastUsed[scope][command] = timestamp;
+        else
+            delete this.commandLastUsed[scope][command];
 
-        if (save) {
-            this.doc.commandCooldown = this.commandCooldown;
-            this.doc.markModified(`commandCooldown.${scope}.${command}`);
-            return this.doc.save();
-        }
+        if (scope !== 'global')
+            this.setCommandLastUsed('global', command, timestamp, false);
+
+        this.doc.markModified(`commandLastUsed.${scope}.${command}`);
+        if (save) await this.save();
+
+        return this.doc;
     }
 
     /**
@@ -118,13 +153,29 @@ export class UserWrapper {
      * @returns the changed user doc if something was changed and save is true
      * @memberof UserWrapper
      */
-    resetCooldown(scope: string, save: boolean = true) {
-        if (!this.commandCooldown[scope]) return;
-        delete this.commandCooldown[scope];
-        if (save) {
-            this.doc.commandCooldown = this.commandCooldown;
-            this.doc.markModified('commandCooldown');
-            return this.doc.save();
-        }
+    resetCommandLastUsed(scope: string, save: boolean = true) {
+        if (!this.commandLastUsed[scope]) return;
+        delete this.commandLastUsed[scope];
+
+        this.doc.markModified('commandLastUsed');
+        if (save) this.save();
+    }
+
+    /**
+     * If this user can use the command based on usage limits
+     *
+     * @param {string} scope guild id / 'dm' / 'global'
+     * @param {string} commandName name of the command
+     * @param {CommandUsageLimits} limits usage limits
+     * @returns boolean if the user can use the command
+     * @memberof UserWrapper
+     */
+    canUseCommand(scope: string, commandName: string, limits: CommandUsageLimits) {
+        if (!limits.enabled) return false;
+        if (limits.localCooldown && Date.now() < this.getCommandLastUsed(scope, commandName) + limits.localCooldown)
+            return false;
+        if (limits.globalCooldown && Date.now() < this.getCommandLastUsed('global', commandName) + limits.globalCooldown)
+            return false;
+        return true;
     }
 }

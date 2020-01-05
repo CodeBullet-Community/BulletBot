@@ -67,7 +67,7 @@ var command: commandInterface = {
                         Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send({
                             "embed": {
-                                "color": Bot.database.settingsDB.cache.embedColors.default,
+                                "color": Bot.settings.embedColors.default,
                                 "timestamp": new Date().toISOString(),
                                 "author": {
                                     "name": "Megalog Settings"

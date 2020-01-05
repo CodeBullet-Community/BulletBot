@@ -53,7 +53,7 @@ var command: commandInterface = {
                             // build embed
                             var output = new RichEmbed();
                             output.setAuthor('Disabled Commands:', Bot.client.user.displayAvatarURL);
-                            output.setColor(Bot.database.settingsDB.cache.embedColors.help);
+                            output.setColor(Bot.settings.embedColors.help);
 
                             // add disabled commands
                             var commandsObject: commandsObject = commandsDoc.toObject();

@@ -87,8 +87,8 @@ var command: commandInterface = {
             // checks whether there is a maximum purge number. if not, it will use
             // 1000 as the default and warn you about it being unconfigured
             let maxMessages = 1000;
-            if (Bot.database.settingsDB.cache.commands[command.name] && Bot.database.settingsDB.cache.commands[command.name].maxMessages) {
-                maxMessages = Bot.database.settingsDB.cache.commands[command.name].maxMessages;
+            if (Bot.settings.commands[command.name] && Bot.settings.commands[command.name].maxMessages) {
+                maxMessages = Bot.settings.commands[command.name].maxMessages;
             } else {
                 console.warn(`WARNINGS: PLEASE SET THE 'maxMessages' PROPERTY FOR THE PURGE COMMAND IN THE GLOBAL DOC`);
             }

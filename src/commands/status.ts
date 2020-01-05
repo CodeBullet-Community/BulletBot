@@ -30,7 +30,7 @@ var command: commandInterface = {
             let uptime = getDistributedDuration(Bot.client.uptime);
             m.edit({
                 "embed": {
-                    "color": Bot.database.settingsDB.cache.embedColors.default,
+                    "color": Bot.settings.embedColors.default,
                     "timestamp": new Date().toISOString(),
                     "author": {
                         "name": "BulletBot Status",

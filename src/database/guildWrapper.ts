@@ -1,10 +1,36 @@
 import mongoose = require('mongoose');
-import { Guild, GuildMember, User, UserResolvable } from "discord.js";
-import { guildDoc, UsageLimits, guildObject } from "./schemas";
+import { Guild, GuildMember, UserResolvable, GuildResolvable } from "discord.js";
+import { CommandUsageLimits, guildDoc, UsageLimits, guildObject, guildSchema } from "./schemas";
 import { Bot } from '..';
 import { getPermLevel } from '../utils/permissions';
+import { CommandResolvable } from '../commands';
+import { resolveCommandResolvable } from '../utils/resolvers';
 
-class GuildWrapper implements guildObject {
+/**
+ * returns a GuildWrapper for the specified guild. 
+ * This helper function is necessary to ensure that the wrapper is ready when it's returned
+ *
+ * @export
+ * @param {GuildResolvable} guild
+ * @returns
+ */
+export async function getGuildWrapper(guild: GuildResolvable) {
+    let guildID = guild.toString();
+    if (guild instanceof Guild)
+        guildID = guild.id;
+
+    let guildDoc = await Bot.database.findGuildDoc(guildID);
+    return new GuildWrapper(guildDoc, guild instanceof Guild ? guild : undefined);
+}
+
+/**
+ * Wrapper for the guild object and document so everything can easily be access through one object
+ *
+ * @export
+ * @class GuildWrapper
+ * @implements {guildObject}
+ */
+export class GuildWrapper implements guildObject {
     guildObject: Guild;
     doc: guildDoc;
     guild: string;
@@ -19,37 +45,31 @@ class GuildWrapper implements guildObject {
     usageLimits?: UsageLimits;
 
     /**
-     * Creates an instance of GuildWrapper. Only one parameter has to be provided, 
-     * but providing both guild and guildDoc does make things faster. 
-     * If guildDoc wasn't provided it, doc wont' immediately be set.
-     * 
-     * @param {Guild} guild Guild discord.js object
-     * @param {string} [guildID] guild ID
-     * @param {guildDoc} [guildDoc] guild document
+     * Creates an instance of GuildWrapper.
+     *
+     * @param {guildDoc} guildDoc guild document
+     * @param {Guild} [guild] optional guild object (so constructor doesn't have to search for it)
      * @memberof GuildWrapper
      */
-    constructor(guild: Guild, guildID?: string, guildDoc?: guildDoc) {
-        if (guildDoc) {
-            this.doc = guildDoc;
-            this.syncWrapperWithObject();
-        } else
-            Bot.database.findGuildDoc(guildID || guild.id).then(guildDoc => {
-                if (!guildDoc)
-                    throw new Error(`Guild Doc for ${guildID || guild.id} not found`);
-                this.doc = guildDoc
-                this.syncWrapperWithObject();
-            });
+    constructor(guildDoc: guildDoc, guild?: Guild) {
+        this.doc = guildDoc;
+        this.syncWrapperWithDoc();
 
-        this.guildObject = guild;
-        if (!guild && (guildID || guildDoc))
-            this.guildObject = Bot.client.guilds.get(guildID || guildDoc.guild);
-        if (!this.guildObject)
-            throw new Error(`Guild ${guildID || guildDoc.guild} not found`);
+        if (guild)
+            this.guildObject = guild;
+        else
+            this.guildObject = Bot.client.guilds.get(guildDoc.guild);
     }
 
-    private syncWrapperWithObject() {
+    /**
+     * updates every value in the wrapper with the value in the document
+     *
+     * @private
+     * @memberof GuildWrapper
+     */
+    private syncWrapperWithDoc() {
         let object: guildObject = this.doc.toObject();
-        for (const key in object)
+        for (const key in guildSchema.obj)
             this[key] = object[key];
     }
 
@@ -149,8 +169,69 @@ class GuildWrapper implements guildObject {
     // TODO: add functions for webhooks
     // TODO: add functions for adding/removing locks
 
-    getUsageLimits(){
-        return this.usageLimits || Bot.database.settingsDB.cache.usageLimits;
+    /**
+     * Gets a property at the specified path
+     *
+     * @private
+     * @param {*} object object to trace
+     * @param {string} path path of requested property
+     * @returns value of property
+     * @memberof GuildWrapper
+     */
+    private tracePath(object, path: string) {
+        let current = object;
+        for (const property of path.split('.')) {
+            if (current === undefined) return undefined;
+            current = current[property];
+        }
+        return current;
+    }
+
+    /**
+     * Merges two objects with the second taking priority.
+     *
+     * @private
+     * @param {*} object1 object with less priority
+     * @param {*} object2 object with more priority
+     * @returns merged object
+     * @memberof GuildWrapper
+     */
+    private mergeObject(object1, object2) {
+        let merged = Object.assign({}, object1);
+        for (const key in object2) {
+            if (typeof object2[key] === 'object') {
+                merged[key] = this.mergeObject(object1[key], object2);
+                continue;
+            }
+            merged[key] = object2[key];
+        }
+        return merged;
+    }
+
+    /**
+     * Merges the usage limits of the guild and the global settings at the specific path.
+     *
+     * @param {string} [path=''] What part to merge (default everything)
+     * @returns Merge usage limits
+     * @memberof GuildWrapper
+     */
+    getUsageLimits(path: string = '') {
+        let globalUsageLimits = this.tracePath(Bot.settings.usageLimits, path) || {};
+        let guildUsageLimits = this.tracePath(this.usageLimits, path) || {};
+        return this.mergeObject(globalUsageLimits, guildUsageLimits);
+    }
+
+    /**
+     * Gets command usage limits for specified command
+     *
+     * @param {CommandResolvable} commandResolvable Command for which to get usage limits
+     * @returns {CommandUsageLimits} Usage limits for specified command
+     * @memberof GuildWrapper
+     */
+    getCommandUsageLimits(commandResolvable: CommandResolvable): CommandUsageLimits {
+        let command = resolveCommandResolvable(commandResolvable);
+        let usagelimits = this.getUsageLimits(`commands.${command.name}`);
+        return Bot.commands.getCommandUsageLimits(command, usagelimits);
     }
 
 }

@@ -5,11 +5,7 @@ import { Bot } from '..';
 // usageLimits
 export interface UsageLimits {
     commands?: {
-        [key: string]: {
-            globalCooldown?: number;
-            localCooldown?: number;
-            enabled?: boolean;
-        }
+        [key: string]: CommandUsageLimits;
     };
     cases?: {
         maxCases?: number;
@@ -29,10 +25,17 @@ export interface UsageLimits {
         maxLogs?: number;
         storeTime?: number;
     };
-    guild: {
+    guild?: {
         maxInactiveTime: number;
     };
 }
+
+export interface CommandUsageLimits {
+    globalCooldown?: number;
+    localCooldown?: number;
+    enabled?: boolean;
+}
+
 let usageLimitSchema: mongoose.SchemaDefinition = {
     commands: { required: false, type: mongoose.Schema.Types.Mixed },
     cases: {
@@ -69,7 +72,10 @@ let usageLimitSchema: mongoose.SchemaDefinition = {
         }
     },
     guild: {
-        maxInactiveTime: Number
+        required: false,
+        type: {
+            maxInactiveTime: Number
+        }
     }
 }
 
@@ -376,7 +382,7 @@ export class CommandCache {
 // user
 export interface userObject {
     user: string; // user id
-    commandCooldown: {
+    commandLastUsed: {
         // guild id, 'dm' and 'global'
         [key: string]: {
             // command name
@@ -387,7 +393,7 @@ export interface userObject {
 export interface userDoc extends mongoose.Document, userObject { }
 export const userSchema = new mongoose.Schema({
     user: String,
-    commandCooldown: mongoose.Schema.Types.Mixed
+    commandLastUsed: mongoose.Schema.Types.Mixed
 });
 
 // megalog settings
@@ -899,10 +905,10 @@ export interface globalSettingsObject {
             [key: string]: any;
         }
     };
-    usageLimits: UsageLimits;
+    usageLimits?: UsageLimits;
 }
 export interface globalSettingsDoc extends mongoose.Document, globalSettingsObject { }
-export const globalSettingsSchema = new mongoose.Schema({
+export let globalSettingsSchema = new mongoose.Schema({
     prefix: String,
     presence: {
         status: { type: String, required: false },
@@ -924,5 +930,6 @@ export const globalSettingsSchema = new mongoose.Schema({
     botMasters: [String],
     commands: mongoose.Schema.Types.Mixed,
     filters: mongoose.Schema.Types.Mixed,
-    usageLimits: usageLimitSchema
+    usageLimits: { required: false, type: usageLimitSchema }
 });
+globalSettingsSchema.set('toObject', { minimize: false, versionKey: false });

@@ -19,7 +19,7 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
     var output = new RichEmbed();
     output.setAuthor('Command List:', Bot.client.user.displayAvatarURL);
     if (path) output.setFooter('Path: ~' + path);
-    output.setColor(Bot.database.settingsDB.cache.embedColors.help);
+    output.setColor(Bot.settings.embedColors.help);
 
     // list subcategories
     var categories = Object.keys(strucObject).filter(x => strucObject[x]._categoryName);

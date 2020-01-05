@@ -39,7 +39,7 @@ function sendRandomImage(message: Message, API: string, requestTime: [number, nu
             var embed = new RichEmbed();
             embed.setAuthor('requested by: ' + setname + ' (' + message.author.tag + ')', message.author.displayAvatarURL);
             embed.setImage(JSON.parse(body).link);
-            embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
+            embed.setColor(Bot.settings.embedColors.default);
 
             // send embed
             Bot.mStats.logResponseTime(command.name, requestTime);
@@ -84,7 +84,7 @@ var command: commandInterface = {
             }
             args = args.toLowerCase();
 
-            var apis = Bot.database.settingsDB.cache.commands[command.name].apis; // get api urls
+            var apis = Bot.settings.commands[command.name].apis; // get api urls
             var animals = Object.keys(apis);
 
             if (args == 'random') { // when it should randomly choose a animal

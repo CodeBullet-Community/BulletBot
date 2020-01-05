@@ -59,7 +59,7 @@ export class CaseLogger {
     */
 
     async logKick(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string) {
-        let color = Bot.database.settingsDB.cache.embedColors.negative;
+        let color = Bot.settings.embedColors.negative;
         return await this.logCase(guild, member.user, mod, caseActions.kick, color, reason);
     }
 
@@ -72,7 +72,7 @@ export class CaseLogger {
      * @param {number} duration duration of the ban (optional)
      */
     async logBan(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string, duration?: number) {
-        let color = Bot.database.settingsDB.cache.embedColors.negative;
+        let color = Bot.settings.embedColors.negative;
         return await this.logCase(guild, member.user, mod, caseActions.ban, color, reason, duration);
     }
 
@@ -84,7 +84,7 @@ export class CaseLogger {
      * @param {string} reason the reason why the member was softbanned (optional)
      */
     async logSoftban(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string) {
-        let color = Bot.database.settingsDB.cache.embedColors.negative;
+        let color = Bot.settings.embedColors.negative;
         return await this.logCase(guild, member.user, mod, caseActions.softban, color, reason);
     }
 
@@ -96,7 +96,7 @@ export class CaseLogger {
      * @param {string} reason the reason why the user was unbanned (optional)
      */
     async logUnban(guild: Guild, user: User, mod: GuildMember, reason?: string) {
-        let color = Bot.database.settingsDB.cache.embedColors.positive;
+        let color = Bot.settings.embedColors.positive;
         return await this.logCase(guild, user, mod, caseActions.unban, color, reason);
     }
 
@@ -109,7 +109,7 @@ export class CaseLogger {
      * @param {number} duration duration of the mute (optional)
      */
     async logMute(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string, duration?: number) {
-        let color = Bot.database.settingsDB.cache.embedColors.negative;
+        let color = Bot.settings.embedColors.negative;
         return await this.logCase(guild, member.user, mod, caseActions.mute, color, reason, duration);
     }
 
@@ -121,7 +121,7 @@ export class CaseLogger {
      * @param {string} reason the reason why the member was unmuted (optional)
      */
     async logUnmute(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string) {
-        let color = Bot.database.settingsDB.cache.embedColors.positive;
+        let color = Bot.settings.embedColors.positive;
         return await this.logCase(guild, member.user, mod, caseActions.unmute, color, reason);
     }
 
@@ -133,7 +133,7 @@ export class CaseLogger {
      * @param {string} reason the reason why the member was warned
      */
     async logWarn(guild: Guild, member: GuildMember, mod: GuildMember, reason: string) {
-        let color = Bot.database.settingsDB.cache.embedColors.warn;
+        let color = Bot.settings.embedColors.warn;
         return await this.logCase(guild, member.user, mod, caseActions.warn, color, reason);
     }
 

@@ -31,7 +31,7 @@ async function createWarningsEmbeds(guild: Guild, member?: GuildMember): Promise
 
     while ((cases.length - caseIndex) > 0) { // runs until there are no warn cases left
         embed = new RichEmbed();
-        embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
+        embed.setColor(Bot.settings.embedColors.default);
         // puts 10 warnings into an embed
         for (let i = 0; i < 10 && numOfCases > i; i++) {
             tempCase = cases[caseIndex];

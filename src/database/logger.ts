@@ -102,7 +102,7 @@ export class Logger {
         var embed: any = {
             "embed": {
                 "description": `${role ? 'Role ' + role.toString() : 'User' + user.toString()} was ${type ? 'removed' : 'added'} to ${rank} rank by ${mod.toString()}`,
-                "color": Bot.database.settingsDB.cache.embedColors.default,
+                "color": Bot.settings.embedColors.default,
                 "timestamp": date.toISOString(),
                 "author": {
                     "name": rankName + " Rank:"
@@ -246,7 +246,7 @@ export class Logger {
         logChannel.send({
             "embed": {
                 "description": filter.shortHelp,
-                "color": Bot.database.settingsDB.cache.embedColors.default,
+                "color": Bot.settings.embedColors.default,
                 "timestamp": message.createdAt.toISOString(),
                 "thumbnail": {
                     "url": message.member.user.displayAvatarURL
@@ -317,7 +317,7 @@ export class Logger {
         logChannel.send({
             'embed': {
                 'description': `Filter \`${filter.name}\` was  ${type ? 'disabled' : 'enabled'} by ${mod.toString()}`,
-                'color': Bot.database.settingsDB.cache.embedColors.default,
+                'color': Bot.settings.embedColors.default,
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Filter Change:'
@@ -375,7 +375,7 @@ export class Logger {
         logChannel.send({
             'embed': {
                 'description': `Command \`${command.name}\` was  ${type ? 'disabled' : 'enabled'} by ${mod.toString()}`,
-                'color': Bot.database.settingsDB.cache.embedColors.default,
+                'color': Bot.settings.embedColors.default,
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Command Change:',
@@ -434,7 +434,7 @@ export class Logger {
         logChannel.send({
             'embed': {
                 'description': `The prefix was changed by ${mod.toString()}`,
-                'color': Bot.database.settingsDB.cache.embedColors.default,
+                'color': Bot.settings.embedColors.default,
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Changed Prefix:'
@@ -452,7 +452,7 @@ export class Logger {
                     },
                     {
                         'name': 'Reset command:',
-                        'value': Bot.database.settingsDB.cache.prefix + 'prefix reset'
+                        'value': Bot.settings.prefix + 'prefix reset'
                     }
                 ]
             }
@@ -501,7 +501,7 @@ export class Logger {
         logChannel.send({
             'embed': {
                 'description': `${functionLength} ${functionLength > 1 ? "functions were" : "function was"} ${type.valueOf() ? 'disabled' : 'enabled'} by ${admin.toString()}`,
-                'color': type.valueOf() ? Bot.database.settingsDB.cache.embedColors.negative : Bot.database.settingsDB.cache.embedColors.positive, // bad or good?
+                'color': type.valueOf() ? Bot.settings.embedColors.negative : Bot.settings.embedColors.positive, // bad or good?
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Megalog Logging Change',
@@ -555,7 +555,7 @@ export class Logger {
         logChannel.send({
             'embed': {
                 'description': `${channel} has been ${type.valueOf() ? 'removed from' : 'added to'} ignored channels by ${admin}`,
-                'color': type.valueOf() ? Bot.database.settingsDB.cache.embedColors.negative : Bot.database.settingsDB.cache.embedColors.positive, // bad or good?
+                'color': type.valueOf() ? Bot.settings.embedColors.negative : Bot.settings.embedColors.positive, // bad or good?
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Megalog Logging Change',

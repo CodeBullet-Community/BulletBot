@@ -34,7 +34,7 @@ only one document in collection
             [key: string]: any;
         };
     };
-    usageLimits: UsageLimits; // defined below
+    usageLimits?: UsageLimits; // defined below
 }
 ```
 

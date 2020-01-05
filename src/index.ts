@@ -15,6 +15,7 @@ import fs = require('fs');
 import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate, logVoiceTransfer, logVoiceMute, logVoiceDeaf } from './megalogger';
 import { PActions } from './database/pActions';
 import { CaseLogger } from "./database/caseLogger";
+import { Settings } from './database/settings';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -67,6 +68,7 @@ export class Bot {
     static logger: Logger;
     static pActions: PActions;
     static caseLogger: CaseLogger;
+    static settings: Settings;
 
     /**
      * the static version of a constructor
@@ -84,7 +86,8 @@ export class Bot {
      * @memberof Bot
      */
     static init(client: discord.Client, commands: Commands, filters: Filters, youtube: YTWebhookManager,
-        database: Database, mStats: MStats, catcher: Catcher, logger: Logger, pActions: PActions, caseLogger: CaseLogger) {
+        database: Database, mStats: MStats, catcher: Catcher, logger: Logger, pActions: PActions,
+        caseLogger: CaseLogger, settings: Settings) {
         this.client = client;
         this.commands = commands;
         this.filters = filters;
@@ -95,6 +98,7 @@ export class Bot {
         this.logger = logger;
         this.pActions = pActions;
         this.caseLogger = caseLogger;
+        this.settings = settings;
     }
 }
 
@@ -109,7 +113,8 @@ var youtube = new YTWebhookManager(cluster);
 var catcher = new Catcher(callback.port);
 let pActions = new PActions(cluster);
 var caseLogger = new CaseLogger(cluster);
-Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger, pActions, caseLogger);
+let settings = new Settings(cluster);
+Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger, pActions, caseLogger, settings);
 
 // when bot shuts down save the mStats cache
 exitHook(() => {
@@ -199,7 +204,7 @@ client.on('message', async message => {
 
     var prefix = await Bot.database.getPrefix(message.guild);
     if (!message.content.startsWith(prefix)) {
-        if (!message.content.toLowerCase().startsWith(Bot.database.settingsDB.cache.prefix + 'prefix')) { // also checks if it contains ?!prefix
+        if (!message.content.toLowerCase().startsWith(Bot.settings.prefix + 'prefix')) { // also checks if it contains ?!prefix
             if (!dm && permLevel == permLevels.member) {
                 Bot.filters.filterMessage(message); // filters message if from guild and if a member send it
             }
@@ -207,8 +212,8 @@ client.on('message', async message => {
         }
     }
     // if the command is ?!prefix isn't ?!
-    if (prefix != Bot.database.settingsDB.cache.prefix && message.content.startsWith(Bot.database.settingsDB.cache.prefix)) {
-        prefix = Bot.database.settingsDB.cache.prefix; // sets prefix if message starts with ?!prefix
+    if (prefix != Bot.settings.prefix && message.content.startsWith(Bot.settings.prefix)) {
+        prefix = Bot.settings.prefix; // sets prefix if message starts with ?!prefix
     }
 
     var command = message.content.split(' ')[0].slice(prefix.length).toLowerCase(); // gets command name
@@ -329,9 +334,9 @@ client.on('guildMemberRemove', async member => {
         Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, 'immune', undefined, member.user);
     }
     var userDoc = await Bot.database.findUserDoc(member.id);
-    if (userDoc && userDoc.commandCooldown && userDoc.commandCooldown[member.guild.id]) {
-        delete userDoc.commandCooldown[member.guild.id];
-        userDoc.markModified('commandCooldown.' + member.guild.id);
+    if (userDoc && userDoc.commandLastUsed && userDoc.commandLastUsed[member.guild.id]) {
+        delete userDoc.commandLastUsed[member.guild.id];
+        userDoc.markModified('commandLastUsed.' + member.guild.id);
         userDoc.save();
     }
 });
@@ -388,16 +393,3 @@ let loginInterval = setInterval(() => {
     Bot.client.login(botToken); // logs into discord after 2 seconds
     clearInterval(loginInterval);
 }, 2000);
-
-// enforce presence every hour
-setInterval(() => {
-    if (Bot.client.status != 0) return;
-    if (Bot.database.settingsDB.cache) {
-        if (Bot.database.settingsDB.cache.presence && (Bot.database.settingsDB.cache.presence.status || Bot.database.settingsDB.cache.presence.game || Bot.database.settingsDB.cache.presence.afk)) {
-            Bot.client.user.setPresence(Bot.database.settingsDB.cache.presence);
-        } else {
-            Bot.client.user.setActivity(undefined);
-            Bot.client.user.setStatus('online');
-        }
-    }
-}, durations.hour);

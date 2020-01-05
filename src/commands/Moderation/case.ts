@@ -134,7 +134,7 @@ async function createTotalEmbed(guild: Guild, member?: GuildMember) {
     // create embed
     let embed = new RichEmbed();
     embed.setAuthor(name, avatar);
-    embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
+    embed.setColor(Bot.settings.embedColors.default);
     embed.setDescription(`All cases for ${subject}`);
     embed.addField("Count", `Total: ${cases.total}\nWarn: ${cases.warn}\n Mute: ${cases.mute}\nKick: ${cases.kick}\nSoftban: ${cases.softban}\nBan: ${cases.ban}\nUnmute: ${cases.unmute}\nUnban: ${cases.unban}`);
     embed.setFooter(`ID: ${id}`);
@@ -190,7 +190,7 @@ async function createDetailEmbeds(guild: Guild, member?: GuildMember) {
 
     while ((cases.length - caseIndex) > 0) { // runs until there are no cases left
         embed = new RichEmbed();
-        embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
+        embed.setColor(Bot.settings.embedColors.default);
         // puts 10 cases into an embed
         for (let i = 0; i < 10 && numOfCases > i; i++) {
             tempCase = cases[caseIndex];
@@ -274,10 +274,10 @@ function capitalizeFirstLetter(string) {
  */
 function resolveColor(action: string) {
     switch (action) {
-        case caseActions.warn: return Bot.database.settingsDB.cache.embedColors.warn;
-        case caseActions.ban || caseActions.kick || caseActions.mute || caseActions.softban: return Bot.database.settingsDB.cache.embedColors.negative;
-        case caseActions.unmute || caseActions.unban: return Bot.database.settingsDB.cache.embedColors.positive;
-        default: return Bot.database.settingsDB.cache.embedColors.default;
+        case caseActions.warn: return Bot.settings.embedColors.warn;
+        case caseActions.ban || caseActions.kick || caseActions.mute || caseActions.softban: return Bot.settings.embedColors.negative;
+        case caseActions.unmute || caseActions.unban: return Bot.settings.embedColors.positive;
+        default: return Bot.settings.embedColors.default;
     }
 }
 

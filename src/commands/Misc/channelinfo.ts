@@ -105,7 +105,7 @@ function createTextChannelEmbed(infoChannel, guild) {
     embed.setFooter(`ID: ${infoChannel.id}`);
     // @ts-ignore
     embed.setTimestamp(date.toISOString());
-    embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
+    embed.setColor(Bot.settings.embedColors.default);
     embed.addField("Created", `${dateFormat(infoChannel.createdAt, timeFormat)} \n (${getDayDiff(infoChannel.createdAt, date.getTime())} days ago)`, true);
     embed.addField("Last Message Sent", `${lastMessage} \n ${lastMessageDays}`, true);
     guild.fetchMembers();
@@ -143,7 +143,7 @@ function createVoiceChannelEmbed(infoChannel, guild) {
     embed.setFooter(`ID: ${infoChannel.id}`);
     // @ts-ignore
     embed.setTimestamp(date.toISOString());
-    embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
+    embed.setColor(Bot.settings.embedColors.default);
     embed.addField("Created", `${dateFormat(infoChannel.createdAt, timeFormat)} \n (${getDayDiff(infoChannel.createdAt, date.getTime())} days ago)`, true);
     guild.fetchMembers();
     embed.addField("Currently connected", infoChannel.members.size, true);

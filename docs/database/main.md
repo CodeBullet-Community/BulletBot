@@ -214,11 +214,11 @@ one document for each user
 {
     user: string; // userid
     onServer: Boolean, // whether they are still present on the server
-        commandCooldown: {
+        commandLastUsed: {
         // guild id, 'dm' or 'global'
         [key: string]: {
             // command name
-            [key: string]: number; // timestamp until it can be used again
+            [key: string]: number; // timestamp when the command was last used
         };
     };
     persistentRoles: {

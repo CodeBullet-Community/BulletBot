@@ -41,10 +41,10 @@ function ordinalSuffixOf(i: number) {
 
 function getPresenceColor(member: GuildMember) {
     switch (member.user.presence.status) {
-        case "dnd": return Bot.database.settingsDB.cache.embedColors.negative;
-        case "idle": return Bot.database.settingsDB.cache.embedColors.warn;
-        case "offline": return Bot.database.settingsDB.cache.embedColors.neutral;
-        case "online": return Bot.database.settingsDB.cache.embedColors.positive;
+        case "dnd": return Bot.settings.embedColors.negative;
+        case "idle": return Bot.settings.embedColors.warn;
+        case "offline": return Bot.settings.embedColors.neutral;
+        case "online": return Bot.settings.embedColors.positive;
     }
 }
 

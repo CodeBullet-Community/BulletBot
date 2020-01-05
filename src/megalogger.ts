@@ -26,7 +26,7 @@ export async function logChannelToggle(channel: GuildChannel, created: boolean) 
     await logChannel.send({
         "embed": {
             "description": `**Channel ${created ? 'Created' : 'Deleted'}: ${created ? channel.toString() : '#' + channel.name}**`,
-            "color": (created ? Bot.database.settingsDB.cache.embedColors.positive : Bot.database.settingsDB.cache.embedColors.negative),
+            "color": (created ? Bot.settings.embedColors.positive : Bot.settings.embedColors.negative),
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": "ID: " + channel.id
@@ -68,7 +68,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
         await logChannel.send({
             "embed": {
                 "description": `**Channel name changed of ${newChannel.toString()}**`,
-                "color": Bot.database.settingsDB.cache.embedColors.default,
+                "color": Bot.settings.embedColors.default,
                 "timestamp": new Date().toISOString(),
                 "footer": {
                     "text": "ID: " + newChannel.id
@@ -96,7 +96,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
         await logChannel.send({
             "embed": {
                 "description": `**Channel topic changed of ${newChannel.toString()}**`,
-                "color": Bot.database.settingsDB.cache.embedColors.default,
+                "color": Bot.settings.embedColors.default,
                 "timestamp": new Date().toISOString(),
                 "footer": {
                     "text": "ID: " + newChannel.id
@@ -136,7 +136,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
         let embed = { // base embed
             "embed": {
                 "description": `**Channel permissions changed of ${newChannel.toString()}**\n*note:* check [docs](https://discordapp.com/developers/docs/topics/permissions) to see what the numbers mean`,
-                "color": Bot.database.settingsDB.cache.embedColors.default,
+                "color": Bot.settings.embedColors.default,
                 "timestamp": new Date().toISOString(),
                 "footer": {
                     "text": "ID: " + newChannel.id
@@ -213,7 +213,7 @@ export async function logBan(guild: Guild, user: User, banned: boolean) {
     await logChannel.send({
         "embed": {
             "description": `${user.toString()}\n${user.tag}`,
-            "color": Bot.database.settingsDB.cache.embedColors[banned ? 'negative' : 'positive'],
+            "color": Bot.settings.embedColors[banned ? 'negative' : 'positive'],
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": "ID: " + user.id
@@ -252,7 +252,7 @@ export async function logMember(member: GuildMember, joined: boolean) {
     let embed: any = {
         "embed": {
             "description": member.toString() + "\n" + member.user.tag,
-            "color": Bot.database.settingsDB.cache.embedColors[joined ? 'positive' : 'negative'],
+            "color": Bot.settings.embedColors[joined ? 'positive' : 'negative'],
             "timestamp": joined ? member.joinedAt.toISOString() : new Date().toISOString(),
             "footer": {
                 "text": "ID: " + member.id
@@ -299,7 +299,7 @@ export async function logNickname(oldMember: GuildMember, newMember: GuildMember
     await logChannel.send({
         "embed": {
             "description": `**${newMember.toString()} nickname changed**`,
-            "color": Bot.database.settingsDB.cache.embedColors.default,
+            "color": Bot.settings.embedColors.default,
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": "ID: " + newMember.id
@@ -360,7 +360,7 @@ export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMem
     await logChannel.send({
         "embed": {
             "description": `**${newMember.toString()} roles changed**`,
-            "color": Bot.database.settingsDB.cache.embedColors.default,
+            "color": Bot.settings.embedColors.default,
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": "ID: " + newMember.id
@@ -409,7 +409,7 @@ export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
     await logChannel.send({
         "embed": {
             "description": `**Server name changed**`,
-            "color": Bot.database.settingsDB.cache.embedColors.default,
+            "color": Bot.settings.embedColors.default,
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": "ID: " + newGuild.id
@@ -467,7 +467,7 @@ export async function logMessageDelete(message: Message) {
     let embed: any = {
         "embed": {
             "description": `**Message from ${message.author.toString()} deleted in ${message.channel.toString()}**`,
-            "color": Bot.database.settingsDB.cache.embedColors.negative,
+            "color": Bot.settings.embedColors.negative,
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": `Author: ${message.author.id} | Message: ${message.id}`
@@ -565,7 +565,7 @@ export async function logMessageBulkDelete(messages: Collection<string, Message>
     logMessage.edit({
         "embed": {
             "description": `**Bulk deleted messages in ${messages.first().channel.toString()}**`,
-            "color": Bot.database.settingsDB.cache.embedColors.negative,
+            "color": Bot.settings.embedColors.negative,
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": "Channel: " + messages.first().channel.id
@@ -689,7 +689,7 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
     await logChannel.send({
         "embed": {
             "description": `**Message of ${newMessage.author.toString()} edited in ${newMessage.channel.toString()}** [Jump to Message](${newMessage.url})`,
-            "color": Bot.database.settingsDB.cache.embedColors.default,
+            "color": Bot.settings.embedColors.default,
             "timestamp": newMessage.editedAt.toISOString(),
             "footer": {
                 "text": `Author: ${newMessage.author.id} | Message: ${newMessage.id}`
@@ -739,7 +739,7 @@ export async function logReactionToggle(reaction: MessageReaction, user: User, r
     await logChannel.send({
         "embed": {
             "description": `**${user.toString()} ${!reacted ? 'un' : ''}reacted with ${reaction.emoji.toString()} to [this message](${reaction.message.url})${!reacted ? ' (or reaction got removed)' : ''}** `,
-            "color": Bot.database.settingsDB.cache.embedColors[reacted ? 'positive' : 'negative'],
+            "color": Bot.settings.embedColors[reacted ? 'positive' : 'negative'],
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": `User: ${user.id} | Message: ${reaction.message.id} `
@@ -776,7 +776,7 @@ export async function logReactionRemoveAll(message: Message) {
     await logChannel.send({
         "embed": {
             "description": `**All reactions were removed from a message of ${message.author.toString()} in ${message.channel.toString()}** [Jump to Message](${message.url})`,
-            "color": Bot.database.settingsDB.cache.embedColors.negative,
+            "color": Bot.settings.embedColors.negative,
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": `Author: ${message.author.id} | Message: ${message.id}`
@@ -813,7 +813,7 @@ export async function logRoleToggle(role: Role, created: boolean) {
         await logChannel.send({
             "embed": {
                 "description": `**Role ${role} (${role.name}) was ${created ? 'created' : 'deleted'}**`,
-                "color": Bot.database.settingsDB.cache.embedColors[created ? 'positive' : 'negative'],
+                "color": Bot.settings.embedColors[created ? 'positive' : 'negative'],
                 "timestamp": created ? role.createdAt.toISOString() : new Date().toISOString(),
                 "footer": {
                     "text": "ID: " + role.id
@@ -855,7 +855,7 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
         await logChannel.send({
             "embed": {
                 "description": `**Role name of ${newRole} (${newRole.name}) changed**`,
-                "color": Bot.database.settingsDB.cache.embedColors.default,
+                "color": Bot.settings.embedColors.default,
                 "timestamp": date.toISOString(),
                 "footer": {
                     "text": "ID: " + newRole.id
@@ -882,7 +882,7 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
         await logChannel.send({
             "embed": {
                 "description": `**Role color of ${newRole} (${newRole.name}) changed**`,
-                "color": Bot.database.settingsDB.cache.embedColors.default,
+                "color": Bot.settings.embedColors.default,
                 "timestamp": date.toISOString(),
                 "footer": {
                     "text": "ID: " + newRole.id
@@ -909,7 +909,7 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
         await logChannel.send({
             "embed": {
                 "description": `**Role permissions of ${newRole} (${newRole.name}) changed**\n[What those numbers mean](https://discordapp.com/developers/docs/topics/permissions)`,
-                "color": Bot.database.settingsDB.cache.embedColors.default,
+                "color": Bot.settings.embedColors.default,
                 "timestamp": date.toISOString(),
                 "footer": {
                     "text": "ID: " + newRole.id
@@ -957,7 +957,7 @@ export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildM
     await logChannel.send({
         "embed": {
             "description": `**${newMember.toString()} moved from voice channels ${oldMember.voiceChannel ? oldMember.voiceChannel : 'None'} to ${newMember.voiceChannel ? newMember.voiceChannel : 'None'}**`,
-            "color": Bot.database.settingsDB.cache.embedColors[!oldMember.voiceChannelID ? 'positive' : (!newMember.voiceChannelID ? 'negative' : 'default')],
+            "color": Bot.settings.embedColors[!oldMember.voiceChannelID ? 'positive' : (!newMember.voiceChannelID ? 'negative' : 'default')],
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": "User: " + newMember.id
@@ -994,7 +994,7 @@ export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMembe
     await logChannel.send({
         "embed": {
             "description": `**${newMember} was voice ${newMember.mute ? '' : 'un'}muted in ${newMember.voiceChannel}**`,
-            "color": Bot.database.settingsDB.cache.embedColors[newMember.mute ? 'negative' : 'positive'],
+            "color": Bot.settings.embedColors[newMember.mute ? 'negative' : 'positive'],
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": "User: " + newMember.id
@@ -1031,7 +1031,7 @@ export async function logVoiceDeaf(oldMember: GuildMember, newMember: GuildMembe
     await logChannel.send({
         "embed": {
             "description": `**${newMember} was voice ${newMember.deaf ? '' : 'un'}deafed in ${newMember.voiceChannel}**`,
-            "color": Bot.database.settingsDB.cache.embedColors[newMember.deaf ? 'negative' : 'positive'],
+            "color": Bot.settings.embedColors[newMember.deaf ? 'negative' : 'positive'],
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": "User: " + newMember.id

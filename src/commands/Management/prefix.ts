@@ -38,16 +38,16 @@ var command: commandInterface = {
             // load prefix settings from database
             var prefixDoc = await Bot.database.mainDB.prefix.findOne({ guild: message.guild.id });
 
-            if (args == 'reset' || args == Bot.database.settingsDB.cache.prefix) { // if user wants to reset the prefix to default
+            if (args == 'reset' || args == Bot.settings.prefix) { // if user wants to reset the prefix to default
                 if (prefixDoc) { // if a custom prefix is currently set
                     var oldPrefix: string = prefixDoc.toObject().prefix; // cache old prefix for logging
                     prefixDoc.remove(); // remove setting doc which makes the bot use the default
 
                     // send confirmation message
                     Bot.mStats.logResponseTime(command.name, requestTime);
-                    message.channel.send(`Successfully reset the prefix to \`${Bot.database.settingsDB.cache.prefix}\``);
+                    message.channel.send(`Successfully reset the prefix to \`${Bot.settings.prefix}\``);
                     // log that prefix has been changed
-                    Bot.logger.logPrefix(message.guild, message.member, oldPrefix, Bot.database.settingsDB.cache.prefix);
+                    Bot.logger.logPrefix(message.guild, message.member, oldPrefix, Bot.settings.prefix);
                 } else {
                     Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send(`This server doesn't have a custom prefix`);
@@ -63,7 +63,7 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            var oldPrefix = Bot.database.settingsDB.cache.prefix; // cache old prefix for logging
+            var oldPrefix = Bot.settings.prefix; // cache old prefix for logging
             if (!prefixDoc) { // when the prefix settings doc doesn't exist (so the default is set)
                 prefixDoc = new Bot.database.mainDB.prefix({ guild: message.guild.id, prefix: args });
             } else {

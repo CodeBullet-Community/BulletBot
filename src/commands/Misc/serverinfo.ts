@@ -31,7 +31,7 @@ var command: commandInterface = {
             var botCount = message.guild.members.filter(member => member.user.bot).size;
             var embed = {
                 "embed": {
-                    "color": Bot.database.settingsDB.cache.embedColors.default,
+                    "color": Bot.settings.embedColors.default,
                     "timestamp": date.toISOString(),
                     "footer": {
                         "text": "ID: " + message.guild.id + ' | Region: ' + message.guild.region
