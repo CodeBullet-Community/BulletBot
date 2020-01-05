@@ -49,7 +49,7 @@ export class Settings implements globalSettingsObject {
                 console.info(`added listener to global settings collection`);
             } else {
                 // update global settings cache at a certain interval
-                setInterval(() => Bot.database.updateGlobalSettings(Bot.database.settingsDB), globalUpdateInterval);
+                setInterval(this.sync, globalUpdateInterval);
                 console.info(`updating global settings cache every ${globalUpdateInterval}ms`);
             }
         });
