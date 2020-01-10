@@ -30,7 +30,7 @@ var command: commandInterface = {
             '{command} enable animal'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message: Message, args: string, permLevel: number, dm: boolean, guildWrapper, requestTime: [number, number]) => {
         try {
             var argIndex = 0;
             if (args.length == 0) { // send help embed if no arguments provided
@@ -60,7 +60,7 @@ var command: commandInterface = {
                             for (const cmdName in commandsObject.commands) {
                                 if (commandsObject.commands[cmdName]._enabled) continue;
                                 var cmd = Bot.commands.get(cmdName);
-                                output.addField((await Bot.database.getPrefix(message.guild)) + cmd.name, cmd.help.shortDescription);
+                                output.addField((guildWrapper.getPrefix()) + cmd.name, cmd.help.shortDescription);
                             }
 
                             // send embed or say there aren't any disabled commands
@@ -77,7 +77,7 @@ var command: commandInterface = {
                     }
 
                     // if it should just list all commands it just calls the help command
-                    Bot.commands.get('help').run(message, argsArray[argIndex] ? argsArray[argIndex] : '', permLevel, dm, requestTime);
+                    Bot.commands.get('help').run(message, argsArray[argIndex] ? argsArray[argIndex] : '', permLevel, dm, guildWrapper, requestTime);
                     break;
                 case 'enable':
                     argIndex++;
@@ -118,7 +118,7 @@ var command: commandInterface = {
                     Bot.mStats.logMessageSend();
                     Bot.mStats.logCommandUsage(command.name, 'enable');
                     // log that command was enabled
-                    Bot.logger.logCommand(message.guild, message.member, cmd, logTypes.add);
+                    Bot.logger.logCommand(guildWrapper, message.member, cmd, logTypes.add);
                     break;
                 case 'disable':
                     argIndex++;
@@ -162,7 +162,7 @@ var command: commandInterface = {
                     Bot.mStats.logMessageSend();
                     Bot.mStats.logCommandUsage(command.name, 'disable');
                     // log that command was disabled
-                    Bot.logger.logCommand(message.guild, message.member, cmd, logTypes.remove);
+                    Bot.logger.logCommand(guildWrapper, message.member, cmd, logTypes.remove);
                     break;
             }
 

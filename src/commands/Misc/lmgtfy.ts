@@ -22,7 +22,7 @@ var command: commandInterface = {
         ]
     },
     // TODO: implement different  search engines such as DDG for bangs and img search etc?
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             args = args.trim();
             if (args.length == 0) { // send help embed if no arguments provided

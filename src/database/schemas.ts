@@ -82,6 +82,7 @@ let usageLimitSchema: mongoose.SchemaDefinition = {
 // guild
 export interface guildObject {
     guild: string;
+    prefix?: string;
     logChannel: string;
     caseChannel: string;
     totalCases: number;
@@ -105,6 +106,7 @@ export interface guildObject {
 export interface guildDoc extends mongoose.Document, guildObject { }
 export const guildSchema = new mongoose.Schema({
     guild: String,
+    prefix: { required: false, type: String },
     logChannel: String,
     caseChannel: String,
     totalCases: Number,
@@ -149,17 +151,6 @@ export const staffSchema = new mongoose.Schema({
         roles: [String],
         users: [String]
     }
-});
-
-// prefix
-export interface prefixObject {
-    guild: string;
-    prefix: string;
-}
-export interface prefixDoc extends mongoose.Document, prefixObject { }
-export const prefixSchema = new mongoose.Schema({
-    guild: String,
-    prefix: String
 });
 
 // commands
@@ -892,7 +883,7 @@ export interface globalSettingsObject {
         warn: number;
         positive: number;
     };
-    botMasters: [string];
+    botMasters: string[];
     commands: {
         // key is command name
         [key: string]: {

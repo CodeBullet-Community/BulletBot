@@ -1,27 +1,12 @@
 import mongoose = require('mongoose');
-import { Guild, GuildMember, UserResolvable, GuildResolvable } from "discord.js";
-import { CommandUsageLimits, guildDoc, UsageLimits, guildObject, guildSchema } from "./schemas";
+import { Guild, GuildMember, UserResolvable, GuildResolvable, GuildMemberResolvable } from "discord.js";
+import { CommandUsageLimits, guildDoc, UsageLimits, guildObject, guildSchema, staffDoc } from "./schemas";
 import { Bot } from '..';
-import { getPermLevel } from '../utils/permissions';
+import { getPermLevel, permLevels } from '../utils/permissions';
 import { CommandResolvable } from '../commands';
-import { resolveCommandResolvable } from '../utils/resolvers';
+import { resolveCommand, resolveGuildMember } from '../utils/resolvers';
 
-/**
- * returns a GuildWrapper for the specified guild. 
- * This helper function is necessary to ensure that the wrapper is ready when it's returned
- *
- * @export
- * @param {GuildResolvable} guild
- * @returns
- */
-export async function getGuildWrapper(guild: GuildResolvable) {
-    let guildID = guild.toString();
-    if (guild instanceof Guild)
-        guildID = guild.id;
-
-    let guildDoc = await Bot.database.findGuildDoc(guildID);
-    return new GuildWrapper(guildDoc, guild instanceof Guild ? guild : undefined);
-}
+export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
 
 /**
  * Wrapper for the guild object and document so everything can easily be access through one object
@@ -33,7 +18,9 @@ export async function getGuildWrapper(guild: GuildResolvable) {
 export class GuildWrapper implements guildObject {
     guildObject: Guild;
     doc: guildDoc;
+    staffDoc: staffDoc;
     guild: string;
+    prefix: string;
     logChannel: string;
     caseChannel: string;
     totalCases: number;
@@ -71,6 +58,73 @@ export class GuildWrapper implements guildObject {
         let object: guildObject = this.doc.toObject();
         for (const key in guildSchema.obj)
             this[key] = object[key];
+    }
+
+    /**
+     * Saves changes to doc that were marked as modified
+     *
+     * @param {string} [path] Path that should be specially marked (if provided, document doesn't sync with wrapper)
+     * @returns The saved document
+     * @memberof UserWrapper
+     */
+    save(path?: string) {
+        if (path)
+            this.doc.markModified(path);
+        for (const key in guildSchema.obj)
+            this.doc[key] = this[key];
+        return this.doc.save();
+    }
+
+    /**
+     * Marks everything as modified and saves it to the database.
+     *
+     * @returns The saved document
+     * @memberof UserWrapper
+     */
+    saveAll() {
+        for (const key in guildSchema.obj) {
+            this.doc[key] = this[key];
+            this.doc.markModified(key);
+        }
+        return this.doc.save();
+    }
+
+    /**
+     * Gets the staff document and caches it for if this function is called again.
+     *
+     * @returns Staff document of this guild
+     * @memberof GuildWrapper
+     */
+    async getStaffDoc() {
+        if (this.staffDoc) return this.staffDoc;
+        this.staffDoc = await Bot.database.mainDB.staff.findOne({ guild: this.guild }).exec();
+        if (!this.staffDoc) throw new Error(`Staff document for guild ${this.guild} not found`);
+        return this.staffDoc;
+    }
+
+    /**
+     * Returns the prefix that the guild uses
+     *
+     * @returns Prefix
+     * @memberof GuildWrapper
+     */
+    getPrefix() {
+        if (this.prefix) return this.prefix;
+        return Bot.settings.prefix;
+    }
+
+    /**
+     * Sets a new prefix for the server
+     *
+     * @param {string} prefix New prefix (If not provided, prefix will be reset)
+     * @param {boolean} [save=true] If it should be saved directly
+     * @memberof GuildWrapper
+     */
+    setPrefix(prefix?: string, save = true) {
+        this.prefix = prefix;
+        this.doc.prefix = prefix;
+        this.doc.markModified('prefix');
+        if (save) this.save();
     }
 
     /**
@@ -125,19 +179,6 @@ export class GuildWrapper implements guildObject {
      */
     getCases() {
         return Bot.caseLogger.findByGuild(this.doc.guild);
-    }
-
-    /**
-     * get permission level of user / member
-     *
-     * @param {UserResolvable} user user of which to get permission level
-     * @returns permission level or undefined if member was not found
-     * @memberof GuildWrapper
-     */
-    async getUserPermLevel(user: UserResolvable) {
-        if (user instanceof GuildMember)
-            return getPermLevel(user);
-        return getPermLevel(await this.guildObject.fetchMember(user));
     }
 
     /**
@@ -229,9 +270,46 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     getCommandUsageLimits(commandResolvable: CommandResolvable): CommandUsageLimits {
-        let command = resolveCommandResolvable(commandResolvable);
+        let command = resolveCommand(commandResolvable);
         let usagelimits = this.getUsageLimits(`commands.${command.name}`);
         return Bot.commands.getCommandUsageLimits(command, usagelimits);
+    }
+
+    /**
+     *  returns perm level of member
+     *  - member: 0
+     *  - immune: 1
+     *  - mod: 2
+     *  - admin: 3 
+     *  - botMaster: 4
+     *
+     * @export
+     * @param {GuildMemberResolvable} member member to get perm level from
+     * @returns perm level
+     */
+    async getPermLevel(memberResolvable: GuildMemberResolvable): Promise<permLevels> {
+        let member = await resolveGuildMember(this.guildObject, memberResolvable);
+
+        // if bot master
+        if (Bot.settings.getBotMasters().includes(member.id))
+            return permLevels.botMaster;
+
+        // if admin
+        if (member.hasPermission('ADMINISTRATOR'))
+            return permLevels.admin;
+
+        let staffDoc = await this.getStaffDoc();
+        let ranks = ['admin', 'mod', 'immune'];
+        // iterate through all privileged ranks
+        for (const rank of ranks) {
+            let rankStaff = staffDoc[rank + 's'];
+            // is one of the staff user
+            if (!rankStaff.users.includes(member.user.id)) continue;
+            // has one of the staff roles
+            if (!member.roles.find(role => rankStaff.roles.includes(role.id))) continue;
+            return permLevels[rank];
+        }
+        return permLevels.member;
     }
 
 }

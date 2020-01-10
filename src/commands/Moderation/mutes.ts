@@ -25,7 +25,7 @@ var command: commandInterface = {
             '{command}'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             // get all muted members (permMuted) and temp muted (pActionDocs)
             if (message.guild.large) await message.guild.fetchMembers();

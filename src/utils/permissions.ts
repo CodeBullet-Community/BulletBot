@@ -32,7 +32,7 @@ export async function getPermLevel(member: GuildMember) {
     if (member == null) {
         return permLevels.member;
     }
-    if (Bot.database.getBotMasters().includes(member.user.id)) { // bot masters
+    if (Bot.settings.getBotMasters().includes(member.user.id)) { // bot masters
         return permLevels.botMaster;
     }
     if (member.hasPermission('ADMINISTRATOR')) { // if a user has admin rights he's automatically a admin

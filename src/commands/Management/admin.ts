@@ -26,7 +26,7 @@ var command: commandInterface = {
             '{command} list'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             var argIndex = 0;
             if (args.length == 0) { // send help embed if no arguments provided

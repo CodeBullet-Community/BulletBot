@@ -3,7 +3,7 @@ import { globalSettingsDoc, globalSettingsSchema, globalSettingsObject, CommandU
 import { Bot } from '..';
 import { globalUpdateInterval } from '../bot-config.json';
 import { CommandResolvable } from '../commands';
-import { resolveCommandResolvable } from '../utils/resolvers';
+import { resolveCommand } from '../utils/resolvers';
 
 /**
  * Connects to the settings database and caches the global settings.
@@ -16,7 +16,7 @@ export class Settings implements globalSettingsObject {
     prefix: string;
     presence: import("discord.js").PresenceData;
     embedColors: { default: number; help: number; neutral: number; negative: number; warn: number; positive: number; };
-    botMasters: [string];
+    botMasters: string[];
     commands: { [key: string]: { [key: string]: any; }; };
     filters: { [key: string]: { [key: string]: any; }; };
     usageLimits?: import("./schemas").UsageLimits;
@@ -123,9 +123,20 @@ export class Settings implements globalSettingsObject {
      * @memberof Settings
      */
     getCommandUsageLimits(commandResolvable: CommandResolvable): CommandUsageLimits {
-        let command = resolveCommandResolvable(commandResolvable);
+        let command = resolveCommand(commandResolvable);
         let usageLimits = this.tracePath(this.usageLimits, `commands.${command.name}`) || {};
         return Bot.commands.getCommandUsageLimits(command, usageLimits);
+    }
+
+    /**
+     * returns array of bot master ids
+     *
+     * @returns
+     * @memberof Database
+     */
+    getBotMasters(): string[] {
+        if (!Bot.settings) return [];
+        return Bot.settings.botMasters;
     }
 
 }

@@ -5,17 +5,18 @@ import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
 import { permLevels } from '../../utils/permissions';
 import { commandsObject, logTypes, filtersObject } from '../../database/schemas';
+import { GuildWrapper } from '../../database/guildWrapper';
 
 /**
  * sends a list of filters with their short description
  *
- * @param {Guild} guild guild to get the prefix from
+ * @param {GuildWrapper} guildWrapper Guild to get the list for
  * @param {Message} message message it should reply to
  * @param {*} strucObject structure Object with filters and subcategories it should list
  * @param {string} path the path to that structure Object
  * @param {[number, number]} requestTime when the list was requested to measure response time
  */
-async function sendFilterList(guild: Guild, message: Message, strucObject: any, path: string, requestTime: [number, number]) {
+async function sendFilterList(guildWrapper: GuildWrapper, message: Message, strucObject: any, path: string, requestTime: [number, number]) {
     var output = new RichEmbed();
     output.setAuthor('Filter List:', Bot.client.user.displayAvatarURL);
     if (path) output.setFooter('Path: ~' + path);
@@ -29,10 +30,11 @@ async function sendFilterList(guild: Guild, message: Message, strucObject: any, 
         output.addField('Subcategories:', cat_text);
     }
 
+    let prefix = guildWrapper.getPrefix();
     var filters = Object.keys(strucObject).filter(x => strucObject[x].shortHelp);
     for (var i = 0; i < filters.length; i++) {
         var f = Bot.filters.get(filters[i]);
-        output.addField((await Bot.database.getPrefix(guild)) + f.name, f.shortHelp);
+        output.addField(prefix + f.name, f.shortHelp);
     }
     Bot.mStats.logResponseTime(command.name, requestTime);
     message.channel.send(output);
@@ -64,7 +66,7 @@ var command: commandInterface = {
             '{command} enable kappa'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             var argIndex = 0;
             if (args.length == 0) { // send help embed if no arguments provided
@@ -124,7 +126,7 @@ var command: commandInterface = {
                             }
                         }
                     }
-                    sendFilterList(message.guild, message, strucObject, args.slice(4), requestTime);
+                    sendFilterList(guildWrapper, message, strucObject, args.slice(4), requestTime);
                     break;
                 case 'enable':
                     argIndex++;
@@ -164,7 +166,7 @@ var command: commandInterface = {
                     Bot.mStats.logMessageSend();
                     Bot.mStats.logCommandUsage(command.name, 'enable');
                     // log that the filter was enabled
-                    Bot.logger.logFilter(message.guild, message.member, filter, logTypes.add);
+                    Bot.logger.logFilter(guildWrapper, message.member, filter, logTypes.add);
                     break;
                 case 'disable':
                     argIndex++;
@@ -199,7 +201,7 @@ var command: commandInterface = {
                     Bot.mStats.logMessageSend();
                     Bot.mStats.logCommandUsage(command.name, 'disable');
                     // log that the filter was disabled
-                    Bot.logger.logFilter(message.guild, message.member, filter, logTypes.remove);
+                    Bot.logger.logFilter(guildWrapper, message.member, filter, logTypes.remove);
                     break;
                 default:
                     if (!argsArray[argIndex]) { // check if filter was specified

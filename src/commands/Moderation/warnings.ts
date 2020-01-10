@@ -74,7 +74,7 @@ var command: commandInterface = {
             '{command} @jeff#1234'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
 
             let member: GuildMember;

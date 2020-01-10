@@ -23,7 +23,7 @@ var command: commandInterface = {
             '{command}'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             var date = new Date();
             var age = getDayDiff(message.guild.createdTimestamp, date.getTime());

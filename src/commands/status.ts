@@ -23,7 +23,7 @@ var command: commandInterface = {
             '{command}'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             Bot.mStats.logResponseTime(command.name, requestTime);
             const m: any = await message.channel.send("Pong");

@@ -33,7 +33,7 @@ let command: commandInterface = {
             }
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime, commandCache?) => {
         try {
             // REMEMBER: return true if the command was successfully executed (meaning the users intention where fulfilled)
             //           return false if the command execution was unsuccessful (then the cooldown doesn't get started)

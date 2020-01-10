@@ -75,7 +75,7 @@ var command: commandInterface = {
             }
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             if (args.length == 0) { // if no argument was given send the help embed
                 message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));

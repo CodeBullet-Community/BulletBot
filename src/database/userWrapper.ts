@@ -4,27 +4,6 @@ import { User, UserResolvable, GuildMember, Message, Guild } from "discord.js";
 import { resolveUser } from "../utils/resolvers";
 
 /**
- * returns a user wrapper.
- * This function is necessary to ensure that the wrapper is ready when returned
- *
- * @export
- * @param {UserResolvable} userResolvable user that should be wrapped
- * @param {userDoc} [userDoc] Optional user document (doesn't have to query it if provided)
- * @param {boolean} [createDoc] If the document should be created if it wasn't found (won't be saved to the database)
- * @returns
- */
-export async function getUserWrapper(userResolvable: UserResolvable, userDoc?: userDoc, createDoc?: boolean) {
-    let user = await resolveUser(userResolvable);
-
-    if (!userDoc)
-        userDoc = await Bot.database.findUserDoc(user.id);
-    if (!userDoc && createDoc)
-        userDoc = new Bot.database.mainDB.users({ user: user.id, commandLastUsed: {} });
-
-    return new UserWrapper(userDoc, user);
-}
-
-/**
  * Wrapper for user doc/object. Provides additional functions and easier data handling
  *
  * @export

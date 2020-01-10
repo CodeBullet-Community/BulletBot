@@ -16,6 +16,7 @@ import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, log
 import { PActions } from './database/pActions';
 import { CaseLogger } from "./database/caseLogger";
 import { Settings } from './database/settings';
+import { GuildWrapper } from './database/guildWrapper';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -182,27 +183,30 @@ client.on('message', async message => {
     // get command cache if there is one
     let commandCache = await Bot.database.getCommandCache(message.channel, message.author);
 
+    // get guild wrapper
+    let guildWrapper: GuildWrapper = undefined;
+    if (!dm)
+        guildWrapper = await Bot.database.getGuildWrapper(message.guild);
+
     // if message is only a mention of the bot, he dms help
     if (message.content == '<@' + Bot.client.user.id + '>' && !commandCache) {
-        message.author.createDM().then(dmChannel => {
-            message.channel = dmChannel;
-            Bot.commands.runCommand(message, '', 'help', permLevels.member, true, requestTime);
-            Bot.commands.runCommand(message, 'help', 'help', permLevels.member, true, requestTime);
-        });
+        message.channel = await message.author.createDM();
+        Bot.commands.runCommand(message, '', 'help', permLevels.member, true, guildWrapper, requestTime);
+        Bot.commands.runCommand(message, 'help', 'help', permLevels.member, true, guildWrapper, requestTime);
         return;
     }
 
-    var permLevel = permLevels.member;
-    if (!dm) {// gets perm level of member if message isn't from dms
-        permLevel = await getPermLevel(message.member);
-    }
+    // get perm level
+    let permLevel = permLevels.member;
+    if (!dm) permLevel = await guildWrapper.getPermLevel(message.member);
 
-    if (commandCache) { // directly calls command when command cache exists
-        Bot.commands.runCachedCommand(message, commandCache, permLevel, dm, requestTime);
+    // directly calls command when command cache exists
+    if (commandCache) {
+        Bot.commands.runCachedCommand(message, commandCache, permLevel, dm, guildWrapper, requestTime);
         return;
     }
 
-    var prefix = await Bot.database.getPrefix(message.guild);
+    let prefix = guildWrapper.getPrefix();
     if (!message.content.startsWith(prefix)) {
         if (!message.content.toLowerCase().startsWith(Bot.settings.prefix + 'prefix')) { // also checks if it contains ?!prefix
             if (!dm && permLevel == permLevels.member) {
@@ -210,16 +214,13 @@ client.on('message', async message => {
             }
             return;
         }
-    }
-    // if the command is ?!prefix isn't ?!
-    if (prefix != Bot.settings.prefix && message.content.startsWith(Bot.settings.prefix)) {
-        prefix = Bot.settings.prefix; // sets prefix if message starts with ?!prefix
+        prefix = Bot.settings.prefix;
     }
 
-    var command = message.content.split(' ')[0].slice(prefix.length).toLowerCase(); // gets command name
-    var args = message.content.slice(prefix.length + command.length + 1); // gets arguments
+    let command = message.content.split(' ')[0].slice(prefix.length).toLowerCase(); // gets command name
+    let args = message.content.slice(prefix.length + command.length + 1); // gets arguments
 
-    Bot.commands.runCommand(message, args, command, permLevel, dm, requestTime); // runs command
+    Bot.commands.runCommand(message, args, command, permLevel, dm, guildWrapper, requestTime); // runs command
 });
 
 client.on('messageUpdate', async (oldMessage: discord.Message, newMessage: discord.Message) => {

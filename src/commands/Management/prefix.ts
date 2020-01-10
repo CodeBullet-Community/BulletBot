@@ -25,23 +25,19 @@ var command: commandInterface = {
             '{command} reset'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message: Message, args: string, permLevel: number, dm: boolean, guildWrapper, requestTime: [number, number]) => {
         try {
             if (args.length == 0) { // if no argument was provided reply with prefix
                 Bot.mStats.logResponseTime(command.name, requestTime);
-                message.channel.send(`My prefix is \`${await Bot.database.getPrefix(message.guild)}\``);
+                message.channel.send(`My prefix is \`${guildWrapper.getPrefix()}\``);
                 Bot.mStats.logCommandUsage(command.name, 'list');
                 Bot.mStats.logMessageSend();
                 return false;
             }
 
-            // load prefix settings from database
-            var prefixDoc = await Bot.database.mainDB.prefix.findOne({ guild: message.guild.id });
-
             if (args == 'reset' || args == Bot.settings.prefix) { // if user wants to reset the prefix to default
-                if (prefixDoc) { // if a custom prefix is currently set
-                    var oldPrefix: string = prefixDoc.toObject().prefix; // cache old prefix for logging
-                    prefixDoc.remove(); // remove setting doc which makes the bot use the default
+                if (guildWrapper.prefix) { // if a custom prefix is currently set
+                    guildWrapper.setPrefix();
 
                     // send confirmation message
                     Bot.mStats.logResponseTime(command.name, requestTime);
@@ -63,14 +59,8 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            var oldPrefix = Bot.settings.prefix; // cache old prefix for logging
-            if (!prefixDoc) { // when the prefix settings doc doesn't exist (so the default is set)
-                prefixDoc = new Bot.database.mainDB.prefix({ guild: message.guild.id, prefix: args });
-            } else {
-                oldPrefix = prefixDoc.toObject().prefix;
-                prefixDoc.prefix = args;
-            }
-            prefixDoc.save(); // save changes to the database
+            var oldPrefix = guildWrapper.getPrefix();
+            guildWrapper.setPrefix(args);
 
             // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);

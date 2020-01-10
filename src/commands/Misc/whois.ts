@@ -186,7 +186,7 @@ var command: commandInterface = {
             '{command} @Bullet Bot#1234'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             if (args.length === 0) { // send info of requester if no arguments provided
                 await sendMemberInfo(message, message.member, permLevel, permLevel, requestTime);

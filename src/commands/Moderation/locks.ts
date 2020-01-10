@@ -25,7 +25,7 @@ var command: commandInterface = {
             '{command}'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             let guildDoc = await Bot.database.findGuildDoc(message.guild.id, ['locks']);
             if (!guildDoc) {

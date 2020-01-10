@@ -7,6 +7,7 @@ import { filterInterface } from '../filters';
 import { filterAction, filterActions } from '../utils/filters';
 import { actionToString } from '../utils/parsers';
 import { youtube } from '../bot-config.json';
+import { GuildWrapper } from './guildWrapper';
 
 /**
  * Manages connection to main database with the logs collection. It logs actions into the the database and if a log channel was define also into discord.
@@ -281,21 +282,21 @@ export class Logger {
     /**
      * logs a filter toggle in database and log channel
      *
-     * @param {Guild} guild guild where filter was toggled
+     * @param {GuildWrapper} guildWrapper guild where filter was toggled
      * @param {GuildMember} mod member that requested the toggle
      * @param {filterInterface} filter filter that was toggled
      * @param {(0 | 1)} type enabled or disabled
      * @returns
      * @memberof Logger
      */
-    async logFilter(guild: Guild, mod: GuildMember, filter: filterInterface, type: 0 | 1) {
+    async logFilter(guildWrapper: GuildWrapper, mod: GuildMember, filter: filterInterface, type: 0 | 1) {
         var date = new Date();
-        var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
+        var guildDoc = await this.guilds.findOne({ guild: guildWrapper.guild }).exec();
         if (!guildDoc) return;
 
         // logs log in database
         var logObject: logObject = {
-            guild: guild.id,
+            guild: guildWrapper.guild,
             mod: mod.id,
             action: logActions.filter,
             timestamp: date.getTime(),
@@ -311,7 +312,7 @@ export class Logger {
         Bot.mStats.logLog();
 
         // logs log in log channel if one is specified
-        var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
+        var logChannel: any = guildWrapper.guildObject.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
         logChannel.send({
@@ -329,7 +330,7 @@ export class Logger {
                     },
                     {
                         'name': `${type ? 'Enable' : 'Disable'} Filter:`,
-                        'value': `${await Bot.database.getPrefix(guild)}filters ${type ? 'enable' : 'disable'} ${filter.name}`
+                        'value': `${guildWrapper.getPrefix()}filters ${type ? 'enable' : 'disable'} ${filter.name}`
                     }
                 ]
             }
@@ -339,21 +340,21 @@ export class Logger {
     /**
      * logs the toggling of a command in database and log channel
      *
-     * @param {Guild} guild guild where command was toggled
+     * @param {GuildWrapper} guildWrapper guild where command was toggled
      * @param {GuildMember} mod member that requested the toggle
      * @param {commandInterface} command command that was actually toggled
      * @param {(0 | 1)} type enabled or disabled
      * @returns
      * @memberof Logger
      */
-    async logCommand(guild: Guild, mod: GuildMember, command: commandInterface, type: 0 | 1) {
+    async logCommand(guildWrapper: GuildWrapper, mod: GuildMember, command: commandInterface, type: 0 | 1) {
         var date = new Date();
-        var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
+        var guildDoc = await this.guilds.findOne({ guild: guildWrapper.guild }).exec();
         if (!guildDoc) return;
 
         // logs log in database
         var logObject: logObject = {
-            guild: guild.id,
+            guild: guildWrapper.guild,
             mod: mod.id,
             action: logActions.command,
             timestamp: date.getTime(),
@@ -369,7 +370,7 @@ export class Logger {
         Bot.mStats.logLog();
 
         // logs log in log channel if one is specified
-        var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
+        var logChannel: any = guildWrapper.guildObject.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
         logChannel.send({
@@ -388,7 +389,7 @@ export class Logger {
                     },
                     {
                         'name': `${type ? 'Re-enable' : 'Disable'} Command:`,
-                        'value': `${await Bot.database.getPrefix(guild)}commands ${type ? 'enable' : 'disable'} ${command.name}`
+                        'value': `${guildWrapper.getPrefix()}commands ${type ? 'enable' : 'disable'} ${command.name}`
                     }
                 ]
             }

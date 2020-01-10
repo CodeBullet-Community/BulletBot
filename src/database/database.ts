@@ -6,11 +6,9 @@ import {
     filtersDoc,
     globalSettingsDoc,
     staffDoc,
-    prefixDoc,
     commandCacheDoc,
     guildSchema,
     staffSchema,
-    prefixSchema,
     commandsSchema,
     filtersSchema,
     logSchema,
@@ -32,10 +30,12 @@ import {
 } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
-import { Guild, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
+import { Guild, DMChannel, GroupDMChannel, TextChannel, User, Collection, Snowflake, GuildResolvable, UserResolvable } from 'discord.js';
 import { Bot } from '..';
 import { toNano } from '../utils/time';
 import { UserWrapper } from './userWrapper';
+import { GuildWrapper } from './guildWrapper';
+import { resolveGuild, resolveUser } from '../utils/resolvers';
 
 /**
  * Manages all connections to the main database and settings database
@@ -54,7 +54,6 @@ export class Database {
         connection: mongoose.Connection;
         guilds: mongoose.Model<guildDoc>;
         staff: mongoose.Model<staffDoc>;
-        prefix: mongoose.Model<prefixDoc>;
         commands: mongoose.Model<commandsDoc>;
         filters: mongoose.Model<filtersDoc>;
         logs: mongoose.Model<logDoc>;
@@ -63,6 +62,11 @@ export class Database {
         megalogs: mongoose.Model<megalogDoc>;
         cases: mongoose.Model<caseDoc>;
         pActions: mongoose.Model<pActionDoc>;
+    };
+
+    cache: {
+        guilds: Collection<Snowflake, GuildWrapper>;
+        users: Collection<Snowflake, UserWrapper>;
     };
 
     /**
@@ -85,7 +89,6 @@ export class Database {
                 connection: mainCon,
                 guilds: mainCon.model('guild', guildSchema, 'guilds'),
                 staff: mainCon.model('staff', staffSchema, 'staff'),
-                prefix: mainCon.model('prefix', prefixSchema, 'prefix'),
                 commands: mainCon.model('commands', commandsSchema, 'commands'),
                 filters: mainCon.model('filters', filtersSchema, 'filters'),
                 logs: mainCon.model('log', logSchema, 'logs'),
@@ -94,7 +97,12 @@ export class Database {
                 megalogs: mainCon.model('megalogSettings', megalogSchema, 'megalogs'),
                 cases: mainCon.model('cases', caseSchema, 'cases'),
                 pActions: mainCon.model('pActions', pActionSchema, 'pAction')
-            }
+            };
+
+            Bot.database.cache = {
+                guilds: new Collection(),
+                users: new Collection()
+            };
 
             // clean unused data from database at a certain interval
             setInterval(async () => {
@@ -121,92 +129,6 @@ export class Database {
     }
 
     /**
-     * sets prefix of specific guild
-     * resets it, when prefix is undefined
-     *
-     * @param {string} guildID id of guild where to set the prefix
-     * @param {string} [prefix] the custom prefix. If it's undefined the prefix will be reset
-     * @returns
-     * @memberof Database
-     */
-    async setPrefix(guildID: string, prefix?: string) {
-        var prefixDoc: prefixDoc;
-        if (prefix) {
-            prefixDoc = await this.mainDB.prefix.findOne({ guild: guildID }).exec();
-            if (prefixDoc) return await prefixDoc.remove();
-        }
-        prefixDoc = new this.mainDB.prefix({
-            guild: guildID,
-            prefix: prefix
-        });
-        return await prefixDoc.save();
-    }
-
-    /**
-     * returns prefix of specific guild
-     * returns default prefix if there isn't a custom one defined
-     *
-     * @param {string} guildID
-     * @returns
-     * @memberof Database
-     */
-    /**
-     * returns prefix of specific guild
-     * returns default prefix if there isn't a custom one defined
-     *
-     * @param {Guild} [guild] guild of which to get the prefix
-     * @param {string} [guildID] guild id if you only have the id
-     * @returns {Promise<string>} the prefix
-     * @memberof Database
-     */
-    async getPrefix(guild?: Guild, guildID?: string): Promise<string> {
-        if (!guildID && guild) guildID = guild.id;
-        if (guildID) {
-            var prefixDoc = await this.mainDB.prefix.findOne({ guild: guildID }).exec();
-            if (prefixDoc) return prefixDoc.toObject().prefix;
-            if (!Bot.settings) return '!?';
-        }
-        return Bot.settings.prefix;
-    }
-
-    /**
-     * returns array of bot master ids
-     *
-     * @returns
-     * @memberof Database
-     */
-    getBotMasters() {
-        if (!Bot.settings) return [];
-        return Bot.settings.botMasters;
-    }
-
-    /**
-     * return global command settings of specific command
-     *
-     * @param {string} command command name
-     * @returns
-     * @memberof Database
-     */
-    getGlobalCommandSettings(command: string) {
-        if (!Bot.settings || !Bot.settings.commands[command])
-            return undefined;
-        return Bot.settings.commands[command];
-    }
-
-    /**
-     * return global filter settings of specific filter
-     *
-     * @param {string} filter filter name
-     * @returns
-     * @memberof Database
-     */
-    getGlobalFilterSettings(filter: string) {
-        if (!Bot.settings || !Bot.settings.filters[filter])
-            return undefined;
-        return Bot.settings.filters[filter];
-    }
-
-    /**
      * return guild search query
      *
      * @param {string} guildID id of guild of which t find the doc
@@ -215,6 +137,28 @@ export class Database {
      */
     findGuildDoc(guildID: string, projection?: string[]) {
         return this.mainDB.guilds.findOne({ guild: guildID }, projection).exec();
+    }
+
+    /**
+     * Returns a GuildWrapper for the specified guild. 
+     * This helper function is necessary to ensure that the wrapper is ready when it's returned
+     *
+     * @export
+     * @param {GuildResolvable} guild The guild to get the wrapper for
+     * @returns GuildWrapper of the specified guild
+     * @memberof Database
+     */
+    async getGuildWrapper(guildResolvable: GuildResolvable) {
+        let guild = resolveGuild(guildResolvable);
+        if (!guild) return undefined;
+
+        let guildWrapper = this.cache.guilds.get(guild.id);
+        if (guildWrapper) return guildWrapper;
+
+        let guildDoc = await this.findGuildDoc(guild.id);
+        guildWrapper = new GuildWrapper(guildDoc, guild instanceof Guild ? guild : undefined);
+        this.cache.guilds.set(guild.id, guildWrapper);
+        return guildWrapper
     }
 
     /**
@@ -265,12 +209,12 @@ export class Database {
      * @memberof Database
      */
     async removeGuild(guildID: string) {
+        this.cache.guilds.delete(guildID);
         for (const webhookDoc of await Bot.youtube.webhooks.find({ guild: guildID })) {
             Bot.youtube.deleteWebhook(guildID, webhookDoc.toObject().channel, webhookDoc.toObject().feed);
         }
         this.mainDB.guilds.deleteOne({ guild: guildID }).exec();
         this.mainDB.staff.deleteOne({ guild: guildID }).exec();
-        this.mainDB.prefix.deleteOne({ guild: guildID }).exec();
         this.mainDB.commands.deleteOne({ guild: guildID }).exec();
         this.mainDB.filters.deleteOne({ guild: guildID }).exec();
         this.mainDB.logs.deleteMany({ guild: guildID }).exec();
@@ -280,7 +224,7 @@ export class Database {
     }
 
     /**
-     * cleans the entire guild from guilds, which the bot isn't in anymore
+     * cleans the database from guilds, which the bot isn't in anymore
      *
      * @memberof Database
      */
@@ -552,6 +496,30 @@ export class Database {
             return new UserWrapper(userDoc, user);
         } else if (create)
             return new UserWrapper(undefined, user);
+    }
+
+    /**
+     * Gets a user wrapper for a given user and caches it
+     *
+     * @param {UserResolvable} userResolvable User for which to get a wrapper
+     * @param {boolean} [create] If a userDoc should be created if it wasn't found (won't be saved to the database)
+     * @returns The userWrapper of the given user
+     * @memberof Database
+     */
+    async getUserWrapper(userResolvable: UserResolvable, create?: boolean) {
+        let user = await resolveUser(userResolvable);
+
+        let userWrapper = this.cache.users.get(user.id);
+        if (userWrapper) return userWrapper;
+
+        let userDoc = await Bot.database.findUserDoc(user.id);
+        if (!userDoc && create)
+            userDoc = new Bot.database.mainDB.users({ user: user.id });
+        if (!userDoc) return undefined;
+
+        userWrapper = new UserWrapper(userDoc, user);
+        this.cache.users.set(user.id, userWrapper);
+        return userWrapper;
     }
 
     /**
