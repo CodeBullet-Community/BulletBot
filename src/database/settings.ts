@@ -61,10 +61,10 @@ export class Settings implements globalSettingsObject {
      * @memberof Settings
      */
     async sync() {
-        let doc = await this.collection.findOne().exec();
+        let doc = await Bot.settings.collection.findOne().exec();
         if (!doc)
             throw new Error('settings document not found');
-        this.processDoc(doc);
+        Bot.settings.processDoc(doc);
     }
 
     /**
@@ -74,9 +74,10 @@ export class Settings implements globalSettingsObject {
      * @param {globalSettingsDoc} doc
      * @memberof Settings
      */
-    private processDoc(doc: globalSettingsDoc) {
-        for (const key in globalSettingsSchema.obj)
-            this[key] = doc[key];
+    processDoc(doc: globalSettingsDoc) {
+        let settingsObj = doc.toObject({minimize: false});
+        for (const key in settingsObj)
+            this[key] = settingsObj[key];
 
         if (!Bot.client.user) return;
         if (this.presence && (this.presence.status || this.presence.game || this.presence.afk)) {
