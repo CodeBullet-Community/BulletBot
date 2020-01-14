@@ -3,8 +3,7 @@ import { commandInterface } from '../../commands';
 import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString } from '../../utils/parsers';
-import { CommandCache } from '../../database/schemas';
+import { CommandCache } from '../../database/commandCache';
 
 const abc = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
@@ -35,7 +34,7 @@ var command: commandInterface = {
                 message.channel.send(abc[0]);
                 Bot.mStats.logMessageSend();
                 // create command cache for user
-                new CommandCache(undefined, message.channel, message.author, command.name, 10000, { index: 0 });
+                Bot.database.createCommandCache(message.channel, message.author, command, Date.now() + 10000, { index: 0 });
             } else {
                 if (abc[commandCache.cache.index + 1] == args.toLocaleLowerCase()) { // if user replied with the correct character
                     commandCache.cache.index += 2;

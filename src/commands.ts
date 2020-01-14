@@ -1,11 +1,12 @@
 import { Message, Collection, Guild } from 'discord.js';
 import * as fs from 'fs';
 import { Bot } from '.';
-import { CommandCache, CommandUsageLimits } from './database/schemas';
+import { CommandUsageLimits } from './database/schemas';
 import { permLevels } from './utils/permissions';
 import { permToString, durationToString } from './utils/parsers';
 import { GuildWrapper, GuildWrapperResolvable } from './database/guildWrapper';
 import { resolveCommand, resolveGuildWrapper } from './utils/resolvers';
+import { CommandCache } from './database/commandCache';
 
 /**
  * definition of a command with all it's properties and functions
@@ -271,7 +272,7 @@ export class Commands {
      * @memberof Commands
      */
     async runCachedCommand(message: Message, commandCache: CommandCache, permLevel: permLevels, dm: boolean, guildWrapper: GuildWrapper, requestTime: [number, number]) {
-        var cmd = this.commands.get(commandCache.command);
+        var cmd = this.commands.get(commandCache.command.name);
         if (!cmd) {
             commandCache.remove();
             return;

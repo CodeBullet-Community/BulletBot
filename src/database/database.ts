@@ -4,7 +4,6 @@ import {
     logDoc,
     commandsDoc,
     filtersDoc,
-    globalSettingsDoc,
     staffDoc,
     commandCacheDoc,
     guildSchema,
@@ -13,16 +12,12 @@ import {
     filtersSchema,
     logSchema,
     commandCacheSchema,
-    globalSettingsSchema,
-    globalSettingsObject,
-    CommandCache,
     userDoc,
     userSchema,
     megalogDoc,
     megalogSchema,
     megalogFunctions,
     megalogObject,
-    caseObject,
     caseDoc,
     caseSchema,
     pActionDoc,
@@ -30,12 +25,14 @@ import {
 } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
-import { Guild, DMChannel, GroupDMChannel, TextChannel, User, Collection, Snowflake, GuildResolvable, UserResolvable } from 'discord.js';
+import { Guild, DMChannel, GroupDMChannel, TextChannel, User, Collection, Snowflake, GuildResolvable, UserResolvable, ChannelResolvable, TextBasedChannel } from 'discord.js';
 import { Bot } from '..';
 import { toNano } from '../utils/time';
 import { UserWrapper } from './userWrapper';
 import { GuildWrapper } from './guildWrapper';
-import { resolveGuild, resolveUser } from '../utils/resolvers';
+import { resolveGuild, resolveUser, resolveUserID, resolveChannelID, resolveChannel, resolveCommand } from '../utils/resolvers';
+import { CommandResolvable } from '../commands';
+import { CommandCache } from './commandCache';
 
 /**
  * Manages all connections to the main database and settings database
@@ -67,6 +64,7 @@ export class Database {
     cache: {
         guilds: Collection<Snowflake, GuildWrapper>;
         users: Collection<Snowflake, UserWrapper>;
+        commandCaches: Collection<String, CommandCache>; // key is `${channel.id} {user.id}`
     };
 
     /**
@@ -101,7 +99,8 @@ export class Database {
 
             Bot.database.cache = {
                 guilds: new Collection(),
-                users: new Collection()
+                users: new Collection(),
+                commandCaches: new Collection()
             };
 
             // clean unused data from database at a certain interval
@@ -430,6 +429,7 @@ export class Database {
      *
      * @param {string} channelID channel ID
      * @param {string} userID user ID
+     * @param {Number} [timestamp=Date.now()] Timestamp of when the command cache was valid (Default: Date.now())
      * @returns
      * @memberof Database
      */
@@ -438,26 +438,84 @@ export class Database {
     }
 
     /**
-     * searches for commandCache and will wrap in a CommandCache class. If cacheTime and command is specified it will create one if not found. 
-     * This WON'T update the delete property of a found doc.
+     * Returns key associated with the command cache used for internal caching
      *
-     * @param {(DMChannel | GroupDMChannel | TextChannel)} channel channel for commandCache
-     * @param {User} user user for commandCache
-     * @param {string} [command] command name for new commandCache
-     * @param {number} [cacheTime] cache time for new commandCache
-     * @param {*} [cache] optional cache to set in new commandCache
+     * @private
+     * @param {ChannelResolvable} channel
+     * @param {UserResolvable} user
+     * @returns
+     * @memberof Database
+     */
+    private getCommandCacheKey(channel: ChannelResolvable, user: UserResolvable) {
+        return `${resolveChannelID(channel)} ${resolveUserID(user)}`;
+    }
+
+    /**
+     * Checks if the channel is one used by command caches
+     *
+     * @private
+     * @param {ChannelResolvable} channel Channel to check
+     * @returns Channel object if it's valid
+     * @memberof Database
+     */
+    private validateCommandCacheChannel(channel: ChannelResolvable) {
+        let channelObj = resolveChannel(channel);
+        if (!(channelObj instanceof DMChannel ||
+            channelObj instanceof GroupDMChannel ||
+            channelObj instanceof TextChannel)) throw new Error('Command cache can only be created for DMChannel, GroupDMChannel or TextChannel');
+        return channelObj;
+    }
+
+    /**
+     * Creates a new commandCache in the database and returns a CommandCache object
+     *
+     * @param {ChannelResolvable} channel Channel in which the command cache is valid
+     * @param {UserResolvable} user User associated with the command cache
+     * @param {CommandResolvable} command Command that created the command cache
+     * @param {number} deleteTimestamp When the command cache should be deleted
+     * @param {*} [cache={}] Optional cache
+     * @returns
+     * @memberof Database
+     */
+    async createCommandCache(channel: ChannelResolvable, user: UserResolvable, command: CommandResolvable, deleteTimestamp: number, cache = {}) {
+        let channelObj = this.validateCommandCacheChannel(channel);
+        let userObj = await resolveUser(user);
+        let commandName = resolveCommand(command).name;
+
+        let doc = await new Bot.database.mainDB.commandCache({
+            channel: channelObj.id,
+            user: userObj,
+            command: commandName,
+            cache: cache,
+            delete: deleteTimestamp
+        }).save();
+        let commandCache = new CommandCache(doc, userObj, channelObj);
+        let cacheKey = this.getCommandCacheKey(channelObj.id, userObj.id);
+        this.cache.commandCaches.set(cacheKey, commandCache);
+        return commandCache;
+    }
+
+    /**
+     * Searches cache and database for command cache and returns it wrapped in a CommandCache class
+     *
+     * @param {ChannelResolvable} channel channel for commandCache
+     * @param {UserResolvable} user user for commandCache
      * @returns commandCache wrapped in a CommandCache class
      * @memberof Database
      */
-    async getCommandCache(channel: DMChannel | GroupDMChannel | TextChannel, user: User, command?: string, cacheTime?: number, cache?: any) {
-        let commandCacheDoc = await this.findCommandCacheDoc(channel.id, user.id);
+    async getCommandCache(channel: ChannelResolvable, user: UserResolvable) {
+        let channelObj = this.validateCommandCacheChannel(channel);
+        let userObj = await resolveUser(user);
+        let cacheKey = this.getCommandCacheKey(channelObj, userObj);
 
-        if (!commandCacheDoc) {
-            if (cacheTime && command)
-                return new CommandCache(undefined, channel, user, command, cacheTime, cache);
-            return undefined;
-        }
-        return new CommandCache(commandCacheDoc);
+        let commandCache = this.cache.commandCaches.get(cacheKey);
+        if (commandCache && commandCache.delete > Date.now()) return commandCache;
+
+        let commandCacheDoc = await this.findCommandCacheDoc(channelObj.id, userObj.id);
+        if (!commandCacheDoc) return undefined;
+        commandCache = new CommandCache(commandCacheDoc, userObj, channelObj);
+        this.cache.commandCaches.set(cacheKey, commandCache);
+        return commandCache;
     }
 
     /**
@@ -467,6 +525,10 @@ export class Database {
      * @memberof Database
      */
     cleanCommandCaches() {
+        for (const cache of this.cache.commandCaches) {
+            if (cache[1].delete > Date.now()) continue;
+            this.cache.commandCaches.delete(cache[0]);
+        }
         return this.mainDB.commandCache.deleteMany({ delete: { $lt: Date.now() } }).exec();
     }
 
@@ -573,7 +635,7 @@ export class Database {
     }
 
     /**
-     * cleans database of unused megalog docs and functions with nonexsiting channels
+     * cleans database of unused megalog docs and functions with non-existing channels
      *
      * @memberof Database
      */

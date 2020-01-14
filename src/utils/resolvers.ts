@@ -1,6 +1,6 @@
 /* The resolvers in here are based off those in the ClientDataResolver class of discord.js */
 
-import { User, GuildMember, Message, Guild, Snowflake, GuildResolvable, UserResolvable } from "discord.js";
+import { User, GuildMember, Message, Guild, Snowflake, GuildResolvable, UserResolvable, Channel, ChannelResolvable } from "discord.js";
 import { Bot } from "..";
 import { CommandResolvable, commandInterface } from "../commands";
 import { GuildWrapperResolvable, GuildWrapper } from "../database/guildWrapper";
@@ -67,6 +67,32 @@ export async function resolveGuildMember(guildResolvable: GuildResolvable, userR
     let user = this.resolveUser(userResolvable);
     if (!guild || !user) return null;
     return guild.fetchMember(user.id) || null;
+}
+
+/**
+ * Resolves a ChannelResolvable to a Channel object.
+ * @param {ChannelResolvable} channel The channel resolvable to resolve
+ * @returns {?Channel}
+ */
+export function resolveChannel(channel: ChannelResolvable): Channel {
+    if (channel instanceof Channel) return channel;
+    if (typeof channel === 'string') return this.client.channels.get(channel) || null;
+    if (channel instanceof Message) return channel.channel;
+    if (channel instanceof Guild) return channel.channels.get(channel.id) || null;
+    return null;
+}
+
+/**
+ * Resolves a ChannelResolvable to a channel ID.
+ * @param {ChannelResolvable} channel The channel resolvable to resolve
+ * @returns {?Snowflake}
+ */
+export function resolveChannelID(channel: ChannelResolvable): Snowflake {
+    if (channel instanceof Channel) return channel.id;
+    if (typeof channel === 'string') return channel;
+    if (channel instanceof Message) return channel.channel.id;
+    if (channel instanceof Guild) return channel.defaultChannel.id;
+    return null;
 }
 
 /**
