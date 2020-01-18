@@ -71,8 +71,6 @@ export class GuildWrapper implements guildObject {
     save(path?: string) {
         if (path)
             this.doc.markModified(path);
-        for (const key in guildSchema.obj)
-            this.doc[key] = this[key];
         return this.doc.save();
     }
 
@@ -84,10 +82,8 @@ export class GuildWrapper implements guildObject {
      * @memberof UserWrapper
      */
     saveAll() {
-        for (const key in guildSchema.obj) {
-            this.doc[key] = this[key];
+        for (const key in guildSchema.obj)
             this.doc.markModified(key);
-        }
         return this.doc.save();
     }
 
@@ -122,7 +118,7 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     getPrefix() {
-        if (this.prefix) return this.prefix;
+        if (this.doc.prefix) return this.doc.prefix;
         return Bot.settings.prefix;
     }
 
@@ -301,7 +297,7 @@ export class GuildWrapper implements guildObject {
      */
     getUsageLimits(path: string = '') {
         let globalUsageLimits = this.tracePath(Bot.settings.usageLimits, path) || {};
-        let guildUsageLimits = this.tracePath(this.usageLimits, path) || {};
+        let guildUsageLimits = this.tracePath(this.doc.usageLimits, path) || {};
         return this.mergeObject(globalUsageLimits, guildUsageLimits);
     }
 

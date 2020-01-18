@@ -51,8 +51,6 @@ export class UserWrapper implements userObject {
     save(path?: string) {
         if (path)
             this.doc.markModified(path);
-        for (const key in userSchema.obj)
-            this.doc[key] = this[key];
         return this.doc.save();
     }
 
@@ -63,10 +61,8 @@ export class UserWrapper implements userObject {
      * @memberof UserWrapper
      */
     saveAll() {
-        for (const key in userSchema.obj) {
-            this.doc[key] = this[key];
+        for (const key in userSchema.obj)
             this.doc.markModified(key);
-        }
         return this.doc.save();
     }
 
@@ -89,9 +85,9 @@ export class UserWrapper implements userObject {
      * @memberof UserWrapper
      */
     getCommandLastUsed(scope: string, command: string) {
-        if (!this.commandLastUsed || !this.commandLastUsed[scope] || !this.commandLastUsed[scope][command])
+        if (!this.doc.commandLastUsed || !this.doc.commandLastUsed[scope] || !this.doc.commandLastUsed[scope][command])
             return 0;
-        return this.commandLastUsed[scope][command];
+        return this.doc.commandLastUsed[scope][command];
     }
 
     /**
@@ -109,11 +105,11 @@ export class UserWrapper implements userObject {
         if (isNaN(Number(scope)) && scope != 'dm' && scope != 'global')
             throw new Error("scope should be guild id, 'dm' or 'global' but is '" + scope + "'");
 
-        if (!this.commandLastUsed[scope]) this.commandLastUsed[scope] = {};
+        if (!this.doc.commandLastUsed[scope]) this.doc.commandLastUsed[scope] = {};
         if (timestamp)
-            this.commandLastUsed[scope][command] = timestamp;
+            this.doc.commandLastUsed[scope][command] = timestamp;
         else
-            delete this.commandLastUsed[scope][command];
+            delete this.doc.commandLastUsed[scope][command];
 
         if (scope !== 'global')
             this.setCommandLastUsed('global', command, timestamp, false);
@@ -133,8 +129,8 @@ export class UserWrapper implements userObject {
      * @memberof UserWrapper
      */
     resetCommandLastUsed(scope: string, save: boolean = true) {
-        if (!this.commandLastUsed[scope]) return;
-        delete this.commandLastUsed[scope];
+        if (!this.doc.commandLastUsed[scope]) return;
+        delete this.doc.commandLastUsed[scope];
 
         this.doc.markModified('commandLastUsed');
         if (save) this.save();
