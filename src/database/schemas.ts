@@ -121,6 +121,7 @@ export const guildSchema = new mongoose.Schema({
 });
 
 // staff
+export type StaffRanks = 'admins' | 'mods' | 'immune';
 export interface staffObject {
     guild: string;
     admins: {

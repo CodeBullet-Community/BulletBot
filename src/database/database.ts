@@ -21,7 +21,8 @@ import {
     caseDoc,
     caseSchema,
     pActionDoc,
-    pActionSchema
+    pActionSchema,
+    StaffRanks
 } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
@@ -245,69 +246,6 @@ export class Database {
      */
     findStaffDoc(guildID: string) {
         return this.mainDB.staff.findOne({ guild: guildID }).exec();
-    }
-
-    /**
-     * adds role/user to specific rank
-     * returns true if successful
-     *
-     * @param {string} guildID id of guild where to add the role/user
-     * @param {('admins' | 'mods' | 'immune')} rank in which rank the role/user should be added
-     * @param {string} [roleID] id of role (can be undefined)
-     * @param {string} [userID] if of user (can be undefined)
-     * @returns if addition was successful
-     * @memberof Database
-     */
-    async addToRank(guildID: string, rank: 'admins' | 'mods' | 'immune', roleID?: string, userID?: string) {
-        if (!roleID && !userID) return true;
-        var staffDoc = await this.findStaffDoc(guildID);
-
-        // incase the doc wasn't created yet
-        if (!staffDoc) {
-            staffDoc = new this.mainDB.staff({
-                guild: guildID, admins: { roles: [], users: [] },
-                mods: { roles: [], users: [] },
-                immune: { roles: [], users: [] }
-            });
-            await staffDoc.save();
-        }
-
-        // add role/user to rank
-        if (roleID && !staffDoc[rank].roles.includes(roleID)) {
-            staffDoc[rank].roles.push(roleID);
-        } else if (userID && !staffDoc[rank].users.includes(userID)) {
-            staffDoc[rank].users.push(userID);
-        } else {
-            return false;
-        }
-        staffDoc.save();
-        return true;
-    }
-
-    /**
-     * removes role/user from specific rank
-     * returns true if successful
-     *
-     * @param {string} guildID id of guild where to remove the role/user
-     * @param {('admins' | 'mods' | 'immune')} rank in which rank the user/role is
-     * @param {string} [roleID] id of role (can be undefined)
-     * @param {string} [userID] id of user (can be undefined)
-     * @returns if removed was successful
-     * @memberof Database
-     */
-    async removeFromRank(guildID: string, rank: 'admins' | 'mods' | 'immune', roleID?: string, userID?: string) {
-        if (!roleID && !userID) return true;
-        var staffDoc = await this.findStaffDoc(guildID);
-        if (!staffDoc) return;
-        if (roleID && staffDoc[rank].roles.includes(roleID)) {
-            staffDoc[rank].roles.splice(staffDoc[rank].roles.indexOf(roleID), 1);
-        } else if (userID && staffDoc[rank].users.includes(userID)) {
-            staffDoc[rank].users.splice(staffDoc[rank].users.indexOf(userID), 1);
-        } else {
-            return false;
-        }
-        staffDoc.save();
-        return true;
     }
 
     /**

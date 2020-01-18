@@ -1,10 +1,10 @@
 import mongoose = require('mongoose');
-import { Guild, GuildMember, UserResolvable, GuildResolvable, GuildMemberResolvable } from "discord.js";
-import { CommandUsageLimits, guildDoc, UsageLimits, guildObject, guildSchema, staffDoc } from "./schemas";
+import { Guild, GuildMember, UserResolvable, GuildResolvable, GuildMemberResolvable, RoleResolvable } from "discord.js";
+import { CommandUsageLimits, guildDoc, UsageLimits, guildObject, guildSchema, staffDoc, StaffRanks } from "./schemas";
 import { Bot } from '..';
 import { getPermLevel, permLevels } from '../utils/permissions';
 import { CommandResolvable } from '../commands';
-import { resolveCommand, resolveGuildMember } from '../utils/resolvers';
+import { resolveCommand, resolveGuildMember, resolveRole, resolveUserID } from '../utils/resolvers';
 
 export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
 
@@ -61,7 +61,8 @@ export class GuildWrapper implements guildObject {
     }
 
     /**
-     * Saves changes to doc that were marked as modified
+     * Saves changes to guild doc that were marked as modified. 
+     * IMPORTANT: This method only saves the guild doc not also the staff doc
      *
      * @param {string} [path] Path that should be specially marked (if provided, document doesn't sync with wrapper)
      * @returns The saved document
@@ -76,7 +77,8 @@ export class GuildWrapper implements guildObject {
     }
 
     /**
-     * Marks everything as modified and saves it to the database.
+     * Marks everything in the guild doc as modified and saves it to the database.
+     * IMPORTANT: This method only saves the guild doc not also the staff doc
      *
      * @returns The saved document
      * @memberof UserWrapper
@@ -87,6 +89,17 @@ export class GuildWrapper implements guildObject {
             this.doc.markModified(key);
         }
         return this.doc.save();
+    }
+
+    /**
+     * Saves changes to staff doc that were marked as modified.
+     *
+     * @returns
+     * @memberof GuildWrapper
+     */
+    saveStaffDoc() {
+        if (!this.staffDoc) return undefined;
+        return this.staffDoc.save();
     }
 
     /**
@@ -184,27 +197,57 @@ export class GuildWrapper implements guildObject {
     /**
      * adds user/role to admin/mod/immune rank
      *
-     * @param {('admins' | 'mods' | 'immune')} rank which rank the user/role should be added to
-     * @param {string} [roleID] id of role to add
-     * @param {string} [userID] id of user to add
+     * @param {StaffRanks} rank which rank the user/role should be added to
+     * @param {RoleResolvable} [role] Role to add to the rank
+     * @param {UserResolvable} [user] User to add to the rank
+     * @param {boolean} [save=true] If changes should be directly saved to database
      * @returns if added was successful
      * @memberof GuildWrapper
      */
-    addToRank(rank: 'admins' | 'mods' | 'immune', roleID?: string, userID?: string) {
-        return Bot.database.addToRank(this.doc.guild, rank, roleID, userID);
+    async addToRank(rank: StaffRanks, role?: RoleResolvable, user?: UserResolvable, save: boolean = true) {
+        let roleObj = resolveRole(this.guildObject, role);
+        let userID = resolveUserID(user);
+        if (!roleObj && !userID) return undefined;
+
+        let staffDoc = await this.getStaffDoc();
+
+        // add role/user to rank
+        if (roleObj && !staffDoc[rank].roles.includes(roleObj.id))
+            staffDoc[rank].roles.push(roleObj.id);
+        else if (userID && !staffDoc[rank].users.includes(userID))
+            staffDoc[rank].users.push(userID);
+        else
+            return undefined;
+
+        if (save) await staffDoc.save();
+        return staffDoc;
     }
 
     /**
      * removes user/role from the admin/mod/immune rank
      *
-     * @param {('admins' | 'mods' | 'immune')} rank rank the user should be removed from
-     * @param {string} [roleID] id of role to remove
-     * @param {string} [userID] id of user to remove
-     * @returns if removal was successful
+     * @param {StaffRanks} rank rank the user should be removed from
+     * @param {RoleResolvable} [role] Role to remove to the rank
+     * @param {UserResolvable} [user] User to remove to the rank
+     * @param {boolean} [save=true] If changes should be directly saved to database
      * @memberof GuildWrapper
      */
-    removeFromRank(rank: 'admins' | 'mods' | 'immune', roleID?: string, userID?: string) {
-        return Bot.database.removeFromRank(this.doc.guild, rank, roleID, userID);
+    async removeFromRank(rank: StaffRanks, role?: RoleResolvable, user?: UserResolvable, save: boolean = true) {
+        let roleObj = resolveRole(this.guildObject, role);
+        let userID = resolveUserID(user);
+        if (!roleObj && !userID) return undefined;
+
+        let staffDoc = await this.getStaffDoc();
+
+        if (roleObj && staffDoc[rank].roles.includes(roleObj.id))
+            staffDoc[rank].roles.splice(staffDoc[rank].roles.indexOf(roleObj.id), 1);
+        else if (userID && staffDoc[rank].users.includes(userID))
+            staffDoc[rank].users.splice(staffDoc[rank].users.indexOf(userID), 1);
+        else
+            return undefined;
+
+        if (save) await staffDoc.save();
+        return staffDoc;
     }
 
     // TODO: add functions for webhooks

@@ -1,6 +1,6 @@
 /* The resolvers in here are based off those in the ClientDataResolver class of discord.js */
 
-import { User, GuildMember, Message, Guild, Snowflake, GuildResolvable, UserResolvable, Channel, ChannelResolvable } from "discord.js";
+import { User, GuildMember, Message, Guild, Snowflake, GuildResolvable, UserResolvable, Channel, ChannelResolvable, RoleResolvable, Role } from "discord.js";
 import { Bot } from "..";
 import { CommandResolvable, commandInterface } from "../commands";
 import { GuildWrapperResolvable, GuildWrapper } from "../database/guildWrapper";
@@ -12,7 +12,7 @@ import { GuildWrapperResolvable, GuildWrapper } from "../database/guildWrapper";
  */
 export async function resolveUser(user: UserResolvable): Promise<User> {
     if (user instanceof User) return user;
-    if (typeof user === 'string') return this.client.fetchUser(user);
+    if (typeof user === 'string') return Bot.client.fetchUser(user);
     if (user instanceof GuildMember) return user.user;
     if (user instanceof Message) return user.author;
     if (user instanceof Guild) return user.owner.user;
@@ -39,7 +39,7 @@ export function resolveUserID(user: UserResolvable): Snowflake {
  */
 export function resolveGuild(guild: GuildResolvable): Guild {
     if (guild instanceof Guild) return guild;
-    if (typeof guild === 'string') return this.client.guilds.get(guild) || null;
+    if (typeof guild === 'string') return Bot.client.guilds.get(guild) || null;
     return null;
 }
 
@@ -63,10 +63,24 @@ export async function resolveGuildWrapper(guild: GuildWrapperResolvable): Promis
  */
 export async function resolveGuildMember(guildResolvable: GuildResolvable, userResolvable: UserResolvable): Promise<GuildMember> {
     if (userResolvable instanceof GuildMember) return userResolvable;
-    let guild = this.resolveGuild(guildResolvable);
-    let user = this.resolveUser(userResolvable);
+    let guild = resolveGuild(guildResolvable);
+    let user = await resolveUser(userResolvable);
     if (!guild || !user) return null;
     return guild.fetchMember(user.id) || null;
+}
+
+/**
+* Resolves a RoleResolvable to a Role object.
+* @param {GuildResolvable} guild The guild that this role is part of
+* @param {RoleResolvable} role The role resolvable to resolve
+* @returns {?Role}
+*/
+export function resolveRole(guild: GuildResolvable, role: RoleResolvable): Role {
+    if (role instanceof Role) return role;
+    let guildObj = resolveGuild(guild);
+    if (!guildObj) return null;
+    if (typeof role === 'string') return guildObj.roles.get(role);
+    return null;
 }
 
 /**
@@ -76,7 +90,7 @@ export async function resolveGuildMember(guildResolvable: GuildResolvable, userR
  */
 export function resolveChannel(channel: ChannelResolvable): Channel {
     if (channel instanceof Channel) return channel;
-    if (typeof channel === 'string') return this.client.channels.get(channel) || null;
+    if (typeof channel === 'string') return Bot.client.channels.get(channel) || null;
     if (channel instanceof Message) return channel.channel;
     if (channel instanceof Guild) return channel.channels.get(channel.id) || null;
     return null;

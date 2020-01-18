@@ -64,7 +64,7 @@ var command: commandInterface = {
 
                     // either add or remove the role/user
                     if (argsArray[0] == 'add') {
-                        if (await Bot.database.addToRank(message.guild.id, 'admins', (role ? role.id : undefined), (user ? user.id : undefined))) { // if addition was successful
+                        if (await guildWrapper.addToRank('admins', role, user)) { // if addition was successful
                             Bot.mStats.logResponseTime(command.name, requestTime);
                             message.channel.send(`Successfully added ${role ? role.name : user.toString()} to admins`);
                             // log the staff change
@@ -75,7 +75,7 @@ var command: commandInterface = {
                         }
                         Bot.mStats.logCommandUsage(command.name, 'add');
                     } else {
-                        if (await Bot.database.removeFromRank(message.guild.id, 'admins', (role ? role.id : undefined), (user ? user.id : undefined))) { // if removal was successful
+                        if (await guildWrapper.removeFromRank('admins', role, user)) { // if removal was successful
                             Bot.mStats.logResponseTime(command.name, requestTime);
                             message.channel.send(`Successfully removed ${role ? role.name : user.toString()} from admins`);
                             // log the staff change

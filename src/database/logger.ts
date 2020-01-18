@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { logDoc, logSchema, guildDoc, guildSchema, logObject, logActions, webhookDoc, logTypes, logMegalog } from './schemas';
+import { logDoc, logSchema, guildDoc, guildSchema, logObject, logActions, webhookDoc, logTypes, logMegalog, StaffRanks } from './schemas';
 import { Guild, Role, User, GuildMember, Message, Channel, TextChannel, } from 'discord.js';
 import { commandInterface } from '../commands';
 import { Bot } from '..';
@@ -66,13 +66,13 @@ export class Logger {
      * @param {Guild} guild guild where it actually was changed
      * @param {GuildMember} mod the member that made the change request
      * @param {(0 | 1)} type add or remove
-     * @param {('admins' | 'mods' | 'immune')} rank admins/mods/immune
+     * @param {StaffRanks} rank admins/mods/immune
      * @param {Role} [role] the added/removed role
      * @param {User} [user] the added/removed user
      * @returns
      * @memberof Logger
      */
-    async logStaff(guild: Guild, mod: GuildMember, type: 0 | 1, rank: 'admins' | 'mods' | 'immune', role?: Role, user?: User) {
+    async logStaff(guild: Guild, mod: GuildMember, type: 0 | 1, rank: StaffRanks, role?: Role, user?: User) {
         var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;

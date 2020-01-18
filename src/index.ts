@@ -9,7 +9,7 @@ import { Database } from './database/database';
 import { MStats } from './database/mStats';
 import { botToken, cluster, callback, crashProof } from './bot-config.json';
 import { permLevels, getPermLevel } from './utils/permissions';
-import { logTypes } from './database/schemas';
+import { logTypes, StaffRanks } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
 import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate, logVoiceTransfer, logVoiceMute, logVoiceDeaf } from './megalogger';
@@ -320,21 +320,16 @@ client.on('guildMemberAdd', async member => {
 client.on('guildMemberRemove', async member => {
     if (member.user.id != client.user.id)
         logMember(member, false);
-    // delete all references of this member in the database (ofc not entire user doc)
-    var permLevel = await getPermLevel(member); // removes guild member from ranks if he/She was assigned any
-    if (permLevel == permLevels.admin) {
-        Bot.database.removeFromRank(member.guild.id, 'admins', undefined, member.id);
-        Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, 'admins', undefined, member.user);
-    }
-    if (permLevel == permLevels.mod) {
-        Bot.database.removeFromRank(member.guild.id, 'mods', undefined, member.id);
-        Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, 'mods', undefined, member.user);
-    }
-    if (permLevel == permLevels.immune) {
-        Bot.database.removeFromRank(member.guild.id, 'immune', undefined, member.id);
-        Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, 'immune', undefined, member.user);
-    }
-    var userDoc = await Bot.database.findUserDoc(member.id);
+
+    let guildWrapper = await Bot.database.getGuildWrapper(member.guild);
+    for (const rank of ['admins', 'mods', 'immune'])
+        // @ts-ignore
+        if (guildWrapper.removeFromRank(rank, undefined, member, false))
+            // @ts-ignore
+            Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, rank, undefined, member.user);
+    guildWrapper.saveStaffDoc();
+
+    let userDoc = await Bot.database.findUserDoc(member.id);
     if (userDoc && userDoc.commandLastUsed && userDoc.commandLastUsed[member.guild.id]) {
         delete userDoc.commandLastUsed[member.guild.id];
         userDoc.markModified('commandLastUsed.' + member.guild.id);
@@ -361,20 +356,14 @@ client.on('roleCreate', async role => {
 
 client.on('roleDelete', async role => {
     logRoleToggle(role, false);
-    var staffDoc = await Bot.database.findStaffDoc(role.guild.id); // removes role from ranks if it was assigned to any
-    if (!staffDoc) return;
-    if (staffDoc.admins.roles.includes(role.id)) {
-        Bot.database.removeFromRank(role.guild.id, 'admins', role.id);
-        Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, 'admins', role);
-    }
-    if (staffDoc.mods.roles.includes(role.id)) {
-        Bot.database.removeFromRank(role.guild.id, 'mods', role.id);
-        Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, 'mods', role);
-    }
-    if (staffDoc.immune.roles.includes(role.id)) {
-        Bot.database.removeFromRank(role.guild.id, 'immune', role.id);
-        Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, 'immune', role);
-    }
+
+    let guildWrapper = await Bot.database.getGuildWrapper(role.guild);
+    for (const rank of ['admins', 'mods', 'immune'])
+        // @ts-ignore
+        if (guildWrapper.removeFromRank(rank, role, undefined, false))
+            // @ts-ignore
+            Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, rank, role);
+    guildWrapper.saveStaffDoc();
 });
 
 client.on('roleUpdate', async (oldRole: discord.Role, newRole: discord.Role) => {

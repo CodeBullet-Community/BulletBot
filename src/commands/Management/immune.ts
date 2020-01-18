@@ -64,7 +64,7 @@ var command: commandInterface = {
 
                     // either add or remove the role/user
                     if (argsArray[0] == 'add') {
-                        if (await Bot.database.addToRank(message.guild.id, 'immune', (role ? role.id : undefined), (user ? user.id : undefined))) {
+                        if (await guildWrapper.addToRank('immune', role, user)) {
                             Bot.mStats.logResponseTime(command.name, requestTime);
                             message.channel.send(`Successfully added immunity to ${role ? role.name : user.toString()}`);
                             // log the staff change
@@ -75,7 +75,7 @@ var command: commandInterface = {
                         }
                         Bot.mStats.logCommandUsage(command.name, 'add');
                     } else {
-                        if (await Bot.database.removeFromRank(message.guild.id, 'immune', (role ? role.id : undefined), (user ? user.id : undefined))) {
+                        if (await guildWrapper.removeFromRank('immune', role, user)) {
                             Bot.mStats.logResponseTime(command.name, requestTime);
                             message.channel.send(`Successfully removed immunity from ${role ? role.name : user.toString()}`);
                             // log the staff change
