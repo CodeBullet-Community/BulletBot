@@ -68,9 +68,9 @@ var command: commandInterface = {
                 }
                 if (argsArray[argIndex]) {
                     // parse member which to get cases of
-                    let caseMember = await stringToMember(message.guild, args.substr(4));
+                    let caseMember = await stringToMember(message.guild, argsArray[argIndex]);
                     if (!caseMember) {
-                        message.channel.send(`Cannot find user '${args.substr(4).replace('@', '')}'`);
+                        message.channel.send(`Cannot find user '${argsArray[argIndex].replace('@', '')}'`);
                         Bot.mStats.logMessageSend();
                         return false;
                     }
