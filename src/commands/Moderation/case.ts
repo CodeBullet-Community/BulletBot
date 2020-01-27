@@ -4,7 +4,7 @@ import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { durationToString, permToString, stringToChannel, stringToMember, stringToRole } from '../../utils/parsers';
-import { caseActions, caseDoc } from '../../database/schemas';
+import { caseActions, caseActionsArray, caseDoc } from '../../database/schemas';
 
 var command: commandInterface = {
     name: 'case',
@@ -13,16 +13,30 @@ var command: commandInterface = {
     permLevel: permLevels.mod,
     togglable: false,
     help: {
-        shortDescription: 'list or view cases',
-        longDescription: 'list or view cases of a guild or member',
+        shortDescription: 'delete, list or view cases',
+        longDescription: 'delete, list or view cases of a guild or member',
         usages: [
             '{command} list [member]',
-            '{command} view [caseID]'
+            '{command} view [caseID]',
+            '{command} delete [caseID]',
+            '{command} delete user [user]',
+            '{command} delete user [user] [type]',
+            '{command} delete [type]'
         ],
         examples: [
             '{command} list',
             '{command} list @jeff#1234',
-            '{command} view 32'
+            '{command} view 32',
+            '{command} delete 12',
+            '{command} delete user @jeff#1234',
+            '{command} delete user @jeff#1234 warn',
+            '{command} delete warn'
+        ],
+        additionalFields: [
+            {
+                name: 'Types:',
+                value: caseActionsArray.join(', ')
+            }
         ]
     },
     run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
@@ -54,9 +68,9 @@ var command: commandInterface = {
                 }
                 if (argsArray[argIndex]) {
                     // parse member which to get cases of
-                    let caseMember = await stringToMember(message.guild, args.substr(4));
+                    let caseMember = await stringToMember(message.guild, argsArray[argIndex]);
                     if (!caseMember) {
-                        message.channel.send(`Cannot find user '${args.substr(4).replace('@', '')}'`);
+                        message.channel.send(`Cannot find user '${argsArray[argIndex].replace('@', '')}'`);
                         Bot.mStats.logMessageSend();
                         return false;
                     }
@@ -90,6 +104,78 @@ var command: commandInterface = {
                 Bot.mStats.logCommandUsage(command.name);
             }
 
+            // delete cases given certain criteria
+            if (argsArray[argIndex] == 'delete') {
+                argIndex++;
+                if (!isNaN(parseInt(argsArray[argIndex]))) { // checks if a valid case ID was provided
+                    let caseID = parseInt(args);
+                    // try to delete case and send failure message incase it fails
+                    if (!await Bot.caseLogger.deleteCase(message.guild.id, caseID)) {
+                        message.channel.send('Please provide a valid case ID');
+                        Bot.mStats.logMessageSend();
+                        return false;
+                    }
+
+                    // send confirmation message
+                    Bot.mStats.logResponseTime(command.name, requestTime);
+                    message.channel.send(`:white_check_mark: **Case ${caseID} has been deleted**`);
+                    Bot.mStats.logMessageSend();
+                    Bot.mStats.logCommandUsage(command.name, 'delete id');
+                } else {
+                    let userID: string;
+                    // if user wants to only deleted cases from a specific user
+                    if (argsArray[argIndex] == 'user') {
+                        argIndex++;
+                        // if no user was specified
+                        if (!argsArray[argIndex]) {
+                            message.channel.send('Please specify a user');
+                            Bot.mStats.logMessageSend();
+                            return false;
+                        }
+    
+                        // get member
+                        let member = await stringToMember(message.guild, argsArray[argIndex], false, false, false);
+                        if (member) {
+                            userID = member.id;
+                        } else {
+                            // so cases from members that left can also be banned
+                            userID = argsArray[argIndex];
+                        }
+                        argIndex++;
+                    }
+                    let type: string;
+                    // if type is specified also filter by type
+                    if (argsArray[argIndex]) {
+                        if (!caseActionsArray.includes(argsArray[argIndex])) { // if case action doesn't exist
+                            message.channel.send('Invalid Type. Use one of the following:\n' + caseActionsArray.join(', '));
+                            Bot.mStats.logMessageSend();
+                            return false;
+                        } else {
+                            type = argsArray[argIndex]
+                            argIndex++;
+                        }
+                    } else if (!userID) { // if no type was specified and it isn't being filtered by a user
+                        message.channel.send('Please provide one of the following types:\n' + caseActionsArray.join(', '));
+                        Bot.mStats.logMessageSend();
+                        return false;
+                    }
+    
+                    // build query
+                    let query: any = { guild: message.guild.id };
+                    if (userID) query.user = userID;
+                    if (type) query.action = type;
+    
+                    // delete cases that fit the query
+                    let result = await Bot.caseLogger.cases.deleteMany(query).exec();
+    
+                    // send confirmation message
+                    Bot.mStats.logResponseTime(command.name, requestTime);
+                    message.channel.send(`:white_check_mark: **Successfully deleted ${result.n} ${type ? type + ' ' : ''}case${result.n != 1 ? 's' : ''}${userID ? ` from <@${userID}>` : ''}**`);
+                    Bot.mStats.logMessageSend();
+                    Bot.mStats.logCommandUsage(command.name, 'id');
+                }
+                return true;
+            }
         } catch (e) {
             sendError(message.channel, e);
             Bot.mStats.logError(e, command.name);
