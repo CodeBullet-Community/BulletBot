@@ -1,16 +1,14 @@
 #!/bin/bash
 
 # ########################################################################### #
-#                                                                             #
 # run-in-background.sh                                                        #
-# --------------------------------                                            #
+# --------------------                                                        #
 # Runs BulletBot in the background, as a service on your system.              #
 # If BulletBot is already running in this mode, BulletBot will be restarted.  #
 #                                                                             #
 # Note: All variables (excluding $timer) are exported from                    #
 # linux-master-installer.sh and debian-ubuntu-installer.sh or                 #
 # centos-rhel-installer.sh.                                                   #
-#                                                                             #
 # ########################################################################### #
 
 timer=20
@@ -18,30 +16,16 @@ timer=20
 clear
 read -p "We will now run BulletBot in the background. Press [Enter] to begin."
 
-if [[ -f $start_script_exists || -f $start_service_exists ]]; then
-    echo "Removing file(s) used to run BulletBot with auto-restart..."
-    rm /home/bulletbot/bullet-mongo-start.sh 2>/dev/null
-    rm /lib/systemd/system/bullet-mongo-start.service 2>/dev/null
-    # Reloads systemd daemons to account for the deleted service
-    systemctl daemon-reload
-fi
-
-if [[ ! -f $bullet_service_exists ]]; then
-    echo "Creating bulletbot.service..."
-    echo "[Unit]
-Description=A service to start BulletBot after a crash or system reboot
-After=network.target mongod.service
-
-[Service]
-User=bulletbot
-ExecStart=/usr/bin/node ${home}/out/index.js
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service
-    # Reloads systemd daemons to account for the added service
-    systemctl daemon-reload
+# If bullet-mongo-start.service is enabled...
+if [[ $start_service_status = 0 ]]; then
+    echo "Disabling bullet-mongo-start.service..."
+    systemctl disable bullet-mongo-start.service || {
+        echo "${red}Failed to disable bullet-mongo-start.service" >&2
+        echo "${cyan}This service must be disabled in order to run BulletBot" \
+            "in this run mode"
+        read -p "Press [Enter] to return to the installer menu"
+        exit 1
+    }
 fi
 
 if [[ $bullet_status = "active" ]]; then

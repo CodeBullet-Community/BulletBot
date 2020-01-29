@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # ########################################################################### #
-#                                                                             #
 # run-in-background-autorestart.sh                                            #
 # --------------------------------                                            #
 # Runs BulletBot in the background, as a service on your system, with         #
@@ -12,7 +11,6 @@
 # Note: All variables (excluding $timer) are exported from                    #
 # linux-master-installer.sh and debian-ubuntu-installer.sh or                 #
 # centos-rhel-installer.sh.                                                   #
-#                                                                             #
 # ########################################################################### #
 
 timer=20
@@ -21,31 +19,39 @@ clear
 read -p "We will now run BulletBot in the background with auto-restart on system \
 reboot. Press [Enter] to begin."
 
-if [[ ! -f $start_script_exists || ! -f $start_service_exists ]]; then
-    echo "Creating file(s) required to run Bulletbot with auto-restart..."
+# If bullet-mongo-start.service exists and is not enabled
+if [[ -f $start_service_exists && $start_service_status != 0 ]]; then
+    echo "Enabling bullet-mongo-start.service..."
+    systemctl enable bullet-mongo-start.service || {
+        echo "${red}Failed to enable bullet-mongo-start.service" >&2
+        echo "${cyan}This service must be enabled in order to run BulletBot" \
+            "in this run mode"
+        read -p "Press [Enter] to return to the installer menu"
+        exit 1
+    }
+# If bullet-mongo-start.service doesn't exist
+elif [[ ! -f $start_service_exists ]]; then
+    echo "Creating bullet-monog-start.service..."
     ./installers/Linux_Universal/autorestart/autorestart-updater.sh
-    echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
-    chown bulletbot:bulletbot -R /home/bulletbot
     # Reloads systemd daemons to account for the added service
     systemctl daemon-reload
+    echo "Enabling bullet-mongo-start.service..."
+    systemctl enable bullet-mongo-start.service || {
+        echo "${red}Failed to enable bullet-mongo-start.service" >&2
+        echo "${cyan}This service must be enabled in order to run BulletBot" \
+            "in this run mode"
+        read -p "Press [Enter] to return to the installer menu"
+        exit 1
+    }
 fi
 
-if [[ ! -f $bullet_service_exists ]]; then
-    echo "Creating bulletbot.service..."
-    echo "[Unit]
-Description=A service to start BulletBot after a crash or system reboot
-After=network.target mongod.service
-
-[Service]
-User=bulletbot
-ExecStart=/usr/bin/node ${home}/out/index.js
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service
-    # Reloads systemd daemons to account for the added service
-    systemctl daemon-reload
+if [[ ! -f $start_script_exists ]]; then
+    echo "${red}bullet-mongo-start.sh does not exist" >&2
+    echo "${cyan}bullet-mongo-start.sh is required to use this run mode"
+    echo "Re-download bulletbot using the installers, then retry using this" \
+        "run mode"
+    read -p "Press [Enter] to return to the installer menu"
+    exit 1
 fi
 
 if [[ $bullet_status = "active" ]]; then

@@ -17,7 +17,7 @@
 # VARIABLES USED ALL THROUGHOUT THE SCRIPT #
 # ---------------------------------------- #
 home="/home/bulletbot"
-start_script_exists="/home/bulletbot/bullet-mongo-start.sh"
+start_script_exists="/home/bulletbot/installers/Linux_Universal/autorestart/bullet-mongo-start.sh"
 bullet_service_exists="/lib/systemd/system/bulletbot.service"
 start_service_exists="/lib/systemd/system/bullet-mongo-start.service"
 # Contains all of the files/directories that are associated with BulletBot
@@ -25,6 +25,18 @@ start_service_exists="/lib/systemd/system/bullet-mongo-start.service"
 files=("installers/" "linux-master-installer.sh" "package-lock.json" \
     "package.json" "tsconfig.json" "src/" "media/" "README.md" "out/" \
     "CODE_OF_CONDUCT.md" "CONTRIBUTING.md" "LICENSE")
+bullet_service_content=$(echo "[Unit]
+Description=A service to start BulletBot after a crash or system reboot
+After=network.target mongod.service
+
+[Service]
+User=bulletbot
+ExecStart=/usr/bin/node ${home}/out/index.js
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target" > $bullet_service_exists)
 
 
 # ----------------------------------- #
@@ -137,26 +149,11 @@ download_bb() {
     fi
 
     echo "Creating/updating bulletbot.service..."
-    echo "[Unit]
-Description=A service to start BulletBot after a crash or system reboot
-After=network.target mongod.service
+    $bullet_service_content
 
-[Service]
-User=bulletbot
-ExecStart=/usr/bin/node ${home}/out/index.js
-Restart=always
-RestartSec=3
+    echo "Creating/updating bullet-mongo-start.service..."
+    ./installers/Linux_Universal/autorestart/autorestart-updater.sh
 
-[Install]
-WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service 
-
-    # If you are currently using run mode: Run BulletBot in the background with
-    # auto-restart...
-    if [[ -f $start_script_exists && -f $start_service_exists ]] 2>/dev/null; then
-        echo "Updating startup script and service..."
-        ./installers/Linux_Universal/autorestart/autorestart-updater.sh
-    fi
-    
     echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
     chown bulletbot:bulletbot -R "$home"
     echo -e "\n${green}Finished downloading and updating BulletBot${nc}"
@@ -180,7 +177,10 @@ WantedBy=multi-user.target" > /lib/systemd/system/bulletbot.service
 echo -e "Welcome to the BulletBot Debian/Ubuntu installer\n"
 
 while true; do
+    # TODO: numberics for bullet_status like start_service_status???
     bullet_status=$(systemctl is-active bulletbot.service)
+    start_service_status=$(systemctl is-enabled --quiet bullet-mongo-start.service \
+        2>/dev/null; echo $?)
 
     # Creates a system user named 'bulletbot', if it does not already exist, then
     # creates a home directory for it
@@ -247,6 +247,15 @@ while true; do
         chown bulletbot:bulletbot -R "$home"
         cd "$home"
     fi   
+
+    # E.1. If bulletbot.service does not exist...
+    if [[ ! -f $bullet_service_exists ]]; then
+        # TODO: Figure out why this echo is not printed to the screen
+        echo "Creating bulletbot.service..."
+        $bullet_service_content
+        # Reloads systemd daemons to account for the added service
+        systemctl daemon-reload
+    fi
 
     # Checks to see if it is necessary to download BulletBot (the most recent
     # compiled release)
@@ -353,31 +362,47 @@ while true; do
                 ;;
         esac
     else 
-        if [[ -f $start_script_exists && -f $start_service_exists &&
-                -f $bullet_service_exists && $bullet_status = "active" ]]; then
+        if [[ $start_service_status = 0 && -f $bullet_service_exists && $bullet_status \
+                = "active" ]]; then
+            # E.1.
+            if [[ ! -f $start_script_exists ]]; then
+                echo "${yellow}WARNING: bullet-mongo-start.sh does not exist and" \
+                    "will prevent BulletBot from auto-restarting on system reboot/start"
+                echo "${cyan}Either re-download BulletBot via the installer" \
+                    "or run BulletBot only in the background${nc}"
+            fi
+
             echo "1. Download/update BulletBot and auto-restart files/services"
             echo "2. Run BulletBot in the background"
             echo "3. Run BulletBot in the background with auto-restart${green}" \
                 "(Running in this mode)${nc}"
-        elif [[ -f $start_script_exists && -f $start_service_exists &&
-                -f $bullet_service_exists && $bullet_status != "active" ]]; then
+        elif [[ $start_service_status = 0 && -f $bullet_service_exists && $bullet_status \
+                != "active" ]]; then
+            # E.1.
+            if [[ ! -f $start_script_exists ]]; then
+                echo "${yellow}WARNING: bullet-mongo-start.sh does not exist and" \
+                    "will prevent BulletBot from auto-restarting on system reboot/start"
+                echo "${cyan}Either re-download BulletBot via the installer" \
+                    "or run BulletBot only in the background${nc}"
+            fi
+
             echo "1. Download/update BulletBot and auto-restart files/services"
             echo "2. Run BulletBot in the background"
             echo "3. Run BulletBot in the background with auto-restart${yellow}" \
                 "(Setup to use this mode)${nc}"
         elif [[ -f $bullet_service_exists && $bullet_status = "active" ]]; then
-            echo "1. Download/update BulletBot"
+            echo "1. Download/update BulletBot and auto-restart files/services"
             echo "2. Run BulletBot in the background ${green}(Running in this mode)${nc}"
             echo "3. Run BulletBot in the background with auto-restart"
         elif [[ -f $bullet_service_exists && $bullet_status != "active" ]]; then
-            echo "1. Download/update BulletBot"
+            echo "1. Download/update BulletBot and auto-restart files/services"
             echo "2. Run BulletBot in the background ${yellow}(Setup to use this" \
                 "mode)${nc}"
             echo "3. Run BulletBot in the background with auto-restart"
-        # If this occurs, that means that bulletbot.service has not been created;
-        # though don't worry, as it will be created when you run the bot in any mode
+        # If this occurs, that means that bulletbot.service has not been created
+        # for some reason
         else
-            echo "1. Download/update BulletBot"
+            echo "1. Download/update BulletBot and auto-restart files/services"
             echo "2. Run BulletBot in the background"
             echo "3. Run BulletBot in the background with auto-restart"
         fi
@@ -394,6 +419,7 @@ while true; do
                 export home
                 export bullet_status
                 export start_script_exists
+                export start_service_status
                 export bullet_service_exists
                 ./installers/Linux_Universal/bb-start-modes/run-in-background.sh
                 clear
@@ -402,6 +428,7 @@ while true; do
                 export home
                 export bullet_status
                 export start_script_exists
+                export start_service_status
                 export start_service_exists
                 ./installers/Linux_Universal/bb-start-modes/run-in-background-autorestart.sh
                 clear
