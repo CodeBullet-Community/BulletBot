@@ -48,6 +48,25 @@ if ! hash jq &>/dev/null; then
 fi
 
 
+# ------------------ #
+# CHECKING PUBLIC IP #
+# ------------------ #
+# This method of retrieving the system's Public IP only works on systems placed
+# behind a router. It will not work on servers hosted by services such as AWS...
+public_ip=$(dig +short myip.opendns.com @resolver1.opendns.com)
+
+if [[ ! $public_ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    # This method is less secure than the method above, but works on both cloud
+    # servers and systems placed behind a router
+    public_ip=$(curl -s https://ifconfig.me/ip)
+    if [[ ! $public_ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "${red}Failed to grab Public IP Address" >&2
+        echo "${cyan}If you plan on using webhooks, you will need to manually" \
+            "add your system's Public IP Address to the config file"
+    fi
+fi
+
+
 # ----------------------- #
 # MAIN USER-INPUT SECTION #
 # ----------------------- #
@@ -108,8 +127,8 @@ json="{
         \"interval\": 10000
     },
     \"callback\": {
-        \"URL\": \"[ip address or domain name]\",
-        \"port\": 8000,
+        \"URL\": \"$public_ip\",
+        \"port\": 8020,
         \"path\": \"/webhooks\"
     },
     \"youtube\": {
