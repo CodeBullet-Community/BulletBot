@@ -291,12 +291,12 @@ export class Logger {
      */
     async logFilter(guildWrapper: GuildWrapper, mod: GuildMember, filter: filterInterface, type: 0 | 1) {
         var date = new Date();
-        var guildDoc = await this.guilds.findOne({ guild: guildWrapper.guild }).exec();
+        var guildDoc = await this.guilds.findOne({ guild: guildWrapper.id }).exec();
         if (!guildDoc) return;
 
         // logs log in database
         var logObject: logObject = {
-            guild: guildWrapper.guild,
+            guild: guildWrapper.id,
             mod: mod.id,
             action: logActions.filter,
             timestamp: date.getTime(),
@@ -312,7 +312,7 @@ export class Logger {
         Bot.mStats.logLog();
 
         // logs log in log channel if one is specified
-        var logChannel: any = guildWrapper.guildObject.channels.get(guildDoc.toObject().logChannel);
+        var logChannel: any = guildWrapper.guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
         logChannel.send({
@@ -349,12 +349,12 @@ export class Logger {
      */
     async logCommand(guildWrapper: GuildWrapper, mod: GuildMember, command: commandInterface, type: 0 | 1) {
         var date = new Date();
-        var guildDoc = await this.guilds.findOne({ guild: guildWrapper.guild }).exec();
+        var guildDoc = await this.guilds.findOne({ guild: guildWrapper.id }).exec();
         if (!guildDoc) return;
 
         // logs log in database
         var logObject: logObject = {
-            guild: guildWrapper.guild,
+            guild: guildWrapper.id,
             mod: mod.id,
             action: logActions.command,
             timestamp: date.getTime(),
@@ -370,7 +370,7 @@ export class Logger {
         Bot.mStats.logLog();
 
         // logs log in log channel if one is specified
-        var logChannel: any = guildWrapper.guildObject.channels.get(guildDoc.toObject().logChannel);
+        var logChannel: any = guildWrapper.guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
         logChannel.send({

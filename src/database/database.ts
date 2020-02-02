@@ -231,8 +231,8 @@ export class Database {
     async cleanGuilds() {
         let guildDocs = await this.mainDB.guilds.find({}, ['guild']);
         for (const guildDoc of guildDocs) {
-            if (!Bot.client.guilds.get(guildDoc.guild)) {
-                await this.removeGuild(guildDoc.guild);
+            if (!Bot.client.guilds.get(guildDoc.id)) {
+                await this.removeGuild(guildDoc.id);
             }
         }
     }

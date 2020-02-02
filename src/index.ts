@@ -17,6 +17,7 @@ import { PActions } from './database/pActions';
 import { CaseLogger } from "./database/caseLogger";
 import { Settings } from './database/settings';
 import { GuildWrapper } from './database/guildWrapper';
+import { updateDatabaseAfter1_2_8 } from './database/update';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -378,8 +379,11 @@ client.on('warn', async info => {
     console.warn(info);
 });
 
-let loginInterval = setInterval(() => {
-    if (!Bot.database.mainDB) return; // if not connected to cluster
-    Bot.client.login(botToken); // logs into discord after 2 seconds
-    clearInterval(loginInterval);
-}, 2000);
+
+updateDatabaseAfter1_2_8().then(() => {
+    let loginInterval = setInterval(() => {
+        if (!Bot.database.mainDB) return; // if not connected to cluster
+        Bot.client.login(botToken); // logs into discord after 2 seconds
+        clearInterval(loginInterval);
+    }, 2000);
+});

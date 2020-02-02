@@ -8,15 +8,14 @@ one document for each guild
 
 ```Typescript
 {
-    guild: string; //guild id
+    id: string; //guild id
     logChannel: string; // log channel id
-    logs: []; // oldest to newest log document id
-    staff: string; // staff document id
+    prefix?: string; // custom prefix for the guild
     cases: number; // total number of cases
     webhooks: {
         // key is service name
         [key: string]: string[]; // webhook id
-    }
+    };
     locks: {
         // channel id
         [key: string]: {
@@ -31,50 +30,12 @@ one document for each guild
         channels: string[];
     };
     usageLimits?: UsageLimits; // defined in the `settings` database docs
-}
-```
-
-## staff Collection Document
-
-one document for each guild
-
-```Typescript
-{
-    guild: string;
-    admins: {
-        roles: string[]; // role ids
-        users: string[]; // user ids
+    ranks: {
+        admins: string[]; // role and user ids
+        mods: string[]; // role and user ids
+        immune: string[]; // role and user ids
     };
-    mods: {
-        roles: string[]; // role ids
-        users: string[]; // user ids
-    };
-    immune: {
-        roles: string[]; // role ids
-        users: string[]; // user ids
-    };
-}
-```
-
-## prefix Collection Document
-
-one document for each guild
-
-```Typescript
-{
-    guild: string; // guild id
-    prefix: string; // prefix
-}
-```
-
-## commands Collection Document
-
-one document for each guild
-
-```Typescript
-{
-    guild: string; // guild id
-    commands: {
+    commandSettings: {
         // key is command name
         [key: string]: {
             _enabled: boolean; // if enabled
@@ -83,7 +44,31 @@ one document for each guild
             // custom settings of the command
             [key: string]: any;
         }
-    }
+    };
+    megalog: {
+        ignoreChannels: string[]; // array of channel ids
+        channelCreate?: string; // channel id
+        channelDelete?: string; // channel id
+        channelUpdate?: string; // channel id
+        ban?: string; // channel id
+        unban?: string; // channel id
+        memberJoin?: string; // channel id
+        memberLeave?: string; // channel id
+        nicknameChange?: string; // channel id
+        memberRolesChange?: string; // channel id
+        guildNameChange?: string; // channel id
+        messageDelete?: string; // channel id
+        attachmentCache?: string; // channel id
+        messageEdit?: string; // channel id
+        reactionAdd?: string; // channel id
+        reactionRemove?: string; // channel id
+        roleCreate?: string; // channel id
+        roleDelete?: string; // channel id
+        roleUpdate?: string; // channel id
+        voiceTranfer?: string; // channel id
+        voiceMute?: string; // channel id
+        voiceDeaf?: string; // channel id
+    };
 }
 ```
 
@@ -233,38 +218,6 @@ one document for each user
             lastUsed: number; //  when it was last used
         }
     ]
-}
-```
-
-## megalog Collection Document
-
-one document per guild
-
-```Typescript
-{
-    guild: string; // guild id
-    ignoreChannels: string[]; // array of channel ids
-    channelCreate: string; // channel id
-    channelDelete: string; // channel id
-    channelUpdate: string; // channel id
-    ban: string; // channel id
-    unban: string; // channel id
-    memberJoin: string; // channel id
-    memberLeave: string; // channel id
-    nicknameChange: string; // channel id
-    memberRolesChange: string; // channel id
-    guildNameChange: string; // channel id
-    messageDelete: string; // channel id
-    attachmentCache: string; // channel id
-    messageEdit: string; // channel id
-    reactionAdd: string; // channel id
-    reactionRemove: string; // channel id
-    roleCreate: string; // channel id
-    roleDelete: string; // channel id
-    roleUpdate: string; // channel id
-    voiceTranfer: string; // channel id
-    voiceMute: string; // channel id
-    voiceDeaf: string; // channel id
 }
 ```
 

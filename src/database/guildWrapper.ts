@@ -16,10 +16,10 @@ export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
  * @implements {guildObject}
  */
 export class GuildWrapper implements guildObject {
-    guildObject: Guild;
+    guild: Guild;
     doc: guildDoc;
     staffDoc: staffDoc;
-    guild: string;
+    id: string;
     prefix: string;
     logChannel: string;
     caseChannel: string;
@@ -30,6 +30,41 @@ export class GuildWrapper implements guildObject {
     webhooks: { [key: string]: mongoose.Schema.Types.ObjectId[]; };
     locks: { [key: string]: { until?: number; allowOverwrites: string[]; neutralOverwrites: string[]; }; };
     usageLimits?: UsageLimits;
+    ranks: {
+        admins: string[];
+        mods: string[];
+        immune: string[];
+    };
+    commandSettings: {
+        [key: string]: {
+            _enabled: boolean;
+            [key: string]: any;
+        }
+    };
+    megalog: {
+        ignoreChannels: string[];
+        channelCreate?: string;
+        channelDelete?: string;
+        channelUpdate?: string;
+        ban?: string;
+        unban?: string;
+        memberJoin?: string;
+        memberLeave?: string;
+        nicknameChange?: string;
+        memberRolesChange?: string;
+        guildNameChange?: string;
+        messageDelete?: string;
+        attachmentCache?: string;
+        messageEdit?: string;
+        reactionAdd?: string;
+        reactionRemove?: string;
+        roleCreate?: string;
+        roleDelete?: string;
+        roleUpdate?: string;
+        voiceTranfer?: string;
+        voiceMute?: string;
+        voiceDeaf?: string;
+    };
 
     /**
      * Creates an instance of GuildWrapper.
@@ -43,9 +78,9 @@ export class GuildWrapper implements guildObject {
         this.syncWrapperWithDoc();
 
         if (guild)
-            this.guildObject = guild;
+            this.guild = guild;
         else
-            this.guildObject = Bot.client.guilds.get(guildDoc.guild);
+            this.guild = Bot.client.guilds.get(guildDoc.id);
     }
 
     /**
@@ -106,8 +141,8 @@ export class GuildWrapper implements guildObject {
      */
     async getStaffDoc() {
         if (this.staffDoc) return this.staffDoc;
-        this.staffDoc = await Bot.database.mainDB.staff.findOne({ guild: this.guild }).exec();
-        if (!this.staffDoc) throw new Error(`Staff document for guild ${this.guild} not found`);
+        this.staffDoc = await Bot.database.mainDB.staff.findOne({ guild: this.id }).exec();
+        if (!this.staffDoc) throw new Error(`Staff document for guild ${this.id} not found`);
         return this.staffDoc;
     }
 
@@ -144,7 +179,7 @@ export class GuildWrapper implements guildObject {
      */
     getCaseChannel() {
         if (!this.doc.caseChannel) return undefined;
-        return this.guildObject.channels.get(this.doc.caseChannel);
+        return this.guild.channels.get(this.doc.caseChannel);
     }
 
     /**
@@ -155,7 +190,7 @@ export class GuildWrapper implements guildObject {
      */
     getLogChannel() {
         if (!this.doc.logChannel) return undefined;
-        return this.guildObject.channels.get(this.doc.logChannel);
+        return this.guild.channels.get(this.doc.logChannel);
     }
 
     /**
@@ -166,7 +201,7 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     getCase(caseID: number) {
-        return Bot.caseLogger.findByCase(this.doc.guild, caseID);
+        return Bot.caseLogger.findByCase(this.doc.id, caseID);
     }
 
     /**
@@ -177,7 +212,7 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     removeCase(caseID: number) {
-        return Bot.caseLogger.deleteCase(this.doc.guild, caseID);
+        return Bot.caseLogger.deleteCase(this.doc.id, caseID);
     }
 
     /**
@@ -187,7 +222,7 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     getCases() {
-        return Bot.caseLogger.findByGuild(this.doc.guild);
+        return Bot.caseLogger.findByGuild(this.doc.id);
     }
 
     /**
@@ -201,7 +236,7 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     async addToRank(rank: StaffRanks, role?: RoleResolvable, user?: UserResolvable, save: boolean = true) {
-        let roleObj = resolveRole(this.guildObject, role);
+        let roleObj = resolveRole(this.guild, role);
         let userID = resolveUserID(user);
         if (!roleObj && !userID) return undefined;
 
@@ -229,7 +264,7 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     async removeFromRank(rank: StaffRanks, role?: RoleResolvable, user?: UserResolvable, save: boolean = true) {
-        let roleObj = resolveRole(this.guildObject, role);
+        let roleObj = resolveRole(this.guild, role);
         let userID = resolveUserID(user);
         if (!roleObj && !userID) return undefined;
 
@@ -327,7 +362,7 @@ export class GuildWrapper implements guildObject {
      * @returns perm level
      */
     async getPermLevel(memberResolvable: GuildMemberResolvable): Promise<permLevels> {
-        let member = await resolveGuildMember(this.guildObject, memberResolvable);
+        let member = await resolveGuildMember(this.guild, memberResolvable);
 
         // if bot master
         if (Bot.settings.getBotMasters().includes(member.id))

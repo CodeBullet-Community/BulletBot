@@ -81,7 +81,8 @@ let usageLimitSchema: mongoose.SchemaDefinition = {
 
 // guild
 export interface guildObject {
-    guild: string;
+    guild?: string | any; // from old version
+    id: string;
     prefix?: string;
     logChannel: string;
     caseChannel: string;
@@ -102,8 +103,47 @@ export interface guildObject {
         };
     };
     usageLimits?: UsageLimits;
+    ranks: {
+        admins: string[]; // role and user ids
+        mods: string[]; // role and user ids
+        immune: string[]; // role and user ids
+    };
+    commandSettings: {
+        // key is command name
+        [key: string]: {
+            _enabled: boolean; // if enabled
+            // custom settings of the command
+            [key: string]: any;
+        }
+    };
+    megalog: {
+        ignoreChannels: string[]; // array of channel ids
+        channelCreate?: string; // channel id
+        channelDelete?: string; // channel id
+        channelUpdate?: string; // channel id
+        ban?: string; // channel id
+        unban?: string; // channel id
+        memberJoin?: string; // channel id
+        memberLeave?: string; // channel id
+        nicknameChange?: string; // channel id
+        memberRolesChange?: string; // channel id
+        guildNameChange?: string; // channel id
+        messageDelete?: string; // channel id
+        attachmentCache?: string; // channel id
+        messageEdit?: string; // channel id
+        reactionAdd?: string; // channel id
+        reactionRemove?: string; // channel id
+        roleCreate?: string; // channel id
+        roleDelete?: string; // channel id
+        roleUpdate?: string; // channel id
+        voiceTranfer?: string; // channel id
+        voiceMute?: string; // channel id
+        voiceDeaf?: string; // channel id
+    };
 }
-export interface guildDoc extends mongoose.Document, guildObject { }
+export interface guildDoc extends mongoose.Document, guildObject {
+    id: string;
+}
 export const guildSchema = new mongoose.Schema({
     guild: String,
     prefix: { required: false, type: String },
@@ -117,8 +157,38 @@ export const guildSchema = new mongoose.Schema({
         youtube: [mongoose.Schema.Types.ObjectId]
     },
     locks: mongoose.Schema.Types.Mixed,
-    usageLimits: { required: false, type: usageLimitSchema }
-});
+    usageLimits: { required: false, type: usageLimitSchema },
+    rank: {
+        admins: [String],
+        mods: [String],
+        immune: [String],
+    },
+    commandSettings: mongoose.Schema.Types.Mixed,
+    megalog: {
+        ignoreChannels: [String],
+        channelCreate: { type: String, required: false },
+        channelDelete: { type: String, required: false },
+        channelUpdate: { type: String, required: false },
+        ban: { type: String, required: false },
+        unban: { type: String, required: false },
+        memberJoin: { type: String, required: false },
+        memberLeave: { type: String, required: false },
+        nicknameChange: { type: String, required: false },
+        memberRolesChange: { type: String, required: false },
+        guildNameChange: { type: String, required: false },
+        messageDelete: { type: String, required: false },
+        attachmentCache: { type: String, required: false },
+        messageEdit: { type: String, required: false },
+        reactionAdd: { type: String, required: false },
+        reactionRemove: { type: String, required: false },
+        roleCreate: { type: String, required: false },
+        roleDelete: { type: String, required: false },
+        roleUpdate: { type: String, required: false },
+        voiceTransfer: { type: String, required: false },
+        voiceMute: { type: String, required: false },
+        voiceDeaf: { type: String, required: false }
+    }
+}, { id: false });
 
 // staff
 export type StaffRanks = 'admins' | 'mods' | 'immune';
