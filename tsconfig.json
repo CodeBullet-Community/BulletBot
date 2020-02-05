@@ -8,7 +8,8 @@
         "module": "commonjs",
         "resolveJsonModule": true,
         "esModuleInterop": true,
-        "noImplicitUseStrict": true
+        "noImplicitUseStrict": true,
+        "sourceMap": true
     },
     "exclude": ["src/commands/[command-name].ts"]
 }
