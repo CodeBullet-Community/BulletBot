@@ -1,6 +1,6 @@
 import mongoose = require('mongoose');
-import { logDoc, logSchema, guildDoc, guildSchema, logObject, logActions, webhookDoc, logTypes, logMegalog, StaffRanks } from './schemas';
-import { Guild, Role, User, GuildMember, Message, Channel, TextChannel, } from 'discord.js';
+import { logDoc, logSchema, guildDoc, guildSchema, logObject, logActions, webhookDoc, logTypes, logMegalog, GuildRank } from './schemas';
+import { Guild, Role, User, GuildMember, Message, Channel, TextChannel, Snowflake, } from 'discord.js';
 import { commandInterface } from '../commands';
 import { Bot } from '..';
 import { filterInterface } from '../filters';
@@ -66,13 +66,13 @@ export class Logger {
      * @param {Guild} guild guild where it actually was changed
      * @param {GuildMember} mod the member that made the change request
      * @param {(0 | 1)} type add or remove
-     * @param {StaffRanks} rank admins/mods/immune
+     * @param {GuildRank} rank admins/mods/immune
      * @param {Role} [role] the added/removed role
      * @param {User} [user] the added/removed user
      * @returns
      * @memberof Logger
      */
-    async logStaff(guild: Guild, mod: GuildMember, type: 0 | 1, rank: StaffRanks, role?: Role, user?: User) {
+    async logStaff(guild: Guild, mod: GuildMember, type: 0 | 1, rank: GuildRank, role?: Role, user?: User) {
         var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
@@ -443,12 +443,12 @@ export class Logger {
                 'fields': [
                     {
                         'name': 'New:',
-                        'value': newPrefix,
+                        'value': newPrefix || Bot.settings.prefix,
                         'inline': true
                     },
                     {
                         'name': 'Old:',
-                        'value': oldPrefix,
+                        'value': oldPrefix || Bot.settings.prefix,
                         'inline': true
                     },
                     {

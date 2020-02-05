@@ -35,6 +35,7 @@ var command: commandInterface = {
                 return false;
             }
 
+            var oldPrefix = guildWrapper.getPrefix();
             if (args == 'reset' || args == Bot.settings.prefix) { // if user wants to reset the prefix to default
                 if (guildWrapper.prefix) { // if a custom prefix is currently set
                     guildWrapper.setPrefix();
@@ -59,7 +60,6 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            var oldPrefix = guildWrapper.getPrefix();
             guildWrapper.setPrefix(args);
 
             // send confirmation message

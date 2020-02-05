@@ -5,7 +5,8 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, durationToString, stringToDuration, stringToChannel } from '../../utils/parsers';
 import { durations } from '../../utils/time';
-import { staffObject, guildObject } from '../../database/schemas';
+import { guildObject } from '../../database/schemas';
+import { GuildWrapper } from '../../database/guildWrapper';
 
 /**
  * returns the IDs that it has to overwrite and in what state they were
@@ -13,7 +14,7 @@ import { staffObject, guildObject } from '../../database/schemas';
  * @param {TextChannel} channel channel to get overwrites for
  * @returns
  */
-async function getIDsToOverwrite(channel: TextChannel) {
+async function getIDsToOverwrite(guildWrapper: GuildWrapper, channel: TextChannel) {
     let denyIDs: string[] = []; // IDs that need to be denied
     let allowIDs: string[] = []; // IDs that specifically have to be allowed
 
@@ -22,20 +23,13 @@ async function getIDsToOverwrite(channel: TextChannel) {
         denyIDs.push(overwrite.id);
     }
 
-    // load staff document
-    let staffDoc = await Bot.database.findStaffDoc(channel.guild.id);
-    if (staffDoc) {
-        let staffObject: staffObject = staffDoc.toObject();
-        // add all staff IDs to the allow list
-        allowIDs = allowIDs.concat(staffObject.admins.users)
-            .concat(staffObject.mods.users)
-            .concat(staffObject.immune.users)
-            .concat(staffObject.admins.roles)
-            .concat(staffObject.mods.roles)
-            .concat(staffObject.immune.roles);
-        // removed IDs from the deny list that are in the allowed list
-        denyIDs = denyIDs.filter(id => !allowIDs.includes(id));
-    }
+
+    // add all guild rank IDs to the allow list
+    allowIDs = allowIDs.concat(guildWrapper.ranks.admins)
+        .concat(guildWrapper.ranks.mods)
+        .concat(guildWrapper.ranks.immune);
+    // removed IDs from the deny list that are in the allowed list
+    denyIDs = denyIDs.filter(id => !allowIDs.includes(id));
 
     let allowOverwrites: string[] = []; // ids that originally had a allow overwrite for sending messages
     let neutralOverwrites: string[] = []; // ids that originally had a neutral overwrite for sending messages
@@ -130,7 +124,7 @@ var command: commandInterface = {
             let timeString = time ? durationToString(time) : 'an indefinite time';
 
             // get ids that need to be overwritten
-            let overwrites = await getIDsToOverwrite(channel);
+            let overwrites = await getIDsToOverwrite(guildWrapper, channel);
 
             let query = { guild: message.guild.id };
             query[`locks.${channel.id}`] = { $exists: true };

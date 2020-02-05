@@ -4,10 +4,8 @@ import {
     logDoc,
     commandsDoc,
     filtersDoc,
-    staffDoc,
     commandCacheDoc,
     guildSchema,
-    staffSchema,
     commandsSchema,
     filtersSchema,
     logSchema,
@@ -22,7 +20,7 @@ import {
     caseSchema,
     pActionDoc,
     pActionSchema,
-    StaffRanks
+    GuildRank
 } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
@@ -51,7 +49,6 @@ export class Database {
     mainDB: {
         connection: mongoose.Connection;
         guilds: mongoose.Model<guildDoc>;
-        staff: mongoose.Model<staffDoc>;
         commands: mongoose.Model<commandsDoc>;
         filters: mongoose.Model<filtersDoc>;
         logs: mongoose.Model<logDoc>;
@@ -87,7 +84,6 @@ export class Database {
             Bot.database.mainDB = {
                 connection: mainCon,
                 guilds: mainCon.model('guild', guildSchema, 'guilds'),
-                staff: mainCon.model('staff', staffSchema, 'staff'),
                 commands: mainCon.model('commands', commandsSchema, 'commands'),
                 filters: mainCon.model('filters', filtersSchema, 'filters'),
                 logs: mainCon.model('log', logSchema, 'logs'),
@@ -136,7 +132,7 @@ export class Database {
      * @memberof Database
      */
     findGuildDoc(guildID: string, projection?: string[]) {
-        return this.mainDB.guilds.findOne({ guild: guildID }, projection).exec();
+        return this.mainDB.guilds.findOne({ id: guildID }, projection).exec();
     }
 
     /**
@@ -169,33 +165,23 @@ export class Database {
      * @memberof Database
      */
     async addGuild(guildID) {
-        if (!(await this.findStaffDoc(guildID))) {
-            var staffDoc = new this.mainDB.staff({
-                guild: guildID,
-                admins: {
-                    roles: [],
-                    users: []
-                },
-                mods: {
-                    roles: [],
-                    users: []
-                },
-                immune: {
-                    roles: [],
-                    users: []
-                }
-            });
-            await staffDoc.save();
-        }
         var guildDoc = await this.findGuildDoc(guildID)
         if (!guildDoc) {
             guildDoc = new this.mainDB.guilds({
-                guild: guildID,
+                id: guildID,
                 logChannel: undefined,
                 logs: [],
-                staff: staffDoc.id,
                 webhooks: {
                     youtube: []
+                },
+                commandSettings: {},
+                ranks: {
+                    admins: [],
+                    mods: [],
+                    immune: []
+                },
+                megalog: {
+                    ignoreChannels: []
                 }
             });
         }
@@ -213,8 +199,7 @@ export class Database {
         for (const webhookDoc of await Bot.youtube.webhooks.find({ guild: guildID })) {
             Bot.youtube.deleteWebhook(guildID, webhookDoc.toObject().channel, webhookDoc.toObject().feed);
         }
-        this.mainDB.guilds.deleteOne({ guild: guildID }).exec();
-        this.mainDB.staff.deleteOne({ guild: guildID }).exec();
+        this.mainDB.guilds.deleteOne({ id: guildID }).exec();
         this.mainDB.commands.deleteOne({ guild: guildID }).exec();
         this.mainDB.filters.deleteOne({ guild: guildID }).exec();
         this.mainDB.logs.deleteMany({ guild: guildID }).exec();
@@ -235,17 +220,6 @@ export class Database {
                 await this.removeGuild(guildDoc.id);
             }
         }
-    }
-
-    /**
-     * finds staff doc of specified guild
-     *
-     * @param {string} guildID id of guild of which to get the staff doc
-     * @returns
-     * @memberof Database
-     */
-    findStaffDoc(guildID: string) {
-        return this.mainDB.staff.findOne({ guild: guildID }).exec();
     }
 
     /**

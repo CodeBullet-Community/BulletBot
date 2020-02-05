@@ -1,6 +1,6 @@
 import { Message, RichEmbed, Guild, GuildMember } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels, getPermLevel } from '../../utils/permissions';
+import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToMember, stringToRole } from '../../utils/parsers';

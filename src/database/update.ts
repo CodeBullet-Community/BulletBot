@@ -1,16 +1,49 @@
 import mongoose = require('mongoose');
 import { cluster } from '../bot-config.json';
-import { guildSchema, staffSchema, commandsSchema, megalogSchema, guildDoc, staffDoc, commandsDoc, megalogDoc, megalogObject } from './schemas.js';
+import { guildSchema, commandsSchema, megalogSchema, guildDoc, commandsDoc, megalogDoc, megalogObject } from './schemas.js';
 
 // prefix
-export interface prefixObject {
+interface prefixObject {
     guild: string;
     prefix: string;
 }
-export interface prefixDoc extends mongoose.Document, prefixObject { }
-export const prefixSchema = new mongoose.Schema({
+interface prefixDoc extends mongoose.Document, prefixObject { }
+const prefixSchema = new mongoose.Schema({
     guild: String,
     prefix: String
+});
+
+// staff
+interface staffObject {
+    guild: string;
+    admins: {
+        roles: string[];
+        users: string[];
+    };
+    mods: {
+        roles: string[];
+        users: string[];
+    };
+    immune: {
+        roles: string[];
+        users: string[];
+    };
+}
+interface staffDoc extends mongoose.Document, staffObject { }
+const staffSchema = new mongoose.Schema({
+    guild: String,
+    admins: {
+        roles: [String],
+        users: [String]
+    },
+    mods: {
+        roles: [String],
+        users: [String]
+    },
+    immune: {
+        roles: [String],
+        users: [String]
+    }
 });
 
 export async function updateDatabaseAfter1_2_8() {

@@ -80,6 +80,8 @@ let usageLimitSchema: mongoose.SchemaDefinition = {
 }
 
 // guild
+export type GuildRank = 'admins' | 'mods' | 'immune';
+export const guildRanks: GuildRank[] = ['admins', 'mods', 'immune']
 export interface guildObject {
     guild?: string | any; // from old version
     id: string;
@@ -88,7 +90,6 @@ export interface guildObject {
     caseChannel: string;
     totalCases: number;
     logs: mongoose.Schema.Types.ObjectId[];
-    staff: mongoose.Schema.Types.ObjectId;
     modmailChannel: string,
     webhooks: {
         // key is service name
@@ -145,20 +146,20 @@ export interface guildDoc extends mongoose.Document, guildObject {
     id: string;
 }
 export const guildSchema = new mongoose.Schema({
-    guild: String,
+    guild: { type: String, required: false}, // from old version
+    id: String,
     prefix: { required: false, type: String },
     logChannel: String,
     caseChannel: String,
     totalCases: Number,
     modmailChannel: String,
     logs: [mongoose.Schema.Types.ObjectId],
-    staff: mongoose.Schema.Types.ObjectId,
     webhooks: {
         youtube: [mongoose.Schema.Types.ObjectId]
     },
     locks: mongoose.Schema.Types.Mixed,
     usageLimits: { required: false, type: usageLimitSchema },
-    rank: {
+    ranks: {
         admins: [String],
         mods: [String],
         immune: [String],
@@ -189,40 +190,6 @@ export const guildSchema = new mongoose.Schema({
         voiceDeaf: { type: String, required: false }
     }
 }, { id: false });
-
-// staff
-export type StaffRanks = 'admins' | 'mods' | 'immune';
-export interface staffObject {
-    guild: string;
-    admins: {
-        roles: string[];
-        users: string[];
-    };
-    mods: {
-        roles: string[];
-        users: string[];
-    };
-    immune: {
-        roles: string[];
-        users: string[];
-    };
-}
-export interface staffDoc extends mongoose.Document, staffObject { }
-export const staffSchema = new mongoose.Schema({
-    guild: String,
-    admins: {
-        roles: [String],
-        users: [String]
-    },
-    mods: {
-        roles: [String],
-        users: [String]
-    },
-    immune: {
-        roles: [String],
-        users: [String]
-    }
-});
 
 // commands
 export interface commandsObject {

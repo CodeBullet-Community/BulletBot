@@ -1,6 +1,6 @@
 import { Message, Guild, GuildMember } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels, getPermLevel } from '../../utils/permissions';
+import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, durationToString, stringToMember, stringToDuration } from '../../utils/parsers';
@@ -96,7 +96,7 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            if (await getPermLevel(member) >= permLevels.mod) { // check if member is mod or higher
+            if (await guildWrapper.getPermLevel(member) >= permLevels.mod) { // check if member is mod or higher
                 message.channel.send('You can\'t mute that member');
                 Bot.mStats.logMessageSend();
                 return false;

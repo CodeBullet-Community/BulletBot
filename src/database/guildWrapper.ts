@@ -1,8 +1,8 @@
 import mongoose = require('mongoose');
-import { Guild, GuildMember, UserResolvable, GuildResolvable, GuildMemberResolvable, RoleResolvable } from "discord.js";
-import { CommandUsageLimits, guildDoc, UsageLimits, guildObject, guildSchema, staffDoc, StaffRanks } from "./schemas";
+import { Guild, GuildMember, UserResolvable, GuildResolvable, GuildMemberResolvable, RoleResolvable, Snowflake } from "discord.js";
+import { CommandUsageLimits, guildDoc, UsageLimits, guildObject, guildSchema, GuildRank, guildRanks } from "./schemas";
 import { Bot } from '..';
-import { getPermLevel, permLevels } from '../utils/permissions';
+import { permLevels } from '../utils/permissions';
 import { CommandResolvable } from '../commands';
 import { resolveCommand, resolveGuildMember, resolveRole, resolveUserID } from '../utils/resolvers';
 
@@ -17,8 +17,6 @@ export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
  */
 export class GuildWrapper implements guildObject {
     guild: Guild;
-    doc: guildDoc;
-    staffDoc: staffDoc;
     id: string;
     prefix: string;
     logChannel: string;
@@ -69,81 +67,41 @@ export class GuildWrapper implements guildObject {
     /**
      * Creates an instance of GuildWrapper.
      *
-     * @param {guildDoc} guildDoc guild document
+     * @param {guildDoc} guildObject guild document object
      * @param {Guild} [guild] optional guild object (so constructor doesn't have to search for it)
      * @memberof GuildWrapper
      */
-    constructor(guildDoc: guildDoc, guild?: Guild) {
-        this.doc = guildDoc;
-        this.syncWrapperWithDoc();
+    constructor(guildObject: guildObject, guild?: Guild) {
+        for (const key in guildObject)
+            this[key] = guildObject[key];
 
         if (guild)
             this.guild = guild;
         else
-            this.guild = Bot.client.guilds.get(guildDoc.id);
+            this.guild = Bot.client.guilds.get(guildObject.id);
+    }
+
+    private tracePathSet(object, path: string, value: any) {
+        let pathArray = path.split('.');
+        let i;
+        for (i = 0; i < pathArray.length - 1; i++)
+            object = object[pathArray[i]];
+        object[path[i]] = value;
     }
 
     /**
-     * updates every value in the wrapper with the value in the document
+     * Resynchronizes the cache with the database
      *
-     * @private
+     * @returns The resynchronized Wrapper if the document was found in the database
      * @memberof GuildWrapper
      */
-    private syncWrapperWithDoc() {
-        let object: guildObject = this.doc.toObject();
-        for (const key in guildSchema.obj)
-            this[key] = object[key];
-    }
-
-    /**
-     * Saves changes to guild doc that were marked as modified. 
-     * IMPORTANT: This method only saves the guild doc not also the staff doc
-     *
-     * @param {string} [path] Path that should be specially marked (if provided, document doesn't sync with wrapper)
-     * @returns The saved document
-     * @memberof UserWrapper
-     */
-    save(path?: string) {
-        if (path)
-            this.doc.markModified(path);
-        return this.doc.save();
-    }
-
-    /**
-     * Marks everything in the guild doc as modified and saves it to the database.
-     * IMPORTANT: This method only saves the guild doc not also the staff doc
-     *
-     * @returns The saved document
-     * @memberof UserWrapper
-     */
-    saveAll() {
-        for (const key in guildSchema.obj)
-            this.doc.markModified(key);
-        return this.doc.save();
-    }
-
-    /**
-     * Saves changes to staff doc that were marked as modified.
-     *
-     * @returns
-     * @memberof GuildWrapper
-     */
-    saveStaffDoc() {
-        if (!this.staffDoc) return undefined;
-        return this.staffDoc.save();
-    }
-
-    /**
-     * Gets the staff document and caches it for if this function is called again.
-     *
-     * @returns Staff document of this guild
-     * @memberof GuildWrapper
-     */
-    async getStaffDoc() {
-        if (this.staffDoc) return this.staffDoc;
-        this.staffDoc = await Bot.database.mainDB.staff.findOne({ guild: this.id }).exec();
-        if (!this.staffDoc) throw new Error(`Staff document for guild ${this.id} not found`);
-        return this.staffDoc;
+    async resync(fields?: string[]) {
+        let doc = await Bot.database.findGuildDoc(this.id, fields);
+        if (!doc) return undefined;
+        let obj = doc.toObject({ minimize: false });
+        for (const field of fields)
+            this.tracePathSet(this, field, this.tracePath(obj, field));
+        return this;
     }
 
     /**
@@ -153,7 +111,7 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     getPrefix() {
-        if (this.doc.prefix) return this.doc.prefix;
+        if (this.prefix) return this.prefix;
         return Bot.settings.prefix;
     }
 
@@ -161,14 +119,13 @@ export class GuildWrapper implements guildObject {
      * Sets a new prefix for the server
      *
      * @param {string} prefix New prefix (If not provided, prefix will be reset)
-     * @param {boolean} [save=true] If it should be saved directly
      * @memberof GuildWrapper
      */
-    setPrefix(prefix?: string, save = true) {
+    async setPrefix(prefix?: string) {
+        let query: any = { $set: { prefix: prefix } };
+        if (!prefix) query = { $unset: { prefix: 0 } };
+        await Bot.database.mainDB.guilds.updateOne({ id: this.id }, query).exec();
         this.prefix = prefix;
-        this.doc.prefix = prefix;
-        this.doc.markModified('prefix');
-        if (save) this.save();
     }
 
     /**
@@ -178,8 +135,8 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     getCaseChannel() {
-        if (!this.doc.caseChannel) return undefined;
-        return this.guild.channels.get(this.doc.caseChannel);
+        if (!this.caseChannel) return undefined;
+        return this.guild.channels.get(this.caseChannel);
     }
 
     /**
@@ -189,8 +146,8 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     getLogChannel() {
-        if (!this.doc.logChannel) return undefined;
-        return this.guild.channels.get(this.doc.logChannel);
+        if (!this.logChannel) return undefined;
+        return this.guild.channels.get(this.logChannel);
     }
 
     /**
@@ -201,7 +158,7 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     getCase(caseID: number) {
-        return Bot.caseLogger.findByCase(this.doc.id, caseID);
+        return Bot.caseLogger.findByCase(this.id, caseID);
     }
 
     /**
@@ -212,7 +169,7 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     removeCase(caseID: number) {
-        return Bot.caseLogger.deleteCase(this.doc.id, caseID);
+        return Bot.caseLogger.deleteCase(this.id, caseID);
     }
 
     /**
@@ -222,63 +179,43 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     getCases() {
-        return Bot.caseLogger.findByGuild(this.doc.id);
+        return Bot.caseLogger.findByGuild(this.id);
     }
 
     /**
-     * adds user/role to admin/mod/immune rank
+     * Adds user/role to admin/mod/immune rank
      *
-     * @param {StaffRanks} rank which rank the user/role should be added to
-     * @param {RoleResolvable} [role] Role to add to the rank
-     * @param {UserResolvable} [user] User to add to the rank
-     * @param {boolean} [save=true] If changes should be directly saved to database
-     * @returns if added was successful
+     * @param {GuildRank} rank Which rank the user/role should be added to
+     * @param {Snowflake} snowflake Role/User id to add to the rank
+     * @returns Resulting list of IDs in the rank
      * @memberof GuildWrapper
      */
-    async addToRank(rank: StaffRanks, role?: RoleResolvable, user?: UserResolvable, save: boolean = true) {
-        let roleObj = resolveRole(this.guild, role);
-        let userID = resolveUserID(user);
-        if (!roleObj && !userID) return undefined;
-
-        let staffDoc = await this.getStaffDoc();
-
-        // add role/user to rank
-        if (roleObj && !staffDoc[rank].roles.includes(roleObj.id))
-            staffDoc[rank].roles.push(roleObj.id);
-        else if (userID && !staffDoc[rank].users.includes(userID))
-            staffDoc[rank].users.push(userID);
-        else
-            return undefined;
-
-        if (save) await staffDoc.save();
-        return staffDoc;
+    async addToRank(rank: GuildRank, snowflake: Snowflake) {
+        if (!guildRanks.includes(rank)) return undefined;
+        if (this.ranks[rank].includes(snowflake)) return undefined;
+        let query = { $addToSet: {} };
+        query.$addToSet[`ranks.${rank}`] = [snowflake];
+        await Bot.database.mainDB.guilds.updateOne({ id: this.id }, query).exec();
+        this.ranks[rank].push(snowflake);
+        return this.ranks[rank];
     }
 
     /**
-     * removes user/role from the admin/mod/immune rank
+     * Removes user/role from the admin/mod/immune rank
      *
-     * @param {StaffRanks} rank rank the user should be removed from
-     * @param {RoleResolvable} [role] Role to remove to the rank
-     * @param {UserResolvable} [user] User to remove to the rank
-     * @param {boolean} [save=true] If changes should be directly saved to database
+     * @param {GuildRank} rank Rank the user should be removed from
+     * @param {Snowflake} snowflake Role/User id to remove to the rank
+     * @returns Resulting list of IDs in the rank
      * @memberof GuildWrapper
      */
-    async removeFromRank(rank: StaffRanks, role?: RoleResolvable, user?: UserResolvable, save: boolean = true) {
-        let roleObj = resolveRole(this.guild, role);
-        let userID = resolveUserID(user);
-        if (!roleObj && !userID) return undefined;
-
-        let staffDoc = await this.getStaffDoc();
-
-        if (roleObj && staffDoc[rank].roles.includes(roleObj.id))
-            staffDoc[rank].roles.splice(staffDoc[rank].roles.indexOf(roleObj.id), 1);
-        else if (userID && staffDoc[rank].users.includes(userID))
-            staffDoc[rank].users.splice(staffDoc[rank].users.indexOf(userID), 1);
-        else
-            return undefined;
-
-        if (save) await staffDoc.save();
-        return staffDoc;
+    async removeFromRank(rank: GuildRank, snowflake: Snowflake) {
+        if (!guildRanks.includes(rank)) return undefined;
+        if (!this.ranks[rank].includes(snowflake)) return undefined;
+        let query = { $pull: {} };
+        query.$pull[`ranks.${rank}`] = snowflake;
+        await Bot.database.mainDB.guilds.updateOne({ id: this.id }, query).exec();
+        this.ranks[rank].splice(this.ranks[rank].indexOf(snowflake), 1);
+        return this.ranks[rank];
     }
 
     // TODO: add functions for webhooks
@@ -332,7 +269,7 @@ export class GuildWrapper implements guildObject {
      */
     getUsageLimits(path: string = '') {
         let globalUsageLimits = this.tracePath(Bot.settings.usageLimits, path) || {};
-        let guildUsageLimits = this.tracePath(this.doc.usageLimits, path) || {};
+        let guildUsageLimits = this.tracePath(this.usageLimits, path) || {};
         return this.mergeObject(globalUsageLimits, guildUsageLimits);
     }
 
@@ -345,8 +282,8 @@ export class GuildWrapper implements guildObject {
      */
     getCommandUsageLimits(commandResolvable: CommandResolvable): CommandUsageLimits {
         let command = resolveCommand(commandResolvable);
-        let usagelimits = this.getUsageLimits(`commands.${command.name}`);
-        return Bot.commands.getCommandUsageLimits(command, usagelimits);
+        let usageLimits = this.getUsageLimits(`commands.${command.name}`);
+        return Bot.commands.getCommandUsageLimits(command, usageLimits);
     }
 
     /**
@@ -372,18 +309,75 @@ export class GuildWrapper implements guildObject {
         if (member.hasPermission('ADMINISTRATOR'))
             return permLevels.admin;
 
-        let staffDoc = await this.getStaffDoc();
-        let ranks = ['admin', 'mod', 'immune'];
-        // iterate through all privileged ranks
-        for (const rank of ranks) {
-            let rankStaff = staffDoc[rank + 's'];
-            // is one of the staff user
-            if (!rankStaff.users.includes(member.user.id)) continue;
-            // has one of the staff roles
-            if (!member.roles.find(role => rankStaff.roles.includes(role.id))) continue;
-            return permLevels[rank];
-        }
+        if (this.ranks.admins.includes(member.id)
+            || member.roles.find(role => this.ranks.admins.includes(role.id)))
+            return permLevels.admin;
+        if (this.ranks.mods.includes(member.id)
+            || member.roles.find(role => this.ranks.mods.includes(role.id)))
+            return permLevels.mod;
+        if (this.ranks.immune.includes(member.id)
+            || member.roles.find(role => this.ranks.immune.includes(role.id)))
+            return permLevels.immune;
         return permLevels.member;
+    }
+
+    /**
+     * Gets all snowflakes of a certain rank and checks if that rank exists
+     *
+     * @param {GuildRank} rank Rank to get snowflakes of
+     * @returns {Snowflake[]} Snowflakes of the given rank
+     * @memberof GuildWrapper
+     */
+    getRankIDs(rank: GuildRank): Snowflake[] {
+        if (!guildRanks.includes(rank))
+            throw new Error(`Invalid Input. Rank should be either 'admins', 'mods' or 'immune' but was: ${rank}`);
+        return this.ranks[rank];
+    }
+
+    /**
+     * Only provides GuildMember snowflakes of a certain rank
+     *
+     * @param {GuildRank} rank Rank to get GuildMember snowflakes of
+     * @returns {Snowflake[]} GuildMember snowflakes of a certain rank
+     * @memberof GuildWrapper
+     */
+    getRankMemberIDs(rank: GuildRank): Snowflake[] {
+        return this.getRankIDs(rank).filter(id => !this.guild.roles.get(id));
+    }
+
+    /**
+     * Only provides GuildMembers of a certain rank
+     * 
+     * @param {GuildRank} rank Rank to get GuildMembers of
+     * @returns GuildMembers of a certain rank
+     * @memberof GuildWrapper
+     */
+    async getRankMembers(rank: GuildRank) {
+        let userIDs = this.getRankMemberIDs(rank);
+        let users = userIDs.map(id => this.guild.fetchMember(id))
+        return await Promise.all(users);
+    }
+
+    /**
+     * Only provides Role snowflakes of a certain rank
+     *
+     * @param {GuildRank} rank Rank to get Role snowflakes of
+     * @returns {Snowflake[]} Role snowflakes of a certain rank
+     * @memberof GuildWrapper
+     */
+    getRankRoleIDs(rank: GuildRank): Snowflake[] {
+        return this.getRankIDs(rank).filter(id => this.guild.roles.get(id));
+    }
+
+    /**
+     * Only provides Role of a certain rank
+     *
+     * @param {GuildRank} rank Rank to get Roles of
+     * @returns Roles of a certain rank
+     * @memberof GuildWrapper
+     */
+    getRankRoles(rank: GuildRank) {
+        return this.getRankRoleIDs(rank).map(id => this.guild.roles.get(id));
     }
 
 }

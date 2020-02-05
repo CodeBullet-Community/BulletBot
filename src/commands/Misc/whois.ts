@@ -1,6 +1,6 @@
 import { Message, RichEmbed, Guild, GuildMember } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels, getPermLevel } from '../../utils/permissions';
+import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToMember } from '../../utils/parsers';
@@ -200,7 +200,7 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            await sendMemberInfo(message, member, await getPermLevel(member), permLevel, requestTime);
+            await sendMemberInfo(message, member, await guildWrapper.getPermLevel(member), permLevel, requestTime);
         } catch (e) {
             sendError(message.channel, e);
             Bot.mStats.logError(e, command.name);

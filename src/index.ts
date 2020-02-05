@@ -8,8 +8,8 @@ import { Logger } from './database/logger';
 import { Database } from './database/database';
 import { MStats } from './database/mStats';
 import { botToken, cluster, callback, crashProof } from './bot-config.json';
-import { permLevels, getPermLevel } from './utils/permissions';
-import { logTypes, StaffRanks } from './database/schemas';
+import { permLevels } from './utils/permissions';
+import { logTypes, GuildRank } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
 import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate, logVoiceTransfer, logVoiceMute, logVoiceDeaf } from './megalogger';
@@ -328,7 +328,6 @@ client.on('guildMemberRemove', async member => {
         if (guildWrapper.removeFromRank(rank, undefined, member, false))
             // @ts-ignore
             Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, rank, undefined, member.user);
-    guildWrapper.saveStaffDoc();
 
     let userDoc = await Bot.database.findUserDoc(member.id);
     if (userDoc && userDoc.commandLastUsed && userDoc.commandLastUsed[member.guild.id]) {
@@ -364,7 +363,6 @@ client.on('roleDelete', async role => {
         if (guildWrapper.removeFromRank(rank, role, undefined, false))
             // @ts-ignore
             Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, rank, role);
-    guildWrapper.saveStaffDoc();
 });
 
 client.on('roleUpdate', async (oldRole: discord.Role, newRole: discord.Role) => {
