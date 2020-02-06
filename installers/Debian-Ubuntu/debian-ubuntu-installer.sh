@@ -407,8 +407,9 @@ while true; do
             echo "3. Run BulletBot in the background with auto-restart"
         fi
 
-        echo "4. Create new/update BulletBot config file"
-        echo "5. Stop and exit script"
+        echo "4. Stop BulletBot"
+        echo "5. Create new/update BulletBot config file"
+        echo "6. Stop and exit script"
         read option
         case "$option" in
             1)
@@ -435,10 +436,15 @@ while true; do
                 ;;
             4)
                 export bullet_status
-                ./installers/Linux_Universal/setup/bot-config-setup.sh
+                ./installers/Linux_Universal/bb-stop.sh
                 clear
                 ;;
             5)
+                export bullet_status
+                ./installers/Linux_Universal/setup/bot-config-setup.sh
+                clear
+                ;;
+            6)
                 echo -e "\nExiting..."
                 exit 0
                 ;;

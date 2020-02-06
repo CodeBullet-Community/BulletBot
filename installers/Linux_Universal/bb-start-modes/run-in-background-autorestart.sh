@@ -25,7 +25,7 @@ if [[ -f $start_service_exists && $start_service_status != 0 ]]; then
     systemctl enable bullet-mongo-start.service || {
         echo "${red}Failed to enable bullet-mongo-start.service" >&2
         echo "${cyan}This service must be enabled in order to run BulletBot" \
-            "in this run mode"
+            "in this run mode${nc}"
         read -p "Press [Enter] to return to the installer menu"
         exit 1
     }
@@ -39,7 +39,7 @@ elif [[ ! -f $start_service_exists ]]; then
     systemctl enable bullet-mongo-start.service || {
         echo "${red}Failed to enable bullet-mongo-start.service" >&2
         echo "${cyan}This service must be enabled in order to run BulletBot" \
-            "in this run mode"
+            "in this run mode${nc}"
         read -p "Press [Enter] to return to the installer menu"
         exit 1
     }
@@ -49,7 +49,7 @@ if [[ ! -f $start_script_exists ]]; then
     echo "${red}bullet-mongo-start.sh does not exist" >&2
     echo "${cyan}bullet-mongo-start.sh is required to use this run mode"
     echo "Re-download bulletbot using the installers, then retry using this" \
-        "run mode"
+        "run mode${nc}"
     read -p "Press [Enter] to return to the installer menu"
     exit 1
 fi
