@@ -82,6 +82,13 @@ let usageLimitSchema: mongoose.SchemaDefinition = {
 // guild
 export type GuildRank = 'admins' | 'mods' | 'immune';
 export const guildRanks: GuildRank[] = ['admins', 'mods', 'immune']
+
+export interface CommandSettings {
+    _enabled?: boolean; // if enabled
+    // custom settings of the command
+    [key: string]: any;
+}
+
 export interface guildObject {
     guild?: string | any; // from old version
     id: string;
@@ -111,11 +118,7 @@ export interface guildObject {
     };
     commandSettings: {
         // key is command name
-        [key: string]: {
-            _enabled: boolean; // if enabled
-            // custom settings of the command
-            [key: string]: any;
-        }
+        [key: string]: CommandSettings
     };
     megalog: {
         ignoreChannels: string[]; // array of channel ids
@@ -146,7 +149,7 @@ export interface guildDoc extends mongoose.Document, guildObject {
     id: string;
 }
 export const guildSchema = new mongoose.Schema({
-    guild: { type: String, required: false}, // from old version
+    guild: { type: String, required: false }, // from old version
     id: String,
     prefix: { required: false, type: String },
     logChannel: String,
@@ -190,23 +193,6 @@ export const guildSchema = new mongoose.Schema({
         voiceDeaf: { type: String, required: false }
     }
 }, { id: false });
-
-// commands
-export interface commandsObject {
-    guild: string;
-    commands: {
-        // key is command name
-        [key: string]: {
-            _enabled: boolean;
-            [key: string]: any;
-        }
-    }
-}
-export interface commandsDoc extends mongoose.Document, commandsObject { }
-export const commandsSchema = new mongoose.Schema({
-    guild: String,
-    commands: mongoose.Schema.Types.Mixed
-});
 
 // filters
 export interface filtersObject {

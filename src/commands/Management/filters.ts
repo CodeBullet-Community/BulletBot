@@ -4,7 +4,7 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
 import { permLevels } from '../../utils/permissions';
-import { commandsObject, logTypes, filtersObject } from '../../database/schemas';
+import { logTypes, filtersObject } from '../../database/schemas';
 import { GuildWrapper } from '../../database/guildWrapper';
 
 /**

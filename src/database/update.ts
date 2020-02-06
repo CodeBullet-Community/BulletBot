@@ -1,6 +1,6 @@
 import mongoose = require('mongoose');
 import { cluster } from '../bot-config.json';
-import { guildSchema, commandsSchema, megalogSchema, guildDoc, commandsDoc, megalogDoc, megalogObject } from './schemas.js';
+import { guildSchema, megalogSchema, guildDoc, megalogDoc, megalogObject } from './schemas.js';
 
 // prefix
 interface prefixObject {
@@ -46,6 +46,23 @@ const staffSchema = new mongoose.Schema({
     }
 });
 
+// commands
+interface commandsObject {
+    guild: string;
+    commands: {
+        // key is command name
+        [key: string]: {
+            _enabled: boolean;
+            [key: string]: any;
+        }
+    }
+}
+interface commandsDoc extends mongoose.Document, commandsObject { }
+const commandsSchema = new mongoose.Schema({
+    guild: String,
+    commands: mongoose.Schema.Types.Mixed
+});
+
 export async function updateDatabaseAfter1_2_8() {
     console.info('Database changes for this update will be applied.');
 
@@ -77,6 +94,8 @@ export async function updateDatabaseAfter1_2_8() {
         let commandsDoc = await commandsCollection.findOne({ guild: guildDoc.id }).exec();
         if (commandsDoc)
             guildDoc.commandSettings = commandsDoc.commands;
+        else if (!guildDoc.commandSettings)
+            guildDoc.commandSettings = {};
 
         let megalogDoc = await megalogCollection.findOne({ guild: guildDoc.id }).exec();
         if (megalogDoc) {

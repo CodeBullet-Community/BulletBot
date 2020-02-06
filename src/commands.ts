@@ -245,10 +245,7 @@ export class Commands {
         let user = await Bot.database.getUserWrapper(message.author, true);
         if (!user.canUseCommand(scope, command, commandUsageLimits)) return false;
 
-        if (!dm && cmd.togglable) { // check if command is disabled if request is from a guild and the command is togglable
-            var commandSettings = await Bot.database.getCommandSettings(message.guild.id, command);
-            if (commandSettings && !commandSettings._enabled) return false;
-        }
+        if (!dm && !guildWrapper.commandIsEnabled(command)) return false;
 
         let output = await cmd.run(message, args, permLevel, dm, guildWrapper, requestTime); // run command
 

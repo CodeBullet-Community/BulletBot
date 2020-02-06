@@ -2,11 +2,9 @@ import mongoose = require('mongoose');
 import {
     guildDoc,
     logDoc,
-    commandsDoc,
     filtersDoc,
     commandCacheDoc,
     guildSchema,
-    commandsSchema,
     filtersSchema,
     logSchema,
     commandCacheSchema,
@@ -49,7 +47,6 @@ export class Database {
     mainDB: {
         connection: mongoose.Connection;
         guilds: mongoose.Model<guildDoc>;
-        commands: mongoose.Model<commandsDoc>;
         filters: mongoose.Model<filtersDoc>;
         logs: mongoose.Model<logDoc>;
         commandCache: mongoose.Model<commandCacheDoc>;
@@ -84,7 +81,6 @@ export class Database {
             Bot.database.mainDB = {
                 connection: mainCon,
                 guilds: mainCon.model('guild', guildSchema, 'guilds'),
-                commands: mainCon.model('commands', commandsSchema, 'commands'),
                 filters: mainCon.model('filters', filtersSchema, 'filters'),
                 logs: mainCon.model('log', logSchema, 'logs'),
                 commandCache: mainCon.model('commandCache', commandCacheSchema, 'commandCaches'),
@@ -152,7 +148,7 @@ export class Database {
         if (guildWrapper) return guildWrapper;
 
         let guildDoc = await this.findGuildDoc(guild.id);
-        guildWrapper = new GuildWrapper(guildDoc, guild instanceof Guild ? guild : undefined);
+        guildWrapper = new GuildWrapper(guildDoc.toObject({ minimize: false}), guild instanceof Guild ? guild : undefined);
         this.cache.guilds.set(guild.id, guildWrapper);
         return guildWrapper
     }
@@ -200,7 +196,6 @@ export class Database {
             Bot.youtube.deleteWebhook(guildID, webhookDoc.toObject().channel, webhookDoc.toObject().feed);
         }
         this.mainDB.guilds.deleteOne({ id: guildID }).exec();
-        this.mainDB.commands.deleteOne({ guild: guildID }).exec();
         this.mainDB.filters.deleteOne({ guild: guildID }).exec();
         this.mainDB.logs.deleteMany({ guild: guildID }).exec();
         this.mainDB.megalogs.deleteOne({ guild: guildID }).exec();
@@ -220,63 +215,6 @@ export class Database {
                 await this.removeGuild(guildDoc.id);
             }
         }
-    }
-
-    /**
-     * find command settings doc of specified guild
-     *
-     * @param {string} guildID id of guild of which to find the commands doc
-     * @returns
-     * @memberof Database
-     */
-    findCommandsDoc(guildID: string) {
-        return this.mainDB.commands.findOne({ guild: guildID }).exec();
-    }
-
-    /**
-     * gets guild specific command settings of certain command
-     * if doc isn't undefined but it got deleted in the database, it will return null
-     *
-     * @param {string} guildID id of guild where settings should be taken
-     * @param {string} command command name
-     * @param {commandsDoc} [doc] existing commands doc where the settings should be extracted
-     * @returns command settings
-     * @memberof Database
-     */
-    async getCommandSettings(guildID: string, command: string, doc?: commandsDoc) {
-        var commandSettings = doc;
-        if (!commandSettings || commandSettings.guild != guildID)
-            commandSettings = await this.findCommandsDoc(guildID);
-        if (!commandSettings) return undefined;
-        commandSettings = commandSettings.toObject().commands
-        if (commandSettings[command]) return commandSettings[command];
-        return undefined;
-    }
-
-    /**
-     * sets settings of specific command in a guild
-     * if doc isn't undefined but it got deleted in the database, it won't change anything
-     *
-     * @param {string} guildID id of guild where settings should be set
-     * @param {string} command command name
-     * @param {*} settings settings that should be set
-     * @param {commandsDoc} [doc] existing commands doc where the settings should inserted
-     * @returns whole command doc
-     * @memberof Database
-     */
-    async setCommandSettings(guildID: string, command: string, settings: any, doc?: commandsDoc) {
-        if (!doc || doc.guild != guildID) {
-            doc = await this.findCommandsDoc(guildID);
-        }
-        if (!doc) {
-            doc = new this.mainDB.commands({
-                guild: guildID,
-                commands: {}
-            });
-        }
-        doc.commands[command] = settings;
-        doc.markModified('commands.' + command);
-        return await doc.save();
     }
 
     /**

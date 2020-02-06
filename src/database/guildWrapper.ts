@@ -1,6 +1,6 @@
 import mongoose = require('mongoose');
 import { Guild, GuildMember, UserResolvable, GuildResolvable, GuildMemberResolvable, RoleResolvable, Snowflake } from "discord.js";
-import { CommandUsageLimits, guildDoc, UsageLimits, guildObject, guildSchema, GuildRank, guildRanks } from "./schemas";
+import { CommandUsageLimits, guildDoc, UsageLimits, guildObject, guildSchema, GuildRank, guildRanks, CommandSettings } from "./schemas";
 import { Bot } from '..';
 import { permLevels } from '../utils/permissions';
 import { CommandResolvable } from '../commands';
@@ -34,10 +34,7 @@ export class GuildWrapper implements guildObject {
         immune: string[];
     };
     commandSettings: {
-        [key: string]: {
-            _enabled: boolean;
-            [key: string]: any;
-        }
+        [key: string]: CommandSettings
     };
     megalog: {
         ignoreChannels: string[];
@@ -72,7 +69,7 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     constructor(guildObject: guildObject, guild?: Guild) {
-        for (const key in guildObject)
+        for (const key in guildSchema.obj)
             this[key] = guildObject[key];
 
         if (guild)
@@ -81,6 +78,15 @@ export class GuildWrapper implements guildObject {
             this.guild = Bot.client.guilds.get(guildObject.id);
     }
 
+    /**
+     * Sets a property of a object at a certain path
+     *
+     * @private
+     * @param {*} object Object to set property in
+     * @param {string} path Path to the property
+     * @param {*} value Value it should be set to
+     * @memberof GuildWrapper
+     */
     private tracePathSet(object, path: string, value: any) {
         let pathArray = path.split('.');
         let i;
@@ -99,9 +105,21 @@ export class GuildWrapper implements guildObject {
         let doc = await Bot.database.findGuildDoc(this.id, fields);
         if (!doc) return undefined;
         let obj = doc.toObject({ minimize: false });
-        for (const field of fields)
+        for (const field of fields || guildSchema.obj)
             this.tracePathSet(this, field, this.tracePath(obj, field));
         return this;
+    }
+
+    /**
+     * Does a updateOne call to update the document in the database
+     *
+     * @private
+     * @param {*} doc What should be updated
+     * @returns Query as a promise
+     * @memberof GuildWrapper
+     */
+    private update(doc: any) {
+        return Bot.database.mainDB.guilds.updateOne({ id: this.id }, doc).exec();
     }
 
     /**
@@ -124,7 +142,7 @@ export class GuildWrapper implements guildObject {
     async setPrefix(prefix?: string) {
         let query: any = { $set: { prefix: prefix } };
         if (!prefix) query = { $unset: { prefix: 0 } };
-        await Bot.database.mainDB.guilds.updateOne({ id: this.id }, query).exec();
+        await this.update(query);
         this.prefix = prefix;
     }
 
@@ -195,7 +213,7 @@ export class GuildWrapper implements guildObject {
         if (this.ranks[rank].includes(snowflake)) return undefined;
         let query = { $addToSet: {} };
         query.$addToSet[`ranks.${rank}`] = [snowflake];
-        await Bot.database.mainDB.guilds.updateOne({ id: this.id }, query).exec();
+        await this.update(query);
         this.ranks[rank].push(snowflake);
         return this.ranks[rank];
     }
@@ -213,7 +231,7 @@ export class GuildWrapper implements guildObject {
         if (!this.ranks[rank].includes(snowflake)) return undefined;
         let query = { $pull: {} };
         query.$pull[`ranks.${rank}`] = snowflake;
-        await Bot.database.mainDB.guilds.updateOne({ id: this.id }, query).exec();
+        await this.update(query);
         this.ranks[rank].splice(this.ranks[rank].indexOf(snowflake), 1);
         return this.ranks[rank];
     }
@@ -237,6 +255,73 @@ export class GuildWrapper implements guildObject {
             current = current[property];
         }
         return current;
+    }
+
+    /**
+     * Always returns a object if the command exists
+     *
+     * @param {string} command Command to get settings of
+     * @returns CommandSettings object
+     * @memberof GuildWrapper
+     */
+    getCommandSettings(command: string) {
+        if (!Bot.commands.get(command)) return undefined;
+        return this.commandSettings[command] || {};
+    }
+
+    /**
+     * Overrides settings of specified command with provided settings
+     *
+     * @param {string} command Command to override settings of
+     * @param {CommandSettings} settings Settings to override with
+     * @returns The final settings if successful
+     * @memberof GuildWrapper
+     */
+    async setCommandSettings(command: string, settings: CommandSettings) {
+        if (!Bot.commands.get(command)) return undefined;
+        let query = { $set: {} };
+        query.$set[`commandSettings.${command}`] = settings;
+        await this.update(query);
+        this.commandSettings[command] = settings;
+        return settings;
+    }
+
+    /**
+     * If command is enabled or disabled
+     *
+     * @param {string} command Command to check
+     * @returns if command is enabled
+     * @memberof GuildWrapper
+     */
+    commandIsEnabled(command: string) {
+        if (!Bot.commands.get(command)) return undefined;
+        if (!this.commandSettings[command] || this.commandSettings[command]._enabled) return true;
+        return false;
+    }
+
+    /**
+     * Toggles a command on or off
+     *
+     * @param {string} command Command to toggle
+     * @param {boolean} [value] Optional value to override the toggling value
+     * @returns The final command toggle settings
+     * @memberof GuildWrapper
+     */
+    async toggleCommand(command: string, value?: boolean) {
+        let commandObj = Bot.commands.get(command);
+        if (!commandObj || !commandObj.togglable) return undefined;
+
+        let settings = this.getCommandSettings(command);
+        value = value || settings._enabled === false ? true : false;
+
+        let query = { $set: {} };
+        query.$set[`commandSettings.${command}._enabled`] = value;
+        await this.update(query);
+
+        settings._enabled = value;
+        this.commandSettings[command] = settings;
+        return value;
+
     }
 
     /**
