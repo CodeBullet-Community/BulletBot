@@ -20,7 +20,7 @@ read -p "We will now run BulletBot in the background with auto-restart on system
 reboot. Press [Enter] to begin."
 
 # If bullet-mongo-start.service exists and is not enabled
-if [[ -f $start_service_exists && $start_service_status != 0 ]]; then
+if [[ -f $start_service && $start_service_status != 0 ]]; then
     echo "Enabling bullet-mongo-start.service..."
     systemctl enable bullet-mongo-start.service || {
         echo "${red}Failed to enable bullet-mongo-start.service" >&2
@@ -30,7 +30,7 @@ if [[ -f $start_service_exists && $start_service_status != 0 ]]; then
         exit 1
     }
 # If bullet-mongo-start.service doesn't exist
-elif [[ ! -f $start_service_exists ]]; then
+elif [[ ! -f $start_service ]]; then
     echo "Creating bullet-monog-start.service..."
     ./installers/Linux_Universal/autorestart/autorestart-updater.sh
     # Reloads systemd daemons to account for the added service
@@ -45,7 +45,7 @@ elif [[ ! -f $start_service_exists ]]; then
     }
 fi
 
-if [[ ! -f $start_script_exists ]]; then
+if [[ ! -f $start_script ]]; then
     echo "${red}bullet-mongo-start.sh does not exist" >&2
     echo "${cyan}bullet-mongo-start.sh is required to use this run mode"
     echo "Re-download bulletbot using the installers, then retry using this" \

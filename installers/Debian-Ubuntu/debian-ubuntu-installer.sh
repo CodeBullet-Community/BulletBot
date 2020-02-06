@@ -17,26 +17,26 @@
 # VARIABLES USED ALL THROUGHOUT THE SCRIPT #
 # ---------------------------------------- #
 home="/home/bulletbot"
-start_script_exists="/home/bulletbot/installers/Linux_Universal/autorestart/bullet-mongo-start.sh"
-bullet_service_exists="/lib/systemd/system/bulletbot.service"
-start_service_exists="/lib/systemd/system/bullet-mongo-start.service"
+start_script="/home/bulletbot/installers/Linux_Universal/autorestart/bullet-mongo-start.sh"
+bullet_service="/lib/systemd/system/bulletbot.service"
+start_service="/lib/systemd/system/bullet-mongo-start.service"
 # Contains all of the files/directories that are associated with BulletBot
 # (only files/directories located in the BulletBot root directory)
 files=("installers/" "linux-master-installer.sh" "package-lock.json" \
     "package.json" "tsconfig.json" "src/" "media/" "README.md" "out/" \
     "CODE_OF_CONDUCT.md" "CONTRIBUTING.md" "LICENSE")
-bullet_service_content=$(echo "[Unit]
-Description=A service to start BulletBot after a crash or system reboot
-After=network.target mongod.service
-
-[Service]
-User=bulletbot
-ExecStart=/usr/bin/node ${home}/out/index.js
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target" > $bullet_service_exists)
+bullet_service_content="[Unit]
+\nDescription=A service to start BulletBot after a crash or system reboot
+\nAfter=network.target mongod.service
+\n
+\n[Service]
+\nUser=bulletbot
+\nExecStart=/usr/bin/node ${home}/out/index.js
+\nRestart=always
+\nRestartSec=3
+\n
+\n[Install]
+\nWantedBy=multi-user.target"
 
 
 # ----------------------------------- #
@@ -149,7 +149,7 @@ download_bb() {
     fi
 
     echo "Creating/updating bulletbot.service..."
-    $bullet_service_content
+    echo -e "$bullet_service_content" > "$bullet_service"
 
     echo "Creating/updating bullet-mongo-start.service..."
     ./installers/Linux_Universal/autorestart/autorestart-updater.sh
@@ -177,7 +177,7 @@ download_bb() {
 echo -e "Welcome to the BulletBot Debian/Ubuntu installer\n"
 
 while true; do
-    # TODO: numberics for bullet_status like start_service_status???
+    # TODO: Numberics for bullet_status like start_service_status???
     bullet_status=$(systemctl is-active bulletbot.service)
     start_service_status=$(systemctl is-enabled --quiet bullet-mongo-start.service \
         2>/dev/null; echo $?)
@@ -249,10 +249,9 @@ while true; do
     fi   
 
     # E.1. If bulletbot.service does not exist...
-    if [[ ! -f $bullet_service_exists ]]; then
-        # TODO: Figure out why this echo is not printed to the screen
+    if [[ ! -f $bullet_service ]]; then
         echo "Creating bulletbot.service..."
-        $bullet_service_content
+        echo -e "$bullet_service_content" > "$bullet_service"
         # Reloads systemd daemons to account for the added service
         systemctl daemon-reload
     fi
@@ -362,10 +361,10 @@ while true; do
                 ;;
         esac
     else 
-        if [[ $start_service_status = 0 && -f $bullet_service_exists && $bullet_status \
+        if [[ $start_service_status = 0 && -f $bullet_service && $bullet_status \
                 = "active" ]]; then
             # E.1.
-            if [[ ! -f $start_script_exists ]]; then
+            if [[ ! -f $start_script ]]; then
                 echo "${yellow}WARNING: bullet-mongo-start.sh does not exist and" \
                     "will prevent BulletBot from auto-restarting on system reboot/start"
                 echo "${cyan}Either re-download BulletBot via the installer" \
@@ -376,10 +375,10 @@ while true; do
             echo "2. Run BulletBot in the background"
             echo "3. Run BulletBot in the background with auto-restart${green}" \
                 "(Running in this mode)${nc}"
-        elif [[ $start_service_status = 0 && -f $bullet_service_exists && $bullet_status \
+        elif [[ $start_service_status = 0 && -f $bullet_service && $bullet_status \
                 != "active" ]]; then
             # E.1.
-            if [[ ! -f $start_script_exists ]]; then
+            if [[ ! -f $start_script ]]; then
                 echo "${yellow}WARNING: bullet-mongo-start.sh does not exist and" \
                     "will prevent BulletBot from auto-restarting on system reboot/start"
                 echo "${cyan}Either re-download BulletBot via the installer" \
@@ -390,11 +389,11 @@ while true; do
             echo "2. Run BulletBot in the background"
             echo "3. Run BulletBot in the background with auto-restart${yellow}" \
                 "(Setup to use this mode)${nc}"
-        elif [[ -f $bullet_service_exists && $bullet_status = "active" ]]; then
+        elif [[ -f $bullet_service && $bullet_status = "active" ]]; then
             echo "1. Download/update BulletBot and auto-restart files/services"
             echo "2. Run BulletBot in the background ${green}(Running in this mode)${nc}"
             echo "3. Run BulletBot in the background with auto-restart"
-        elif [[ -f $bullet_service_exists && $bullet_status != "active" ]]; then
+        elif [[ -f $bullet_service && $bullet_status != "active" ]]; then
             echo "1. Download/update BulletBot and auto-restart files/services"
             echo "2. Run BulletBot in the background ${yellow}(Setup to use this" \
                 "mode)${nc}"
@@ -419,18 +418,18 @@ while true; do
             2)
                 export home
                 export bullet_status
-                export start_script_exists
+                export start_script
                 export start_service_status
-                export bullet_service_exists
+                export bullet_service
                 ./installers/Linux_Universal/bb-start-modes/run-in-background.sh
                 clear
                 ;;
             3)
                 export home
                 export bullet_status
-                export start_script_exists
+                export start_script
                 export start_service_status
-                export start_service_exists
+                export start_service
                 ./installers/Linux_Universal/bb-start-modes/run-in-background-autorestart.sh
                 clear
                 ;;
