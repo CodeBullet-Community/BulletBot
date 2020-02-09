@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { mStatsAllTimeDoc, mStatsDayDoc, mStatsHourDoc, mStatsAllTimeSchema, mStatsDaySchema, mStatsHourSchema, mStatsHourObject, mStatsObject, errorDoc, errorSchema, mStatsDayObject, megalogFunctions, createEmptyMStatsObject, bugDoc, botSuggestionDoc, bugSchema, botSuggestionSchema } from './schemas';
+import { mStatsAllTimeDoc, mStatsDayDoc, mStatsHourDoc, mStatsAllTimeSchema, mStatsDaySchema, mStatsHourSchema, mStatsHourObject, mStatsObject, errorDoc, errorSchema, mStatsDayObject, megalogGroups, createEmptyMStatsObject, bugDoc, botSuggestionDoc, bugSchema, botSuggestionSchema } from './schemas';
 import { Bot } from '..';
 import { durations, toNano } from '../utils/time';
 import crypto = require('crypto');
@@ -201,10 +201,10 @@ export class MStats {
             }
             hourly.doc.webhooks.youtube.total = await Bot.youtube.webhooks.countDocuments().exec();
             // total enabled megalog functions
-            for (const megalogFunction of megalogFunctions.all) {
+            for (const megalogFunction of megalogGroups.all) {
                 let query = {};
-                query[megalogFunction] = { $exists: true };
-                hourly.doc.megalog.enabled[megalogFunction] = await Bot.database.mainDB.megalogs.countDocuments(query).exec();
+                query[`megalog.${megalogFunction}`] = { $exists: true };
+                hourly.doc.megalog.enabled[megalogFunction] = await Bot.database.mainDB.guilds.countDocuments(query).exec();
             }
 
             // marks nested objects as modified so they also get saved
@@ -604,7 +604,7 @@ export class MStats {
             this.hourly.doc.megalog = createEmptyMStatsObject().megalog;
         if (!this.hourly.doc.megalog.logged)
             this.hourly.doc.megalog.logged = createEmptyMStatsObject().megalog.logged;
-        if (!megalogFunctions.all.includes(megalogFunction)) {
+        if (!megalogGroups.all.includes(megalogFunction)) {
             console.warn(`Invalid input in mStats.logMegalogLog function: ${megalogFunction}`);
             return;
         }
@@ -624,9 +624,9 @@ export class MStats {
      * @returns
      * @memberof MStats
      */
-    logBug(message: Message, bug:string) {
+    logBug(message: Message, bug: string) {
         if (!this.hourly) return;
-        this.hourly.doc.bugs ++;
+        this.hourly.doc.bugs++;
         return new this.bugs({
             user: message.author.id,
             guild: message.guild ? message.guild.id : undefined,
@@ -644,7 +644,7 @@ export class MStats {
      */
     logBotSuggestion(message: Message, suggestion: string) {
         if (!this.hourly) return;
-        this.hourly.doc.botSuggestions ++;
+        this.hourly.doc.botSuggestions++;
         return new this.suggestions({
             user: message.author.id,
             guild: message.guild ? message.guild.id : undefined,

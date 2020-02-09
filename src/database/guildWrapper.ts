@@ -43,7 +43,7 @@ export class GuildWrapper extends Wrapper<guildObject> implements guildObject {
 
     /**
      * Creates an instance of GuildWrapper.
-     *
+     * 
      * @param {Snowflake} id ID of the guild
      * @param {Guild} [guild] optional guild object (so constructor doesn't have to search for it)
      * @memberof GuildWrapper
@@ -370,6 +370,156 @@ export class GuildWrapper extends Wrapper<guildObject> implements guildObject {
      */
     async getRankRoles(rank: GuildRank) {
         return (await this.getRankRoleIDs(rank)).map(id => this.guild.roles.get(id));
+    }
+
+    /**
+     * Check if a megalog function is enabled
+     *
+     * @param {MegalogFunction} func Which megalog function to check
+     * @returns
+     * @memberof GuildWrapper
+     */
+    async megalogIsEnabled(func: MegalogFunction) {
+        return await this.getMegalogChannelID(func) ? true : false;
+    }
+
+    /**
+     * Returns the id of the channel for a specific megalog function if it's defined
+     *
+     * @param {MegalogFunction} func Function to get channel for
+     * @returns
+     * @memberof GuildWrapper
+     */
+    async getMegalogChannelID(func: MegalogFunction) {
+        this.load('megalog');
+        if (!megalogGroups.all.includes(func))
+            throw new Error(`Invalid Input. 'func' should be a MegalogFunction but was: ${func}`);
+        return this.megalog[func];
+    }
+
+    /**
+     * Returns the channel for a specific megalog channel if it's defined
+     *
+     * @param {MegalogFunction} func
+     * @returns
+     * @memberof GuildWrapper
+     */
+    async getMegalogChannel(func: MegalogFunction) {
+        let channelID = await this.getMegalogChannelID(func);
+        let channel = this.guild.channels.get(channelID);
+        if (!(channel instanceof TextChannel)) return undefined;
+        return channel;
+    }
+
+    /**
+     * Sets a channel for a specific megalog function
+     *
+     * @param {MegalogFunction} func Function to set the channel for
+     * @param {ChannelResolvable} channel Channel to set the function to
+     * @returns The channel id if it was set successfully
+     * @memberof GuildWrapper
+     */
+    async setMegalogChannel(func: MegalogFunction, channel: ChannelResolvable) {
+        this.load('megalog');
+        let channelID = resolveChannelID(channel);
+        if (await this.getMegalogChannelID(func) == channelID) return undefined;
+        let query = { $set: {} };
+        query.$set[`megalog.${func}`] = channelID;
+        await this.update(query);
+        this.data.megalog[func] = channelID;
+        return channelID;
+    }
+
+    /**
+     * Unsets the channel of a specific megalog function
+     *
+     * @param {MegalogFunction} func Function to unset the channel
+     * @returns The old channel id if there was one
+     * @memberof GuildWrapper
+     */
+    async disableMegalogFunction(func: MegalogFunction) {
+        this.load('megalog');
+        let channelId = await this.getMegalogChannelID(func);
+        if (!channelId) return undefined;
+        let query = { $unset: {} };
+        query.$unset[`megalog.${func}`] = 0;
+        await this.update(query);
+        delete this.data.megalog[func];
+        return channelId;
+    }
+
+    /**
+     * Gets the ids of the channels that the megalog should ignore
+     *
+     * @returns
+     * @memberof GuildWrapper
+     */
+    async getMegalogIgnoreChannelIDs() {
+        await this.load('megalog');
+        return this.megalog.ignoreChannels;
+    }
+
+    /**
+     * Gets the channels that the megalog should ignore
+     *
+     * @returns {Promise<TextChannel[]>}
+     * @memberof GuildWrapper
+     */
+    async getMegalogIgnoreChannels(): Promise<TextChannel[]> {
+        let IDs = await this.getMegalogIgnoreChannelIDs();
+        let channels = IDs.map(id => this.guild.channels.get(id));
+        // @ts-ignore
+        return channels.filter(channel => channel instanceof TextChannel);
+    }
+
+    /**
+     * Checks if a channel should be ignored by the megalog
+     *
+     * @param {ChannelResolvable} channel Channel to check
+     * @returns If the channel should be ignored by the megalog
+     * @memberof GuildWrapper
+     */
+    async megalogIsIgnored(channel: ChannelResolvable) {
+        this.load('megalog');
+        let channelID = resolveChannelID(channel);
+        return this.megalog.ignoreChannels.includes(channelID);
+    }
+
+    /**
+     * Removes a channel from the megalog ignore list if the channel is in that list
+     *
+     * @param {ChannelResolvable} channel Channel to remove
+     * @returns Resulting ignore list if channel was removed
+     * @memberof GuildWrapper
+     */
+    async removeMegalogIgnoreChannel(channel: ChannelResolvable) {
+        this.load('megalog');
+        let channelID = resolveChannelID(channel);
+        if (!this.megalog.ignoreChannels.includes(channelID)) return undefined;
+        let query = { $pull: {} };
+        query.$pull['megalog.ignoreChannels'] = channelID;
+        await this.update(query);
+        _.remove(this.data.megalog.ignoreChannels, channelID);
+        return this.megalog.ignoreChannels;
+    }
+
+    /**
+     * Adds a channel to the megalog ignore list if it doesn't already exist
+     *
+     * @param {ChannelResolvable} channel Channel to add
+     * @returns Resulting ignore list if channel was added
+     * @memberof GuildWrapper
+     */
+    async addMegalogIgnoreChannel(channel: ChannelResolvable) {
+        this.load('megalog');
+        let channelObj = resolveChannel(channel);
+        if (!(channelObj instanceof TextChannel)) return undefined;
+        if (this.megalog.ignoreChannels.includes(channelObj.id)) return undefined;
+        let query = { $addToSet: {} };
+        query.$addToSet['megalog.ignoreChannels'] = channelObj.id;
+        await this.update(query);
+        this.data.megalog.ignoreChannels.push(channelObj.id);
+        return this.megalog.ignoreChannels;
     }
 
 }

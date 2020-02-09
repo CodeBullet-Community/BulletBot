@@ -10,10 +10,6 @@ import {
     commandCacheSchema,
     userDoc,
     userSchema,
-    megalogDoc,
-    megalogSchema,
-    megalogFunctions,
-    megalogObject,
     caseDoc,
     caseSchema,
     pActionDoc,
@@ -52,7 +48,6 @@ export class Database {
         logs: mongoose.Model<logDoc>;
         commandCache: mongoose.Model<commandCacheDoc>;
         users: mongoose.Model<userDoc>;
-        megalogs: mongoose.Model<megalogDoc>;
         cases: mongoose.Model<caseDoc>;
         pActions: mongoose.Model<pActionDoc>;
     };
@@ -86,7 +81,6 @@ export class Database {
                 logs: mainCon.model('log', logSchema, 'logs'),
                 commandCache: mainCon.model('commandCache', commandCacheSchema, 'commandCaches'),
                 users: mainCon.model('user', userSchema, 'users'),
-                megalogs: mainCon.model('megalogSettings', megalogSchema, 'megalogs'),
                 cases: mainCon.model('cases', caseSchema, 'cases'),
                 pActions: mainCon.model('pActions', pActionSchema, 'pAction')
             };
@@ -102,7 +96,6 @@ export class Database {
                 await Bot.database.cleanGuilds();
                 Bot.database.cleanCommandCaches();
                 Bot.database.cleanUsers();
-                Bot.database.cleanMegalogs();
                 //console.log('cleaned database');
             }, cleanInterval);
             console.info(`cleaning database every ${cleanInterval}ms`);
@@ -149,7 +142,7 @@ export class Database {
         let guildWrapper = this.cache.guilds.get(guild.id)
         if (!guildWrapper) {
             guildWrapper = new GuildWrapper(guild.id, guild);
-        this.cache.guilds.set(guild.id, guildWrapper);
+            this.cache.guilds.set(guild.id, guildWrapper);
         }
         await guildWrapper.load(fields);
         return guildWrapper;
@@ -200,7 +193,6 @@ export class Database {
         this.mainDB.guilds.deleteOne({ id: guildID }).exec();
         this.mainDB.filters.deleteOne({ guild: guildID }).exec();
         this.mainDB.logs.deleteMany({ guild: guildID }).exec();
-        this.mainDB.megalogs.deleteOne({ guild: guildID }).exec();
         this.mainDB.cases.deleteMany({ guild: guildID }).exec();
         this.mainDB.pActions.deleteMany({ 'info.guild': guildID }).exec();
     }
@@ -455,66 +447,5 @@ export class Database {
                 commandCooldown: 0
             }
         });
-    }
-
-    /**
-     * makes query to find megalog doc of a guild
-     *
-     * @param {string} guildID guild id
-     * @returns
-     * @memberof Database
-     */
-    findMegalogDoc(guildID: string) {
-        return this.mainDB.megalogs.findOne({ guild: guildID }).exec();
-    }
-
-    /**
-     * will try to find the megalog doc of a guild and if non was found, it will create one
-     *
-     * @param {string} guildID guild id
-     * @returns
-     * @memberof Database
-     */
-    async getMegalogDoc(guildID: string) {
-        let megalogDoc = await this.findMegalogDoc(guildID);
-        if (!megalogDoc) {
-            megalogDoc = new this.mainDB.megalogs({
-                guild: guildID
-            });
-            await megalogDoc.save();
-        }
-        return megalogDoc;
-    }
-
-    /**
-     * cleans database of unused megalog docs and functions with non-existing channels
-     *
-     * @memberof Database
-     */
-    async cleanMegalogs() {
-        // delete functions set to undefined
-        let deleteQuery = {};
-        for (const func of megalogFunctions.all) {
-            deleteQuery[func] = { $exists: false };
-        }
-        await this.mainDB.megalogs.deleteMany(deleteQuery).exec();
-
-        let megalogDocs = await this.mainDB.megalogs.find();
-        for (const megalogDoc of megalogDocs) {
-            let modified = false;
-            let megalogObject: megalogObject = megalogDoc.toObject();
-            let guild = Bot.client.guilds.get(megalogObject.guild);
-            if (!guild) { // if guild was deleted
-                megalogDoc.remove();
-                continue;
-            }
-            for (const func of megalogFunctions.all) { // check if the channels for the functions still exist
-                if (megalogObject[func] && !guild.channels.get(megalogObject[func])) {
-                    megalogDoc[func] = undefined;
-                    modified = true;
-                }
-            }
-            if (modified) megalogDoc.save();
-        }
     }
 }

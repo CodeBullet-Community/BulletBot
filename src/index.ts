@@ -9,7 +9,7 @@ import { Database } from './database/database';
 import { MStats } from './database/mStats';
 import { botToken, cluster, callback, crashProof } from './bot-config.json';
 import { permLevels } from './utils/permissions';
-import { logTypes, GuildRank } from './database/schemas';
+import { logTypes, GuildRank, megalogGroups } from './database/schemas';
 import { durations } from './utils/time';
 import fs = require('fs');
 import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate, logVoiceTransfer, logVoiceMute, logVoiceDeaf } from './megalogger';
@@ -269,22 +269,10 @@ client.on('channelDelete', async channel => {
         for (const webhookDoc of youtubeWebhookDocs) {
             Bot.youtube.deleteWebhook(channel.guild.id, channel.id, webhookDoc.toObject().feed);
         }
-        let megalogDoc = await Bot.database.findMegalogDoc(channel.guild.id); // checks if there are any megalogger functions for that channel
-        if (megalogDoc) {
-            let modified = false;
-            if (megalogDoc.ignoreChannels.includes(channel.id)) {
-                megalogDoc.ignoreChannels.splice(megalogDoc.ignoreChannels.indexOf(channel.id), 1);
-                modified = true;
-            }
-            let megalogObject = megalogDoc.toObject();
-            for (const key in megalogObject) {
-                if (megalogObject[key] == channel.id) {
-                    megalogDoc[key] = undefined;
-                    modified = true;
-                }
-            }
-            if (modified) megalogDoc.save();
-        }
+        let guildWrapper = await Bot.database.getGuildWrapper(channel.guild, 'megalog');
+        for (const func of megalogGroups.all)
+            if (guildWrapper.megalog[func] == channel.id)
+                await guildWrapper.disableMegalogFunction(func);
     }
 });
 

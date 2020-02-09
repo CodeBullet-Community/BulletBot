@@ -98,8 +98,58 @@ export interface CommandSettings {
     [key: string]: any;
 }
 
+export type MegalogFunction = 'channelCreate' | 'channelDelete' | 'channelUpdate' | 'ban' |
+    'unban' | 'memberJoin' | 'memberLeave' | 'nicknameChange' |
+    'memberRolesChange' | 'guildNameChange' | 'messageDelete' | 'attachmentCache' |
+    'messageEdit' | 'reactionAdd' | 'reactionRemove' | 'roleCreate' |
+    'roleDelete' | 'roleUpdate' | 'voiceTransfer' | 'voiceMute' |
+    'voiceDeaf';
+
+export type MegalogGroup = 'all' | 'channels' | 'members' | 'roles' | 'voice' | 'messages' | 'reactions';
+export type MegalogGroupDefinitions = { [T in MegalogGroup]: MegalogFunction[] };
+
+export const megalogGroups: MegalogGroupDefinitions = {
+    all: [
+        'channelCreate',
+        'channelDelete',
+        'channelUpdate',
+        'ban',
+        'unban',
+        'memberJoin',
+        'memberLeave',
+        'nicknameChange',
+        'memberRolesChange',
+        'guildNameChange',
+        'messageDelete',
+        'attachmentCache',
+        'messageEdit',
+        'reactionAdd',
+        'reactionRemove',
+        'roleCreate',
+        'roleDelete',
+        'roleUpdate',
+        'voiceTransfer',
+        'voiceMute',
+        'voiceDeaf'],
+    channels: ['channelCreate',
+        'channelDelete',
+        'channelUpdate'],
+    members: ['memberJoin',
+        'memberLeave', 'memberRolesChange'],
+    roles: ['roleCreate',
+        'roleDelete',
+        'roleUpdate'],
+    voice: ['voiceTransfer',
+        'voiceMute',
+        'voiceDeaf'],
+    messages: ['messageDelete',
+        'attachmentCache',
+        'messageEdit'],
+    reactions: ['reactionAdd',
+        'reactionRemove']
+};
+
 export interface guildObject {
-    guild?: string | any; // from old version
     id: string;
     prefix?: string;
     logChannel: string;
@@ -109,11 +159,11 @@ export interface guildObject {
     modmailChannel: string,
     webhooks: {
         // key is service name
-        [key: string]: mongoose.Schema.Types.ObjectId[];
+        [service: string]: mongoose.Schema.Types.ObjectId[];
     };
     locks: {
         // channel id
-        [key: string]: {
+        [channelId: string]: {
             until?: number;
             allowOverwrites: string[];
             neutralOverwrites: string[];
@@ -127,35 +177,11 @@ export interface guildObject {
     };
     commandSettings: {
         // key is command name
-        [key: string]: CommandSettings
+        [command: string]: CommandSettings
     };
     megalog: {
-        ignoreChannels: string[]; // array of channel ids
-        channelCreate?: string; // channel id
-        channelDelete?: string; // channel id
-        channelUpdate?: string; // channel id
-        ban?: string; // channel id
-        unban?: string; // channel id
-        memberJoin?: string; // channel id
-        memberLeave?: string; // channel id
-        nicknameChange?: string; // channel id
-        memberRolesChange?: string; // channel id
-        guildNameChange?: string; // channel id
-        messageDelete?: string; // channel id
-        attachmentCache?: string; // channel id
-        messageEdit?: string; // channel id
-        reactionAdd?: string; // channel id
-        reactionRemove?: string; // channel id
-        roleCreate?: string; // channel id
-        roleDelete?: string; // channel id
-        roleUpdate?: string; // channel id
-        voiceTranfer?: string; // channel id
-        voiceMute?: string; // channel id
-        voiceDeaf?: string; // channel id
-    };
-}
-export interface guildDoc extends mongoose.Document, guildObject {
-    id: string;
+        ignoreChannels: string[];
+    } & { [T in MegalogFunction]: string };
 }
 export type guildDoc = ExDocument<guildObject>;
 export const guildSchema = new mongoose.Schema({
@@ -341,99 +367,6 @@ export const userSchema = new mongoose.Schema({
     user: String,
     commandLastUsed: mongoose.Schema.Types.Mixed
 });
-
-// megalog settings
-export interface megalogObject {
-    guild: string; // guild id
-    ignoreChannels: string[]; // channel ids
-    channelCreate: string;
-    channelDelete: string;
-    channelUpdate: string;
-    ban: string;
-    unban: string;
-    memberJoin: string;
-    memberLeave: string;
-    nicknameChange: string;
-    memberRolesChange: string;
-    guildNameChange: string;
-    messageDelete: string;
-    attachmentCache: string;
-    messageEdit: string;
-    reactionAdd: string;
-    reactionRemove: string;
-    roleCreate: string;
-    roleDelete: string;
-    roleUpdate: string;
-    voiceTransfer: string;
-    voiceMute: string;
-    voiceDeaf: string;
-}
-export interface megalogDoc extends mongoose.Document, megalogObject { }
-export const megalogSchema = new mongoose.Schema({
-    guild: String,
-    ignoreChannels: [String],
-    channelCreate: { type: String, required: false },
-    channelDelete: { type: String, required: false },
-    channelUpdate: { type: String, required: false },
-    ban: { type: String, required: false },
-    unban: { type: String, required: false },
-    memberJoin: { type: String, required: false },
-    memberLeave: { type: String, required: false },
-    nicknameChange: { type: String, required: false },
-    memberRolesChange: { type: String, required: false },
-    guildNameChange: { type: String, required: false },
-    messageDelete: { type: String, required: false },
-    attachmentCache: { type: String, required: false },
-    messageEdit: { type: String, required: false },
-    reactionAdd: { type: String, required: false },
-    reactionRemove: { type: String, required: false },
-    roleCreate: { type: String, required: false },
-    roleDelete: { type: String, required: false },
-    roleUpdate: { type: String, required: false },
-    voiceTransfer: { type: String, required: false },
-    voiceMute: { type: String, required: false },
-    voiceDeaf: { type: String, required: false }
-});
-export const megalogFunctions = {
-    all: [
-        'channelCreate',
-        'channelDelete',
-        'channelUpdate',
-        'ban',
-        'unban',
-        'memberJoin',
-        'memberLeave',
-        'nicknameChange',
-        'memberRolesChange',
-        'guildNameChange',
-        'messageDelete',
-        'attachmentCache',
-        'messageEdit',
-        'reactionAdd',
-        'reactionRemove',
-        'roleCreate',
-        'roleDelete',
-        'roleUpdate',
-        'voiceTransfer',
-        'voiceMute',
-        'voiceDeaf'],
-    channels: ['channelCreate',
-        'channelDelete',
-        'channelUpdate'],
-    members: ['memberJoin',
-        'memberLeave', 'memberRolesChange'],
-    roles: ['roleCreate',
-        'roleDelete',
-        'roleUpdate'],
-    voice: ['voiceTransfer',
-        'voiceMute',
-        'voiceDeaf'],
-    messages: ['messageDelete',
-        'attachmentCache',
-        'messageEdit'],
-    reactions: ['reactionAdd',
-        'reactionRemove']
-};
 
 // pAction
 export enum pActionActions {

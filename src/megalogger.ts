@@ -13,16 +13,14 @@ import dateFormat = require('dateformat');
  * @memberof megalogger
  */
 export async function logChannelToggle(channel: GuildChannel, created: boolean) {
-    let megalogDoc = await Bot.database.findMegalogDoc(channel.guild.id);
+    let guildWrapper = await Bot.database.getGuildWrapper(channel.guild, 'megalog');
     // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(channel.id)) return;
-    if (!megalogDoc.channelCreate && created) return;
-    if (!megalogDoc.channelDelete && !created) return;
+    if (await guildWrapper.megalogIsIgnored(channel)) return;
 
     // send actual log
-    let logChannel = channel.guild.channels.get(created ? megalogDoc.toObject().channelCreate : megalogDoc.toObject().channelDelete);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel(created ? 'channelCreate' : 'channelDelete');
+    if (!logChannel) return;
+
     await logChannel.send({
         "embed": {
             "description": `**Channel ${created ? 'Created' : 'Deleted'}: ${created ? channel.toString() : '#' + channel.name}**`,
@@ -55,15 +53,14 @@ export async function logChannelToggle(channel: GuildChannel, created: boolean) 
  * @memberof megalogger
  */
 export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: GuildChannel) {
-    let megalogDoc = await Bot.database.findMegalogDoc(newChannel.guild.id);
+    let guildWrapper = await Bot.database.getGuildWrapper(newChannel.guild, 'megalog');
     // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(newChannel.id)) return;
-    if (!megalogDoc.channelUpdate) return;
+    if (await guildWrapper.megalogIsIgnored(newChannel)) return;
 
     // sends actual log
-    let logChannel = newChannel.guild.channels.get(megalogDoc.toObject().channelUpdate);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel('channelUpdate');
+    if (!logChannel) return;
+
     if (oldChannel.name != newChannel.name) { // if name was changed
         await logChannel.send({
             "embed": {
@@ -92,7 +89,8 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
             }
         });
         Bot.mStats.logMessageSend();
-    } if (oldChannel instanceof TextChannel && newChannel instanceof TextChannel && oldChannel.topic != newChannel.topic) { // if topic was changed
+    }
+    if (oldChannel instanceof TextChannel && newChannel instanceof TextChannel && oldChannel.topic != newChannel.topic) { // if topic was changed
         await logChannel.send({
             "embed": {
                 "description": `**Channel topic changed of ${newChannel.toString()}**`,
@@ -202,14 +200,12 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
  * @memberof megalogger
  */
 export async function logBan(guild: Guild, user: User, banned: boolean) {
-    let megalogDoc = await Bot.database.findMegalogDoc(guild.id);
-    // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if ((!megalogDoc.ban && banned) || (!megalogDoc.unban && !banned)) return;
+    let guildWrapper = await Bot.database.getGuildWrapper(guild, 'megalog');
 
     // send log
-    let logChannel = guild.channels.get(banned ? megalogDoc.toObject().ban : megalogDoc.toObject().unban);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel(banned ? 'ban' : 'unban');
+    if (!logChannel) return;
+
     await logChannel.send({
         "embed": {
             "description": `${user.toString()}\n${user.tag}`,
@@ -241,14 +237,12 @@ export async function logBan(guild: Guild, user: User, banned: boolean) {
  * @memberof megalogger
  */
 export async function logMember(member: GuildMember, joined: boolean) {
-    let megalogDoc = await Bot.database.findMegalogDoc(member.guild.id);
-    // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if ((!megalogDoc.memberJoin && joined) || (!megalogDoc.memberLeave && !joined)) return;
+    let guildWrapper = await Bot.database.getGuildWrapper(member.guild, 'megalog');
 
     // send log
-    let logChannel = member.guild.channels.get(joined ? megalogDoc.toObject().memberJoin : megalogDoc.toObject().memberLeave);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel(joined ? 'memberJoin' : 'memberLeave');
+    if (!logChannel) return;
+
     let embed: any = {
         "embed": {
             "description": member.toString() + "\n" + member.user.tag,
@@ -288,14 +282,12 @@ export async function logMember(member: GuildMember, joined: boolean) {
  */
 export async function logNickname(oldMember: GuildMember, newMember: GuildMember) {
     if (oldMember.nickname == newMember.nickname) return;
-    let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
-    // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (!megalogDoc.nicknameChange) return;
+    let guildWrapper = await Bot.database.getGuildWrapper(newMember.guild, 'megalog');
 
     // send log
-    let logChannel = newMember.guild.channels.get(megalogDoc.nicknameChange);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel('nicknameChange');
+    if (!logChannel) return;
+
     await logChannel.send({
         "embed": {
             "description": `**${newMember.toString()} nickname changed**`,
@@ -341,14 +333,12 @@ export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMem
     let rolesRemoved = oldMember.roles.filter(x => !newMember.roles.get(x.id));
     if (rolesAdded.size == 0 && rolesRemoved.size == 0) return;
 
-    let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
-    // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (!megalogDoc.memberRolesChange) return;
+    let guildWrapper = await Bot.database.getGuildWrapper(newMember.guild, 'megalog');
 
     // create and send log
-    let logChannel = newMember.guild.channels.get(megalogDoc.memberRolesChange);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel('memberRolesChange');
+    if (!logChannel) return;
+
     let roleAddedString = ''; // which roles were added from the member
     for (const role of rolesAdded.array()) {
         roleAddedString += role.toString();
@@ -398,14 +388,11 @@ export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMem
  */
 export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
     if (oldGuild.name == newGuild.name) return;
-    let megalogDoc = await Bot.database.findMegalogDoc(newGuild.id);
-    // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (!megalogDoc.guildNameChange) return;
+    let guildWrapper = await Bot.database.getGuildWrapper(newGuild, 'megalog');
 
     // send log
-    let logChannel = newGuild.channels.get(megalogDoc.guildNameChange);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel('guildNameChange');
+    if (!logChannel) return;
     await logChannel.send({
         "embed": {
             "description": `**Server name changed**`,
@@ -446,15 +433,12 @@ export async function logGuildName(oldGuild: Guild, newGuild: Guild) {
  */
 export async function logMessageDelete(message: Message) {
     if (message.channel instanceof DMChannel) return;
-    let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
+    let guildWrapper = await Bot.database.getGuildWrapper(message.guild, 'megalog');
     // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (!megalogDoc) return;
-    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(message.channel.id)) return;
-    if (!megalogDoc.messageDelete) return;
-    if (message.channel.id == megalogDoc.messageDelete) return; // check if deleted message isn't a megalog message
-    let logChannel = message.guild.channels.get(megalogDoc.messageDelete);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    if (await guildWrapper.megalogIsIgnored(message.channel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel('messageDelete');
+    if (!logChannel) return;
+    if (message.channel.id == logChannel.id) return; // check if deleted message isn't a megalog message
 
     // shorten message if it's longer then 1024
     let shortened = false;
@@ -484,7 +468,7 @@ export async function logMessageDelete(message: Message) {
             ]
         }
     };
-    
+
     // get attachments from attachment cache
     if (message.attachments.size > 0) {
         let attachments = '';
@@ -494,7 +478,7 @@ export async function logMessageDelete(message: Message) {
             "name": "Attachments",
             "value": attachments
         });
-        let cachedAttachments = await getAttachmentCache(message, megalogDoc.toObject().attachmentCache);
+        let cachedAttachments = await getAttachmentCache(message);
         let cachedString: string;
         var cachedArray: string[] = [];
         if (cachedAttachments && cachedAttachments.size > 0) {
@@ -527,27 +511,24 @@ export async function logMessageDelete(message: Message) {
  * @memberof megalogger
  */
 export async function logMessageBulkDelete(messages: Collection<string, Message>) {
-    if (messages.first().channel instanceof DMChannel) return;
-    let megalogDoc = await Bot.database.findMegalogDoc(messages.first().guild.id);
+    let testMessage = messages.first();
+    if (testMessage.channel instanceof DMChannel) return;
+    let guildWrapper = await Bot.database.getGuildWrapper(testMessage.guild, 'megalog');
     // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(messages.first().channel.id)) return;
-    if (!megalogDoc.messageDelete) return;
-    if (messages.first().channel.id == megalogDoc.messageDelete) return; // check if deleted messages aren't megalog messages
-
-    // create and send log
-    let logChannel = messages.first().guild.channels.get(megalogDoc.messageDelete);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    if (await guildWrapper.megalogIsIgnored(testMessage.channel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel('messageDelete');
+    if (!logChannel) return;
+    if (testMessage.channel.id == logChannel.id) return;
 
     // create attachment file with  deleted messages, needs to be with a certain format so https://txt.discord.website/ can show it correctly
     //@ts-ignore
-    let humanLog = `**Deleted Messages from #${messages.first().channel.name} (${messages.first().channel.id}) in ${messages.first().guild.name} (${messages.first().guild.id})**`;
+    let humanLog = `**Deleted Messages from #${testMessage.channel.name} (${testMessage.channel.id}) in ${testMessage.guild.name} (${testMessage.guild.id})**`;
     for (const message of messages.array().reverse()) {
         humanLog += `\r\n\r\n[${dateFormat(message.createdAt, timeFormat)}] ${message.author.tag} (${message.id})`;
         humanLog += ' : ' + message.content;
         if (message.attachments.size) {
             humanLog += '\n*Attachments:*';
-            let cachedAttachments = await getAttachmentCache(message, megalogDoc.toObject().attachmentCache);
+            let cachedAttachments = await getAttachmentCache(message);
             if (cachedAttachments || cachedAttachments.size) {
                 for (const attachment of cachedAttachments.array()) {
                     humanLog += '\n' + attachment.url;
@@ -564,16 +545,16 @@ export async function logMessageBulkDelete(messages: Collection<string, Message>
     let logMessage: Message = await logChannel.send(attachment);
     logMessage.edit({
         "embed": {
-            "description": `**Bulk deleted messages in ${messages.first().channel.toString()}**`,
+            "description": `**Bulk deleted messages in ${testMessage.channel.toString()}**`,
             "color": Bot.settings.embedColors.negative,
             "timestamp": new Date().toISOString(),
             "footer": {
-                "text": "Channel: " + messages.first().channel.id
+                "text": "Channel: " + testMessage.channel.id
             },
             "author": {
                 //@ts-ignore
-                "name": messages.first().channel.name,
-                "icon_url": messages.first().guild.iconURL
+                "name": testMessage.channel.name,
+                "icon_url": testMessage.guild.iconURL
             },
             "fields": [
                 {
@@ -602,9 +583,10 @@ export async function logMessageBulkDelete(messages: Collection<string, Message>
  * @returns
  * @memberof megalogger
  */
-async function getAttachmentCache(message: Message, cacheChannelID: string, timerange = 3000) {
-    let cacheChannel = message.guild.channels.get(cacheChannelID);
-    if (!cacheChannel || !(cacheChannel instanceof TextChannel)) return;
+async function getAttachmentCache(message: Message, timerange = 3000) {
+    let guildWrapper = await Bot.database.getGuildWrapper(message.guild, 'megalog');
+    let cacheChannel = await guildWrapper.getMegalogChannel('attachmentCache');
+    if (!cacheChannel) return;
     var cache = await cacheChannel.fetchMessages({ limit: 20, around: message.id }); // loads 20 messages that were send around that time
     var cacheMessage = cache.find(x => x.content.includes(`BulletBotCacheTagThing: ${message.url}`)); // get attachment cache with the specific id
     if (!cacheMessage || !cacheMessage.attachments.size) return;
@@ -622,15 +604,13 @@ async function getAttachmentCache(message: Message, cacheChannelID: string, time
 export async function cacheAttachment(message: Message) {
     if (message.channel instanceof DMChannel) return;
     if (message.attachments.size == 0) return; // check if message has even attachments
-    let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
+    let guildWrapper = await Bot.database.getGuildWrapper(message.guild, 'megalog');
     // check megalog settings if this should get cached
-    if (!megalogDoc) return;
-    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(message.channel.id)) return;
-    if (!megalogDoc.attachmentCache) return;
+    if (await guildWrapper.megalogIsIgnored(message.channel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel('attachmentCache');
+    if (!logChannel) return;
+    if (message.channel.id == logChannel.id) return;
 
-    // send attachment cache
-    let logChannel = message.guild.channels.get(megalogDoc.attachmentCache);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
     let attachments: string[] = [];
     for (const attachment of message.attachments.array()) {
         attachments.push(attachment.url);
@@ -660,16 +640,14 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
     if (newMessage.channel instanceof DMChannel) return;
     if (oldMessage.content == newMessage.content) return; // check if content even changed
 
-    let megalogDoc = await Bot.database.findMegalogDoc(newMessage.guild.id);
+    let guildWrapper = await Bot.database.getGuildWrapper(newMessage.guild, 'megalog');
     // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(newMessage.channel.id)) return;
-    if (!megalogDoc.messageEdit) return;
-    if (megalogDoc.messageDelete == newMessage.channel.id && newMessage.author.id == Bot.client.user.id) return; // check if it isn't a megalog that was edited
-
-    // create and send log
-    let logChannel = newMessage.guild.channels.get(megalogDoc.messageEdit);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    if (await guildWrapper.megalogIsIgnored(newMessage.channel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel('messageEdit');
+    if (!logChannel) return;
+    let deleteChannelId = await guildWrapper.getMegalogChannelID('messageDelete');
+    // check if it isn't a megalog that was edited
+    if (deleteChannelId == newMessage.channel.id && newMessage.author.id == Bot.client.user.id) return;
 
     // shorten both messages when the content is larger then 1024 chars
     let oldShortened = false;
@@ -727,15 +705,12 @@ export async function logMessageEdit(oldMessage: Message, newMessage: Message) {
  */
 export async function logReactionToggle(reaction: MessageReaction, user: User, reacted: boolean) {
     if (reaction.message.channel instanceof DMChannel) return;
-    let megalogDoc = await Bot.database.findMegalogDoc(reaction.message.guild.id);
+    let guildWrapper = await Bot.database.getGuildWrapper(reaction.message.guild, 'megalog');
     // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(reaction.message.channel.id)) return;
-    if ((reacted && !megalogDoc.reactionAdd) || (!reacted && !megalogDoc.reactionRemove)) return;
+    if (await guildWrapper.megalogIsIgnored(reaction.message.channel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel(reacted ? 'reactionAdd' : 'reactionRemove');
+    if (!logChannel) return;
 
-    // send log
-    let logChannel = reaction.message.guild.channels.get(reacted ? megalogDoc.reactionAdd : megalogDoc.reactionRemove);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
         "embed": {
             "description": `**${user.toString()} ${!reacted ? 'un' : ''}reacted with ${reaction.emoji.toString()} to [this message](${reaction.message.url})${!reacted ? ' (or reaction got removed)' : ''}** `,
@@ -764,15 +739,12 @@ export async function logReactionToggle(reaction: MessageReaction, user: User, r
  */
 export async function logReactionRemoveAll(message: Message) {
     if (message.channel instanceof DMChannel) return;
-    let megalogDoc = await Bot.database.findMegalogDoc(message.guild.id);
+    let guildWrapper = await Bot.database.getGuildWrapper(message.guild, 'megalog');
     // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (megalogDoc.ignoreChannels && megalogDoc.ignoreChannels.includes(message.channel.id)) return;
-    if (!megalogDoc.reactionRemove) return;
+    if (await guildWrapper.megalogIsIgnored(message.channel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel('reactionRemove');
+    if (!logChannel) return;
 
-    // send log
-    let logChannel = message.guild.channels.get(megalogDoc.reactionRemove);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
         "embed": {
             "description": `**All reactions were removed from a message of ${message.author.toString()} in ${message.channel.toString()}** [Jump to Message](${message.url})`,
@@ -801,14 +773,11 @@ export async function logReactionRemoveAll(message: Message) {
  * @memberof megalogger
  */
 export async function logRoleToggle(role: Role, created: boolean) {
-    let megalogDoc = await Bot.database.findMegalogDoc(role.guild.id);
+    let guildWrapper = await Bot.database.getGuildWrapper(role.guild, 'megalog');
     // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if ((created && !megalogDoc.roleCreate) || (!created && !megalogDoc.roleDelete)) return;
-
-    // send log
-    let logChannel = role.guild.channels.get(created ? megalogDoc.roleCreate : megalogDoc.roleDelete);
+    let logChannel = await guildWrapper.getMegalogChannel(created ? 'roleCreate' : 'roleDelete');
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
+
     try {
         await logChannel.send({
             "embed": {
@@ -842,14 +811,11 @@ export async function logRoleToggle(role: Role, created: boolean) {
  */
 export async function logRoleUpdate(oldRole: Role, newRole: Role) {
     if ((oldRole.name == newRole.name) && (oldRole.color == newRole.color) && (oldRole.permissions == newRole.permissions)) return;
-    let megalogDoc = await Bot.database.findMegalogDoc(newRole.guild.id);
+    let guildWrapper = await Bot.database.getGuildWrapper(newRole.guild, 'megalog');
     // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (!megalogDoc.roleUpdate) return;
+    let logChannel = await guildWrapper.getMegalogChannel('roleUpdate');
+    if (!logChannel) return;
 
-    // send logs
-    let logChannel = newRole.guild.channels.get(megalogDoc.roleUpdate);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
     let date = new Date();
     if (oldRole.name != newRole.name) { // if name was changed
         await logChannel.send({
@@ -946,14 +912,10 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
  */
 export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildMember) {
     if (oldMember.voiceChannelID == newMember.voiceChannelID) return;
-    let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
-    // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (!megalogDoc.voiceTransfer) return;
+    let guildWrapper = await Bot.database.getGuildWrapper(newMember.guild, 'megalog');
+    let logChannel = await guildWrapper.getMegalogChannel('voiceTransfer');
+    if (!logChannel) return;
 
-    // send log
-    let logChannel = newMember.guild.channels.get(megalogDoc.voiceTransfer);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
         "embed": {
             "description": `**${newMember.toString()} moved from voice channels ${oldMember.voiceChannel ? oldMember.voiceChannel : 'None'} to ${newMember.voiceChannel ? newMember.voiceChannel : 'None'}**`,
@@ -983,14 +945,11 @@ export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildM
  */
 export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMember) {
     if (oldMember.mute == newMember.mute) return; // check if member mute state changed
-    let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
+    let guildWrapper = await Bot.database.getGuildWrapper(newMember.guild, 'megalog');
     // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (!megalogDoc.voiceMute) return;
+    let logChannel = await guildWrapper.getMegalogChannel('voiceMute');
+    if (!logChannel) return;
 
-    // send log
-    let logChannel = newMember.guild.channels.get(megalogDoc.voiceMute);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
         "embed": {
             "description": `**${newMember} was voice ${newMember.mute ? '' : 'un'}muted in ${newMember.voiceChannel}**`,
@@ -1020,14 +979,11 @@ export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMembe
  */
 export async function logVoiceDeaf(oldMember: GuildMember, newMember: GuildMember) {
     if (oldMember.deaf == newMember.deaf) return; // changed if member deaf state changed
-    let megalogDoc = await Bot.database.findMegalogDoc(newMember.guild.id);
+    let guildWrapper = await Bot.database.getGuildWrapper(newMember.guild, 'megalog');
     // check megalog settings if this should get logged
-    if (!megalogDoc) return;
-    if (!megalogDoc.voiceDeaf) return;
-
-    // send log
-    let logChannel = newMember.guild.channels.get(megalogDoc.voiceDeaf);
-    if (!logChannel || !(logChannel instanceof TextChannel)) return;
+    let logChannel = await guildWrapper.getMegalogChannel('voiceDeaf');
+    if (!logChannel) return;
+    
     await logChannel.send({
         "embed": {
             "description": `**${newMember} was voice ${newMember.deaf ? '' : 'un'}deafed in ${newMember.voiceChannel}**`,

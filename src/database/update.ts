@@ -1,6 +1,12 @@
 import mongoose = require('mongoose');
 import { cluster } from '../bot-config.json';
-import { guildSchema, megalogSchema, guildDoc, megalogDoc, megalogObject } from './schemas.js';
+import { guildSchema, guildDoc, guildObject, ExDocument } from './schemas.js';
+import { Snowflake } from 'discord.js';
+
+interface OldGuildObject extends guildObject {
+    guild?: Snowflake
+}
+type OldGuildDoc = ExDocument<OldGuildObject>;
 
 // prefix
 interface prefixObject {
@@ -63,6 +69,59 @@ const commandsSchema = new mongoose.Schema({
     commands: mongoose.Schema.Types.Mixed
 });
 
+// megalog settings
+interface megalogObject {
+    guild: string; // guild id
+    ignoreChannels: string[]; // channel ids
+    channelCreate: string;
+    channelDelete: string;
+    channelUpdate: string;
+    ban: string;
+    unban: string;
+    memberJoin: string;
+    memberLeave: string;
+    nicknameChange: string;
+    memberRolesChange: string;
+    guildNameChange: string;
+    messageDelete: string;
+    attachmentCache: string;
+    messageEdit: string;
+    reactionAdd: string;
+    reactionRemove: string;
+    roleCreate: string;
+    roleDelete: string;
+    roleUpdate: string;
+    voiceTransfer: string;
+    voiceMute: string;
+    voiceDeaf: string;
+}
+interface megalogDoc extends mongoose.Document, megalogObject { }
+const megalogSchema = new mongoose.Schema({
+    guild: String,
+    ignoreChannels: [String],
+    channelCreate: { type: String, required: false },
+    channelDelete: { type: String, required: false },
+    channelUpdate: { type: String, required: false },
+    ban: { type: String, required: false },
+    unban: { type: String, required: false },
+    memberJoin: { type: String, required: false },
+    memberLeave: { type: String, required: false },
+    nicknameChange: { type: String, required: false },
+    memberRolesChange: { type: String, required: false },
+    guildNameChange: { type: String, required: false },
+    messageDelete: { type: String, required: false },
+    attachmentCache: { type: String, required: false },
+    messageEdit: { type: String, required: false },
+    reactionAdd: { type: String, required: false },
+    reactionRemove: { type: String, required: false },
+    roleCreate: { type: String, required: false },
+    roleDelete: { type: String, required: false },
+    roleUpdate: { type: String, required: false },
+    voiceTransfer: { type: String, required: false },
+    voiceMute: { type: String, required: false },
+    voiceDeaf: { type: String, required: false }
+});
+
 export async function updateDatabaseAfter1_2_8() {
     console.info('Database changes for this update will be applied.');
 
@@ -75,7 +134,7 @@ export async function updateDatabaseAfter1_2_8() {
     let commandsCollection: mongoose.Model<commandsDoc> = mainCon.model('commands', commandsSchema, 'commands');
     let megalogCollection: mongoose.Model<megalogDoc> = mainCon.model('megalogSettings', megalogSchema, 'megalogs');
 
-    let guildDocs = await guildCollection.find().exec();
+    let guildDocs: OldGuildDoc[] = await guildCollection.find().exec();
     for (const guildDoc of guildDocs) {
         guildDoc.id = guildDoc.guild;
         delete guildDoc.guild;
