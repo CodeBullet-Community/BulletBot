@@ -29,16 +29,16 @@ var command: commandInterface = {
         try {
             if (args.length == 0) { // if no argument was provided reply with prefix
                 Bot.mStats.logResponseTime(command.name, requestTime);
-                message.channel.send(`My prefix is \`${guildWrapper.getPrefix()}\``);
+                message.channel.send(`My prefix is \`${await guildWrapper.getPrefix()}\``);
                 Bot.mStats.logCommandUsage(command.name, 'list');
                 Bot.mStats.logMessageSend();
                 return false;
             }
 
-            var oldPrefix = guildWrapper.getPrefix();
+            var oldPrefix = await guildWrapper.getPrefix();
             if (args == 'reset' || args == Bot.settings.prefix) { // if user wants to reset the prefix to default
                 if (guildWrapper.prefix) { // if a custom prefix is currently set
-                    guildWrapper.setPrefix();
+                    await guildWrapper.setPrefix();
 
                     // send confirmation message
                     Bot.mStats.logResponseTime(command.name, requestTime);
@@ -60,7 +60,7 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            guildWrapper.setPrefix(args);
+            await guildWrapper.setPrefix(args);
 
             // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);

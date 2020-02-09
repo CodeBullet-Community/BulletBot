@@ -30,7 +30,7 @@ async function sendFilterList(guildWrapper: GuildWrapper, message: Message, stru
         output.addField('Subcategories:', cat_text);
     }
 
-    let prefix = guildWrapper.getPrefix();
+    let prefix = await guildWrapper.getPrefix();
     var filters = Object.keys(strucObject).filter(x => strucObject[x].shortHelp);
     for (var i = 0; i < filters.length; i++) {
         var f = Bot.filters.get(filters[i]);

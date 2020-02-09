@@ -13,9 +13,9 @@ function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-function listRank(guildWrapper: GuildWrapper, rank: GuildRank) {
-    let roles = guildWrapper.getRankRoleIDs(rank).map(id => `<@&${id}>`);
-    let users = guildWrapper.getRankMemberIDs(rank).map(id => `<@${id}>`);
+async function listRank(guildWrapper: GuildWrapper, rank: GuildRank) {
+    let roles = (await guildWrapper.getRankRoleIDs(rank)).map(id => `<@&${id}>`);
+    let users = (await guildWrapper.getRankMemberIDs(rank)).map(id => `<@${id}>`);
     return {
         'embed': {
             'color': Bot.settings.embedColors.default,
@@ -101,7 +101,7 @@ let command: commandInterface = {
             }
 
             if (argsArray[argIndex] == 'list') {
-                let embed = listRank(guildWrapper, rank);
+                let embed = await listRank(guildWrapper, rank);
                 Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(embed);
                 Bot.mStats.logMessageSend();

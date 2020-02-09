@@ -7,7 +7,7 @@ interface prefixObject {
     guild: string;
     prefix: string;
 }
-interface prefixDoc extends mongoose.Document, prefixObject { }
+type prefixDoc = ExDocument<prefixObject>;
 const prefixSchema = new mongoose.Schema({
     guild: String,
     prefix: String
@@ -29,7 +29,7 @@ interface staffObject {
         users: string[];
     };
 }
-interface staffDoc extends mongoose.Document, staffObject { }
+type staffDoc = ExDocument<staffObject>;
 const staffSchema = new mongoose.Schema({
     guild: String,
     admins: {
@@ -57,7 +57,7 @@ interface commandsObject {
         }
     }
 }
-interface commandsDoc extends mongoose.Document, commandsObject { }
+type commandsDoc = ExDocument<commandsObject>;
 const commandsSchema = new mongoose.Schema({
     guild: String,
     commands: mongoose.Schema.Types.Mixed

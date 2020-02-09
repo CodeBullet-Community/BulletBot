@@ -207,7 +207,7 @@ client.on('message', async message => {
         return;
     }
 
-    let prefix = guildWrapper.getPrefix();
+    let prefix = await guildWrapper.getPrefix();
     if (!message.content.startsWith(prefix)) {
         if (!message.content.toLowerCase().startsWith(Bot.settings.prefix + 'prefix')) { // also checks if it contains ?!prefix
             if (!dm && permLevel == permLevels.member) {
@@ -325,7 +325,7 @@ client.on('guildMemberRemove', async member => {
     let guildWrapper = await Bot.database.getGuildWrapper(member.guild);
     for (const rank of ['admins', 'mods', 'immune'])
         // @ts-ignore
-        if (guildWrapper.removeFromRank(rank, undefined, member, false))
+        if (await guildWrapper.removeFromRank(rank, undefined, member, false))
             // @ts-ignore
             Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, rank, undefined, member.user);
 
@@ -360,7 +360,7 @@ client.on('roleDelete', async role => {
     let guildWrapper = await Bot.database.getGuildWrapper(role.guild);
     for (const rank of ['admins', 'mods', 'immune'])
         // @ts-ignore
-        if (guildWrapper.removeFromRank(rank, role, undefined, false))
+        if (await guildWrapper.removeFromRank(rank, role, undefined, false))
             // @ts-ignore
             Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, rank, role);
 });

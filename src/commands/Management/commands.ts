@@ -6,15 +6,17 @@ import { permLevels } from '../../utils/permissions';
 import { logTypes } from '../../database/schemas';
 import { GuildWrapper } from '../../database/guildWrapper';
 
-function getCommandList(guildWrapper: GuildWrapper, title: string, criteria: (command: commandInterface) => boolean) {
+async function getCommandList(guildWrapper: GuildWrapper, title: string, criteria: (command: commandInterface) => Promise<boolean>) {
     let embed = new RichEmbed();
     embed.setAuthor(title, Bot.client.user.displayAvatarURL);
     embed.setColor(Bot.settings.embedColors.help);
 
-    let commands = Bot.commands.commands.filter(criteria);
-    for (const command of commands.array())
-        embed.addField(guildWrapper.getPrefix() + command.name, command.help.shortDescription);
-    if (!commands.size)
+    let prefix = await guildWrapper.getPrefix();
+    for (const command of Bot.commands.commands.array()) {
+        if (!await criteria(command)) continue;
+        embed.addField(prefix + command.name, command.help.shortDescription);
+    }
+    if (!embed.fields.length)
         embed.setDescription('*No commands*');
 
     return embed;
@@ -55,18 +57,18 @@ var command: commandInterface = {
                 return;
             }
             var argsArray = args.split(' ').filter(x => x.length != 0); // split arguments string by spaces
-            
+
             if (argsArray[argIndex] == 'list') {
                 argIndex++;
                 if (argsArray[argIndex] != 'disabled' && argsArray[argIndex] != 'enabled')
                     // if it should just list all commands it just calls the help command
                     return await Bot.commands.get('help').run(message, argsArray[argIndex] ? argsArray[argIndex] : '', permLevel, dm, guildWrapper, requestTime);
 
-                let criteria: (command: commandInterface) => boolean;
+                let criteria: (command: commandInterface) => Promise<boolean>;
                 if (argsArray[argIndex] == 'disabled')
-                    criteria = (command) => command.togglable && !guildWrapper.commandIsEnabled(command.name);
+                    criteria = async (command) => command.togglable && !(await guildWrapper.commandIsEnabled(command.name));
                 else
-                    criteria = (command) => command.togglable && guildWrapper.commandIsEnabled(command.name);
+                    criteria = async (command) => command.togglable && await guildWrapper.commandIsEnabled(command.name);
 
                 let title = argsArray[argIndex] == 'disabled' ? 'Disabled Commands' : 'Enabled Commands';
                 let embed = getCommandList(guildWrapper, title, criteria);
@@ -105,7 +107,7 @@ var command: commandInterface = {
             }
 
             // check if it's already enabled
-            if (guildWrapper.commandIsEnabled(cmd.name) == enable) {
+            if (await guildWrapper.commandIsEnabled(cmd.name) == enable) {
                 Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(`The ${cmd.name} command is already ${enable ? 'enabled' : 'disabled'}`);
                 Bot.mStats.logMessageSend();

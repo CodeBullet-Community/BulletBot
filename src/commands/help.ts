@@ -33,7 +33,7 @@ async function sendCommandList(guildWrapper: GuildWrapper, message: Message, str
     }
 
     // list commands
-    let prefix = guildWrapper.getPrefix();
+    let prefix = await guildWrapper.getPrefix();
     var commands = Object.keys(strucObject).filter(x => strucObject[x].help);
     for (var i = 0; i < commands.length; i++) {
         var f = Bot.commands.get(commands[i]);

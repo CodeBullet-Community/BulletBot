@@ -1,10 +1,13 @@
 import mongoose = require('mongoose');
-import { Guild, GuildMember, UserResolvable, GuildResolvable, GuildMemberResolvable, RoleResolvable, Snowflake } from "discord.js";
-import { CommandUsageLimits, guildDoc, UsageLimits, guildObject, guildSchema, GuildRank, guildRanks, CommandSettings } from "./schemas";
+import { Guild, GuildMember, UserResolvable, GuildResolvable, GuildMemberResolvable, RoleResolvable, Snowflake, ChannelResolvable, TextChannel } from "discord.js";
+import { CommandUsageLimits, guildDoc, UsageLimits, guildObject, guildSchema, GuildRank, guildRanks, CommandSettings, MegalogFunction, megalogGroups } from "./schemas";
 import { Bot } from '..';
 import { permLevels } from '../utils/permissions';
 import { CommandResolvable } from '../commands';
-import { resolveCommand, resolveGuildMember, resolveRole, resolveUserID } from '../utils/resolvers';
+import { resolveCommand, resolveGuildMember, resolveChannel, resolveChannelID } from '../utils/resolvers';
+import { Wrapper } from './wrapper';
+import _, { PropertyPath } from "lodash";
+import { keys } from 'ts-transformer-keys';
 
 export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
 
@@ -15,7 +18,7 @@ export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
  * @class GuildWrapper
  * @implements {guildObject}
  */
-export class GuildWrapper implements guildObject {
+export class GuildWrapper extends Wrapper<guildObject> implements guildObject {
     guild: Guild;
     id: string;
     prefix: string;
@@ -36,90 +39,23 @@ export class GuildWrapper implements guildObject {
     commandSettings: {
         [key: string]: CommandSettings
     };
-    megalog: {
-        ignoreChannels: string[];
-        channelCreate?: string;
-        channelDelete?: string;
-        channelUpdate?: string;
-        ban?: string;
-        unban?: string;
-        memberJoin?: string;
-        memberLeave?: string;
-        nicknameChange?: string;
-        memberRolesChange?: string;
-        guildNameChange?: string;
-        messageDelete?: string;
-        attachmentCache?: string;
-        messageEdit?: string;
-        reactionAdd?: string;
-        reactionRemove?: string;
-        roleCreate?: string;
-        roleDelete?: string;
-        roleUpdate?: string;
-        voiceTranfer?: string;
-        voiceMute?: string;
-        voiceDeaf?: string;
-    };
+    megalog: { ignoreChannels: string[]; } & { [T in MegalogFunction]: string };
 
     /**
      * Creates an instance of GuildWrapper.
      *
-     * @param {guildDoc} guildObject guild document object
+     * @param {Snowflake} id ID of the guild
      * @param {Guild} [guild] optional guild object (so constructor doesn't have to search for it)
      * @memberof GuildWrapper
      */
-    constructor(guildObject: guildObject, guild?: Guild) {
-        for (const key in guildSchema.obj)
-            this[key] = guildObject[key];
+    constructor(id: Snowflake, guild?: Guild) {
+        super(Bot.database.mainDB.guilds, { id: id }, ['id'], keys<guildObject>());
+        this.data.id = id;
 
         if (guild)
             this.guild = guild;
         else
-            this.guild = Bot.client.guilds.get(guildObject.id);
-    }
-
-    /**
-     * Sets a property of a object at a certain path
-     *
-     * @private
-     * @param {*} object Object to set property in
-     * @param {string} path Path to the property
-     * @param {*} value Value it should be set to
-     * @memberof GuildWrapper
-     */
-    private tracePathSet(object, path: string, value: any) {
-        let pathArray = path.split('.');
-        let i;
-        for (i = 0; i < pathArray.length - 1; i++)
-            object = object[pathArray[i]];
-        object[path[i]] = value;
-    }
-
-    /**
-     * Resynchronizes the cache with the database
-     *
-     * @returns The resynchronized Wrapper if the document was found in the database
-     * @memberof GuildWrapper
-     */
-    async resync(fields?: string[]) {
-        let doc = await Bot.database.findGuildDoc(this.id, fields);
-        if (!doc) return undefined;
-        let obj = doc.toObject({ minimize: false });
-        for (const field of fields || guildSchema.obj)
-            this.tracePathSet(this, field, this.tracePath(obj, field));
-        return this;
-    }
-
-    /**
-     * Does a updateOne call to update the document in the database
-     *
-     * @private
-     * @param {*} doc What should be updated
-     * @returns Query as a promise
-     * @memberof GuildWrapper
-     */
-    private update(doc: any) {
-        return Bot.database.mainDB.guilds.updateOne({ id: this.id }, doc).exec();
+            this.guild = Bot.client.guilds.get(id);
     }
 
     /**
@@ -128,7 +64,8 @@ export class GuildWrapper implements guildObject {
      * @returns Prefix
      * @memberof GuildWrapper
      */
-    getPrefix() {
+    async getPrefix() {
+        await this.load('prefix');
         if (this.prefix) return this.prefix;
         return Bot.settings.prefix;
     }
@@ -143,7 +80,7 @@ export class GuildWrapper implements guildObject {
         let query: any = { $set: { prefix: prefix } };
         if (!prefix) query = { $unset: { prefix: 0 } };
         await this.update(query);
-        this.prefix = prefix;
+        this.data.prefix = prefix;
     }
 
     /**
@@ -152,7 +89,8 @@ export class GuildWrapper implements guildObject {
      * @returns
      * @memberof GuildWrapper
      */
-    getCaseChannel() {
+    async getCaseChannel() {
+        this.load('caseChannel');
         if (!this.caseChannel) return undefined;
         return this.guild.channels.get(this.caseChannel);
     }
@@ -163,7 +101,8 @@ export class GuildWrapper implements guildObject {
      * @returns
      * @memberof GuildWrapper
      */
-    getLogChannel() {
+    async getLogChannel() {
+        this.load('logChannel');
         if (!this.logChannel) return undefined;
         return this.guild.channels.get(this.logChannel);
     }
@@ -209,12 +148,13 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     async addToRank(rank: GuildRank, snowflake: Snowflake) {
+        await this.load('ranks');
         if (!guildRanks.includes(rank)) return undefined;
         if (this.ranks[rank].includes(snowflake)) return undefined;
         let query = { $addToSet: {} };
         query.$addToSet[`ranks.${rank}`] = [snowflake];
         await this.update(query);
-        this.ranks[rank].push(snowflake);
+        this.data.ranks[rank].push(snowflake);
         return this.ranks[rank];
     }
 
@@ -227,35 +167,18 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     async removeFromRank(rank: GuildRank, snowflake: Snowflake) {
+        await this.load('ranks');
         if (!guildRanks.includes(rank)) return undefined;
         if (!this.ranks[rank].includes(snowflake)) return undefined;
         let query = { $pull: {} };
         query.$pull[`ranks.${rank}`] = snowflake;
         await this.update(query);
-        this.ranks[rank].splice(this.ranks[rank].indexOf(snowflake), 1);
+        this.data.ranks[rank].splice(this.ranks[rank].indexOf(snowflake), 1);
         return this.ranks[rank];
     }
 
     // TODO: add functions for webhooks
     // TODO: add functions for adding/removing locks
-
-    /**
-     * Gets a property at the specified path
-     *
-     * @private
-     * @param {*} object object to trace
-     * @param {string} path path of requested property
-     * @returns value of property
-     * @memberof GuildWrapper
-     */
-    private tracePath(object, path: string) {
-        let current = object;
-        for (const property of path.split('.')) {
-            if (current === undefined) return undefined;
-            current = current[property];
-        }
-        return current;
-    }
 
     /**
      * Always returns a object if the command exists
@@ -264,7 +187,8 @@ export class GuildWrapper implements guildObject {
      * @returns CommandSettings object
      * @memberof GuildWrapper
      */
-    getCommandSettings(command: string) {
+    async getCommandSettings(command: string) {
+        await this.load('commandSettings');
         if (!Bot.commands.get(command)) return undefined;
         return this.commandSettings[command] || {};
     }
@@ -282,7 +206,7 @@ export class GuildWrapper implements guildObject {
         let query = { $set: {} };
         query.$set[`commandSettings.${command}`] = settings;
         await this.update(query);
-        this.commandSettings[command] = settings;
+        this.data.commandSettings[command] = settings;
         return settings;
     }
 
@@ -293,7 +217,8 @@ export class GuildWrapper implements guildObject {
      * @returns if command is enabled
      * @memberof GuildWrapper
      */
-    commandIsEnabled(command: string) {
+    async commandIsEnabled(command: string) {
+        await this.load('commandSettings');
         if (!Bot.commands.get(command)) return undefined;
         if (!this.commandSettings[command] || this.commandSettings[command]._enabled) return true;
         return false;
@@ -308,10 +233,11 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     async toggleCommand(command: string, value?: boolean) {
+        await this.load('commandSettings');
         let commandObj = Bot.commands.get(command);
         if (!commandObj || !commandObj.togglable) return undefined;
 
-        let settings = this.getCommandSettings(command);
+        let settings = await this.getCommandSettings(command);
         value = value || settings._enabled === false ? true : false;
 
         let query = { $set: {} };
@@ -319,30 +245,8 @@ export class GuildWrapper implements guildObject {
         await this.update(query);
 
         settings._enabled = value;
-        this.commandSettings[command] = settings;
+        this.data.commandSettings[command] = settings;
         return value;
-
-    }
-
-    /**
-     * Merges two objects with the second taking priority.
-     *
-     * @private
-     * @param {*} object1 object with less priority
-     * @param {*} object2 object with more priority
-     * @returns merged object
-     * @memberof GuildWrapper
-     */
-    private mergeObject(object1, object2) {
-        let merged = Object.assign({}, object1);
-        for (const key in object2) {
-            if (typeof object2[key] === 'object') {
-                merged[key] = this.mergeObject(object1[key], object2);
-                continue;
-            }
-            merged[key] = object2[key];
-        }
-        return merged;
     }
 
     /**
@@ -352,10 +256,11 @@ export class GuildWrapper implements guildObject {
      * @returns Merge usage limits
      * @memberof GuildWrapper
      */
-    getUsageLimits(path: string = '') {
-        let globalUsageLimits = this.tracePath(Bot.settings.usageLimits, path) || {};
-        let guildUsageLimits = this.tracePath(this.usageLimits, path) || {};
-        return this.mergeObject(globalUsageLimits, guildUsageLimits);
+    async getUsageLimits(path: PropertyPath = '') {
+        await this.load('usageLimits');
+        let globalUsageLimits: any = _.at<any>(Bot.settings.usageLimits, path) || {};
+        let guildUsageLimits: any = _.at<any>(this.usageLimits, path) || {};
+        return _.merge(globalUsageLimits, guildUsageLimits);
     }
 
     /**
@@ -365,9 +270,9 @@ export class GuildWrapper implements guildObject {
      * @returns {CommandUsageLimits} Usage limits for specified command
      * @memberof GuildWrapper
      */
-    getCommandUsageLimits(commandResolvable: CommandResolvable): CommandUsageLimits {
+    async getCommandUsageLimits(commandResolvable: CommandResolvable): Promise<CommandUsageLimits> {
         let command = resolveCommand(commandResolvable);
-        let usageLimits = this.getUsageLimits(`commands.${command.name}`);
+        let usageLimits = await this.getUsageLimits(`commands.${command.name}`);
         return Bot.commands.getCommandUsageLimits(command, usageLimits);
     }
 
@@ -384,6 +289,7 @@ export class GuildWrapper implements guildObject {
      * @returns perm level
      */
     async getPermLevel(memberResolvable: GuildMemberResolvable): Promise<permLevels> {
+        await this.load('ranks');
         let member = await resolveGuildMember(this.guild, memberResolvable);
 
         // if bot master
@@ -413,7 +319,8 @@ export class GuildWrapper implements guildObject {
      * @returns {Snowflake[]} Snowflakes of the given rank
      * @memberof GuildWrapper
      */
-    getRankIDs(rank: GuildRank): Snowflake[] {
+    async getRankIDs(rank: GuildRank): Promise<Snowflake[]> {
+        await this.load('ranks');
         if (!guildRanks.includes(rank))
             throw new Error(`Invalid Input. Rank should be either 'admins', 'mods' or 'immune' but was: ${rank}`);
         return this.ranks[rank];
@@ -426,8 +333,8 @@ export class GuildWrapper implements guildObject {
      * @returns {Snowflake[]} GuildMember snowflakes of a certain rank
      * @memberof GuildWrapper
      */
-    getRankMemberIDs(rank: GuildRank): Snowflake[] {
-        return this.getRankIDs(rank).filter(id => !this.guild.roles.get(id));
+    async getRankMemberIDs(rank: GuildRank): Promise<Snowflake[]> {
+        return (await this.getRankIDs(rank)).filter(id => !this.guild.roles.get(id));
     }
 
     /**
@@ -438,7 +345,7 @@ export class GuildWrapper implements guildObject {
      * @memberof GuildWrapper
      */
     async getRankMembers(rank: GuildRank) {
-        let userIDs = this.getRankMemberIDs(rank);
+        let userIDs = await this.getRankMemberIDs(rank);
         let users = userIDs.map(id => this.guild.fetchMember(id))
         return await Promise.all(users);
     }
@@ -450,8 +357,8 @@ export class GuildWrapper implements guildObject {
      * @returns {Snowflake[]} Role snowflakes of a certain rank
      * @memberof GuildWrapper
      */
-    getRankRoleIDs(rank: GuildRank): Snowflake[] {
-        return this.getRankIDs(rank).filter(id => this.guild.roles.get(id));
+    async getRankRoleIDs(rank: GuildRank): Promise<Snowflake[]> {
+        return (await this.getRankIDs(rank)).filter(id => this.guild.roles.get(id));
     }
 
     /**
@@ -461,8 +368,8 @@ export class GuildWrapper implements guildObject {
      * @returns Roles of a certain rank
      * @memberof GuildWrapper
      */
-    getRankRoles(rank: GuildRank) {
-        return this.getRankRoleIDs(rank).map(id => this.guild.roles.get(id));
+    async getRankRoles(rank: GuildRank) {
+        return (await this.getRankRoleIDs(rank)).map(id => this.guild.roles.get(id));
     }
 
 }

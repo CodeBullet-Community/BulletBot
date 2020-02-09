@@ -330,7 +330,7 @@ export class Logger {
                     },
                     {
                         'name': `${type ? 'Enable' : 'Disable'} Filter:`,
-                        'value': `${guildWrapper.getPrefix()}filters ${type ? 'enable' : 'disable'} ${filter.name}`
+                        'value': `${await guildWrapper.getPrefix()}filters ${type ? 'enable' : 'disable'} ${filter.name}`
                     }
                 ]
             }
@@ -389,7 +389,7 @@ export class Logger {
                     },
                     {
                         'name': `${type ? 'Re-enable' : 'Disable'} Command:`,
-                        'value': `${guildWrapper.getPrefix()}commands ${type ? 'enable' : 'disable'} ${command.name}`
+                        'value': `${await guildWrapper.getPrefix()}commands ${type ? 'enable' : 'disable'} ${command.name}`
                     }
                 ]
             }

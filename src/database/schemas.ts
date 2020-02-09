@@ -2,6 +2,15 @@ import mongoose = require('mongoose');
 import { PresenceData, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
 import { Bot } from '..';
 
+/**
+ * A document that extends on a specific Object
+ */
+export type ExDocument<T> = T & mongoose.Document;
+/**
+ * Array of keys of a specific
+ */
+export type Keys<T> = (keyof T)[];
+
 // usageLimits
 export interface UsageLimits {
     commands?: {
@@ -148,6 +157,7 @@ export interface guildObject {
 export interface guildDoc extends mongoose.Document, guildObject {
     id: string;
 }
+export type guildDoc = ExDocument<guildObject>;
 export const guildSchema = new mongoose.Schema({
     guild: { type: String, required: false }, // from old version
     id: String,
@@ -205,7 +215,7 @@ export interface filtersObject {
         }
     }
 }
-export interface filtersDoc extends mongoose.Document, filtersObject { }
+export type filtersDoc = ExDocument<filtersObject>;
 export const filtersSchema = new mongoose.Schema({
     guild: String,
     filters: mongoose.Schema.Types.Mixed
@@ -219,7 +229,7 @@ export interface logObject {
     timestamp: number;
     info?: logStaff | logWebhook | logFilter | logCommand | logPrefix | logMegalog | logMegalogIgnore;
 }
-export interface logDoc extends mongoose.Document, logObject { }
+export type logDoc = ExDocument<logObject>;
 export const logSchema = new mongoose.Schema({
     guild: String,
     action: Number,
@@ -306,7 +316,7 @@ export interface commandCacheObject {
     delete: number;
 }
 
-export interface commandCacheDoc extends mongoose.Document, commandCacheObject { }
+export type commandCacheDoc = ExDocument<commandCacheObject>;
 export const commandCacheSchema = new mongoose.Schema({
     channel: String,
     user: String,
@@ -326,7 +336,7 @@ export interface userObject {
         };
     };
 }
-export interface userDoc extends mongoose.Document, userObject { }
+export type userDoc = ExDocument<userObject>;
 export const userSchema = new mongoose.Schema({
     user: String,
     commandLastUsed: mongoose.Schema.Types.Mixed
@@ -491,7 +501,7 @@ export interface caseObject {
     reason?: string;
 }
 
-export interface caseDoc extends mongoose.Document, caseObject { }
+export type caseDoc = ExDocument<caseObject>;
 export const caseSchema = new mongoose.Schema({
     guild: String,
     caseID: Number,
@@ -732,7 +742,7 @@ export interface mStatsAllTimeObject extends mStatsObject {
     from: number;
     to: number;
 }
-export interface mStatsAllTimeDoc extends mongoose.Document, mStatsAllTimeObject { }
+export type mStatsAllTimeDoc = ExDocument<mStatsAllTimeObject>;
 var mStatsAllTimeSchemaStruc: any = mStatsSchemaStruc;
 mStatsAllTimeSchemaStruc.from = Number;
 mStatsAllTimeSchemaStruc.to = Number;
@@ -742,7 +752,7 @@ export const mStatsAllTimeSchema = new mongoose.Schema(mStatsAllTimeSchemaStruc)
 export interface mStatsDayObject extends mStatsObject {
     day: number;
 }
-export interface mStatsDayDoc extends mongoose.Document, mStatsDayObject { }
+export type mStatsDayDoc = ExDocument<mStatsDayObject>;
 var mStatsDaySchemaStruc: any = mStatsSchemaStruc;
 mStatsDaySchemaStruc.day = Number;
 export const mStatsDaySchema = new mongoose.Schema(mStatsDaySchemaStruc);
@@ -752,7 +762,7 @@ export interface mStatsHourObject extends mStatsObject {
     day: number;
     hour: number;
 }
-export interface mStatsHourDoc extends mongoose.Document, mStatsDayObject { }
+export type mStatsHourDoc = ExDocument<mStatsHourObject>;
 var mStatsHourSchemaStruc: any = mStatsSchemaStruc;
 mStatsHourSchemaStruc.day = Number;
 mStatsHourSchemaStruc.hour = Number;
@@ -766,7 +776,7 @@ export interface errorObject {
     count: number;
     error: any;
 }
-export interface errorDoc extends mongoose.Document, errorObject { }
+export type errorDoc = ExDocument<errorObject>;
 export const errorSchema = new mongoose.Schema({
     first: Number,
     last: Number,
@@ -781,7 +791,7 @@ export interface bugObject {
     user: string; // user ID which reported it
     bug: string; // bug description
 }
-export interface bugDoc extends mongoose.Document, bugObject { }
+export type bugDoc = ExDocument<bugObject>;
 export const bugSchema = new mongoose.Schema({
     guild: { type: String, required: false },
     user: String,
@@ -794,7 +804,7 @@ export interface botSuggestionObject {
     user: string; // user ID which suggested it
     suggestion: string; // suggestion description
 }
-export interface botSuggestionDoc extends mongoose.Document, botSuggestionObject { }
+export type botSuggestionDoc = ExDocument<botSuggestionObject>;
 export const botSuggestionSchema = new mongoose.Schema({
     guild: { type: String, required: false },
     user: String,
@@ -808,7 +818,7 @@ export interface webhookObject {
     channel: string;
     message: string;
 }
-export interface webhookDoc extends mongoose.Document, webhookObject { }
+export type webhookDoc = ExDocument<webhookObject>;
 export const webhookSchema = new mongoose.Schema({
     feed: String,
     guild: String,
@@ -843,7 +853,7 @@ export interface globalSettingsObject {
     };
     usageLimits?: UsageLimits;
 }
-export interface globalSettingsDoc extends mongoose.Document, globalSettingsObject { }
+export type globalSettingsDoc = ExDocument<globalSettingsObject>;
 export let globalSettingsSchema = new mongoose.Schema({
     prefix: String,
     presence: {

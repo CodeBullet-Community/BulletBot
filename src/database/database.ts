@@ -18,7 +18,8 @@ import {
     caseSchema,
     pActionDoc,
     pActionSchema,
-    GuildRank
+    GuildRank,
+    guildObject
 } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
@@ -137,20 +138,21 @@ export class Database {
      *
      * @export
      * @param {GuildResolvable} guild The guild to get the wrapper for
+     * @param {(keyof guildObject | (keyof guildObject)[])} [fields] Only those fields should be loaded (Can also be a single value)
      * @returns GuildWrapper of the specified guild
      * @memberof Database
      */
-    async getGuildWrapper(guildResolvable: GuildResolvable) {
+    async getGuildWrapper(guildResolvable: GuildResolvable, fields?: keyof guildObject | (keyof guildObject)[]) {
         let guild = resolveGuild(guildResolvable);
         if (!guild) return undefined;
 
-        let guildWrapper = this.cache.guilds.get(guild.id);
-        if (guildWrapper) return guildWrapper;
-
-        let guildDoc = await this.findGuildDoc(guild.id);
-        guildWrapper = new GuildWrapper(guildDoc.toObject({ minimize: false}), guild instanceof Guild ? guild : undefined);
+        let guildWrapper = this.cache.guilds.get(guild.id)
+        if (!guildWrapper) {
+            guildWrapper = new GuildWrapper(guild.id, guild);
         this.cache.guilds.set(guild.id, guildWrapper);
-        return guildWrapper
+        }
+        await guildWrapper.load(fields);
+        return guildWrapper;
     }
 
     /**

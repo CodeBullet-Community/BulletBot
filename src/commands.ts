@@ -237,7 +237,7 @@ export class Commands {
         // get command usage limits
         let commandUsageLimits = Bot.settings.getCommandUsageLimits(command);
         if (!dm) {
-            commandUsageLimits = guildWrapper.getCommandUsageLimits(command);
+            commandUsageLimits = await guildWrapper.getCommandUsageLimits(command);
         }
 
         // check if user can use command
@@ -245,7 +245,7 @@ export class Commands {
         let user = await Bot.database.getUserWrapper(message.author, true);
         if (!user.canUseCommand(scope, command, commandUsageLimits)) return false;
 
-        if (!dm && !guildWrapper.commandIsEnabled(command)) return false;
+        if (!dm && !(await guildWrapper.commandIsEnabled(command))) return false;
 
         let output = await cmd.run(message, args, permLevel, dm, guildWrapper, requestTime); // run command
 
@@ -304,10 +304,10 @@ export class Commands {
     async getHelpEmbed(commandResolvable: CommandResolvable, guildWrapperResolvable?: GuildWrapperResolvable) {
         let command = resolveCommand(commandResolvable);
         let guildWrapper = await resolveGuildWrapper(guildWrapperResolvable);
-        let commandUsageLimits = guildWrapper.getCommandUsageLimits(commandResolvable);
+        let commandUsageLimits = await guildWrapper.getCommandUsageLimits(commandResolvable);
 
 
-        let prefix = guildWrapper.getPrefix();
+        let prefix = await guildWrapper.getPrefix();
         let embed = {
             color: Bot.settings.embedColors.help,
             author: {
