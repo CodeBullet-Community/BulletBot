@@ -1,9 +1,10 @@
 import mongoose = require('mongoose');
-import { globalSettingsDoc, globalSettingsSchema, globalSettingsObject, CommandUsageLimits } from './schemas';
+import { globalSettingsDoc, globalSettingsSchema, globalSettingsObject, CommandUsageLimits, UsageLimits } from './schemas';
 import { Bot } from '..';
 import { globalUpdateInterval } from '../bot-config.json';
 import { CommandResolvable } from '../commands';
 import { resolveCommand } from '../utils/resolvers';
+import { PresenceData } from 'discord.js';
 
 /**
  * Connects to the settings database and caches the global settings.
@@ -14,12 +15,12 @@ import { resolveCommand } from '../utils/resolvers';
  */
 export class Settings implements globalSettingsObject {
     prefix: string;
-    presence: import("discord.js").PresenceData;
+    presence: PresenceData;
     embedColors: { default: number; help: number; neutral: number; negative: number; warn: number; positive: number; };
     botMasters: string[];
     commands: { [key: string]: { [key: string]: any; }; };
     filters: { [key: string]: { [key: string]: any; }; };
-    usageLimits?: import("./schemas").UsageLimits;
+    usageLimits?: UsageLimits;
     connection: mongoose.Connection;
     collection: mongoose.Model<globalSettingsDoc>;
 
