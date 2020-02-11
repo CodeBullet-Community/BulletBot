@@ -34,6 +34,9 @@ bullet_service_content="[Unit]
 \nExecStart=/usr/bin/node ${home}/out/index.js
 \nRestart=always
 \nRestartSec=3
+\nStandardOutput=syslog
+\nStandardError=syslog
+\nSyslogIdentifier=bulletbot
 \n
 \n[Install]
 \nWantedBy=multi-user.target"

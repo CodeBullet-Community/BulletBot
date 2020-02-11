@@ -15,6 +15,9 @@ Description=A service to execute bullet-mongo-start.sh on system reboot
 
 [Service]
 ExecStart=/bin/bash /home/bulletbot/installers/Linux_Universal/autorestart/bullet-mongo-start.sh
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=bullet-mongo-start
 
 [Install]
 WantedBy=multi-user.target" > /lib/systemd/system/bullet-mongo-start.service
