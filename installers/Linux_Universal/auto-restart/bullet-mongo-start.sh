@@ -27,7 +27,7 @@
 # ########################################################################### #
 
 
-. /home/bulletbot/installers/Linux_Universal/autorestart/bullet-mongo-start.conf
+. /home/bulletbot/installers/Linux_Universal/auto-restart/bullet-mongo-start.conf
 
 addresses=$_MAIL_TO # The email addreses that the status report is sent to
 send_status=$_SEND_STATUS # Determines if the status report can be sent

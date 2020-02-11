@@ -2,10 +2,10 @@
 
 # #################################################################### #
 #                                                                      #
-# autorestart-updater.sh                                               #
+# auto-restart-updater.sh                                               #
 # ----------------------                                               #
 # Contains code that is used by debian-ubuntu-installer.sh,            #
-# centos-rhel-installer.sh, and run-in-background-autorestart.sh. This #
+# centos-rhel-installer.sh, and run-in-background-auto-restart.sh. This #
 # prevents the same chunk of code existing in multiple files.          #
 #                                                                      #
 # #################################################################### #
@@ -14,7 +14,7 @@ echo "[Unit]
 Description=A service to execute bullet-mongo-start.sh on system reboot
 
 [Service]
-ExecStart=/bin/bash /home/bulletbot/installers/Linux_Universal/autorestart/bullet-mongo-start.sh
+ExecStart=/bin/bash /home/bulletbot/installers/Linux_Universal/auto-restart/bullet-mongo-start.sh
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=bullet-mongo-start

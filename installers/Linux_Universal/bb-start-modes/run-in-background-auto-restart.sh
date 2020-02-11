@@ -2,11 +2,11 @@
 
 # ########################################################################### #
 #                                                                             #
-# run-in-background-autorestart.sh                                            #
+# run-in-background-auto-restart.sh                                            #
 # --------------------------------                                            #
 # Runs BulletBot in the background, as a service on your system, with         #
 # auto-restart on system reboot. This means that if the system is rebooted or #
-# is turned back on, BulletBot will automatically be (re)started. If          #
+# is turned back on, BulletBot will automatically be started. If          #
 # BulletBot is already running in this mode, BulletBot will be restarted.     #
 #                                                                             #
 # Note: All variables (excluding $timer) are exported from                    #
@@ -37,7 +37,7 @@ if [[ -f $start_service && $start_service_status != 0 ]]; then
 # If bullet-mongo-start.service doesn't exist
 elif [[ ! -f $start_service ]]; then
     echo "Creating bullet-monog-start.service..."
-    ./installers/Linux_Universal/autorestart/autorestart-updater.sh
+    ./installers/Linux_Universal/auto-restart/auto-restart-updater.sh
     # Reloads systemd daemons to account for the added service
     systemctl daemon-reload
     echo "Enabling bullet-mongo-start.service..."
@@ -84,11 +84,11 @@ while ((timer > 0)); do
     ((timer-=1))
 done
 
-# Lists the start-up logs in order to better identify if and when
-# an error occurred during the start up of bulletbot.service
-echo -e "\n\n-------- bulletbot.service start-up logs ---------" \
+# Lists the startup logs in order to better identify if and when
+# an error occurred during the startup of bulletbot.service
+echo -e "\n\n-------- bulletbot.service startup logs ---------" \
     "\n$(journalctl -u bulletbot -b --no-hostname -S "$start_time")" \
-    "\n--------- End of bulletbot.service start-up logs --------\n"
+    "\n--------- End of bulletbot.service startup logs --------\n"
 
 echo -e "Please check the logs above to make sure that there aren't any" \
     "errors, and if there are, to resolve whatever issue is causing them\n"
