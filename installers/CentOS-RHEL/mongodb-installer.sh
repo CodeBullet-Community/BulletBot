@@ -39,7 +39,7 @@ echo "Enabling mongod.service..."
 systemctl enable mongod.service || {
     echo "${red}Failed to enable mongod.service" >&2
     echo "${cyan}mongod.service should be enabled so that it is automatically" \
-        "(re)started on system reboot${nc}"
+        "started on system reboot${nc}"
 }
 echo "Starting mongod.service..."
 systemctl start mongod.service || {

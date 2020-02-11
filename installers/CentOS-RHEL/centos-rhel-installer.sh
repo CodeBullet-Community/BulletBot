@@ -17,7 +17,7 @@
 # VARIABLES USED ALL THROUGHOUT THE SCRIPT #
 # ---------------------------------------- #
 home="/home/bulletbot"
-start_script="/home/bulletbot/installers/Linux_Universal/autorestart/bullet-mongo-start.sh"
+start_script="/home/bulletbot/installers/Linux_Universal/auto-restart/bullet-mongo-start.sh"
 bullet_service="/lib/systemd/system/bulletbot.service"
 start_service="/lib/systemd/system/bullet-mongo-start.service"
 # Contains all of the files/directories that are associated with BulletBot
@@ -156,7 +156,7 @@ download_bb() {
     echo -e "$bullet_service_content" > "$bullet_service"
 
     echo "Creating/updating bullet-mongo-start.service..."
-    ./installers/Linux_Universal/autorestart/autorestart-updater.sh
+    ./installers/Linux_Universal/auto-restart/auto-restart-updater.sh
     
     echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
     chown bulletbot:bulletbot -R "$home"
@@ -438,7 +438,7 @@ while true; do
                 export start_script
                 export start_service_status
                 export start_service
-                ./installers/Linux_Universal/bb-start-modes/run-in-background-autorestart.sh
+                ./installers/Linux_Universal/bb-start-modes/run-in-background-auto-restart.sh
                 clear
                 ;;
             4)

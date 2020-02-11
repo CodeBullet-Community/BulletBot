@@ -208,6 +208,8 @@ echo -e "\n${green}Finished setting up bot-config.json${nc}"
 
 if [[ $bullet_status = "active" ]]; then
     timer=20
+    # Saves the current time and date to be used with journalctl
+    start_time=$(date +"%F %H:%M:%S")
 
     echo "Restarting bulletbot.service to apply changes to bot-config.json..."
     systemctl restart bulletbot.service || {
@@ -218,7 +220,7 @@ if [[ $bullet_status = "active" ]]; then
         exit 1
     }
     
-    # Waits in order to give bulletbot.service enough time to (re)start
+    # Waits in order to give bulletbot.service enough time to restart
     echo "Waiting 20 seconds for bulletbot.service to start..."
     while ((timer > 0)); do
         echo -en "\r$timer seconds left "
@@ -226,12 +228,12 @@ if [[ $bullet_status = "active" ]]; then
         ((timer-=1))
     done
     
-    # Lists the last 40 logs in order to better identify if and when
-    # an error occurred during the start up of bulletbot.service
-    echo -e "\n\n--------Last 40 lines of logged events for" \
-        "bulletbot.service---------\n$(journalctl -u bulletbot -n \
-        40)\n---------End of bulletbot.service logs--------\n"
-    
+    # Lists the startup logs in order to better identify if and when
+    # an error occurred during the startup of bulletbot.service
+    echo -e "\n\n-------- bulletbot.service startup logs ---------" \
+        "\n$(journalctl -u bulletbot -b --no-hostname -S "$start_time")" \
+        "\n--------- End of bulletbot.service startup logs --------\n"
+
     echo -e "Please check the logs above to make sure that there aren't any" \
         "errors, and if there are, to resolve whatever issue is causing them\n"
 fi

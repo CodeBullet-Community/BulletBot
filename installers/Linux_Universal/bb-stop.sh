@@ -4,7 +4,7 @@
 #                                                                              #
 # bb-stop.sh                                                                   #
 # ----------                                                                   #
-# Is in charge of stopping bulletbot.service, which will in turn wil stop      #
+# Is in charge of stopping bulletbot.service, which will in turn will stop     #
 # BulleBot.                                                                    #
 #                                                                              #
 # Note: All variables are exported from linux-master-installer.sh and          #

@@ -58,11 +58,11 @@ while ((timer > 0)); do
     ((timer-=1))
 done
 
-# Lists the start-up logs in order to better identify if and when
-# an error occurred during the start up of bulletbot.service
-echo -e "\n\n-------- bulletbot.service start-up logs ---------" \
+# Lists the startup logs in order to better identify if and when
+# an error occurred during the startup of bulletbot.service
+echo -e "\n\n-------- bulletbot.service startup logs ---------" \
     "\n$(journalctl -u bulletbot -b --no-hostname -S "$start_time")" \
-    "\n--------- End of bulletbot.service start-up logs --------\n"
+    "\n--------- End of bulletbot.service startup logs --------\n"
 
 echo -e "Please check the logs above to make sure that there aren't any" \
     "errors, and if there are, to resolve whatever issue is causing them\n"
