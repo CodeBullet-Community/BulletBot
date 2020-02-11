@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # ########################################################################### #
+#                                                                             #
 # run-in-background-autorestart.sh                                            #
 # --------------------------------                                            #
 # Runs BulletBot in the background, as a service on your system, with         #
@@ -11,6 +12,7 @@
 # Note: All variables (excluding $timer) are exported from                    #
 # linux-master-installer.sh and debian-ubuntu-installer.sh or                 #
 # centos-rhel-installer.sh.                                                   #
+#                                                                             #
 # ########################################################################### #
 
 timer=20
@@ -18,6 +20,9 @@ timer=20
 clear
 read -p "We will now run BulletBot in the background with auto-restart on system \
 reboot. Press [Enter] to begin."
+
+# Saves the current time and date to be used with journalctl
+start_time=$(date +"%F %H:%M:%S")
 
 # If bullet-mongo-start.service exists and is not enabled
 if [[ -f $start_service && $start_service_status != 0 ]]; then
@@ -79,11 +84,11 @@ while ((timer > 0)); do
     ((timer-=1))
 done
 
-# Lists the last 40 logs in order to better identify if and when
-# an error occurred during the start-up of bulletbot.service
-echo -e "\n\n--------Last 40 lines of logged events for" \
-    "bulletbot.service---------\n$(journalctl -u bulletbot -n \
-    40)\n---------End of bulletbot.service logs--------\n"
+# Lists the start-up logs in order to better identify if and when
+# an error occurred during the start up of bulletbot.service
+echo -e "\n\n-------- bulletbot.service start-up logs ---------" \
+    "\n$(journalctl -u bulletbot -b --no-hostname -S "$start_time")" \
+    "\n--------- End of bulletbot.service start-up logs --------\n"
 
 echo -e "Please check the logs above to make sure that there aren't any" \
     "errors, and if there are, to resolve whatever issue is causing them\n"
