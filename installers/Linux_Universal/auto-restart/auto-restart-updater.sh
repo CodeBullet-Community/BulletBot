@@ -1,17 +1,20 @@
 #!/bin/bash
 
-# #################################################################### #
-#                                                                      #
-# auto-restart-updater.sh                                               #
-# ----------------------                                               #
-# Contains code that is used by debian-ubuntu-installer.sh,            #
-# centos-rhel-installer.sh, and run-in-background-auto-restart.sh. This #
-# prevents the same chunk of code existing in multiple files.          #
-#                                                                      #
-# #################################################################### #
-
+################################################################################
+#
+# Creates and/or updates 'bullet-mongo-start.service', then enables it.
+#
+# Purpose of Script
+# =================
+# This script is used by 'debian-ubuntu-installer.sh',
+# 'centos-rhel-installer.sh', and 'run-in-background-auto-restart.sh'. By having
+# each script call/execute this one, it prevents the same chunk of code from
+# existing in multiple files.
+#
+################################################################################
+    
 echo "[Unit]
-Description=A service to execute bullet-mongo-start.sh on system reboot
+Description=A service to execute 'bullet-mongo-start.sh' on system reboot
 
 [Service]
 ExecStart=/bin/bash /home/bulletbot/installers/Linux_Universal/auto-restart/bullet-mongo-start.sh
