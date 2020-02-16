@@ -49,6 +49,55 @@ export class Wrapper<T extends Object> {
     }
 
     /**
+     * Checks if the document corresponding to this wrapper exists
+     *
+     * @returns
+     * @memberof Wrapper
+     */
+    async docExists() {
+        return await this.getDoc([]) ? true : false;
+    }
+
+    /**
+     * Creates a document for this wrapper with the provided content. 
+     * By default it first checks if there is already a document and if so doesn't create one.
+     * 
+     * IMPORTANT: The wrapper doesn't check if the document is correct and can actually be found by it's uniqueQuery.
+     *
+     * @param {T} content The content of the document
+     * @param {boolean} [overwrite=false] If it should overwrite the old document (Default false)
+     * @returns The created document if it was created
+     * @memberof Wrapper
+     */
+    async createDoc(content: T, overwrite = false) {
+        let oldDocExists = await this.docExists();
+        if (!overwrite && oldDocExists) return undefined;
+        if (oldDocExists) await this.model.deleteOne(this.uniqueQuery).exec();
+        let doc = new this.model(content);
+        this.loadFromObject(content);
+        return doc.save();
+    }
+
+    /**
+     * Loads fields from a provided object. 
+     * The object is seen as fully loaded, so undefined fields will also be used.
+     *
+     * @param {T} obj The object to load from
+     * @param {boolean} [replace=true] If already loaded fields should be replaced
+     * @returns The resulting data object
+     * @memberof Wrapper
+     */
+    loadFromObject(obj: T, replace = true) {
+        this.loadedFields = [...this.allFields];
+        for (const key of this.allFields) {
+            if (this.loadedFields.includes(key) && !replace)
+                continue;
+            this.data[key] = obj[key];
+        }
+        return this.data;
+    }
+
+    /**
      * Reloads all already loaded fields of the wrapper
      *
      * @param {(keyof T)[]} [fields] If set it only reloads those fields (can also be not yet loaded fields)

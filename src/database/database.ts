@@ -15,7 +15,8 @@ import {
     pActionDoc,
     pActionSchema,
     GuildRank,
-    guildObject
+    guildObject,
+    userObject
 } from './schemas';
 import { setInterval } from 'timers';
 import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
@@ -127,7 +128,6 @@ export class Database {
 
     /**
      * Returns a GuildWrapper for the specified guild. 
-     * This helper function is necessary to ensure that the wrapper is ready when it's returned
      *
      * @export
      * @param {GuildResolvable} guild The guild to get the wrapper for
@@ -388,43 +388,27 @@ export class Database {
     }
 
     /**
-     * will search for a user doc and wrap it in a UserWrapper. 
-     * If create is true and it didn't find a user doc, it will create a new one.
-     *
-     * @param {User} user user for which to find/create a wrapper/doc
-     * @param {boolean} [create=false] if it should create a new doc if there isn't already one. (default false)
-     * @returns user doc wrapped in a UserWrapper
-     * @memberof Database
-     */
-    async getUser(user: User, create: boolean = false) {
-        var userDoc = await this.findUserDoc(user.id);
-        if (userDoc) {
-            return new UserWrapper(userDoc, user);
-        } else if (create)
-            return new UserWrapper(undefined, user);
-    }
-
-    /**
-     * Gets a user wrapper for a given user and caches it
+     * Gets a UserWrapper for a given user and caches it
      *
      * @param {UserResolvable} userResolvable User for which to get a wrapper
-     * @param {boolean} [create] If a userDoc should be created if it wasn't found (won't be saved to the database)
-     * @returns The userWrapper of the given user
+     * @param {(keyof userObject | (keyof userObject)[])} [fields] Only those fields should be loaded (Can also be a single value)
+     * @returns UserWrapper for the specified user
      * @memberof Database
      */
-    async getUserWrapper(userResolvable: UserResolvable, create?: boolean) {
+    async getUserWrapper(userResolvable: UserResolvable, fields?: keyof userObject | (keyof userObject)[]) {
         let user = await resolveUser(userResolvable);
 
         let userWrapper = this.cache.users.get(user.id);
-        if (userWrapper) return userWrapper;
+        if (!userWrapper) {
+            userWrapper = new UserWrapper(user.id, user);
+            await userWrapper.createDoc({
+                id: user.id,
+                commandLastUsed: {}
+            }, false);
+            this.cache.users.set(user.id, userWrapper);
+        }
+        await userWrapper.load(fields);
 
-        let userDoc = await Bot.database.findUserDoc(user.id);
-        if (!userDoc && create)
-            userDoc = new Bot.database.mainDB.users({ user: user.id });
-        if (!userDoc) return undefined;
-
-        userWrapper = new UserWrapper(userDoc, user);
-        this.cache.users.set(user.id, userWrapper);
         return userWrapper;
     }
 

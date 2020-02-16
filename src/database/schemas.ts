@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { PresenceData, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
+import { PresenceData, DMChannel, GroupDMChannel, TextChannel, User, Snowflake } from 'discord.js';
 import { Bot } from '..';
 
 /**
@@ -352,11 +352,11 @@ export const commandCacheSchema = new mongoose.Schema({
 });
 
 // user
+export type CommandScope = 'dm' | 'guild' | Snowflake;
 export interface userObject {
-    user: string; // user id
+    id: string; // user id
     commandLastUsed: {
-        // guild id, 'dm' and 'global'
-        [key: string]: {
+        [P in CommandScope]?: {
             // command name
             [key: string]: number; // timestamp until it can be reused again
         };
@@ -364,7 +364,7 @@ export interface userObject {
 }
 export type userDoc = ExDocument<userObject>;
 export const userSchema = new mongoose.Schema({
-    user: String,
+    id: String,
     commandLastUsed: mongoose.Schema.Types.Mixed
 });
 

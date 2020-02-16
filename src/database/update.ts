@@ -1,8 +1,9 @@
 import mongoose = require('mongoose');
 import { cluster } from '../bot-config.json';
-import { guildSchema, guildDoc, guildObject, ExDocument } from './schemas.js';
+import { guildSchema, guildDoc, guildObject, ExDocument, userObject, userSchema } from './schemas.js';
 import { Snowflake } from 'discord.js';
 
+// guild
 interface OldGuildObject extends guildObject {
     guild?: Snowflake
 }
@@ -122,12 +123,18 @@ const megalogSchema = new mongoose.Schema({
     voiceDeaf: { type: String, required: false }
 });
 
+// user
+type OldUserObject = userObject & {
+    user: string;
+}
+type OldUserDoc = ExDocument<OldUserObject>;
+
 export async function updateDatabaseAfter1_2_8() {
     console.info('Database changes for this update will be applied.');
 
     let mainCon = await mongoose.createConnection(cluster.url + '/main' + cluster.suffix, { useNewUrlParser: true });
 
-    let guildCollection: mongoose.Model<guildDoc> = mainCon.model('guild', guildSchema, 'guilds');
+    let guildCollection: mongoose.Model<OldGuildDoc> = mainCon.model('guild', guildSchema, 'guilds');
 
     let prefixCollection: mongoose.Model<prefixDoc> = mainCon.model('prefix', prefixSchema, 'prefix');
     let staffCollection: mongoose.Model<staffDoc> = mainCon.model('staff', staffSchema, 'staff');
@@ -164,6 +171,10 @@ export async function updateDatabaseAfter1_2_8() {
         }
         guildDoc.save();
     }
+
+    let userCollection: mongoose.Model<OldUserDoc> = mainCon.model('user', userSchema, 'users');
+
+    await userCollection.update({}, { $rename: { user: 'id' } }).exec();
 
     for (const name of ['prefix', 'staff', 'commands', 'megalogs'])
         try {

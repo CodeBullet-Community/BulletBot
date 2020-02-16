@@ -242,8 +242,8 @@ export class Commands {
 
         // check if user can use command
         let scope = (dm ? 'dm' : message.guild.id);
-        let user = await Bot.database.getUserWrapper(message.author, true);
-        if (!user.canUseCommand(scope, command, commandUsageLimits)) return false;
+        let user = await Bot.database.getUserWrapper(message.author, 'commandLastUsed');
+        if (!(await user.canUseCommand(scope, command, commandUsageLimits))) return false;
 
         if (!dm && !(await guildWrapper.commandIsEnabled(command))) return false;
 
