@@ -1,26 +1,25 @@
 import mongoose = require('mongoose');
 import {
-    guildDoc,
-    logDoc,
-    filtersDoc,
-    commandCacheDoc,
+    GuildDoc,
+    LogDoc,
+    FiltersDoc,
+    CommandCacheDoc,
     guildSchema,
     filtersSchema,
     logSchema,
     commandCacheSchema,
-    userDoc,
+    UserDoc,
     userSchema,
-    caseDoc,
+    CaseDoc,
     caseSchema,
-    pActionDoc,
+    PActionDoc,
     pActionSchema,
-    GuildRank,
-    guildObject,
-    userObject
+    GuildObject,
+    UserObject
 } from './schemas';
 import { setInterval } from 'timers';
-import { globalUpdateInterval, cleanInterval } from '../bot-config.json';
-import { Guild, DMChannel, GroupDMChannel, TextChannel, User, Collection, Snowflake, GuildResolvable, UserResolvable, ChannelResolvable, TextBasedChannel } from 'discord.js';
+import { cleanInterval } from '../bot-config.json';
+import { DMChannel, GroupDMChannel, TextChannel, Collection, Snowflake, GuildResolvable, UserResolvable, ChannelResolvable } from 'discord.js';
 import { Bot } from '..';
 import { toNano } from '../utils/time';
 import { UserWrapper } from './userWrapper';
@@ -39,18 +38,18 @@ export class Database {
     /**
      * represents the main database with all collections and the actual connection
      *
-     * @type {{connection: mongoose.Connection;guilds: mongoose.Model<guildDoc>;staff: mongoose.Model<staffDoc>;prefix: mongoose.Model<prefixDoc>;commands: mongoose.Model<commandsDoc>;filters: mongoose.Model<filtersDoc>;logs: mongoose.Model<logDoc>;commandCache: mongoose.Model<commandCacheDoc>;}}
+     * @type {{connection: mongoose.Connection;guilds: mongoose.Model<GuildDoc>;staff: mongoose.Model<staffDoc>;prefix: mongoose.Model<prefixDoc>;commands: mongoose.Model<commandsDoc>;filters: mongoose.Model<FiltersDoc>;logs: mongoose.Model<LogDoc>;commandCache: mongoose.Model<CommandCacheDoc>;}}
      * @memberof Database
      */
     mainDB: {
         connection: mongoose.Connection;
-        guilds: mongoose.Model<guildDoc>;
-        filters: mongoose.Model<filtersDoc>;
-        logs: mongoose.Model<logDoc>;
-        commandCache: mongoose.Model<commandCacheDoc>;
-        users: mongoose.Model<userDoc>;
-        cases: mongoose.Model<caseDoc>;
-        pActions: mongoose.Model<pActionDoc>;
+        guilds: mongoose.Model<GuildDoc>;
+        filters: mongoose.Model<FiltersDoc>;
+        logs: mongoose.Model<LogDoc>;
+        commandCache: mongoose.Model<CommandCacheDoc>;
+        users: mongoose.Model<UserDoc>;
+        cases: mongoose.Model<CaseDoc>;
+        pActions: mongoose.Model<PActionDoc>;
     };
 
     cache: {
@@ -131,11 +130,11 @@ export class Database {
      *
      * @export
      * @param {GuildResolvable} guild The guild to get the wrapper for
-     * @param {(keyof guildObject | (keyof guildObject)[])} [fields] Only those fields should be loaded (Can also be a single value)
+     * @param {(keyof GuildObject | (keyof GuildObject)[])} [fields] Only those fields should be loaded (Can also be a single value)
      * @returns GuildWrapper of the specified guild
      * @memberof Database
      */
-    async getGuildWrapper(guildResolvable: GuildResolvable, fields?: keyof guildObject | (keyof guildObject)[]) {
+    async getGuildWrapper(guildResolvable: GuildResolvable, fields?: keyof GuildObject | (keyof GuildObject)[]) {
         let guild = resolveGuild(guildResolvable);
         if (!guild) return undefined;
 
@@ -228,11 +227,11 @@ export class Database {
      *
      * @param {string} guildID id of guild where the settings should be taken
      * @param {string} filter filter name
-     * @param {filtersDoc} [doc] existing filters doc where the settings should be extracted
+     * @param {FiltersDoc} [doc] existing filters doc where the settings should be extracted
      * @returns filter settings
      * @memberof Database
      */
-    async getFilterSettings(guildID: string, filter: string, doc?: filtersDoc) {
+    async getFilterSettings(guildID: string, filter: string, doc?: FiltersDoc) {
         var filterSettings = doc;
         if (!filterSettings || filterSettings.guild != guildID)
             filterSettings = await this.findFiltersDoc(guildID);
@@ -249,11 +248,11 @@ export class Database {
      * @param {string} guildID id of guild where the settings should be set
      * @param {string} filter filter name
      * @param {*} settings settings that should be set
-     * @param {filtersDoc} [doc] existing filters doc where the settings should be inserted
+     * @param {FiltersDoc} [doc] existing filters doc where the settings should be inserted
      * @returns whole filter doc
      * @memberof Database
      */
-    async setFilterSettings(guildID: string, filter: string, settings: any, doc?: filtersDoc) {
+    async setFilterSettings(guildID: string, filter: string, settings: any, doc?: FiltersDoc) {
         if (!doc || doc.guild != guildID) {
             doc = await this.findFiltersDoc(guildID);
         }
@@ -391,11 +390,11 @@ export class Database {
      * Gets a UserWrapper for a given user and caches it
      *
      * @param {UserResolvable} userResolvable User for which to get a wrapper
-     * @param {(keyof userObject | (keyof userObject)[])} [fields] Only those fields should be loaded (Can also be a single value)
+     * @param {(keyof UserObject | (keyof UserObject)[])} [fields] Only those fields should be loaded (Can also be a single value)
      * @returns UserWrapper for the specified user
      * @memberof Database
      */
-    async getUserWrapper(userResolvable: UserResolvable, fields?: keyof userObject | (keyof userObject)[]) {
+    async getUserWrapper(userResolvable: UserResolvable, fields?: keyof UserObject | (keyof UserObject)[]) {
         let user = await resolveUser(userResolvable);
 
         let userWrapper = this.cache.users.get(user.id);

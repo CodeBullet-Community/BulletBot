@@ -1,10 +1,10 @@
-import { Message, RichEmbed, Guild } from 'discord.js';
+import { Message, RichEmbed } from 'discord.js';
 import { commandInterface } from '../commands';
-import { permLevels } from '../utils/permissions';
+import { PermLevels } from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
-import { permToString } from '../utils/parsers';
 import { GuildWrapper } from '../database/guildWrapper';
+import { BenchmarkTimestamp } from '../utils/time';
 
 /**
  * sends a list of commands with their short description
@@ -13,9 +13,9 @@ import { GuildWrapper } from '../database/guildWrapper';
  * @param {Message} message message it should reply to
  * @param {*} strucObject structure Object with commands and subcategories it should list
  * @param {string} path the path to that structure Object
- * @param {[number, number]} requestTime when the list was requested to measure response time
+ * @param {BenchmarkTimestamp} requestTime when the list was requested to measure response time
  */
-async function sendCommandList(guildWrapper: GuildWrapper, message: Message, strucObject: any, path: string, requestTime: [number, number]) {
+async function sendCommandList(guildWrapper: GuildWrapper, message: Message, strucObject: any, path: string, requestTime: BenchmarkTimestamp) {
     // create embed and set basic information
     var output = new RichEmbed();
     output.setAuthor('Command List:', Bot.client.user.displayAvatarURL);
@@ -37,7 +37,7 @@ async function sendCommandList(guildWrapper: GuildWrapper, message: Message, str
     var commands = Object.keys(strucObject).filter(x => strucObject[x].help);
     for (var i = 0; i < commands.length; i++) {
         var f = Bot.commands.get(commands[i]);
-        if (f.permLevel == permLevels.botMaster) continue; // ignores commands only for bot masters
+        if (f.permLevel == PermLevels.botMaster) continue; // ignores commands only for bot masters
         output.addField(prefix + f.name, f.help.shortDescription);
     }
 
@@ -52,7 +52,7 @@ var command: commandInterface = {
     name: 'help',
     path: '',
     dm: false,
-    permLevel: permLevels.member,
+    permLevel: PermLevels.member,
     togglable: false,
     help: {
         shortDescription: 'gives a command list and help',
@@ -66,7 +66,7 @@ var command: commandInterface = {
             '{command} whois'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, guildWrapper, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             if (args.length == 0) {
                 sendCommandList(guildWrapper, message, Bot.commands.structure, undefined, requestTime);

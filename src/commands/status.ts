@@ -1,17 +1,15 @@
-import { Message, RichEmbed, Guild } from 'discord.js';
 import { commandInterface } from '../commands';
-import { permLevels } from '../utils/permissions';
+import { PermLevels } from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
-import { permToString } from '../utils/parsers';
-import { getDurationDiff, timeFormat, durations, getDistributedDuration } from '../utils/time';
+import { timeFormat, getDistributedDuration } from '../utils/time';
 import dateFormat = require('dateformat');
 
 var command: commandInterface = {
     name: 'status',
     path: '',
     dm: true,
-    permLevel: permLevels.botMaster,
+    permLevel: PermLevels.botMaster,
     togglable: false,
     help: {
         shortDescription: 'gives bot status',

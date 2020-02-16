@@ -1,15 +1,13 @@
-import { Message, RichEmbed, Guild } from 'discord.js';
 import { commandInterface } from '../commands';
-import { permLevels } from '../utils/permissions';
+import { PermLevels } from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
-import { permToString } from '../utils/parsers';
 
 var command: commandInterface = {
     name: 'ping',
     path: '',
     dm: true,
-    permLevel: permLevels.member,
+    permLevel: PermLevels.member,
     togglable: false,
     help: {
         shortDescription: 'checks bots responsiveness',

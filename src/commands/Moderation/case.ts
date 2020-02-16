@@ -1,16 +1,16 @@
-import { Message, RichEmbed, Guild, GuildMember } from 'discord.js';
+import { RichEmbed, Guild, GuildMember } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { durationToString, permToString, stringToChannel, stringToMember, stringToRole } from '../../utils/parsers';
-import { caseActions, caseDoc } from '../../database/schemas';
+import { durationToString, stringToMember } from '../../utils/parsers';
+import { CaseActions, CaseDoc } from '../../database/schemas';
 
 var command: commandInterface = {
     name: 'case',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
     help: {
         shortDescription: 'list or view cases',
@@ -154,13 +154,13 @@ function resolveTotalCases(query) {
     for (let i = 0; query.length > i; i++) {
         caseResolved.total += 1;
         switch (query[i].action) {
-            case caseActions.ban: caseResolved.ban++; break;
-            case caseActions.warn: caseResolved.warn++; break;
-            case caseActions.mute: caseResolved.mute++; break;
-            case caseActions.kick: caseResolved.kick++; break;
-            case caseActions.softban: caseResolved.softban++; break;
-            case caseActions.unmute: caseResolved.unmute++; break;
-            case caseActions.unban: caseResolved.unban++; break;
+            case CaseActions.ban: caseResolved.ban++; break;
+            case CaseActions.warn: caseResolved.warn++; break;
+            case CaseActions.mute: caseResolved.mute++; break;
+            case CaseActions.kick: caseResolved.kick++; break;
+            case CaseActions.softban: caseResolved.softban++; break;
+            case CaseActions.unmute: caseResolved.unmute++; break;
+            case CaseActions.unban: caseResolved.unban++; break;
         }
     }
     return caseResolved;
@@ -174,7 +174,7 @@ function resolveTotalCases(query) {
  * @returns
  */
 async function createDetailEmbeds(guild: Guild, member?: GuildMember) {
-    let cases: caseDoc[]
+    let cases: CaseDoc[]
     if (member) { // get either all cases from a member or the whole guild
         cases = await Bot.caseLogger.findByMember(guild.id, member.id);
     } else {
@@ -183,7 +183,7 @@ async function createDetailEmbeds(guild: Guild, member?: GuildMember) {
     let detailEmbedArray = [];
     let caseIndex = 0;
     let numOfCases = cases.length;
-    let tempCase: caseDoc;
+    let tempCase: CaseDoc;
     let tempMod;
     let tempMember;
     let embed;
@@ -274,9 +274,9 @@ function capitalizeFirstLetter(string) {
  */
 function resolveColor(action: string) {
     switch (action) {
-        case caseActions.warn: return Bot.settings.embedColors.warn;
-        case caseActions.ban || caseActions.kick || caseActions.mute || caseActions.softban: return Bot.settings.embedColors.negative;
-        case caseActions.unmute || caseActions.unban: return Bot.settings.embedColors.positive;
+        case CaseActions.warn: return Bot.settings.embedColors.warn;
+        case CaseActions.ban || CaseActions.kick || CaseActions.mute || CaseActions.softban: return Bot.settings.embedColors.negative;
+        case CaseActions.unmute || CaseActions.unban: return Bot.settings.embedColors.positive;
         default: return Bot.settings.embedColors.default;
     }
 }

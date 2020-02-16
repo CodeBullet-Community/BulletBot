@@ -5,7 +5,7 @@
  * @export
  * @enum {number}
  */
-export enum durations {
+export enum Durations {
     nano = 1e-6,
     second = 1000,
     minute = second * 60,
@@ -14,6 +14,8 @@ export enum durations {
     thirtyDays = day * 30
 }
 
+export type BenchmarkTimestamp = [number, number];
+
 export const timeFormat = 'ddd dd/mm/yyyy HH:MM:ss';
 
 /**
@@ -21,10 +23,10 @@ export const timeFormat = 'ddd dd/mm/yyyy HH:MM:ss';
  *
  * @param {number} timestamp0 first timestamp
  * @param {number} timestamp1 second timestamp
- * @param {(number | durations)} duration duration of time
+ * @param {(number | Durations)} duration duration of time
  * @returns
  */
-export function getDurationDiff(timestamp0: number, timestamp1: number, duration: number | durations) {
+export function getDurationDiff(timestamp0: number, timestamp1: number, duration: number | Durations) {
     return Math.abs(timestamp0 - timestamp1) / duration;
 }
 
@@ -37,7 +39,7 @@ export function getDurationDiff(timestamp0: number, timestamp1: number, duration
  * @returns
  */
 export function getDayDiff(timestamp0: number, timestamp1: number) {
-    return Math.round(getDurationDiff(timestamp0, timestamp1, durations.day));
+    return Math.round(getDurationDiff(timestamp0, timestamp1, Durations.day));
 }
 
 /**
@@ -49,10 +51,10 @@ export function getDayDiff(timestamp0: number, timestamp1: number) {
  */
 export function getDistributedDuration(msDuration: number) {
     msDuration = Math.abs(msDuration);
-    let days = Math.floor(msDuration / durations.day);
-    let hours = Math.floor(msDuration / durations.hour) % 24;
-    let minutes = Math.floor(msDuration / durations.minute) % 60;
-    let seconds = Math.floor(msDuration / durations.second) % 60;
+    let days = Math.floor(msDuration / Durations.day);
+    let hours = Math.floor(msDuration / Durations.hour) % 24;
+    let minutes = Math.floor(msDuration / Durations.minute) % 60;
+    let seconds = Math.floor(msDuration / Durations.second) % 60;
     let milliseconds = msDuration % 1000;
     return { days, hours, minutes, seconds, milliseconds };
 }
@@ -63,6 +65,6 @@ export function getDistributedDuration(msDuration: number) {
  * @export
  * @returns
  */
-export function toNano(time: [number, number]) {
-    return (time[0] * 1e9 + time[1]) * durations.nano;
+export function toNano(time: BenchmarkTimestamp) {
+    return (time[0] * 1e9 + time[1]) * Durations.nano;
 }

@@ -1,13 +1,12 @@
-import { Message, Guild, GuildMember, Role, Snowflake } from 'discord.js';
+import { Message, Guild, GuildMember, Snowflake } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString, stringToRole, stringToMember } from '../../utils/parsers';
-import { durations } from '../../utils/time';
+import { stringToRole, stringToMember } from '../../utils/parsers';
 import { guildRanks, GuildRank } from '../../database/schemas';
 import { GuildWrapper } from '../../database/guildWrapper';
-import { logTypes } from '../../database/schemas';
+import { LogTypes } from '../../database/schemas';
 
 function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -66,7 +65,7 @@ let command: commandInterface = {
     name: 'staff',
     path: '',
     dm: false,
-    permLevel: permLevels.botMaster,
+    permLevel: PermLevels.botMaster,
     togglable: false,
     help: {
         shortDescription: '-',
@@ -74,7 +73,7 @@ let command: commandInterface = {
         usages: [],
         examples: []
     },
-    run: async (message, args, permLevel, dm, guildWrapper, requestTime, commandCache?) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             if (args.length == 0) {
                 message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
@@ -126,7 +125,7 @@ let command: commandInterface = {
             if (result) {
                 message.channel.send(`Successfully added ${snowflakeObj.name} to the rank \`${rank}\``);
                 // log the staff change
-                await logOperation(message.guild, message.member, operation ? logTypes.add : logTypes.remove, rank, snowflakeObj.id, snowflakeObj.isRole);
+                await logOperation(message.guild, message.member, operation ? LogTypes.add : LogTypes.remove, rank, snowflakeObj.id, snowflakeObj.isRole);
             } else {
                 message.channel.send(`${snowflakeObj.name} is already a in the rank \`${rank}\``);
             }

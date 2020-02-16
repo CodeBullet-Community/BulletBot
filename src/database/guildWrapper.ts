@@ -1,9 +1,9 @@
 import mongoose = require('mongoose');
-import { Guild, GuildMember, UserResolvable, GuildResolvable, GuildMemberResolvable, RoleResolvable, Snowflake, ChannelResolvable, TextChannel } from "discord.js";
-import { CommandUsageLimits, guildDoc, UsageLimits, guildObject, guildSchema, GuildRank, guildRanks, CommandSettings, MegalogFunction, megalogGroups } from "./schemas";
+import { Guild, GuildResolvable, GuildMemberResolvable, Snowflake, ChannelResolvable, TextChannel } from "discord.js";
+import { CommandUsageLimits, WebhookService, UsageLimits, GuildObject, GuildRank, guildRanks, CommandSettings, MegalogFunction, megalogGroups } from "./schemas";
 import { Bot } from '..';
-import { permLevels } from '../utils/permissions';
-import { CommandResolvable } from '../commands';
+import { PermLevels } from '../utils/permissions';
+import { CommandResolvable, CommandName } from '../commands';
 import { resolveCommand, resolveGuildMember, resolveChannel, resolveChannelID } from '../utils/resolvers';
 import { Wrapper } from './wrapper';
 import _, { PropertyPath } from "lodash";
@@ -18,28 +18,40 @@ export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
  * @class GuildWrapper
  * @implements {guildObject}
  */
-export class GuildWrapper extends Wrapper<guildObject> implements guildObject {
+export class GuildWrapper extends Wrapper<GuildObject> implements GuildObject {
     guild: Guild;
-    id: string;
-    prefix: string;
-    logChannel: string;
-    caseChannel: string;
+    id: Snowflake;
+    prefix?: string;
+    logChannel: Snowflake;
+    caseChannel: Snowflake;
     totalCases: number;
     logs: mongoose.Schema.Types.ObjectId[];
-    staff: mongoose.Schema.Types.ObjectId;
-    modmailChannel: string;
-    webhooks: { [key: string]: mongoose.Schema.Types.ObjectId[]; };
-    locks: { [key: string]: { until?: number; allowOverwrites: string[]; neutralOverwrites: string[]; }; };
+    modmailChannel: Snowflake;
+    webhooks: {
+        // key is service name
+        [K in WebhookService]?: mongoose.Schema.Types.ObjectId[];
+    };
+    locks: {
+        // channel id
+        [K in Snowflake]: {
+            until?: number;
+            allowOverwrites: Snowflake[];
+            neutralOverwrites: Snowflake[];
+        };
+    };
     usageLimits?: UsageLimits;
     ranks: {
-        admins: string[];
-        mods: string[];
-        immune: string[];
+        admins: Snowflake[]; // role and user ids
+        mods: Snowflake[]; // role and user ids
+        immune: Snowflake[]; // role and user ids
     };
     commandSettings: {
-        [key: string]: CommandSettings
+        // key is command name
+        [K in CommandName]: CommandSettings
     };
-    megalog: { ignoreChannels: string[]; } & { [T in MegalogFunction]: string };
+    megalog: {
+        ignoreChannels: Snowflake[];
+    } & { [T in MegalogFunction]: Snowflake };
 
     /**
      * Creates an instance of GuildWrapper.
@@ -49,7 +61,7 @@ export class GuildWrapper extends Wrapper<guildObject> implements guildObject {
      * @memberof GuildWrapper
      */
     constructor(id: Snowflake, guild?: Guild) {
-        super(Bot.database.mainDB.guilds, { id: id }, ['id'], keys<guildObject>());
+        super(Bot.database.mainDB.guilds, { id: id }, ['id'], keys<GuildObject>());
         this.data.id = id;
 
         if (guild)
@@ -187,7 +199,7 @@ export class GuildWrapper extends Wrapper<guildObject> implements guildObject {
      * @returns CommandSettings object
      * @memberof GuildWrapper
      */
-    async getCommandSettings(command: string) {
+    async getCommandSettings(command: CommandName) {
         await this.load('commandSettings');
         if (!Bot.commands.get(command)) return undefined;
         return this.commandSettings[command] || {};
@@ -201,7 +213,7 @@ export class GuildWrapper extends Wrapper<guildObject> implements guildObject {
      * @returns The final settings if successful
      * @memberof GuildWrapper
      */
-    async setCommandSettings(command: string, settings: CommandSettings) {
+    async setCommandSettings(command: CommandName, settings: CommandSettings) {
         if (!Bot.commands.get(command)) return undefined;
         let query = { $set: {} };
         query.$set[`commandSettings.${command}`] = settings;
@@ -217,7 +229,7 @@ export class GuildWrapper extends Wrapper<guildObject> implements guildObject {
      * @returns if command is enabled
      * @memberof GuildWrapper
      */
-    async commandIsEnabled(command: string) {
+    async commandIsEnabled(command: CommandName) {
         await this.load('commandSettings');
         if (!Bot.commands.get(command)) return undefined;
         if (!this.commandSettings[command] || this.commandSettings[command]._enabled) return true;
@@ -232,7 +244,7 @@ export class GuildWrapper extends Wrapper<guildObject> implements guildObject {
      * @returns The final command toggle settings
      * @memberof GuildWrapper
      */
-    async toggleCommand(command: string, value?: boolean) {
+    async toggleCommand(command: CommandName, value?: boolean) {
         await this.load('commandSettings');
         let commandObj = Bot.commands.get(command);
         if (!commandObj || !commandObj.togglable) return undefined;
@@ -288,28 +300,28 @@ export class GuildWrapper extends Wrapper<guildObject> implements guildObject {
      * @param {GuildMemberResolvable} member member to get perm level from
      * @returns perm level
      */
-    async getPermLevel(memberResolvable: GuildMemberResolvable): Promise<permLevels> {
+    async getPermLevel(memberResolvable: GuildMemberResolvable): Promise<PermLevels> {
         await this.load('ranks');
         let member = await resolveGuildMember(this.guild, memberResolvable);
 
         // if bot master
         if (Bot.settings.getBotMasters().includes(member.id))
-            return permLevels.botMaster;
+            return PermLevels.botMaster;
 
         // if admin
         if (member.hasPermission('ADMINISTRATOR'))
-            return permLevels.admin;
+            return PermLevels.admin;
 
         if (this.ranks.admins.includes(member.id)
             || member.roles.find(role => this.ranks.admins.includes(role.id)))
-            return permLevels.admin;
+            return PermLevels.admin;
         if (this.ranks.mods.includes(member.id)
             || member.roles.find(role => this.ranks.mods.includes(role.id)))
-            return permLevels.mod;
+            return PermLevels.mod;
         if (this.ranks.immune.includes(member.id)
             || member.roles.find(role => this.ranks.immune.includes(role.id)))
-            return permLevels.immune;
-        return permLevels.member;
+            return PermLevels.immune;
+        return PermLevels.member;
     }
 
     /**

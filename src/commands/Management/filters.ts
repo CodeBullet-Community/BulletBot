@@ -1,11 +1,11 @@
-import { Message, RichEmbed, Guild } from 'discord.js';
+import { Message, RichEmbed } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString } from '../../utils/parsers';
-import { permLevels } from '../../utils/permissions';
-import { logTypes, filtersObject } from '../../database/schemas';
+import { PermLevels } from '../../utils/permissions';
+import { LogTypes, FiltersObject } from '../../database/schemas';
 import { GuildWrapper } from '../../database/guildWrapper';
+import { BenchmarkTimestamp } from '../../utils/time';
 
 /**
  * sends a list of filters with their short description
@@ -14,9 +14,9 @@ import { GuildWrapper } from '../../database/guildWrapper';
  * @param {Message} message message it should reply to
  * @param {*} strucObject structure Object with filters and subcategories it should list
  * @param {string} path the path to that structure Object
- * @param {[number, number]} requestTime when the list was requested to measure response time
+ * @param {BenchmarkTimestamp} requestTime when the list was requested to measure response time
  */
-async function sendFilterList(guildWrapper: GuildWrapper, message: Message, strucObject: any, path: string, requestTime: [number, number]) {
+async function sendFilterList(guildWrapper: GuildWrapper, message: Message, strucObject: any, path: string, requestTime: BenchmarkTimestamp) {
     var output = new RichEmbed();
     output.setAuthor('Filter List:', Bot.client.user.displayAvatarURL);
     if (path) output.setFooter('Path: ~' + path);
@@ -46,7 +46,7 @@ var command: commandInterface = {
     name: 'filters',
     path: '',
     dm: false,
-    permLevel: permLevels.admin,
+    permLevel: PermLevels.admin,
     togglable: false,
     help: {
         shortDescription: 'Let\'s you toggle filters',
@@ -92,7 +92,7 @@ var command: commandInterface = {
                             output.setColor(Bot.settings.embedColors.help);
 
                             // add enabled filters
-                            var filtersObject: filtersObject = filtersDoc.toObject();
+                            var filtersObject: FiltersObject = filtersDoc.toObject();
                             for (const filterName in filtersObject.filters) {
                                 if (!filtersObject.filters[filterName]._enabled) continue;
                                 var cmd = Bot.filters.get(filterName);
@@ -166,7 +166,7 @@ var command: commandInterface = {
                     Bot.mStats.logMessageSend();
                     Bot.mStats.logCommandUsage(command.name, 'enable');
                     // log that the filter was enabled
-                    Bot.logger.logFilter(guildWrapper, message.member, filter, logTypes.add);
+                    Bot.logger.logFilter(guildWrapper, message.member, filter, LogTypes.add);
                     break;
                 case 'disable':
                     argIndex++;
@@ -201,7 +201,7 @@ var command: commandInterface = {
                     Bot.mStats.logMessageSend();
                     Bot.mStats.logCommandUsage(command.name, 'disable');
                     // log that the filter was disabled
-                    Bot.logger.logFilter(guildWrapper, message.member, filter, logTypes.remove);
+                    Bot.logger.logFilter(guildWrapper, message.member, filter, LogTypes.remove);
                     break;
                 default:
                     if (!argsArray[argIndex]) { // check if filter was specified

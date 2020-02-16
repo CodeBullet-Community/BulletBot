@@ -1,23 +1,43 @@
 import * as discord from 'discord.js';
 import exitHook = require('exit-hook');
-import { Commands } from './commands';
-import { Filters } from './filters';
-import { YTWebhookManager } from './youtube';
-import { Catcher } from './catcher';
-import { Logger } from './database/logger';
-import { Database } from './database/database';
-import { MStats } from './database/mStats';
-import { botToken, cluster, callback, crashProof } from './bot-config.json';
-import { permLevels } from './utils/permissions';
-import { logTypes, GuildRank, megalogGroups } from './database/schemas';
-import { durations } from './utils/time';
 import fs = require('fs');
-import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate, logVoiceTransfer, logVoiceMute, logVoiceDeaf } from './megalogger';
-import { PActions } from './database/pActions';
-import { CaseLogger } from "./database/caseLogger";
-import { Settings } from './database/settings';
+
+import { botToken, callback, cluster, crashProof } from './bot-config.json';
+import { Catcher } from './catcher';
+import { Commands } from './commands';
+import { CaseLogger } from './database/caseLogger';
+import { Database } from './database/database';
 import { GuildWrapper } from './database/guildWrapper';
+import { Logger } from './database/logger';
+import { MStats } from './database/mStats';
+import { PActions } from './database/pActions';
+import { LogTypes, megalogGroups } from './database/schemas';
+import { Settings } from './database/settings';
 import { updateDatabaseAfter1_2_8 } from './database/update';
+import { Filters } from './filters';
+import {
+    cacheAttachment,
+    logBan,
+    logChannelToggle,
+    logChannelUpdate,
+    logGuildName,
+    logMember,
+    logMemberRoles,
+    logMessageBulkDelete,
+    logMessageDelete,
+    logMessageEdit,
+    logNickname,
+    logReactionRemoveAll,
+    logReactionToggle,
+    logRoleToggle,
+    logRoleUpdate,
+    logVoiceDeaf,
+    logVoiceMute,
+    logVoiceTransfer,
+} from './megalogger';
+import { PermLevels } from './utils/permissions';
+import { Durations } from './utils/time';
+import { YTWebhookManager } from './youtube';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -123,7 +143,7 @@ exitHook(() => {
     if (!Bot.mStats.hourly) return;
     console.log('Saving cached data...');
     Bot.mStats.saveHour(Bot.mStats.hourly);
-    var until = new Date().getTime() + durations.second;
+    var until = new Date().getTime() + Durations.second;
     while (until > new Date().getTime()) { }
     console.log("cached data saved");
 });
@@ -192,13 +212,13 @@ client.on('message', async message => {
     // if message is only a mention of the bot, he dms help
     if (message.content == '<@' + Bot.client.user.id + '>' && !commandCache) {
         message.channel = await message.author.createDM();
-        Bot.commands.runCommand(message, '', 'help', permLevels.member, true, guildWrapper, requestTime);
-        Bot.commands.runCommand(message, 'help', 'help', permLevels.member, true, guildWrapper, requestTime);
+        Bot.commands.runCommand(message, '', 'help', PermLevels.member, true, guildWrapper, requestTime);
+        Bot.commands.runCommand(message, 'help', 'help', PermLevels.member, true, guildWrapper, requestTime);
         return;
     }
 
     // get perm level
-    let permLevel = permLevels.member;
+    let permLevel = PermLevels.member;
     if (!dm) permLevel = await guildWrapper.getPermLevel(message.member);
 
     // directly calls command when command cache exists
@@ -210,7 +230,7 @@ client.on('message', async message => {
     let prefix = await guildWrapper.getPrefix();
     if (!message.content.startsWith(prefix)) {
         if (!message.content.toLowerCase().startsWith(Bot.settings.prefix + 'prefix')) { // also checks if it contains ?!prefix
-            if (!dm && permLevel == permLevels.member) {
+            if (!dm && permLevel == PermLevels.member) {
                 Bot.filters.filterMessage(message); // filters message if from guild and if a member send it
             }
             return;
@@ -315,7 +335,7 @@ client.on('guildMemberRemove', async member => {
         // @ts-ignore
         if (await guildWrapper.removeFromRank(rank, undefined, member, false))
             // @ts-ignore
-            Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, rank, undefined, member.user);
+            Bot.logger.logStaff(member.guild, member.guild.me, LogTypes.remove, rank, undefined, member.user);
 
     let userDoc = await Bot.database.findUserDoc(member.id);
     if (userDoc && userDoc.commandLastUsed && userDoc.commandLastUsed[member.guild.id]) {
@@ -350,7 +370,7 @@ client.on('roleDelete', async role => {
         // @ts-ignore
         if (await guildWrapper.removeFromRank(rank, role, undefined, false))
             // @ts-ignore
-            Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, rank, role);
+            Bot.logger.logStaff(role.guild, role.guild.me, LogTypes.remove, rank, role);
 });
 
 client.on('roleUpdate', async (oldRole: discord.Role, newRole: discord.Role) => {

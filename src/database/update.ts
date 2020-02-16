@@ -1,10 +1,11 @@
-import mongoose = require('mongoose');
-import { cluster } from '../bot-config.json';
-import { guildSchema, guildDoc, guildObject, ExDocument, userObject, userSchema } from './schemas.js';
 import { Snowflake } from 'discord.js';
+import mongoose = require('mongoose');
+
+import { cluster } from '../bot-config.json';
+import { ExDocument, GuildObject, guildSchema, UserObject, userSchema } from './schemas.js';
 
 // guild
-interface OldGuildObject extends guildObject {
+interface OldGuildObject extends GuildObject {
     guild?: Snowflake
 }
 type OldGuildDoc = ExDocument<OldGuildObject>;
@@ -124,7 +125,7 @@ const megalogSchema = new mongoose.Schema({
 });
 
 // user
-type OldUserObject = userObject & {
+type OldUserObject = UserObject & {
     user: string;
 }
 type OldUserDoc = ExDocument<OldUserObject>;

@@ -1,11 +1,11 @@
-import { Message, Guild, TextChannel } from 'discord.js';
+import { TextChannel } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString, stringToDuration, stringToChannel } from '../../utils/parsers';
-import { durations } from '../../utils/time';
-import { guildObject } from '../../database/schemas';
+import { durationToString, stringToDuration, stringToChannel } from '../../utils/parsers';
+import { Durations } from '../../utils/time';
+import { GuildObject } from '../../database/schemas';
 import { GuildWrapper } from '../../database/guildWrapper';
 
 /**
@@ -74,9 +74,9 @@ var command: commandInterface = {
     name: 'lock',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
-    cooldownLocal: durations.second,
+    cooldownLocal: Durations.second,
     help: {
         shortDescription: 'Lock a channel for normal members',
         longDescription: 'Removes the write permissions of all normal members. Immune get excluded.',
@@ -164,7 +164,7 @@ var command: commandInterface = {
                 Bot.database.mainDB.guilds.updateOne({ guild: message.guild.id }, updateDoc).exec();
 
                 // get overwrites ids from guild doc (it only needs to be put into allow, because the arrays get merged anyways later)
-                let guildObject: guildObject = existingLock.toObject();
+                let guildObject: GuildObject = existingLock.toObject();
                 overwrites.allowOverwrites = guildObject.locks[channel.id].allowOverwrites;
                 overwrites.neutralOverwrites = guildObject.locks[channel.id].neutralOverwrites;
             }

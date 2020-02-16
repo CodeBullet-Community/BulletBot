@@ -1,13 +1,26 @@
+import { Channel, Guild, GuildMember, Message, Role, TextChannel, User } from 'discord.js';
 import mongoose = require('mongoose');
-import { logDoc, logSchema, guildDoc, guildSchema, logObject, logActions, webhookDoc, logTypes, logMegalog, GuildRank } from './schemas';
-import { Guild, Role, User, GuildMember, Message, Channel, TextChannel, Snowflake, } from 'discord.js';
-import { commandInterface } from '../commands';
+
 import { Bot } from '..';
+import { youtube } from '../bot-config.json';
+import { commandInterface } from '../commands';
 import { filterInterface } from '../filters';
 import { filterAction, filterActions } from '../utils/filters';
 import { actionToString } from '../utils/parsers';
-import { youtube } from '../bot-config.json';
 import { GuildWrapper } from './guildWrapper';
+import {
+    GuildDoc,
+    GuildRank,
+    guildSchema,
+    LogActions,
+    LogDoc,
+    LogObject,
+    logSchema,
+    LogTypes,
+    MegalogFunction,
+    WebhookDoc,
+    WebhookService,
+} from './schemas';
 
 /**
  * Manages connection to main database with the logs collection. It logs actions into the the database and if a log channel was define also into discord.
@@ -28,17 +41,17 @@ export class Logger {
     /**
      * model for guilds collection
      *
-     * @type {mongoose.Model<guildDoc>}
+     * @type {mongoose.Model<GuildDoc>}
      * @memberof Logger
      */
-    guilds: mongoose.Model<guildDoc>;
+    guilds: mongoose.Model<GuildDoc>;
     /**
      * model for logs collection
      *
-     * @type {mongoose.Model<logDoc>}
+     * @type {mongoose.Model<LogDoc>}
      * @memberof Logger
      */
-    logs: mongoose.Model<logDoc>;
+    logs: mongoose.Model<LogDoc>;
 
     /**
      * Creates an instance of Logger, connections to main database and inits all models.
@@ -78,9 +91,9 @@ export class Logger {
         if (!guildDoc) return;
 
         // logs logs in database
-        var logObject: logObject = {
+        var logObject: LogObject = {
             guild: guild.id,
-            action: logActions.staff,
+            action: LogActions.staff,
             mod: mod.id,
             timestamp: date.getTime(),
             info: {
@@ -122,24 +135,24 @@ export class Logger {
      *
      * @param {Guild} guild guild where action was made
      * @param {GuildMember} mod member that made the action request
-     * @param {string} service name of service
-     * @param {webhookDoc} webhookDoc the final state of the webhook doc
+     * @param {WebhookService} service name of service
+     * @param {WebhookDoc} webhookDoc the final state of the webhook doc
      * @param {(0 | 1 | 2)} type added/removed/changed
      * @param {boolean} [changedChannel] if channel was changed
      * @param {boolean} [changedMessage] if message was changed
      * @returns
      * @memberof Logger
      */
-    async logWebhook(guild: Guild, mod: GuildMember, service: string, webhookDoc: webhookDoc, type: 0 | 1 | 2, changedChannel?: boolean, changedMessage?: boolean) {
+    async logWebhook(guild: Guild, mod: GuildMember, service: WebhookService, webhookDoc: WebhookDoc, type: 0 | 1 | 2, changedChannel?: boolean, changedMessage?: boolean) {
         var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
 
         // logs log in database
-        var logObject: logObject = {
+        var logObject: LogObject = {
             guild: guild.id,
             mod: mod.id,
-            action: logActions.webhook,
+            action: LogActions.webhook,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -171,13 +184,13 @@ export class Logger {
         }
         var action = '';
         switch (type) {
-            case logTypes.add:
+            case LogTypes.add:
                 action = 'Created';
                 break;
-            case logTypes.remove:
+            case LogTypes.remove:
                 action = 'Deleted';
                 break;
-            case logTypes.change:
+            case LogTypes.change:
                 action = 'Changed';
                 break;
         }
@@ -222,7 +235,6 @@ export class Logger {
      * @memberof Logger
      */
     async logFilterCatch(message: Message, filter: filterInterface, reason: string, actions: filterAction[]) {
-        var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: message.guild.id }).exec();
         if (!guildDoc) return;
 
@@ -295,10 +307,10 @@ export class Logger {
         if (!guildDoc) return;
 
         // logs log in database
-        var logObject: logObject = {
+        var logObject: LogObject = {
             guild: guildWrapper.id,
             mod: mod.id,
-            action: logActions.filter,
+            action: LogActions.filter,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -353,10 +365,10 @@ export class Logger {
         if (!guildDoc) return;
 
         // logs log in database
-        var logObject: logObject = {
+        var logObject: LogObject = {
             guild: guildWrapper.id,
             mod: mod.id,
-            action: logActions.command,
+            action: LogActions.command,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -412,10 +424,10 @@ export class Logger {
         if (!guildDoc) return;
 
         // logs log in database
-        var logObject: logObject = {
+        var logObject: LogObject = {
             guild: guild.id,
             mod: mod.id,
-            action: logActions.prefix,
+            action: LogActions.prefix,
             timestamp: date.getTime(),
             info: {
                 old: oldPrefix,
@@ -465,22 +477,22 @@ export class Logger {
      *
      * @param {Guild} guild guild where change was made
      * @param {GuildMember} admin admin that made the change
-     * @param {logTypes} type whether command was added or removed
-     * @param {string[]} functions functions which were added / removed
+     * @param {LogTypes} type whether command was added or removed
+     * @param {MegalogFunction[]} functions functions which were added / removed
      * @param {Channel} channel specifies the channed where the logging function has been placed
      * @returns
      * @memberof Logger
      */
-    async logMegalog(guild: Guild, admin: GuildMember, type: logTypes.add | logTypes.remove, functions: string[], channel?: Channel) {
+    async logMegalog(guild: Guild, admin: GuildMember, type: LogTypes.add | LogTypes.remove, functions: MegalogFunction[], channel?: Channel) {
         var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
 
         // logs log in database
-        var logObject: logObject = {
+        var logObject: LogObject = {
             guild: guild.id,
             mod: admin.id,
-            action: logActions.megalog,
+            action: LogActions.megalog,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -523,21 +535,21 @@ export class Logger {
      *
      * @param {Guild} guild guild where change was made
      * @param {GuildMember} admin admin that made the change
-     * @param {(logTypes.add | logTypes.remove)} type whether command was added or removed
+     * @param {(LogTypes.add | LogTypes.remove)} type whether command was added or removed
      * @param {TextChannel} channel channel that has been added/removed
      * @returns
      * @memberof Logger
      */
-    async logMegalogIgnore(guild: Guild, admin: GuildMember, type: logTypes.add | logTypes.remove, channel: TextChannel) {
+    async logMegalogIgnore(guild: Guild, admin: GuildMember, type: LogTypes.add | LogTypes.remove, channel: TextChannel) {
         var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
 
         // logs log in database
-        var logObject: logObject = {
+        var logObject: LogObject = {
             guild: guild.id,
             mod: admin.id,
-            action: logActions.megalogIgnore,
+            action: LogActions.megalogIgnore,
             timestamp: date.getTime(),
             info: {
                 type: type,

@@ -1,8 +1,10 @@
-import { Bot } from "..";
-import { userObject, CommandUsageLimits, CommandScope } from "./schemas";
-import { User, Snowflake } from "discord.js";
-import { Wrapper } from "./wrapper";
-import { keys } from "ts-transformer-keys";
+import { Snowflake, User } from 'discord.js';
+import { keys } from 'ts-transformer-keys';
+
+import { Bot } from '..';
+import { CommandName } from '../commands';
+import { CommandScope, CommandUsageLimits, UserObject } from './schemas';
+import { Wrapper } from './wrapper';
 
 /**
  * Wrapper for user doc/object. Provides additional functions and easier data handling
@@ -15,10 +17,10 @@ import { keys } from "ts-transformer-keys";
  *
  * @export
  * @class UserWrapper
- * @extends {Wrapper<userObject>}
+ * @extends {Wrapper<UserObject>}
  * @implements {userObject}
  */
-export class UserWrapper extends Wrapper<userObject> implements userObject {
+export class UserWrapper extends Wrapper<UserObject> implements UserObject {
     user: User;
     id: string;
     commandLastUsed: { [key: string]: { [key: string]: number; }; };
@@ -31,7 +33,7 @@ export class UserWrapper extends Wrapper<userObject> implements userObject {
      * @memberof UserWrapper
      */
     constructor(id: Snowflake, user: User) {
-        super(Bot.database.mainDB.users, { id: id }, ['id'], keys<userObject>());
+        super(Bot.database.mainDB.users, { id: id }, ['id'], keys<UserObject>());
         this.data.id = id;
         this.user = user;
     }
@@ -49,7 +51,7 @@ export class UserWrapper extends Wrapper<userObject> implements userObject {
      * @returns timestamp when the command was last used by the user
      * @memberof UserWrapper
      */
-    async getCommandLastUsed(scope: string, command: string) {
+    async getCommandLastUsed(scope: string, command: CommandName) {
         await this.load('commandLastUsed');
         this.checkCommandScope(scope);
         if (!this.commandLastUsed || !this.commandLastUsed[scope] || !this.commandLastUsed[scope][command])
@@ -66,7 +68,7 @@ export class UserWrapper extends Wrapper<userObject> implements userObject {
      * @returns The timestamp if it was successfully set
      * @memberof UserWrapper
      */
-    async setCommandLastUsed(scope: CommandScope, command: string, timestamp: number) {
+    async setCommandLastUsed(scope: CommandScope, command: CommandName, timestamp: number) {
         await this.load('commandLastUsed');
         this.checkCommandScope(scope);
         let query = { $set: {} };
@@ -88,7 +90,7 @@ export class UserWrapper extends Wrapper<userObject> implements userObject {
      * @param {number} timestamp When the command was last used
      * @memberof UserWrapper
      */
-    private _setCommandLastUsed(scope: CommandScope, command: string, timestamp: number) {
+    private _setCommandLastUsed(scope: CommandScope, command: CommandName, timestamp: number) {
         if (!this.data.commandLastUsed[scope]) this.data.commandLastUsed[scope] = {};
         this.data.commandLastUsed[scope][command] = timestamp;
     }

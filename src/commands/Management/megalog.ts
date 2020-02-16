@@ -1,11 +1,12 @@
-import { Message, Guild, TextChannel, RichEmbed } from 'discord.js';
+import { Message, TextChannel, RichEmbed } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, stringToChannel } from '../../utils/parsers';
-import { megalogGroups, logTypes, MegalogFunction } from '../../database/schemas';
+import { stringToChannel } from '../../utils/parsers';
+import { megalogGroups, LogTypes, MegalogFunction } from '../../database/schemas';
 import { GuildWrapper } from '../../database/guildWrapper';
+import { BenchmarkTimestamp } from '../../utils/time';
 
 async function createMegalogInfoEmbed(guildWrapper: GuildWrapper) {
     let embed = new RichEmbed();
@@ -30,7 +31,7 @@ async function createMegalogInfoEmbed(guildWrapper: GuildWrapper) {
     return embed;
 }
 
-async function toggleMegalogFunction(message: Message, guildWrapper: GuildWrapper, requestTime: [number, number], argsArray: string[], argIndex: number) {
+async function toggleMegalogFunction(message: Message, guildWrapper: GuildWrapper, requestTime: BenchmarkTimestamp, argsArray: string[], argIndex: number) {
     let functionArg = argsArray[argIndex + 1]
     let functions: MegalogFunction[] = megalogGroups[functionArg];
     // @ts-ignore
@@ -79,7 +80,7 @@ async function toggleMegalogFunction(message: Message, guildWrapper: GuildWrappe
     }
 
     // log that the functions have been enabled
-    await Bot.logger.logMegalog(message.guild, message.member, enable ? logTypes.add : logTypes.remove, changedFunctions, channel);
+    await Bot.logger.logMegalog(message.guild, message.member, enable ? LogTypes.add : LogTypes.remove, changedFunctions, channel);
 
     // send confirmation message
     Bot.mStats.logResponseTime(command.name, requestTime);
@@ -89,7 +90,7 @@ async function toggleMegalogFunction(message: Message, guildWrapper: GuildWrappe
     return true;
 }
 
-async function toggleMegalogIgnore(message: Message, guildWrapper: GuildWrapper, requestTime: [number, number], argsArray: string[], argIndex: number) {
+async function toggleMegalogIgnore(message: Message, guildWrapper: GuildWrapper, requestTime: BenchmarkTimestamp, argsArray: string[], argIndex: number) {
     let ignore = argsArray[argIndex] == 'ignore';
     argIndex++;
 
@@ -108,7 +109,7 @@ async function toggleMegalogIgnore(message: Message, guildWrapper: GuildWrapper,
     let result = await (ignore ? guildWrapper.addMegalogIgnoreChannel(channel) : guildWrapper.removeMegalogIgnoreChannel(channel));
 
     if (result)
-        Bot.logger.logMegalogIgnore(message.guild, message.member, ignore ? logTypes.add : logTypes.remove, channel);
+        Bot.logger.logMegalogIgnore(message.guild, message.member, ignore ? LogTypes.add : LogTypes.remove, channel);
 
     // send confirmation message
     Bot.mStats.logResponseTime(command.name, requestTime);
@@ -124,7 +125,7 @@ var command: commandInterface = {
     name: 'megalog',
     path: '',
     dm: false,
-    permLevel: permLevels.admin,
+    permLevel: PermLevels.admin,
     togglable: false,
     help: {
         shortDescription: 'let\'s you change megalog settings',

@@ -1,12 +1,14 @@
-import { Message, Collection, Guild } from 'discord.js';
+import { Collection, Guild, Message } from 'discord.js';
 import * as fs from 'fs';
+
 import { Bot } from '.';
-import { CommandUsageLimits } from './database/schemas';
-import { permLevels } from './utils/permissions';
-import { permToString, durationToString } from './utils/parsers';
-import { GuildWrapper, GuildWrapperResolvable } from './database/guildWrapper';
-import { resolveCommand, resolveGuildWrapper } from './utils/resolvers';
 import { CommandCache } from './database/commandCache';
+import { GuildWrapper, GuildWrapperResolvable } from './database/guildWrapper';
+import { CommandUsageLimits } from './database/schemas';
+import { durationToString, permToString } from './utils/parsers';
+import { PermLevel, PermLevels } from './utils/permissions';
+import { resolveCommand, resolveGuildWrapper } from './utils/resolvers';
+import { BenchmarkTimestamp } from './utils/time';
 
 /**
  * definition of a command with all it's properties and functions
@@ -18,10 +20,10 @@ export interface commandInterface {
     /**
      * name of filter
      *
-     * @type {string}
+     * @type {CommandName}
      * @memberof commandInterface
      */
-    name: string;
+    name: CommandName;
     /**
      * optional property that should be set as empty string. It can change the actual position in the structure. The categories are separated by /
      *
@@ -44,10 +46,10 @@ export interface commandInterface {
      *  3. admin
      *  4. bot master
      *
-     * @type {(0 | 1 | 2 | 3 | 4)}
+     * @type {PermLevel}
      * @memberof commandInterface
      */
-    permLevel: 0 | 1 | 2 | 3 | 4;
+    permLevel: PermLevel;
     /**
      * if command can be toggled in guilds
      *
@@ -114,19 +116,19 @@ export interface commandInterface {
      *
      * @param {Message} message message that requested the command
      * @param {string} args arguments
-     * @param {number} permLevel permLevel of the user that requested the command
+     * @param {PermLevel} permLevel permLevel of the user that requested the command
      * @param {GuildWrapper} guildWrapper guild wrapper is only provided if dm is false
      * @param {boolean} dm if message came from dms
-     * @param {[number, number]} requestTime var for performance tracking
+     * @param {BenchmarkTimestamp} requestTime var for performance tracking
      * @param {CommandCache} [commandCache] optional parameter, if command was called with cache
      * @returns if command was successful. True and undefined means yes. If it yes, the cooldown gets set if a time is specified
      * @memberof commandInterface
      */
-    run(message: Message, args: string, permLevel: number, dm: boolean, guildWrapper: GuildWrapper, requestTime: [number, number], commandCache?: CommandCache): Promise<boolean>;
+    run(message: Message, args: string, permLevel: PermLevel, dm: boolean, guildWrapper: GuildWrapper, requestTime: BenchmarkTimestamp, commandCache?: CommandCache): Promise<boolean>;
 }
 
-export type CommandResolvable = string | commandInterface;
-
+export type CommandName = string
+export type CommandResolvable = CommandName | commandInterface;
 
 /**
  * loads all commands and runs all commands
@@ -215,11 +217,11 @@ export class Commands {
      * @param {number} permLevel perm level or member that send the message
      * @param {boolean} dm if message is from a dm
      * @param {GuildWrapper} guildWrapper guild wrapper is only provided if dm is false
-     * @param {[number, number]} requestTime var for performance tracking
+     * @param {BenchmarkTimestamp} requestTime var for performance tracking
      * @returns
      * @memberof Commands
      */
-    async runCommand(message: Message, args: string, command: string, permLevel: permLevels, dm: boolean, guildWrapper: GuildWrapper, requestTime: [number, number]) {
+    async runCommand(message: Message, args: string, command: CommandName, permLevel: PermLevels, dm: boolean, guildWrapper: GuildWrapper, requestTime: BenchmarkTimestamp) {
         var cmd = this.commands.get(command);
         // command not found
         if (!cmd) return false;
@@ -261,14 +263,14 @@ export class Commands {
      *
      * @param {Message} message message from where the request came from
      * @param {CommandCache} commandCache command cache
-     * @param {permLevels} permLevel perm level or member that send the message
+     * @param {PermLevels} permLevel perm level or member that send the message
      * @param {boolean} dm if message is from a dm
      * @param {GuildWrapper} guildWrapper guild wrapper is only provided if dm is false
-     * @param {[number, number]} requestTime var for performance tracking
+     * @param {BenchmarkTimestamp} requestTime var for performance tracking
      * @returns
      * @memberof Commands
      */
-    async runCachedCommand(message: Message, commandCache: CommandCache, permLevel: permLevels, dm: boolean, guildWrapper: GuildWrapper, requestTime: [number, number]) {
+    async runCachedCommand(message: Message, commandCache: CommandCache, permLevel: PermLevels, dm: boolean, guildWrapper: GuildWrapper, requestTime: BenchmarkTimestamp) {
         var cmd = this.commands.get(commandCache.command.name);
         if (!cmd) {
             commandCache.remove();
@@ -289,7 +291,7 @@ export class Commands {
      * @returns
      * @memberof Commands
      */
-    get(command: string) {
+    get(command: CommandName) {
         return this.commands.get(command);
     }
 

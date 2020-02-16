@@ -1,18 +1,18 @@
-import { Message, Guild, TextChannel } from 'discord.js';
+import { TextChannel } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString, stringToChannel } from '../../utils/parsers';
-import { durations } from '../../utils/time';
+import { stringToChannel } from '../../utils/parsers';
+import { Durations } from '../../utils/time';
 
 var command: commandInterface = {
     name: 'unlock',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
-    cooldownLocal: durations.second,
+    cooldownLocal: Durations.second,
     help: {
         shortDescription: 'Unlocks a channel locked by the bot',
         longDescription: 'Unlocks a specified channel that was perviously locked by the bot',

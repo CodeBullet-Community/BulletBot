@@ -1,9 +1,8 @@
-import { Message, RichEmbed, Guild, GuildMember } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, stringToMember, stringToRole } from '../../utils/parsers';
+import { stringToRole } from '../../utils/parsers';
 import { getDayDiff, timeFormat } from '../../utils/time';
 import dateFormat = require('dateformat');
 
@@ -11,7 +10,7 @@ var command: commandInterface = {
     name: 'roleinfo',
     path: '',
     dm: false,
-    permLevel: permLevels.member,
+    permLevel: PermLevels.member,
     togglable: false,
     help: {
         shortDescription: 'gives a description of a role',

@@ -1,6 +1,9 @@
+import { PresenceData, Snowflake } from 'discord.js';
+import _ from 'lodash';
+import { ObjectId } from 'mongodb';
 import mongoose = require('mongoose');
-import { PresenceData, DMChannel, GroupDMChannel, TextChannel, User, Snowflake } from 'discord.js';
-import { Bot } from '..';
+
+import { CommandName } from '../commands';
 
 /**
  * A document that extends on a specific Object
@@ -14,7 +17,7 @@ export type Keys<T> = (keyof T)[];
 // usageLimits
 export interface UsageLimits {
     commands?: {
-        [key: string]: CommandUsageLimits;
+        [K in CommandName]: CommandUsageLimits;
     };
     cases?: {
         maxCases?: number;
@@ -149,41 +152,43 @@ export const megalogGroups: MegalogGroupDefinitions = {
         'reactionRemove']
 };
 
-export interface guildObject {
-    id: string;
+export type WebhookService = 'youtube';
+
+export interface GuildObject {
+    id: Snowflake;
     prefix?: string;
-    logChannel: string;
-    caseChannel: string;
+    logChannel: Snowflake;
+    caseChannel: Snowflake;
     totalCases: number;
     logs: mongoose.Schema.Types.ObjectId[];
-    modmailChannel: string,
+    modmailChannel: Snowflake;
     webhooks: {
         // key is service name
-        [service: string]: mongoose.Schema.Types.ObjectId[];
+        [K in WebhookService]?: mongoose.Schema.Types.ObjectId[];
     };
     locks: {
         // channel id
-        [channelId: string]: {
+        [K in Snowflake]: {
             until?: number;
-            allowOverwrites: string[];
-            neutralOverwrites: string[];
+            allowOverwrites: Snowflake[];
+            neutralOverwrites: Snowflake[];
         };
     };
     usageLimits?: UsageLimits;
     ranks: {
-        admins: string[]; // role and user ids
-        mods: string[]; // role and user ids
-        immune: string[]; // role and user ids
+        admins: Snowflake[]; // role and user ids
+        mods: Snowflake[]; // role and user ids
+        immune: Snowflake[]; // role and user ids
     };
     commandSettings: {
         // key is command name
-        [command: string]: CommandSettings
+        [K in CommandName]: CommandSettings
     };
     megalog: {
-        ignoreChannels: string[];
-    } & { [T in MegalogFunction]: string };
+        ignoreChannels: Snowflake[];
+    } & { [T in MegalogFunction]: Snowflake };
 }
-export type guildDoc = ExDocument<guildObject>;
+export type GuildDoc = ExDocument<GuildObject>;
 export const guildSchema = new mongoose.Schema({
     guild: { type: String, required: false }, // from old version
     id: String,
@@ -194,7 +199,7 @@ export const guildSchema = new mongoose.Schema({
     modmailChannel: String,
     logs: [mongoose.Schema.Types.ObjectId],
     webhooks: {
-        youtube: [mongoose.Schema.Types.ObjectId]
+        youtube: { required: false, type: [mongoose.Schema.Types.ObjectId] }
     },
     locks: mongoose.Schema.Types.Mixed,
     usageLimits: { required: false, type: usageLimitSchema },
@@ -231,8 +236,8 @@ export const guildSchema = new mongoose.Schema({
 }, { id: false });
 
 // filters
-export interface filtersObject {
-    guild: string;
+export interface FiltersObject {
+    guild: Snowflake;
     filters: {
         // key is filter name
         [key: string]: {
@@ -241,21 +246,21 @@ export interface filtersObject {
         }
     }
 }
-export type filtersDoc = ExDocument<filtersObject>;
+export type FiltersDoc = ExDocument<FiltersObject>;
 export const filtersSchema = new mongoose.Schema({
     guild: String,
     filters: mongoose.Schema.Types.Mixed
 });
 
 // log
-export interface logObject {
-    guild: string;
+export interface LogObject {
+    guild: Snowflake;
     action: number;
-    mod: string;
+    mod: Snowflake;
     timestamp: number;
-    info?: logStaff | logWebhook | logFilter | logCommand | logPrefix | logMegalog | logMegalogIgnore;
+    info?: LogStaff | LogWebhook | LogFilter | LogCommand | LogPrefix | LogMegalog | LogMegalogIgnore;
 }
-export type logDoc = ExDocument<logObject>;
+export type LogDoc = ExDocument<LogObject>;
 export const logSchema = new mongoose.Schema({
     guild: String,
     action: Number,
@@ -270,7 +275,7 @@ export const logSchema = new mongoose.Schema({
  * @export
  * @enum {number}
  */
-export enum logTypes {
+export enum LogTypes {
     add = 0,
     remove = 1,
     change = 2
@@ -282,7 +287,7 @@ export enum logTypes {
  * @export
  * @enum {number}
  */
-export enum logActions {
+export enum LogActions {
     staff = 0,
     webhook = 1,
     filter = 2,
@@ -292,57 +297,57 @@ export enum logActions {
     megalogIgnore = 6
 }
 
-export interface logStaff {
-    type: logTypes.add | logTypes.remove; // add or remove
+export interface LogStaff {
+    type: LogTypes.add | LogTypes.remove; // add or remove
     rank: 'admins' | 'mods' | 'immune';
-    role?: string; // role id
-    user?: string; // user id
+    role?: Snowflake; // role id
+    user?: Snowflake; // user id
 }
 
-export interface logWebhook {
-    type: logTypes; // add, remove or change
-    service: string; // service name
-    webhookID: string; // doc id
+export interface LogWebhook {
+    type: LogTypes; // add, remove or change
+    service: WebhookService; // service name
+    webhookID: ObjectId; // doc id
     changedChannel?: boolean; // if channel was changed
     changedMessage?: boolean; // if message was changed
 }
 
-export interface logFilter {
-    type: logTypes.add | logTypes.remove; // add, remove or change
+export interface LogFilter {
+    type: LogTypes.add | LogTypes.remove; // add, remove or change
     filter: string; // filter name
 }
 
-export interface logCommand {
-    type: logTypes.add | logTypes.remove; // add, remove or change
-    command: string; // command name
+export interface LogCommand {
+    type: LogTypes.add | LogTypes.remove; // add, remove or change
+    command: CommandName; // command name
 }
 
-export interface logPrefix {
+export interface LogPrefix {
     old: string,
     new: string
 }
 
-export interface logMegalog {
-    type: logTypes.add | logTypes.remove; // add/remove
-    functions: string[]; // functions enabled/disabled
-    channel?: string // channel ID
+export interface LogMegalog {
+    type: LogTypes.add | LogTypes.remove; // add/remove
+    functions: MegalogFunction[]; // functions enabled/disabled
+    channel?: Snowflake // channel ID
 }
 
-export interface logMegalogIgnore {
-    type: logTypes.add | logTypes.remove; // add/remove
-    channel?: string // channel ID
+export interface LogMegalogIgnore {
+    type: LogTypes.add | LogTypes.remove; // add/remove
+    channel?: Snowflake // channel ID
 }
 
 // command cache
-export interface commandCacheObject {
-    channel: string;
-    user: string;
-    command: string;
+export interface CommandCacheObject {
+    channel: Snowflake;
+    user: Snowflake;
+    command: CommandName;
     cache: any;
     delete: number;
 }
 
-export type commandCacheDoc = ExDocument<commandCacheObject>;
+export type CommandCacheDoc = ExDocument<CommandCacheObject>;
 export const commandCacheSchema = new mongoose.Schema({
     channel: String,
     user: String,
@@ -353,36 +358,35 @@ export const commandCacheSchema = new mongoose.Schema({
 
 // user
 export type CommandScope = 'dm' | 'guild' | Snowflake;
-export interface userObject {
-    id: string; // user id
+export interface UserObject {
+    id: Snowflake; // user id
     commandLastUsed: {
-        [P in CommandScope]?: {
-            // command name
-            [key: string]: number; // timestamp until it can be reused again
+        [K in CommandScope]?: {
+            [K in CommandName]: number; // timestamp until it can be reused again
         };
     };
 }
-export type userDoc = ExDocument<userObject>;
+export type UserDoc = ExDocument<UserObject>;
 export const userSchema = new mongoose.Schema({
     id: String,
     commandLastUsed: mongoose.Schema.Types.Mixed
 });
 
 // pAction
-export enum pActionActions {
+export enum PActionActions {
     mute = 'mute',
     lockChannel = 'lockChannel',
     ban = 'ban',
     resubWebhook = 'resubWebhook'
 }
 
-export interface pActionObject {
+export interface PActionObject {
     from: number;
     to: number;
-    action: pActionActions;
-    info: pActionMute | pActionBan | pActionLockChannel | pActionResubWebhook;
+    action: PActionActions;
+    info: PActionMute | PActionBan | PActionLockChannel | PActionResubWebhook;
 };
-export interface pActionDoc extends mongoose.Document, pActionObject { };
+export interface PActionDoc extends mongoose.Document, PActionObject { };
 export const pActionSchema = new mongoose.Schema({
     from: Number,
     to: Number,
@@ -390,28 +394,29 @@ export const pActionSchema = new mongoose.Schema({
     info: mongoose.Schema.Types.Mixed
 });
 
-export interface pActionMute {
-    guild: string;
-    user: string;
+export interface PActionMute {
+    guild: Snowflake;
+    user: Snowflake;
     case: number;
 }
-export interface pActionBan {
-    guild: string;
-    user: string;
+export interface PActionBan {
+    guild: Snowflake;
+    user: Snowflake;
     case: number;
 }
-export interface pActionLockChannel {
-    guild: string;
-    channel: string;
-    allowOverwrites: string[];
-    neutralOverwrites: string[];
+export interface PActionLockChannel {
+    guild: Snowflake;
+    channel: Snowflake;
+    allowOverwrites: Snowflake[];
+    neutralOverwrites: Snowflake[];
 }
-export interface pActionResubWebhook {
-    service: string;
+export interface PActionResubWebhook {
+    service: WebhookService;
 }
 
 // case
-export enum caseActions {
+export type CaseAction = 'ban' | 'warn' | 'mute' | 'kick' | 'softban' | 'unmute' | 'unban';
+export enum CaseActions {
     ban = 'ban',
     warn = 'warn',
     mute = 'mute',
@@ -423,18 +428,18 @@ export enum caseActions {
 
 export const caseActionsArray = ['ban', 'warn', 'mute', 'kick', 'softban', 'unmute', 'unban'];
 
-export interface caseObject {
-    guild: string;
+export interface CaseObject {
+    guild: Snowflake;
     caseID: number;
-    user: string;
-    action: string;
+    user: Snowflake;
+    action: CaseAction;
     timestamp: number;
     duration?: number;
-    mod: string;
+    mod: Snowflake;
     reason?: string;
 }
 
-export type caseDoc = ExDocument<caseObject>;
+export type CaseDoc = ExDocument<CaseObject>;
 export const caseSchema = new mongoose.Schema({
     guild: String,
     caseID: Number,
@@ -446,8 +451,8 @@ export const caseSchema = new mongoose.Schema({
     reason: { type: String, required: false },
 });
 
-export interface mStatsObject {
-    messagesReceived: number; // all messages recieved
+export interface MStatsObject {
+    messagesReceived: number; // all messages received
     messagesSend: number; // all messages send
     logs: number; // total logs created
     guildsJoined: number;
@@ -459,7 +464,7 @@ export interface mStatsObject {
     commandTotal: number; // total used
     commands: {
         // key is command name, usage data
-        [key: string]: {
+        [K in CommandName]: {
             _errors: number; // total errors caught
             _resp: number; // response time in ms (when first replay send, so ping doesn't get counted)
             _main?: number; // main command
@@ -473,7 +478,7 @@ export interface mStatsObject {
     };
     webhooks: {
         // key is service name
-        [key: string]: {
+        [K in WebhookService]?: {
             total: number; // how many exist
             created: number;
             changed: number;
@@ -486,54 +491,14 @@ export interface mStatsObject {
     };
     megalog: {
         enabled: {
-            channelCreate: number;
-            channelDelete: number;
-            channelUpdate: number;
-            ban: number;
-            unban: number;
-            memberJoin: number;
-            memberLeave: number;
-            nicknameChange: number;
-            memberRolesChange: number;
-            guildNameChange: number;
-            messageDelete: number;
-            attachmentCache: number;
-            messageEdit: number;
-            reactionAdd: number;
-            reactionRemove: number;
-            roleCreate: number;
-            roleDelete: number;
-            roleUpdate: number;
-            voiceTranfer: number;
-            voiceMute: number;
-            voiceDeaf: number;
+            [K in MegalogFunction]: number;
         };
         logged: {
-            channelCreate: number;
-            channelDelete: number;
-            channelUpdate: number;
-            ban: number;
-            unban: number;
-            memberJoin: number;
-            memberLeave: number;
-            nicknameChange: number;
-            memberRolesChange: number;
-            guildNameChange: number;
-            messageDelete: number;
-            attachmentCache: number;
-            messageEdit: number;
-            reactionAdd: number;
-            reactionRemove: number;
-            roleCreate: number;
-            roleDelete: number;
-            roleUpdate: number;
-            voiceTranfer: number;
-            voiceMute: number;
-            voiceDeaf: number;
+            [K in MegalogFunction]: number;
         };
     };
 }
-export function createEmptyMStatsObject(): mStatsObject {
+export function createEmptyMStatsObject(): MStatsObject {
     return {
         messagesReceived: 0,
         messagesSend: 0,
@@ -572,7 +537,7 @@ export function createEmptyMStatsObject(): mStatsObject {
                 roleCreate: 0,
                 roleDelete: 0,
                 roleUpdate: 0,
-                voiceTranfer: 0,
+                voiceTransfer: 0,
                 voiceMute: 0,
                 voiceDeaf: 0
             },
@@ -595,7 +560,7 @@ export function createEmptyMStatsObject(): mStatsObject {
                 roleCreate: 0,
                 roleDelete: 0,
                 roleUpdate: 0,
-                voiceTranfer: 0,
+                voiceTransfer: 0,
                 voiceMute: 0,
                 voiceDeaf: 0
             }
@@ -640,7 +605,7 @@ const mStatsSchemaStruc = {
             roleCreate: Number,
             roleDelete: Number,
             roleUpdate: Number,
-            voiceTranfer: Number,
+            voiceTransfer: Number,
             voiceMute: Number,
             voiceDeaf: Number
         },
@@ -663,7 +628,7 @@ const mStatsSchemaStruc = {
             roleCreate: Number,
             roleDelete: Number,
             roleUpdate: Number,
-            voiceTranfer: Number,
+            voiceTransfer: Number,
             voiceMute: Number,
             voiceDeaf: Number
         }
@@ -671,45 +636,45 @@ const mStatsSchemaStruc = {
 }
 
 // allTime
-export interface mStatsAllTimeObject extends mStatsObject {
+export interface MStatsAllTimeObject extends MStatsObject {
     from: number;
     to: number;
 }
-export type mStatsAllTimeDoc = ExDocument<mStatsAllTimeObject>;
-var mStatsAllTimeSchemaStruc: any = mStatsSchemaStruc;
+export type MStatsAllTimeDoc = ExDocument<MStatsAllTimeObject>;
+var mStatsAllTimeSchemaStruc: any = _.cloneDeep(mStatsSchemaStruc);
 mStatsAllTimeSchemaStruc.from = Number;
 mStatsAllTimeSchemaStruc.to = Number;
 export const mStatsAllTimeSchema = new mongoose.Schema(mStatsAllTimeSchemaStruc);
 
 // day
-export interface mStatsDayObject extends mStatsObject {
+export interface MStatsDayObject extends MStatsObject {
     day: number;
 }
-export type mStatsDayDoc = ExDocument<mStatsDayObject>;
-var mStatsDaySchemaStruc: any = mStatsSchemaStruc;
+export type MStatsDayDoc = ExDocument<MStatsDayObject>;
+var mStatsDaySchemaStruc: any = _.cloneDeep(mStatsSchemaStruc);
 mStatsDaySchemaStruc.day = Number;
 export const mStatsDaySchema = new mongoose.Schema(mStatsDaySchemaStruc);
 
 // hour
-export interface mStatsHourObject extends mStatsObject {
+export interface MStatsHourObject extends MStatsObject {
     day: number;
     hour: number;
 }
-export type mStatsHourDoc = ExDocument<mStatsHourObject>;
-var mStatsHourSchemaStruc: any = mStatsSchemaStruc;
+export type MStatsHourDoc = ExDocument<MStatsHourObject>;
+var mStatsHourSchemaStruc: any = _.cloneDeep(mStatsSchemaStruc);
 mStatsHourSchemaStruc.day = Number;
 mStatsHourSchemaStruc.hour = Number;
 export const mStatsHourSchema = new mongoose.Schema(mStatsHourSchemaStruc);
 
 // error
-export interface errorObject {
+export interface ErrorObject {
     first: number;
     last: number;
     md5: string;
     count: number;
     error: any;
 }
-export type errorDoc = ExDocument<errorObject>;
+export type ErrorDoc = ExDocument<ErrorObject>;
 export const errorSchema = new mongoose.Schema({
     first: Number,
     last: Number,
@@ -719,12 +684,12 @@ export const errorSchema = new mongoose.Schema({
 });
 
 // bug
-export interface bugObject {
-    guild?: string; // guild ID where it was reported (optional)
-    user: string; // user ID which reported it
+export interface BugObject {
+    guild?: Snowflake; // guild ID where it was reported (optional)
+    user: Snowflake; // user ID which reported it
     bug: string; // bug description
 }
-export type bugDoc = ExDocument<bugObject>;
+export type BugDoc = ExDocument<BugObject>;
 export const bugSchema = new mongoose.Schema({
     guild: { type: String, required: false },
     user: String,
@@ -732,12 +697,12 @@ export const bugSchema = new mongoose.Schema({
 });
 
 // suggestion
-export interface botSuggestionObject {
-    guild?: string; // guild ID where it was suggested (optional)
-    user: string; // user ID which suggested it
+export interface BotSuggestionObject {
+    guild?: Snowflake; // guild ID where it was suggested (optional)
+    user: Snowflake; // user ID which suggested it
     suggestion: string; // suggestion description
 }
-export type botSuggestionDoc = ExDocument<botSuggestionObject>;
+export type BotSuggestionDoc = ExDocument<BotSuggestionObject>;
 export const botSuggestionSchema = new mongoose.Schema({
     guild: { type: String, required: false },
     user: String,
@@ -745,13 +710,13 @@ export const botSuggestionSchema = new mongoose.Schema({
 });
 
 // youtube webhook
-export interface webhookObject {
+export interface WebhookObject {
     feed: string;
-    guild: string;
-    channel: string;
+    guild: Snowflake;
+    channel: Snowflake;
     message: string;
 }
-export type webhookDoc = ExDocument<webhookObject>;
+export type WebhookDoc = ExDocument<WebhookObject>;
 export const webhookSchema = new mongoose.Schema({
     feed: String,
     guild: String,
@@ -760,7 +725,7 @@ export const webhookSchema = new mongoose.Schema({
 });
 
 // global settings
-export interface globalSettingsObject {
+export interface GlobalSettingsObject {
     prefix: string;
     presence: PresenceData;
     embedColors: {
@@ -771,10 +736,10 @@ export interface globalSettingsObject {
         warn: number;
         positive: number;
     };
-    botMasters: string[];
+    botMasters: Snowflake[];
     commands: {
         // key is command name
-        [key: string]: {
+        [K in CommandName]: {
             [key: string]: any;
         };
     };
@@ -786,7 +751,7 @@ export interface globalSettingsObject {
     };
     usageLimits?: UsageLimits;
 }
-export type globalSettingsDoc = ExDocument<globalSettingsObject>;
+export type GlobalSettingsDoc = ExDocument<GlobalSettingsObject>;
 export let globalSettingsSchema = new mongoose.Schema({
     prefix: String,
     presence: {

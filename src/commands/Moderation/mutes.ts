@@ -1,20 +1,18 @@
-import { Message, Guild } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString } from '../../utils/parsers';
-import { durations, timeFormat } from '../../utils/time';
-import { pActionActions } from '../../database/schemas';
+import { Durations, timeFormat } from '../../utils/time';
+import { PActionActions } from '../../database/schemas';
 import dateFormat = require('dateformat');
 
 var command: commandInterface = {
     name: 'mutes',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
-    cooldownLocal: durations.second,
+    cooldownLocal: Durations.second,
     help: {
         shortDescription: 'Lists all muted members',
         longDescription: 'Lists all temporary and permanently muted members.',
@@ -30,7 +28,7 @@ var command: commandInterface = {
             // get all muted members (permMuted) and temp muted (pActionDocs)
             if (message.guild.large) await message.guild.fetchMembers();
             let permMuted = message.guild.members.filter(x => x.roles.find(y => y.name.toLowerCase() == 'muted') != undefined);
-            let pActionDocs = await Bot.pActions.pActions.find({ action: pActionActions.mute, 'info.guild': message.guild.id }, ['to', 'info.user']).exec();
+            let pActionDocs = await Bot.pActions.pActions.find({ action: PActionActions.mute, 'info.guild': message.guild.id }, ['to', 'info.user']).exec();
 
             // create string for temp muted and subtract the members from permMuted array
             let tempMutedString = '';

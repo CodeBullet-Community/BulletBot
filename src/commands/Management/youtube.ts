@@ -3,8 +3,8 @@ import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToChannel } from '../../utils/parsers';
-import { permLevels } from '../../utils/permissions';
-import { webhookObject, logTypes } from '../../database/schemas';
+import { PermLevels } from '../../utils/permissions';
+import { WebhookObject, LogTypes } from '../../database/schemas';
 import { googleAPIKey, youtube } from '../../bot-config.json';
 import { google } from 'googleapis';
 import { getYTChannelID } from '../../youtube';
@@ -47,10 +47,10 @@ async function parseWebhookInput(message: Message, argsArray: string[], argIndex
 /**
  * returns a embed with details about a webhook
  *
- * @param {webhookObject} webhookObject
+ * @param {WebhookObject} webhookObject
  * @returns
  */
-async function createWebhookEmbed(webhookObject: webhookObject) {
+async function createWebhookEmbed(webhookObject: WebhookObject) {
     // get channel info from api
     var channelInfo = await google.youtube('v3').channels.list({
         key: googleAPIKey,
@@ -95,7 +95,7 @@ var command: commandInterface = {
     name: 'youtube',
     path: '',
     dm: false,
-    permLevel: permLevels.admin,
+    permLevel: PermLevels.admin,
     togglable: false,
     help: {
         shortDescription: 'create/delete/change YouTube webhooks',
@@ -128,7 +128,7 @@ var command: commandInterface = {
                 case 'list':
                     var guildDoc = await Bot.database.findGuildDoc(message.guild.id); // get guild doc which contains a list of all webhooks
                     if (!guildDoc) throw new Error(`Couldn't find guild doc of guild ${message.guild.id} in youtube list command`);
-                    if (!guildDoc.webhooks || !guildDoc.webhooks.youtube || !guildDoc.webhooks.youtube.length) { // check if there are no youtube webhooks
+                    if (!guildDoc?.webhooks?.youtube?.length) { // check if there are no youtube webhooks
                         Bot.mStats.logResponseTime(command.name, requestTime);
                         message.channel.send('There aren\'t any YouTube webhooks');
                         Bot.mStats.logMessageSend();
@@ -180,7 +180,7 @@ var command: commandInterface = {
                     } else {
                         message.channel.send(`Successfully added webhook to ${input.channel} for https://youtube.com/channel/${input.YTChannelID}`);
                         // log that webhook was created
-                        Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, logTypes.add);
+                        Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogTypes.add);
                     }
                     break;
                 case 'rem':
@@ -200,7 +200,7 @@ var command: commandInterface = {
                     } else {
                         message.channel.send(`Successfully removed webhook to ${input.channel} for https://youtube.com/channel/${input.YTChannelID}`);
                         // log that webhook was removed
-                        Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, logTypes.remove);
+                        Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogTypes.remove);
                     }
                     Bot.mStats.logMessageSend();
                     break;
@@ -236,7 +236,7 @@ var command: commandInterface = {
                             if (webhookDoc && webhookDoc.channel == newChannel.id) {
                                 message.channel.send(`Successfully changed webhook channel from ${input.channel} to ${newChannel}`);
                                 // log that the channel was changed
-                                Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, logTypes.change, true);
+                                Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogTypes.change, true);
                             } else {
                                 message.channel.send(`change was unsuccessful`);
                             }
@@ -264,7 +264,7 @@ var command: commandInterface = {
                             if (webhookDoc && webhookDoc.feed == newYTChannelID) {
                                 message.channel.send(`Successfully changed webhook feed from https://youtube.com/channel/${input.YTChannelID} to https://youtube.com/channel/${webhookDoc.feed}`);
                                 // log that the feed was changed
-                                Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, logTypes.add);
+                                Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogTypes.add);
                             } else {
                                 message.channel.send(`change was unsuccessful`);
                             }
@@ -297,7 +297,7 @@ var command: commandInterface = {
                             if (webhookDoc && webhookDoc.message == newText) {
                                 message.channel.send(`Successfully changed webhook message to \`${newText}\``);
                                 // log that message was changed
-                                Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, logTypes.change, undefined, true);
+                                Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogTypes.change, undefined, true);
                             } else {
                                 message.channel.send(`change was unsuccessful`);
                             }

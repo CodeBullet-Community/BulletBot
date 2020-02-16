@@ -1,18 +1,17 @@
-import { Message, Guild } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString, stringToMember, stringToDuration } from '../../utils/parsers';
-import { durations } from '../../utils/time';
+import { durationToString, stringToMember, stringToDuration } from '../../utils/parsers';
+import { Durations } from '../../utils/time';
 
 var command: commandInterface = {
     name: 'ban',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
-    cooldownLocal: durations.second,
+    cooldownLocal: Durations.second,
     help: {
         shortDescription: 'Ban members',
         longDescription: 'Ban members for a certain or indefinite time. Reason is always optional, but is highly recommended.',
@@ -52,7 +51,7 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            if (await guildWrapper.getPermLevel(member) >= permLevels.mod) { // check if member is mod or higher
+            if (await guildWrapper.getPermLevel(member) >= PermLevels.mod) { // check if member is mod or higher
                 message.channel.send('You can\'t ban that member');
                 Bot.mStats.logMessageSend();
                 return false;

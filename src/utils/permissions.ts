@@ -1,14 +1,18 @@
-import { GuildMember, GuildChannel, GuildMemberResolvable } from 'discord.js';
-import { Bot } from '..';
-import { resolveGuildMember } from './resolvers';
-
 /**
- * constants for every existing perm level
+ * A number that represents a permission level
  *
  * @export
  * @enum {number}
  */
-export enum permLevels {
+export type PermLevel = 0 | 1 | 2 | 3 | 4;
+
+/**
+ * All permission levels mapped to their number
+ *
+ * @export
+ * @enum {number}
+ */
+export enum PermLevels {
     member = 0,
     immune = 1,
     mod = 2,

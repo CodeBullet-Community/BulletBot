@@ -1,7 +1,7 @@
 import { DMChannel, GroupDMChannel, TextChannel, User } from "discord.js";
-import { commandCacheDoc, commandCacheObject } from "./schemas";
+import { CommandCacheDoc } from "./schemas";
 import { commandInterface } from "../commands";
-import { resolveCommand, resolveChannel } from "../utils/resolvers";
+import { resolveCommand } from "../utils/resolvers";
 
 /**
  * Wrapper from command cache. Is a mix between doc and object
@@ -49,18 +49,18 @@ export class CommandCache {
     /**
      * Document from the database storing the command cache
      *
-     * @type {commandCacheDoc}
+     * @type {CommandCacheDoc}
      * @memberof CommandCache
      */
-    doc: commandCacheDoc;
+    doc: CommandCacheDoc;
     /**
      * Creates an instance of CommandCache with an existing command cache.
-     * @param {commandCacheDoc} commandCacheDoc Existing command cache
+     * @param {CommandCacheDoc} commandCacheDoc Existing command cache
      * @param {User} user The user for the command cache
      * @param {(DMChannel | GroupDMChannel | TextChannel)} [channel] The channel of the command cache
      * @memberof CommandCache
      */
-    constructor(commandCacheDoc: commandCacheDoc, user: User, channel: DMChannel | GroupDMChannel | TextChannel) {
+    constructor(commandCacheDoc: CommandCacheDoc, user: User, channel: DMChannel | GroupDMChannel | TextChannel) {
         this.doc = commandCacheDoc;
         this.user = user;
         this.channel = channel;

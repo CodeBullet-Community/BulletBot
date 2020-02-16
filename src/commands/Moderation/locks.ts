@@ -1,20 +1,18 @@
-import { Message, Guild } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString } from '../../utils/parsers';
-import { durations, timeFormat } from '../../utils/time';
-import { guildObject } from '../../database/schemas';
+import { Durations, timeFormat } from '../../utils/time';
+import { GuildObject } from '../../database/schemas';
 import dateFormat = require('dateformat');
 
 var command: commandInterface = {
     name: 'locks',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
-    cooldownLocal: durations.second,
+    cooldownLocal: Durations.second,
     help: {
         shortDescription: 'Lists all locked channels',
         longDescription: 'Lists all temporary and permanently locked channels',
@@ -33,7 +31,6 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            let guildObject: guildObject = guildDoc.toObject();
             // turn guild.locks into two arrays
             let permLockedArray = [];
             let tempLockedArray = [];

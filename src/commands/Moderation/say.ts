@@ -1,6 +1,6 @@
-import { Message, RichEmbed, Guild, TextChannel, GuildChannel, DMChannel, Channel, GroupDMChannel } from 'discord.js';
-import { permLevels } from '../../utils/permissions';
-import { stringToChannel, stringToEmbed, permToString } from '../../utils/parsers';
+import { Message } from 'discord.js';
+import { PermLevels } from '../../utils/permissions';
+import { stringToChannel, stringToEmbed } from '../../utils/parsers';
 import { sendMentionMessage, sendError } from '../../utils/messages';
 import { commandInterface } from '../../commands';
 import { Bot } from '../..';
@@ -9,7 +9,7 @@ var command: commandInterface = {
     name: 'say',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
     help: {
         shortDescription: 'let\'s the bot speak for you',
@@ -117,7 +117,7 @@ var command: commandInterface = {
             }
 
             // check if requester can mention everyone and if so, allow everyone mention
-            let mentionEveryone = permLevel >= permLevels.admin ? true : false;
+            let mentionEveryone = permLevel >= PermLevels.admin ? true : false;
             if (!mentionEveryone) mentionEveryone = message.member.hasPermission('MENTION_EVERYONE');
 
             try {

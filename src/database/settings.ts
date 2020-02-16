@@ -1,10 +1,11 @@
+import { PresenceData } from 'discord.js';
 import mongoose = require('mongoose');
-import { globalSettingsDoc, globalSettingsSchema, globalSettingsObject, CommandUsageLimits, UsageLimits } from './schemas';
+
 import { Bot } from '..';
 import { globalUpdateInterval } from '../bot-config.json';
 import { CommandResolvable } from '../commands';
 import { resolveCommand } from '../utils/resolvers';
-import { PresenceData } from 'discord.js';
+import { CommandUsageLimits, GlobalSettingsDoc, GlobalSettingsObject, globalSettingsSchema, UsageLimits } from './schemas';
 
 /**
  * Connects to the settings database and caches the global settings.
@@ -13,7 +14,7 @@ import { PresenceData } from 'discord.js';
  * @class Settings
  * @implements {globalSettingsObject}
  */
-export class Settings implements globalSettingsObject {
+export class Settings implements GlobalSettingsObject {
     prefix: string;
     presence: PresenceData;
     embedColors: { default: number; help: number; neutral: number; negative: number; warn: number; positive: number; };
@@ -22,7 +23,7 @@ export class Settings implements globalSettingsObject {
     filters: { [key: string]: { [key: string]: any; }; };
     usageLimits?: UsageLimits;
     connection: mongoose.Connection;
-    collection: mongoose.Model<globalSettingsDoc>;
+    collection: mongoose.Model<GlobalSettingsDoc>;
 
     /**
      * Creates an instance of Settings and a connection to the settings database. 
@@ -72,10 +73,10 @@ export class Settings implements globalSettingsObject {
      * Processes the retrieved settings document and caches it.
      *
      * @private
-     * @param {globalSettingsDoc} doc
+     * @param {GlobalSettingsDoc} doc
      * @memberof Settings
      */
-    processDoc(doc: globalSettingsDoc) {
+    processDoc(doc: GlobalSettingsDoc) {
         let settingsObj = doc.toObject({minimize: false});
         for (const key in settingsObj)
             this[key] = settingsObj[key];

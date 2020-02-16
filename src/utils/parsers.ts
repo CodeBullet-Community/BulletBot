@@ -1,8 +1,9 @@
 import { Guild } from 'discord.js';
-import { filterAction, filterActions } from './filters';
-import { permLevels } from './permissions';
+
 import { Bot } from '..';
-import { durations } from './time';
+import { filterAction, filterActions } from './filters';
+import { PermLevels } from './permissions';
+import { Durations } from './time';
 
 /**
  * Returns similarity value based on Levenshtein distance.
@@ -270,15 +271,15 @@ export function actionToString(action: filterAction) {
  */
 export function permToString(permLevel: number) {
     switch (permLevel) {
-        case permLevels.member:
+        case PermLevels.member:
             return 'member';
-        case permLevels.immune:
+        case PermLevels.immune:
             return 'immune member';
-        case permLevels.mod:
+        case PermLevels.mod:
             return 'mod';
-        case permLevels.admin:
+        case PermLevels.admin:
             return 'admin';
-        case permLevels.botMaster:
+        case PermLevels.botMaster:
             return 'my master';
         default:
             Bot.mStats.logError(new Error('unknown permission level: ' + permLevel));
@@ -335,13 +336,13 @@ export function durationToString(duration: number) {
 export function stringToDuration(text: string) {
     let ms = 0;
     let seconds = /(\d+)s/.exec(text);
-    if (seconds) ms += Number(seconds[1]) * durations.second;
+    if (seconds) ms += Number(seconds[1]) * Durations.second;
     let minutes = /(\d+)m/.exec(text);
-    if (minutes) ms += Number(minutes[1]) * durations.minute;
+    if (minutes) ms += Number(minutes[1]) * Durations.minute;
     let hours = /(\d+)h/.exec(text);
-    if (hours) ms += Number(hours[1]) * durations.hour;
+    if (hours) ms += Number(hours[1]) * Durations.hour;
     let days = /(\d+)d/.exec(text);
-    if (days) ms += Number(days[1]) * durations.day;
+    if (days) ms += Number(days[1]) * Durations.day;
 
     return ms;
 }

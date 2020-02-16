@@ -1,16 +1,13 @@
-import { Message, RichEmbed, Guild, GuildMember, Role, MessageMentions } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, stringToChannel, stringToRole, stringToMember } from '../../utils/parsers';
-import { permLevels } from '../../utils/permissions';
-import { logTypes } from '../../database/schemas';
+import { PermLevels } from '../../utils/permissions';
 
 var command: commandInterface = {
     name: 'admin',
     path: '',
     dm: false,
-    permLevel: permLevels.admin,
+    permLevel: PermLevels.admin,
     togglable: false,
     help: {
         shortDescription: 'manage admin rank',

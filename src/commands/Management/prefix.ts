@@ -1,15 +1,15 @@
-import { Message, RichEmbed, Guild } from 'discord.js';
+import { Message } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString } from '../../utils/parsers';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
+import { BenchmarkTimestamp } from '../../utils/time';
 
 var command: commandInterface = {
     name: 'prefix',
     path: '',
     dm: false,
-    permLevel: permLevels.admin,
+    permLevel: PermLevels.admin,
     togglable: false,
     help: {
         shortDescription: 'sets custom prefix',
@@ -25,7 +25,7 @@ var command: commandInterface = {
             '{command} reset'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, guildWrapper, requestTime: [number, number]) => {
+    run: async (message: Message, args: string, permLevel: number, dm: boolean, guildWrapper, requestTime: BenchmarkTimestamp) => {
         try {
             if (args.length == 0) { // if no argument was provided reply with prefix
                 Bot.mStats.logResponseTime(command.name, requestTime);

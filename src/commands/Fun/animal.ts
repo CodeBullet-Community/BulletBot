@@ -3,8 +3,9 @@ import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import request = require("request");
+import { BenchmarkTimestamp } from '../../utils/time';
 
 /**
  * selects a random element of a array
@@ -21,9 +22,9 @@ function selectRandom(array: any[]) {
  *
  * @param {Message} message messages to reply to
  * @param {string} API API which to ask for a image from
- * @param {[number,number]} requestTime when image was requested to measure response time
+ * @param {BenchmarkTimestamp} requestTime when image was requested to measure response time
  */
-function sendRandomImage(message: Message, API: string, requestTime: [number, number]) {
+function sendRandomImage(message: Message, API: string, requestTime: BenchmarkTimestamp) {
     new Promise<RichEmbed>((resolve, reject) => {
         request.get(API, (error, response, body) => {
             if (error) reject(error);
@@ -55,7 +56,7 @@ var command: commandInterface = {
     name: 'animal',
     path: '',
     dm: true,
-    permLevel: permLevels.member,
+    permLevel: PermLevels.member,
     togglable: true,
     help: {
         shortDescription: 'returns cute animal images',

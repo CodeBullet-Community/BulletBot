@@ -1,10 +1,10 @@
 import { Message, RichEmbed, Guild, GuildMember } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToMember } from '../../utils/parsers';
-import { getDayDiff, timeFormat } from '../../utils/time';
+import { getDayDiff, timeFormat, BenchmarkTimestamp } from '../../utils/time';
 import dateFormat = require('dateformat');
 
 async function getJoinRank(ID: string, guild: Guild) { // Call it with the ID of the user and the guild
@@ -136,7 +136,7 @@ async function createMemberEmbed(member: GuildMember, permLevel: number, request
     };
 
     // if the requester is a mod or higher, it also adds the case counts
-    if (requesterPermLevel >= permLevels.mod) {
+    if (requesterPermLevel >= PermLevels.mod) {
         let caseDocs = await Bot.caseLogger.cases.find({ user: member.id, guild: member.guild.id }, ['action']).exec();
         let summary = { unmute: 0, mute: 0, unban: 0, ban: 0, kick: 0, warn: 0, softban: 0 };
         for (const caseDoc of caseDocs)
@@ -158,9 +158,9 @@ async function createMemberEmbed(member: GuildMember, permLevel: number, request
  * @param {GuildMember} member member to get info of
  * @param {number} permLevel permission level of the member
  * @param {number} requesterPermLevel the permission level of the info requester
- * @param {[number, number]} requestTime when the info was requested to measure response time
+ * @param {BenchmarkTimestamp} requestTime when the info was requested to measure response time
  */
-async function sendMemberInfo(message: Message, member: GuildMember, permLevel: number, requesterPermLevel: number, requestTime: [number, number]) {
+async function sendMemberInfo(message: Message, member: GuildMember, permLevel: number, requesterPermLevel: number, requestTime: BenchmarkTimestamp) {
     var embed = await createMemberEmbed(member, permLevel, requesterPermLevel)
     Bot.mStats.logResponseTime(command.name, requestTime);
     message.channel.send(embed);
@@ -172,7 +172,7 @@ var command: commandInterface = {
     name: 'whois',
     path: '',
     dm: false,
-    permLevel: permLevels.member,
+    permLevel: PermLevels.member,
     togglable: false,
     help: {
         shortDescription: 'returns infos about a user',

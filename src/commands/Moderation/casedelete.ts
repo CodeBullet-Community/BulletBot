@@ -1,19 +1,18 @@
-import { Message, Guild, GuildMember } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString, stringToMember } from '../../utils/parsers';
-import { durations } from '../../utils/time';
+import { stringToMember } from '../../utils/parsers';
+import { Durations } from '../../utils/time';
 import { caseActionsArray } from '../../database/schemas';
 
 var command: commandInterface = {
     name: 'casedelete',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
-    cooldownLocal: durations.second,
+    cooldownLocal: Durations.second,
     help: {
         shortDescription: 'Delete cases',
         longDescription: 'Let\'s you delete cases',

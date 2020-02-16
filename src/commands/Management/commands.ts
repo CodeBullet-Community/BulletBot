@@ -1,9 +1,9 @@
-import { Message, RichEmbed, Guild } from 'discord.js';
+import { RichEmbed } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permLevels } from '../../utils/permissions';
-import { logTypes } from '../../database/schemas';
+import { PermLevels } from '../../utils/permissions';
+import { LogTypes } from '../../database/schemas';
 import { GuildWrapper } from '../../database/guildWrapper';
 
 async function getCommandList(guildWrapper: GuildWrapper, title: string, criteria: (command: commandInterface) => Promise<boolean>) {
@@ -26,7 +26,7 @@ var command: commandInterface = {
     name: 'commands',
     path: '',
     dm: false,
-    permLevel: permLevels.admin,
+    permLevel: PermLevels.admin,
     togglable: false,
     help: {
         shortDescription: 'Let\'s you toggle commands',
@@ -48,7 +48,7 @@ var command: commandInterface = {
             '{command} enable animal'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, guildWrapper, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             var argIndex = 0;
             if (args.length == 0) { // send help embed if no arguments provided
@@ -123,7 +123,7 @@ var command: commandInterface = {
             Bot.mStats.logMessageSend();
             Bot.mStats.logCommandUsage(command.name, enable ? 'enable' : 'disable');
             // log that command was enabled
-            Bot.logger.logCommand(guildWrapper, message.member, cmd, enable ? logTypes.add : logTypes.remove);
+            Bot.logger.logCommand(guildWrapper, message.member, cmd, enable ? LogTypes.add : LogTypes.remove);
             return true;
         } catch (e) {
             sendError(message.channel, e);

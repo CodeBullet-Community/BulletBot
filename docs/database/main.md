@@ -197,7 +197,7 @@ one document for each user
 
 ```Typescript
 {
-    user: string; // userid
+    id: string; // userid
     onServer: Boolean, // whether they are still present on the server
         commandLastUsed: {
         // guild id, 'dm' or 'global'

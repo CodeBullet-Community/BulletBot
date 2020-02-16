@@ -1,14 +1,16 @@
+import bodyParser = require('body-parser');
+import express = require('express');
+import { google } from 'googleapis';
 import mongoose = require('mongoose');
-import { webhookDoc, webhookSchema, webhookObject } from './database/schemas';
-import { google } from "googleapis";
+import request = require('request');
+import xml2js = require('xml2js');
+
 import { Bot } from '.';
-import { googleAPIKey, callback } from "./bot-config.json";
-import request = require("request");
-import express = require("express");
-import bodyParser = require("body-parser");
-import xml2js = require('xml2js')
+import { callback, googleAPIKey } from './bot-config.json';
+import { WebhookDoc, WebhookObject, webhookSchema } from './database/schemas';
 import { sendMentionMessage } from './utils/messages';
-import { durations } from './utils/time';
+import { Durations } from './utils/time';
+
 const xmlParser = new xml2js.Parser({ explicitArray: false });
 
 /**
@@ -105,7 +107,7 @@ export function addYoutubeCatcher(app: express.Application) {
                 const link = "https://youtu.be/" + video["yt:videoId"];
                 // runs through all subscriptions for that youtube channel
                 for (const webhookDoc of webhookDocs) {
-                    const webhookObject: webhookObject = webhookDoc.toObject();
+                    const webhookObject: WebhookObject = webhookDoc.toObject();
                     var guild = Bot.client.guilds.get(webhookObject.guild);
                     if (!guild) {
                         console.warn("in youtube webhookcatcher guild " + webhookObject.guild + " wasn't found");
@@ -147,10 +149,10 @@ export class YTWebhookManager {
     /**
      * model for youtube collection
      *
-     * @type {mongoose.Model<webhookDoc>}
+     * @type {mongoose.Model<WebhookDoc>}
      * @memberof YTWebhookManager
      */
-    webhooks: mongoose.Model<webhookDoc>;
+    webhooks: mongoose.Model<WebhookDoc>;
 
     /**
      *Creates an instance of YTWebhookManager.
@@ -210,7 +212,7 @@ export class YTWebhookManager {
                     'hub.mode': subscribe ? 'subscribe' : 'unsubscribe',
                     'hub.callback': `http://${callback.URL}:${callback.port}${callback.path}/youtube`, // uses in bot-config specified callback URL
                     'hub.topic': 'https://www.youtube.com/xml/feeds/videos.xml?channel_id=' + YTChannelID,
-                    'hub.lease_seconds': durations.thirtyDays * 240 / 1000
+                    'hub.lease_seconds': Durations.thirtyDays * 240 / 1000
                 }
             }, (error, response, body) => {
                 if (error) reject(error);

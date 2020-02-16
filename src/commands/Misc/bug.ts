@@ -1,18 +1,16 @@
-import { Message, Guild } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString } from '../../utils/parsers';
-import { durations, getDurationDiff } from '../../utils/time';
+import { Durations } from '../../utils/time';
 
 var command: commandInterface = {
     name: 'bug',
     path: '',
     dm: true,
-    permLevel: permLevels.member,
+    permLevel: PermLevels.member,
     togglable: false,
-    cooldownGlobal: durations.second * 20,
+    cooldownGlobal: Durations.second * 20,
     help: {
         shortDescription: 'reports a bug to the devs',
         longDescription: 'reports a bug to the dev. Be as descriptive as you can',
