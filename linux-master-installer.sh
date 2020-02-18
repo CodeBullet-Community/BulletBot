@@ -19,6 +19,7 @@
     cyan=$'\033[0;36m'
     red=$'\033[1;31m'
     nc=$'\033[0m'
+    clrln=$'\r\033[K'
 
 #
 ################################################################################
@@ -33,6 +34,12 @@
         no_hostname="--no-hostname"
         export no_hostname
     fi
+
+    # Used in combination with the sub-master installers to apply changes to
+    # the installers after downloading the latest BulletBot release, without
+    # requiring the user to exit then re-execute the master installer
+    master_installer="/home/bulletbot/linux-master-installer.sh"
+    export master_installer
 
 #
 ################################################################################
@@ -50,7 +57,13 @@
 
     # Changes the working directory to that of where the executed script is
     # located
-    cd "$(dirname $0)" # TODO: Maybe add fail safe...
+    cd "$(dirname "$0")" || {
+        echo "${red}Failed to change working directories" >&2
+        echo "${cyan}Change your working directory to the same directory of" \
+            "the executed script${nc}"
+        echo -e "\nExiting..."
+        exit 1
+    }
 
 #
 ################################################################################
@@ -131,6 +144,7 @@
                             }
                             echo "Attempting to download 'debian-ubuntu-installer.sh'" \
                                 "again..."
+                            continue
                         else
                             echo "${cyan}Either resolve the issue causing the" \
                                 "error or manually download" \
@@ -141,11 +155,15 @@
                     }
                     break
                 done
-                chmod +x debian-ubuntu-installer.sh
-                ./debian-ubuntu-installer.sh
+                chmod +x debian-ubuntu-installer.sh && ./debian-ubuntu-installer.sh || {
+                    echo "${red}Failed to execute 'debian-ubuntu-installer.sh'${nc}" >&2
+                    echo -e "\nExiting..."
+                    exit 1
+                }
                 rm debian-ubuntu-installer.sh
             else
-                echo "${red}Failed to execute 'debian-ubuntu-installer.sh'${nc}"
+                echo "${red}Failed to execute 'debian-ubuntu-installer.sh'${nc}" >&2
+                echo -e "\nExiting..."
                 exit 1
             fi
         }
@@ -173,6 +191,7 @@
                             }
                             echo "Attempting to download 'centos-rhel-installer'" \
                                 "again..."
+                            continue
                         else
                             echo "${cyan}Either resolve the issue causing the" \
                                 "error or manually download" \
@@ -183,11 +202,15 @@
                     }
                     break
                 done 
-                chmod +x centos-rhel-installer.sh
-                ./centos-rhel-installer.sh
+                chmod +x centos-rhel-installer.sh && ./centos-rhel-installer.sh || {
+                    echo "${red}Failed to execute 'centos-rhel-installer.sh'${nc}" >&2
+                    echo -e "\nExiting..."
+                    exit 1
+                }
                 rm centos-rhel-installer.sh
             else
-                echo "${red}Failed to execute 'centos-rhel-installer.sh'${nc}"
+                echo "${red}Failed to execute 'centos-rhel-installer.sh'${nc}" >&2
+                echo -e "\nExiting..."
                 exit 1
             fi
         }
@@ -205,7 +228,7 @@
 #
     detect_distro_ver_arch_bits
     export distro sver ver arch bits codename
-    export yellow green cyan red nc
+    export yellow green cyan red nc clrln
 
     echo "SYSTEM INFO"
     echo "Bit Type: $bits"

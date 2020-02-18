@@ -43,7 +43,13 @@
     # If 'bullet-mongo-start.service' does not exist
     elif [[ ! -f $start_service ]]; then
         echo "Creating 'bullet-mongo-start.service'..."
-        ./installers/Linux_Universal/auto-restart/auto-restart-updater.sh
+        ./installers/Linux_Universal/auto-restart/auto-restart-updater.sh || {
+            echo "${red}Failed to create 'bullet-mongo-start.service'" >&2
+            echo "${cyan}This service must exist in order to run BulletBot in" \
+                "this run mode${nc}"
+            read -p "Press [Enter] to return to the installer menu"
+            exit 1
+        }
         # Reloads systemd daemons to account for the added service
         systemctl daemon-reload
         echo "Enabling 'bullet-mongo-start.service'..."
@@ -73,7 +79,7 @@
 #
 ################################################################################
 #
-    if [[ $bullet_status = "active" ]]; then
+    if [[ $bullet_service_status = "active" ]]; then
         echo "Restarting 'bulletbot.service'..."
         systemctl restart bulletbot.service || {
             echo "${red}Failed to restart 'bulletbot.service'${nc}" >&2
@@ -100,13 +106,14 @@
 #
     # Waits in order to give 'bulletbot.service' enough time to (re)start
     while ((timer > 0)); do
-        echo -en "\r$timer seconds left "
+        echo -en "${clrln}${timer} seconds left"
         sleep 1
         ((timer-=1))
     done
 
     # Lists the startup logs in order to better identify if and when
     # an error occurred during the startup of 'bulletbot.service'
+    # Note: $no_hostname is purposefully unquoted. Do not quote those variables.
     echo -e "\n\n-------- bulletbot.service startup logs ---------" \
         "\n$(journalctl -u bulletbot -b $no_hostname -S "$start_time")" \
         "\n--------- End of bulletbot.service startup logs --------\n"

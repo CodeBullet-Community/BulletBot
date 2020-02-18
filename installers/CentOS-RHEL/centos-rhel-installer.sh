@@ -54,7 +54,7 @@
         printf "We will now download the compiled version of the newest release. "
         read -p "Press [Enter] to begin."
         
-        if [[ $bullet_status = "active" ]]; then
+        if [[ $bullet_service_status = "active" ]]; then
             # B.1. $exists = true when 'bulletbot.service' is active, and is
             # used to indicate to the user that the service was stopped and that
             # they will need to start the service
@@ -154,9 +154,14 @@
         }
         
         echo "Unzipping 'BulletBot.zip'..."
-        unzip -o BulletBot.zip
+        unzip -o BulletBot.zip || {
+            echo "${red}Failed to unzip 'BulletBot.zip'" >&2
+            echo -e "\nExiting..."
+            exit 1
+        }
         echo "Removing 'BulletBot.zip'..."
-        rm BulletBot.zip
+        rm BulletBot.zip 2>/dev/null || echo "${red}Failed to remove" \
+            "'BulletBot.zip'${nc}" >&2
 
         # A.2.
         # Moves 'bot-config.json', if it exists, to 'out/'
@@ -170,24 +175,34 @@
 
         if [[ -f $bullet_service ]]; then
             echo "Updating 'bulletbot.service'..."
+            create_or_update_1="update"
         else
             echo "Creating 'bulletbot.service'..."
+            create_or_update_1="create"
         fi
-        # TODO: Add error trap
-        echo -e "$bullet_service_content" > "$bullet_service"
+        echo -e "$bullet_service_content" > "$bullet_service" || {
+            echo "${red}Failed to $create_or_update_1 'bulletbot.service'${nc}" \
+                >&2
+            bb_s_update="Failed"
+        }
 
         if [[ -f $start_service ]]; then
             echo "Updating 'bullet-mongo-start.service'..."
+            create_or_update_2="update"
         else
             echo "Creating 'bullet-mongo-start.service'..."
+            create_or_update_2="create"
         fi
-        # TODO: Add error trap
-        ./installers/Linux_Universal/auto-restart/auto-restart-updater.sh
+        ./installers/Linux_Universal/auto-restart/auto-restart-updater.sh || {
+            echo "${red}Failed to $create_or_update_2 'bullet-mongo-start.service'" \
+                "${nc}" >&2
+            b_m_s_s_update="Failed"
+        }
 
     #
     ############################################################################
     #
-    # Cleaning up...
+    # Cleaning up and presenting results...
     #
     ############################################################################
     #
@@ -195,6 +210,18 @@
         chown bulletbot:bulletbot -R "$home"
         echo -e "\n${green}Finished downloading/updating BulletBot${nc}"
         
+        if [[ $bb_s_update || $b_m_s_s_update ]] ;then
+            echo "${yellow}WARNING:"
+            if [[ $bb_s_update ]]; then
+                printf "    Failed to %s 'bulletbot.service'" "$create_or_update_1"
+            fi
+            if [[ $b_m_s_s_update ]]; then
+                printf "    Failed to %s 'bullet-mongo-start.service'" \
+                    "$create_or_update_2"
+            fi
+            echo "${nc}"
+        fi
+
         # B.1.
         if [[ $exists ]]; then
             echo "${cyan}NOTE: 'bulletbot.service' was stopped to update" \
@@ -202,9 +229,9 @@
                 "installer menu${nc}"
         fi
 
-        read -p "Press [Enter] to apply any existing changes to the installer"
+        read -p "Press [Enter] to apply any existing changes to the installers"
         clear
-        source installers/CentOS-RHEL/centos-rhel-installer.sh
+        exec "$master_installer"
     }
 
 #
@@ -217,9 +244,8 @@
     echo -e "Welcome to the BulletBot CentOS/RHEL installer\n"
 
     while true; do
-        # TODO: Numerics for $bullet_status like $start_service_status???
-        # TODO: Change $bullet_status to $bullet_service_status???
-        bullet_status=$(systemctl is-active bulletbot.service)
+        # TODO: Numerics for $bullet_service_status like $start_service_status???
+        bullet_service_status=$(systemctl is-active bulletbot.service)
         start_service_status=$(systemctl is-enabled --quiet bullet-mongo-start.service \
             2>/dev/null; echo $?)
 
@@ -247,7 +273,7 @@
                 echo -e "\nExiting..."
                 exit 1
             }
-            echo "Changing permissions of '/home/bulletbot'"
+            echo "Changing permissions of '/home/bulletbot'..."
             # Permissions for the home directory have to be changed, else an
             # error will be produced when trying to install the 'node_module'
             chmod 755 "$home"
@@ -269,7 +295,14 @@
 
             echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
             chown bulletbot:bulletbot -R "$home"
-            cd "$home"
+            cd "$home" || {
+                echo "${red}Failed to change working directory to" \
+                    "'/home/bulletbot'"
+                echo "${cyan}Change your working directory to '/home/bulletbot'" \
+                    "${nc}"
+                echo -e "\nExiting..."
+                exit 1
+            }
         # Creates bulletbot's home directory if it does not exist
         elif [[ ! -d $home ]]; then
             echo "${yellow}bulletbot's home directory does not exist${nc}" >&2
@@ -289,7 +322,14 @@
 
             echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
             chown bulletbot:bulletbot -R "$home"
-            cd "$home"
+            cd "$home" || {
+                echo "${red}Failed to change working directory to" \
+                    "'/home/bulletbot'"
+                echo "${cyan}Change your working directory to '/home/bulletbot'" \
+                    "${nc}"
+                echo -e "\nExiting..."
+                exit 1
+            }
         fi
 
         if [[ $PWD != "/home/bulletbot" ]]; then
@@ -306,13 +346,25 @@
 
             echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
             chown bulletbot:bulletbot -R "$home"
-            cd "$home"
+            cd "$home" || {
+                echo "${red}Failed to change working directory to" \
+                    "'/home/bulletbot'"
+                echo "${cyan}Change your working directory to '/home/bulletbot'" \
+                    "${nc}"
+                echo -e "\nExiting..."
+                exit 1
+            }
         fi   
         
         # E.1. Creates 'bulletbot.service', if it does not exist
         if [[ ! -f $bullet_service ]]; then
             echo "Creating 'bulletbot.service'..."
-            echo -e "$bullet_service_content" > "$bullet_service"
+            echo -e "$bullet_service_content" > "$bullet_service" || {
+                echo "${red}Failed to create 'bulletbot.service'" >&2
+                echo "${cyan}This service must exist for BulletBot to work${nc}"
+                echo -e "\nExiting..."
+                exit 1
+            }
             # Reloads systemd daemons to account for the added service
             systemctl daemon-reload
         fi
@@ -418,7 +470,7 @@
                     clear
                     ;;
                 5)
-                    export bullet_status
+                    export bullet_service_status
                     ./installers/Linux_Universal/setup/bot-config-setup.sh
                     clear
                     ;;
@@ -435,7 +487,7 @@
             esac
         # BulletBot run mode options
         else
-            if [[ $start_service_status = 0 && -f $bullet_service && $bullet_status \
+            if [[ $start_service_status = 0 && -f $bullet_service && $bullet_service_status \
                     = "active" ]]; then
                 # E.1.
                 if [[ ! -f $start_script ]]; then
@@ -450,7 +502,7 @@
                 echo "2. Run BulletBot in the background"
                 echo "3. Run BulletBot in the background with auto-restart${green}" \
                     "(Running in this mode)${nc}"
-            elif [[ $start_service_status = 0 && -f $bullet_service && $bullet_status \
+            elif [[ $start_service_status = 0 && -f $bullet_service && $bullet_service_status \
                     != "active" ]]; then
                 # E.1.
                 if [[ ! -f $start_script ]]; then
@@ -465,12 +517,12 @@
                 echo "2. Run BulletBot in the background"
                 echo "3. Run BulletBot in the background with auto-restart${yellow}" \
                     "(Setup to use this mode)${nc}"
-            elif [[ -f $bullet_service && $bullet_status = "active" ]]; then
+            elif [[ -f $bullet_service && $bullet_service_status = "active" ]]; then
                 echo "1. Download/update BulletBot and auto-restart files/services"
                 echo "2. Run BulletBot in the background ${green}(Running in" \
                     "this mode)${nc}"
                 echo "3. Run BulletBot in the background with auto-restart"
-            elif [[ -f $bullet_service && $bullet_status != "active" ]]; then
+            elif [[ -f $bullet_service && $bullet_service_status != "active" ]]; then
                 echo "1. Download/update BulletBot and auto-restart files/services"
                 echo "2. Run BulletBot in the background ${yellow}(Setup to" \
                     "use this mode)${nc}"
@@ -494,7 +546,7 @@
                     ;;
                 2)
                     export home
-                    export bullet_status
+                    export bullet_service_status
                     export start_script
                     export start_service_status
                     export bullet_service
@@ -503,7 +555,7 @@
                     ;;
                 3)
                     export home
-                    export bullet_status
+                    export bullet_service_status
                     export start_script
                     export start_service_status
                     export start_service
@@ -511,12 +563,12 @@
                     clear
                     ;;
                 4)
-                    export bullet_status
+                    export bullet_service_status
                     ./installers/Linux_Universal/bb-stop.sh
                     clear
                     ;;
                 5)
-                    export bullet_status
+                    export bullet_service_status
                     ./installers/Linux_Universal/setup/bot-config-setup.sh
                     clear
                     ;;

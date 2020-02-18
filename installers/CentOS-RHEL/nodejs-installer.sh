@@ -25,7 +25,11 @@
             exit 1
         }
         echo "Installing nodejs..."
-        yum -y install nodejs
+        yum -y install nodejs || {
+            echo "${red}Failed to install nodejs${nc}" >&2
+            read -p "Press [Enter] to return to the installer menu"
+            exit 1
+        }
     }
 
     install_node_module_pkgs() {

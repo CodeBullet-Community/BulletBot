@@ -46,7 +46,7 @@
 #
 ################################################################################
 #
-    if [[ $bullet_status = "active" ]]; then
+    if [[ $bullet_service_status = "active" ]]; then
         echo "Restarting 'bulletbot.service'..."
         systemctl restart bulletbot.service || {
             echo "${red}Failed to restart 'bulletbot.service'${nc}" >&2
@@ -73,13 +73,14 @@
 #
     # Waits in order to give 'bulletbot.service' enough time to (re)start
     while ((timer > 0)); do
-        echo -en "\r$timer seconds left "
+        echo -en "${clrln}${timer} seconds left"
         sleep 1
         ((timer-=1))
     done
 
     # Lists the startup logs in order to better identify if and when
     # an error occurred during the startup of 'bulletbot.service'
+    # Note: $no_hostname is purposefully unquoted. Do not quote those variables.
     echo -e "\n\n-------- bulletbot.service startup logs ---------" \
         "\n$(journalctl -u bulletbot -b $no_hostname -S "$start_time")" \
         "\n--------- End of bulletbot.service startup logs --------\n"

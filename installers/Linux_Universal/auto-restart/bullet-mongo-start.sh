@@ -26,10 +26,12 @@
 # the installers that is not called by either the master installer or
 # sub-master installer(s). It is independent and only called on system reboot.
 #
+# Note 2: $no_hostname is purposefully unquoted. Do not quote those variables.
+#
 ################################################################################
 #
     # Tries to load custom configurations, but will load the default if the
-    # custom do not exist
+    # custom one do not exist
     if [[ -f /home/bulletbot/installers/Linux_Universal/auto-restart/bullet-mongo-start.local ]]; then
         . /home/bulletbot/installers/Linux_Universal/auto-restart/bullet-mongo-start.local
     else
@@ -115,8 +117,8 @@
             echo "Waiting 20 seconds ('bulletbot.service' start wait period)"
             sleep 20 
             while true; do
-                bullet_status=$(systemctl is-active bulletbot.service)
-                if [[ $bullet_status = "active" ]]; then
+                bullet_service_status=$(systemctl is-active bulletbot.service)
+                if [[ $bullet_service_status = "active" ]]; then
                     echo "Successfully started 'bulletbot.service'"
                     if [[ $send_status = true ]]; then
                         echo "Sending 'BulletBot Startup Status Report'"
@@ -124,7 +126,7 @@
                             "\n\nSuccessfully started bulletbot.service" \
                             "\n\nService exit status codes" \
                             "\n    mongod.service status: $mongo_status" \
-                            "\n    bulletbot.service status: $bullet_status" \
+                            "\n    bulletbot.service status: $bullet_service_status" \
                             "\n\n-------- mongod.service startup logs --------" \
                             "\n$(journalctl -u mongod -b $no_hostname)" \
                             "\n-------- End of mongod.service startup logs --------" \
@@ -143,7 +145,7 @@
                     fi
                     echo "Done..."
                     exit 0
-                elif [[ $bullet_status = "inactive" || $bullet_status = "failed" \
+                elif [[ $bullet_service_status = "inactive" || $bullet_service_status = "failed" \
                         ]]; then
                     echo "Failed to start 'bulletbot.service'" >&2
                     if [[ $send_status = true ]]; then
@@ -153,7 +155,7 @@
                             "\nCould not start bulletbot.service" \
                             "\n\nService exit status codes" \
                             "\n    mongod.service status: $mongo_status" \
-                            "\n    bulletbot.service status: $bullet_status" \
+                            "\n    bulletbot.service status: $bullet_service_status" \
                             "\n\n-------- mongod.service startup logs --------" \
                             "\n$(journalctl -u mongod -b $no_hostname)" \
                             "\n-------- End of mongod.service startup logs --------" \
@@ -183,7 +185,7 @@
                             "or the status of bulletbot.service is unrecognized" \
                             "\n\nService exit status codes" \
                             "\n    mongod.service status: $mongo_status" \
-                            "\n    bulletbot.service status: $bullet_status" \
+                            "\n    bulletbot.service status: $bullet_service_status" \
                             "\n\n-------- mongod.service startup logs --------" \
                             "\n$(journalctl -u mongod -b $no_hostname)" \
                             "\n-------- End of mongod.service startup logs --------" \
@@ -221,7 +223,7 @@
                         "\nCould not start mongod.service" \
                         "\n\nService exit status codes" \
                         "\n    mongod.service status: $mongo_status" \
-                        "\n    bulletbot.service status: $bullet_status" \
+                        "\n    bulletbot.service status: $bullet_service_status" \
                         "\n\n-------- mongod.service startup logs --------" \
                         "\n$(journalctl -u mongod -b $no_hostname)" \
                         "\n-------- End of mongod.service startup logs --------" \
@@ -251,7 +253,7 @@
                     "or the status of mongod.service is unrecognized" \
                     "\n\nService exit status codes" \
                     "\n    mongod.service status: $mongo_status" \
-                    "\n    bulletbot.service status: $bullet_status" \
+                    "\n    bulletbot.service status: $bullet_service_status" \
                     "\n\n-------- mongod.service startup logs --------" \
                     "\n$(journalctl -u mongod -b $no_hostname)" \
                     "\n-------- End of mongod.service startup logs --------" \

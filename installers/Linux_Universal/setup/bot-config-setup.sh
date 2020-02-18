@@ -13,6 +13,42 @@
     clear
     read -p "We will now set up 'bot-config.json'. Press [Enter] to begin."
 
+    epel_installed=false
+
+#
+################################################################################
+#
+# [ Functions ]
+#
+################################################################################
+#
+    epel_and_pkg() {
+        # CentOS and RHEL use the yum/dnf package manager while Debian and
+        # Ubuntu use apt
+        if [[ $distro = "centos" || $distro = "rhel" ]]; then
+            # EPEL must be installed in order to install jq and during
+            if [[ $sver = "7" ]]; then
+                if [[ $epel_installed = false ]]; then
+                    yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && epel_installed=true || {
+                        echo "${red}Failed to install Extra Packages for" \
+                            "Enterprise Linux${nc}"
+                    }
+                fi
+                pkg_manager="yum"
+            else
+                if [[ $epel_installed = false ]]; then
+                    dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && epel_installed=true || {
+                        echo "${red}Failed to install Extra Packages for" \
+                            "Enterprise Linux${nc}"
+                    }
+
+                fi
+                pkg_manager="dnf"
+            fi
+        else
+            pkg_manager="apt"
+        fi
+    }
 #
 ################################################################################
 #
@@ -22,28 +58,7 @@
 #
     if ! hash jq &>/dev/null; then
         echo "${yellow}jq is not installed${nc}"
-
-        # CentOS and RHEL use the yum/dnf package manager while Debian and
-        # Ubuntu use apt
-        if [[ $distro = "centos" || $distro = "rhel" ]]; then
-            # EPEL must be installed in order to install jq
-            if [[ $sver = "7" ]]; then
-                yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm || {
-                    echo "${red}Failed to install Extra Packages for" \
-                        "Enterprise Linux${nc}"
-                }
-                pkg_manager="yum"
-            else
-                dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm || {
-                    echo "${red}Failed to install Extra Packages for" \
-                        "Enterprise Linux${nc}"
-                }
-                pkg_manager="dnf"
-            fi
-        else
-            pkg_manager="apt"
-        fi
-
+        epel_and_pkg
         echo "Installing jq..."
         "$pkg_manager" -y install jq || {
             echo "${red}Failed to install jq" >&2
@@ -51,7 +66,19 @@
         }
     fi
 
-    # TODO: Add code to install dig if it doesn't exists
+    if ! hash dig &>/dev/null; then
+        echo "${yellow}dig is not installed${nc}"
+        epel_and_pkg
+        echo "Installing dig..."
+        # On CentOS/RHEL, dig is installed from the bind-utils package
+        "$pkg_manager" -y install dnsutils || "$pkg_manager" -y install bind-utils || {
+            echo "${red}Failed to install dig" >&2
+            echo "${cyan}dig should be installed so that your system's public" \
+                "IP Address can be retrieved in the most secure way"
+            echo "The installer will use its secondary method to retrieve your" \
+                "system's public IP Address${nc}"
+        }
+    fi
 
 #
 ################################################################################
@@ -149,7 +176,7 @@
         },
         \"callback\": {
             \"URL\": \"$public_ip\",
-            \"port\": 8020,
+            \"port\": 8000,
             \"path\": \"/webhooks\"
         },
         \"youtube\": {
@@ -208,7 +235,7 @@
                         echo "$json" > tmp.json
                     }
                     diff -s -y tmp.json out/bot-config.json
-                    read
+                    read -p "Press [Enter] to return to the BulletBot config menu" 
                     rm tmp.json
                     clear
                     ;;
@@ -233,12 +260,11 @@
 #
 ################################################################################
 #
-# Restarts 'bulletbot.service' so that the new 'bot-config.json' is used by
-# BulletBot
+# Restarts 'bulletbot.service' to load the new 'bot-config.json' for BulletBot
 #
 ################################################################################
 #
-    if [[ $bullet_status = "active" ]]; then
+    if [[ $bullet_service_status = "active" ]]; then
         timer=20
         # Saves the current time and date, which will be used with journalctl
         start_time=$(date +"%F %H:%M:%S")
@@ -255,13 +281,15 @@
         # Waits in order to give 'bulletbot.service' enough time to restart
         echo "Waiting 20 seconds for 'bulletbot.service' to start..."
         while ((timer > 0)); do
-            echo -en "\r$timer seconds left "
+            echo -en "${clrln}${timer} seconds left"
             sleep 1
             ((timer-=1))
         done
         
         # Lists the startup logs in order to better identify if and when
         # an error occurred during the startup of 'bulletbot.service'
+        # Note: $no_hostname is purposefully unquoted. Do not quote those
+        # variables
         echo -e "\n\n-------- bulletbot.service startup logs ---------" \
             "\n$(journalctl -u bulletbot -b $no_hostname -S "$start_time")" \
             "\n--------- End of bulletbot.service startup logs --------\n"
