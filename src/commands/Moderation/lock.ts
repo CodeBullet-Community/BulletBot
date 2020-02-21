@@ -6,7 +6,7 @@ import { sendError } from '../../utils/messages';
 import { durationToString, stringToDuration, stringToChannel } from '../../utils/parsers';
 import { Durations } from '../../utils/time';
 import { GuildObject } from '../../database/schemas';
-import { GuildWrapper } from '../../database/guildWrapper';
+import { GuildWrapper } from '../../database/wrappers/guildWrapper';
 
 /**
  * returns the IDs that it has to overwrite and in what state they were

@@ -4,7 +4,7 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { PermLevels } from '../../utils/permissions';
 import { LogTypes, FiltersObject } from '../../database/schemas';
-import { GuildWrapper } from '../../database/guildWrapper';
+import { GuildWrapper } from '../../database/wrappers/guildWrapper';
 import { BenchmarkTimestamp } from '../../utils/time';
 
 /**

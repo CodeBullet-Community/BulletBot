@@ -1,10 +1,10 @@
 import mongoose = require('mongoose');
 import { Guild, GuildResolvable, GuildMemberResolvable, Snowflake, ChannelResolvable, TextChannel } from "discord.js";
-import { CommandUsageLimits, WebhookService, UsageLimits, GuildObject, GuildRank, guildRanks, CommandSettings, MegalogFunction, megalogGroups } from "./schemas";
-import { Bot } from '..';
-import { PermLevels } from '../utils/permissions';
-import { CommandResolvable, CommandName } from '../commands';
-import { resolveCommand, resolveGuildMember, resolveChannel, resolveChannelID } from '../utils/resolvers';
+import { CommandUsageLimits, WebhookService, UsageLimits, GuildObject, GuildRank, guildRanks, CommandSettings, MegalogFunction, megalogGroups } from "../schemas";
+import { Bot } from '../..';
+import { PermLevels } from '../../utils/permissions';
+import { CommandResolvable, CommandName } from '../../commands';
+import { resolveCommand, resolveGuildMember, resolveChannel, resolveChannelID } from '../../utils/resolvers';
 import { Wrapper } from './wrapper';
 import _, { PropertyPath } from "lodash";
 import { keys } from 'ts-transformer-keys';

@@ -3,7 +3,7 @@
 import { User, GuildMember, Message, Guild, Snowflake, GuildResolvable, UserResolvable, Channel, ChannelResolvable, RoleResolvable, Role } from "discord.js";
 import { Bot } from "..";
 import { CommandResolvable, commandInterface } from "../commands";
-import { GuildWrapperResolvable, GuildWrapper } from "../database/guildWrapper";
+import { GuildWrapperResolvable, GuildWrapper } from "../database/wrappers/guildWrapper";
 
 /**
  * Resolves a UserResolvable to a User object.

@@ -2,8 +2,8 @@ import { Collection, Guild, Message } from 'discord.js';
 import * as fs from 'fs';
 
 import { Bot } from '.';
-import { CommandCache } from './database/commandCache';
-import { GuildWrapper, GuildWrapperResolvable } from './database/guildWrapper';
+import { CommandCache } from './database//wrappers/commandCache';
+import { GuildWrapper, GuildWrapperResolvable } from './database/wrappers/guildWrapper';
 import { CommandUsageLimits } from './database/schemas';
 import { durationToString, permToString } from './utils/parsers';
 import { PermLevel, PermLevels } from './utils/permissions';

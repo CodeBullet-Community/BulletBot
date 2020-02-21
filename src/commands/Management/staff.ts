@@ -5,7 +5,7 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { stringToRole, stringToMember } from '../../utils/parsers';
 import { guildRanks, GuildRank } from '../../database/schemas';
-import { GuildWrapper } from '../../database/guildWrapper';
+import { GuildWrapper } from '../../database/wrappers/guildWrapper';
 import { LogTypes } from '../../database/schemas';
 
 function capitalizeFirstLetter(string) {

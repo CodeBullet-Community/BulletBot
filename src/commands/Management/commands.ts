@@ -4,7 +4,7 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { PermLevels } from '../../utils/permissions';
 import { LogTypes } from '../../database/schemas';
-import { GuildWrapper } from '../../database/guildWrapper';
+import { GuildWrapper } from '../../database/wrappers/guildWrapper';
 
 async function getCommandList(guildWrapper: GuildWrapper, title: string, criteria: (command: commandInterface) => Promise<boolean>) {
     let embed = new RichEmbed();

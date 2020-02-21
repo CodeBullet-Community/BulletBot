@@ -3,7 +3,7 @@ import { commandInterface } from '../../commands';
 import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { CommandCache } from '../../database/commandCache';
+import { CommandCache } from '../../database/wrappers/commandCache';
 
 const abc = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 

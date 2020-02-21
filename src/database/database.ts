@@ -22,11 +22,11 @@ import { cleanInterval } from '../bot-config.json';
 import { DMChannel, GroupDMChannel, TextChannel, Collection, Snowflake, GuildResolvable, UserResolvable, ChannelResolvable } from 'discord.js';
 import { Bot } from '..';
 import { toNano } from '../utils/time';
-import { UserWrapper } from './userWrapper';
-import { GuildWrapper } from './guildWrapper';
+import { UserWrapper } from './wrappers/userWrapper';
+import { GuildWrapper } from './wrappers/guildWrapper';
 import { resolveGuild, resolveUser, resolveUserID, resolveChannelID, resolveChannel, resolveCommand } from '../utils/resolvers';
 import { CommandResolvable } from '../commands';
-import { CommandCache } from './commandCache';
+import { CommandCache } from './/wrappers/commandCache';
 
 /**
  * Manages all connections to the main database and settings database

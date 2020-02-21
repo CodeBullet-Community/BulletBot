@@ -5,7 +5,7 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { stringToChannel } from '../../utils/parsers';
 import { megalogGroups, LogTypes, MegalogFunction } from '../../database/schemas';
-import { GuildWrapper } from '../../database/guildWrapper';
+import { GuildWrapper } from '../../database/wrappers/guildWrapper';
 import { BenchmarkTimestamp } from '../../utils/time';
 
 async function createMegalogInfoEmbed(guildWrapper: GuildWrapper) {

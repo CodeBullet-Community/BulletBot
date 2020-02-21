@@ -1,7 +1,7 @@
 import { DMChannel, GroupDMChannel, TextChannel, User } from "discord.js";
-import { CommandCacheDoc } from "./schemas";
-import { commandInterface } from "../commands";
-import { resolveCommand } from "../utils/resolvers";
+import { CommandCacheDoc } from "../schemas";
+import { commandInterface } from "../../commands";
+import { resolveCommand } from "../../utils/resolvers";
 
 /**
  * Wrapper from command cache. Is a mix between doc and object

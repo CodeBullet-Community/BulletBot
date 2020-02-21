@@ -1,6 +1,6 @@
 import { Schema, Model, Document, Query } from "mongoose";
 import _ from "lodash";
-import { ExDocument, Keys } from "./schemas";
+import { ExDocument, Keys } from "../schemas";
 
 /**
  * Wrapper for mongoDB documents. 

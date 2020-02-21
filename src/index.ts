@@ -7,7 +7,7 @@ import { Catcher } from './catcher';
 import { Commands } from './commands';
 import { CaseLogger } from './database/caseLogger';
 import { Database } from './database/database';
-import { GuildWrapper } from './database/guildWrapper';
+import { GuildWrapper } from './database/wrappers/guildWrapper';
 import { Logger } from './database/logger';
 import { MStats } from './database/mStats';
 import { PActions } from './database/pActions';

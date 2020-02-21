@@ -1,9 +1,9 @@
 import { Snowflake, User } from 'discord.js';
 import { keys } from 'ts-transformer-keys';
 
-import { Bot } from '..';
-import { CommandName } from '../commands';
-import { CommandScope, CommandUsageLimits, UserObject } from './schemas';
+import { Bot } from '../..';
+import { CommandName } from '../../commands';
+import { CommandScope, CommandUsageLimits, UserObject } from '../schemas';
 import { Wrapper } from './wrapper';
 
 /**

@@ -7,7 +7,7 @@ import { commandInterface } from '../commands';
 import { filterInterface } from '../filters';
 import { filterAction, filterActions } from '../utils/filters';
 import { actionToString } from '../utils/parsers';
-import { GuildWrapper } from './guildWrapper';
+import { GuildWrapper } from './wrappers/guildWrapper';
 import {
     GuildDoc,
     GuildRank,
