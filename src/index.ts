@@ -38,6 +38,13 @@ import {
 import { PermLevels } from './utils/permissions';
 import { Durations } from './utils/time';
 import { YTWebhookManager } from './youtube';
+import { keys } from 'ts-transformer-keys';
+
+try {
+    keys();
+} catch{
+    throw new Error(`Code wasn't correctly compiled. Use 'ttsc' instead of 'tsc' so plugins also get compiled`);
+}
 
 // add console logging info
 require('console-stamp')(console, {
