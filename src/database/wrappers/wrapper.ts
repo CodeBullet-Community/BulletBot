@@ -1,6 +1,6 @@
 import { Schema, Model, Document, Query } from "mongoose";
 import _ from "lodash";
-import { ExDocument, Keys } from "../schemas";
+import { ExDocument, Keys, OptionalFields, ObjectKey } from "../schemas";
 
 /**
  * Wrapper for mongoDB documents. 
@@ -13,11 +13,12 @@ import { ExDocument, Keys } from "../schemas";
  */
 export class Wrapper<T extends Object> {
 
-    private model: Model<ExDocument<T>>;
-    private uniqueQuery: any;
+    private readonly model: Model<ExDocument<T>>;
+    private readonly uniqueQuery: any;
     private loadedFields: Keys<T>;
     private readonly allFields: Keys<T>;
     protected data: Partial<T>;
+    removed: boolean;
 
     /**
      *Creates an instance of Wrapper.
@@ -34,17 +35,18 @@ export class Wrapper<T extends Object> {
         this.allFields = allFields;
         this.data = {};
         this.allFields.forEach(key => this.setProperty(key));
+        this.removed = false;
     }
 
     /**
      * Queries the database for the document corresponding to the wrapper
      *
      * @private
-     * @param {string[]} [fields] What parts of the document should be returned
+     * @param {Keys<T>} [fields] What parts of the document should be returned
      * @returns The document if it was found
      * @memberof Wrapper
      */
-    protected getDoc(fields?: (keyof T)[]) {
+    protected getDoc(fields?: Keys<T>) {
         return this.model.findOne(this.uniqueQuery, fields ? fields.join(' ') : undefined).exec();
     }
 
@@ -100,34 +102,47 @@ export class Wrapper<T extends Object> {
     /**
      * Reloads all already loaded fields of the wrapper
      *
-     * @param {(keyof T)[]} [fields] If set it only reloads those fields (can also be not yet loaded fields)
+     * @param {Keys<T>} [fields] If set it only reloads those fields (can also be not yet loaded fields)
      * @returns
      * @memberof Wrapper
      */
-    async resync(fields?: (keyof T)[]) {
+    async resync(fields?: Keys<T>) {
         let result = await this.load(fields || this.loadedFields, true);
         return result ? this : undefined;
     }
 
     /**
-     * Creates a getter for a specific field
+     * Creates a getter for a specific field that connects with 
      *
      * @private
      * @param {string} key Field to define a getter for
      * @memberof Wrapper
      */
     private setProperty(key: keyof T) {
-        Object.defineProperty(this, key, {
-            get: () => {
-                if (!this.isLoaded(key)) {
-                    console.warn(new Error(`The wrapper property "${key}" has been accessed before being loaded. Please first check if a property is already loaded with "Wrapper.load()".`));
-                    return undefined;
-                }
-                return this.data[key];
-            },
-            set: () => {
-                throw new Error('Wrapper properties cannot be changed directly. Use functions for that.');
+        this.setCustomProperty(key, () => {
+            if (!this.isLoaded(key)) {
+                console.warn(new Error(`The wrapper property "${key}" has been accessed before being loaded. Please first check if a property is already loaded with "Wrapper.load()".`));
+                return undefined;
             }
+            return this.data[key];
+        });
+    }
+
+    /**
+     * Sets the provided getter and creates a Setter that throws an error
+     *
+     * @protected
+     * @param {ObjectKey} key What key should be used
+     * @param {() => any} getter Getter to set
+     * @memberof Wrapper
+     */
+    protected setCustomProperty(key: ObjectKey, getter: () => any) {
+        Object.defineProperty(this, key, {
+            get: getter,
+            set: () => {
+                throw new Error(`Attempted to set property "${String(key)}". Wrapper properties cannot be changed directly. Use provided functions for that.`);
+            },
+            configurable: true
         });
     }
 
@@ -160,11 +175,11 @@ export class Wrapper<T extends Object> {
      * Updates which fields of the wrapper are loaded
      *
      * @private
-     * @param {string[]} [fields] Fields that were newly loaded
+     * @param {Keys<T>} [fields] Fields that were newly loaded
      * @returns Which fields weren't loaded before
      * @memberof Wrapper
      */
-    private updateLoadedFields(fields?: (keyof T)[]) {
+    protected updateLoadedFields(fields?: Keys<T>) {
         if (!this.loadedFields)
             return [];
         if (!fields)
@@ -179,12 +194,12 @@ export class Wrapper<T extends Object> {
      * Loads specified not loaded fields. 
      * If force is true it loads all specified fields regardless of if they are already loaded.
      *
-     * @param {(keyof T | (keyof T)[])} [fields] Fields to load (Can also be a single field)
+     * @param {OptionalFields<T>} [fields] Fields to load (Can also be a single field)
      * @param {boolean} [force=false] If already loaded fields should also be reloaded
      * @returns Which fields were newly loaded
      * @memberof Wrapper
      */
-    async load(fields?: keyof T | (keyof T)[], force = false) {
+    async load(fields?: OptionalFields<T>, force = false) {
         fields = fields ? [].concat(fields) : undefined;
         let loadFields = this.updateLoadedFields(fields);
         if (!loadFields.length && !force) return [];
@@ -199,12 +214,13 @@ export class Wrapper<T extends Object> {
     }
 
     /**
-     * Deletes the corresponding document from the database
+     * Removes the corresponding document from the database
      *
      * @returns
      * @memberof Wrapper
      */
-    delete() {
+    remove() {
+        this.removed = true;
         return this.model.deleteOne(this.uniqueQuery).exec();
     }
 

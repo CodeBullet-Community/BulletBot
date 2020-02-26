@@ -1,11 +1,11 @@
-import { Message, Guild } from 'discord.js';
-import { commandInterface } from '../../commands';
-import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
+import { commandInterface } from '../../commands';
 import { sendError } from '../../utils/messages';
-import { CommandCache } from '../../database/wrappers/commandCache';
+import { PermLevels } from '../../utils/permissions';
+import { Durations } from '../../utils/time';
 
-const abc = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+const abc = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+const waitTime = Durations.second * 10;
 
 var command: commandInterface = {
     name: 'abc',
@@ -33,23 +33,24 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 message.channel.send(abc[0]);
                 Bot.mStats.logMessageSend();
-                // create command cache for user
-                Bot.database.createCommandCache(message.channel, message.author, command, Date.now() + 10000, { index: 0 });
+                // create CommandCache for user
+                Bot.database.createCommandCache(message.channel, message.author, command, permLevel, Date.now() + waitTime, 0);
             } else {
-                if (abc[commandCache.cache.index + 1] == args.toLocaleLowerCase()) { // if user replied with the correct character
-                    commandCache.cache.index += 2;
+                await commandCache.load('cache');
+                if (abc[commandCache.cache + 1] == args.toLocaleLowerCase()) { // if user replied with the correct character
+                    await commandCache.setCache(commandCache.cache + 2);
 
-                    if (abc[commandCache.cache.index]) { // if alphabet is finished or not
-                        message.channel.send(abc[commandCache.cache.index]);
+                    if (abc[commandCache.cache]) { // if alphabet is finished or not
+                        message.channel.send(abc[commandCache.cache]);
                         Bot.mStats.logMessageSend();
-                        commandCache.save(10000);
+                        await commandCache.extendExpirationTimestamp(waitTime)
                     } else {
                         message.channel.send('alphabet was finished');
                         Bot.mStats.logMessageSend();
                         commandCache.remove();
                     }
                 } else {
-                    message.channel.send(`You were supposed to send \`${abc[commandCache.cache.index + 1]}\``);
+                    message.channel.send(`You were supposed to send \`${abc[commandCache.cache + 1]}\``);
                     Bot.mStats.logMessageSend();
                     commandCache.remove();
                 }

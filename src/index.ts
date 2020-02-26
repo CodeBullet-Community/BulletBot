@@ -1,19 +1,20 @@
 import * as discord from 'discord.js';
 import exitHook = require('exit-hook');
 import fs = require('fs');
+import { keys } from 'ts-transformer-keys';
 
 import { botToken, callback, cluster, crashProof } from './bot-config.json';
 import { Catcher } from './catcher';
 import { Commands } from './commands';
 import { CaseLogger } from './database/caseLogger';
 import { Database } from './database/database';
-import { GuildWrapper } from './database/wrappers/guildWrapper';
 import { Logger } from './database/logger';
 import { MStats } from './database/mStats';
 import { PActions } from './database/pActions';
 import { LogTypes, megalogGroups } from './database/schemas';
 import { Settings } from './database/settings';
 import { updateDatabaseAfter1_2_8 } from './database/update';
+import { GuildWrapper } from './database/wrappers/guildWrapper';
 import { Filters } from './filters';
 import {
     cacheAttachment,
@@ -38,7 +39,6 @@ import {
 import { PermLevels } from './utils/permissions';
 import { Durations } from './utils/time';
 import { YTWebhookManager } from './youtube';
-import { keys } from 'ts-transformer-keys';
 
 try {
     keys();
@@ -208,13 +208,19 @@ client.on('message', async message => {
     if (!message.guild)
         dm = true;
 
-    // get command cache if there is one
-    let commandCache = await Bot.database.getCommandCache(message.channel, message.author);
+    // get CommandCache if there is one
+    let commandCache = await Bot.database.findCommandCache(message.channel, message.author);
 
     // get guild wrapper
     let guildWrapper: GuildWrapper = undefined;
     if (!dm)
         guildWrapper = await Bot.database.getGuildWrapper(message.guild);
+
+    // directly calls command when CommandCache exists
+    if (commandCache) {
+        Bot.commands.runCachedCommand(message, commandCache, commandCache.permLevel, dm, guildWrapper, requestTime);
+        return;
+    }
 
     // if message is only a mention of the bot, he dms help
     if (message.content == '<@' + Bot.client.user.id + '>' && !commandCache) {
@@ -228,11 +234,7 @@ client.on('message', async message => {
     let permLevel = PermLevels.member;
     if (!dm) permLevel = await guildWrapper.getPermLevel(message.member);
 
-    // directly calls command when command cache exists
-    if (commandCache) {
-        Bot.commands.runCachedCommand(message, commandCache, permLevel, dm, guildWrapper, requestTime);
-        return;
-    }
+
 
     let prefix = await guildWrapper.getPrefix();
     if (!message.content.startsWith(prefix)) {

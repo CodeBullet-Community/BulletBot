@@ -15,7 +15,9 @@ import {
     PActionDoc,
     pActionSchema,
     GuildObject,
-    UserObject
+    UserObject,
+    CommandCacheObject,
+    OptionalFields
 } from './schemas';
 import { setInterval } from 'timers';
 import { cleanInterval } from '../bot-config.json';
@@ -26,7 +28,8 @@ import { UserWrapper } from './wrappers/userWrapper';
 import { GuildWrapper } from './wrappers/guildWrapper';
 import { resolveGuild, resolveUser, resolveUserID, resolveChannelID, resolveChannel, resolveCommand } from '../utils/resolvers';
 import { CommandResolvable } from '../commands';
-import { CommandCache } from './/wrappers/commandCache';
+import { CommandCacheWrapper } from './wrappers/commandCacheWrapper';
+import { PermLevel } from '../utils/permissions';
 
 /**
  * Manages all connections to the main database and settings database
@@ -55,7 +58,7 @@ export class Database {
     cache: {
         guilds: Collection<Snowflake, GuildWrapper>;
         users: Collection<Snowflake, UserWrapper>;
-        commandCaches: Collection<String, CommandCache>; // key is `${channel.id} {user.id}`
+        commandCaches: Collection<String, CommandCacheWrapper>; // key is `${channel.id} {user.id}`
     };
 
     /**
@@ -130,11 +133,11 @@ export class Database {
      *
      * @export
      * @param {GuildResolvable} guild The guild to get the wrapper for
-     * @param {(keyof GuildObject | (keyof GuildObject)[])} [fields] Only those fields should be loaded (Can also be a single value)
+     * @param {OptionalFields<GuildObject>} [fields] Only those fields should be loaded (Can also be a single value)
      * @returns GuildWrapper of the specified guild
      * @memberof Database
      */
-    async getGuildWrapper(guildResolvable: GuildResolvable, fields?: keyof GuildObject | (keyof GuildObject)[]) {
+    async getGuildWrapper(guildResolvable: GuildResolvable, fields?: OptionalFields<GuildObject>) {
         let guild = resolveGuild(guildResolvable);
         if (!guild) return undefined;
 
@@ -143,6 +146,7 @@ export class Database {
             guildWrapper = new GuildWrapper(guild.id, guild);
             this.cache.guilds.set(guild.id, guildWrapper);
         }
+        if (!guildWrapper) return undefined;
         await guildWrapper.load(fields);
         return guildWrapper;
     }
@@ -272,7 +276,7 @@ export class Database {
      *
      * @param {string} channelID channel ID
      * @param {string} userID user ID
-     * @param {Number} [timestamp=Date.now()] Timestamp of when the command cache was valid (Default: Date.now())
+     * @param {Number} [timestamp=Date.now()] Timestamp of when the CommandCache was valid (Default: Date.now())
      * @returns
      * @memberof Database
      */
@@ -281,7 +285,7 @@ export class Database {
     }
 
     /**
-     * Returns key associated with the command cache used for internal caching
+     * Returns key associated with the CommandCache used for internal caching
      *
      * @private
      * @param {ChannelResolvable} channel
@@ -294,82 +298,72 @@ export class Database {
     }
 
     /**
-     * Checks if the channel is one used by command caches
+     * Creates (or overwrites) a new CommandCache with the provided values
      *
-     * @private
-     * @param {ChannelResolvable} channel Channel to check
-     * @returns Channel object if it's valid
+     * @param {ChannelResolvable} channel Channel in which the CommandCache should be valid
+     * @param {UserResolvable} user user associated with the CommandCache
+     * @param {CommandResolvable} command Command that created the CommandCache
+     * @param {PermLevel} permLevel What permissions level this command can be executed
+     * @param {number} expirationTimestamp When the CommandCache expires
+     * @param {object} [cache={}] Cache it should have (Default {})
+     * @returns CommandCacheWrapper if creation was successful
      * @memberof Database
      */
-    private validateCommandCacheChannel(channel: ChannelResolvable) {
+    async createCommandCache(channel: ChannelResolvable, user: UserResolvable, command: CommandResolvable, permLevel: PermLevel, expirationTimestamp: number, cache: any = {}) {
         let channelObj = resolveChannel(channel);
-        if (!(channelObj instanceof DMChannel ||
-            channelObj instanceof GroupDMChannel ||
-            channelObj instanceof TextChannel)) throw new Error('Command cache can only be created for DMChannel, GroupDMChannel or TextChannel');
-        return channelObj;
-    }
-
-    /**
-     * Creates a new commandCache in the database and returns a CommandCache object
-     *
-     * @param {ChannelResolvable} channel Channel in which the command cache is valid
-     * @param {UserResolvable} user User associated with the command cache
-     * @param {CommandResolvable} command Command that created the command cache
-     * @param {number} deleteTimestamp When the command cache should be deleted
-     * @param {*} [cache={}] Optional cache
-     * @returns
-     * @memberof Database
-     */
-    async createCommandCache(channel: ChannelResolvable, user: UserResolvable, command: CommandResolvable, deleteTimestamp: number, cache = {}) {
-        let channelObj = this.validateCommandCacheChannel(channel);
         let userObj = await resolveUser(user);
-        let commandName = resolveCommand(command).name;
+        let commandObj = resolveCommand(command);
 
-        let doc = await new Bot.database.mainDB.commandCache({
-            channel: channelObj.id,
-            user: userObj,
-            command: commandName,
-            cache: cache,
-            delete: deleteTimestamp
-        }).save();
-        let commandCache = new CommandCache(doc, userObj, channelObj);
-        let cacheKey = this.getCommandCacheKey(channelObj.id, userObj.id);
-        this.cache.commandCaches.set(cacheKey, commandCache);
+        let commandCache = new CommandCacheWrapper(channelObj, userObj);
+        commandCache = await commandCache.init(commandObj, permLevel, cache, expirationTimestamp);
+        if (!commandCache)
+            throw new Error(`CommandCache initialization failed with following properties: ${JSON.stringify({
+                channel: channelObj.id,
+                user: userObj.id,
+                command: commandObj.name,
+                permLevel: permLevel,
+                expirationTimestamp: expirationTimestamp,
+                cache: cache
+            })}`);
+
+        let key = this.getCommandCacheKey(channelObj.id, userObj.id);
+        this.cache.commandCaches.set(key, commandCache);
         return commandCache;
     }
 
     /**
-     * Searches cache and database for command cache and returns it wrapped in a CommandCache class
+     * Gets the searched CommandCache from the database
      *
-     * @param {ChannelResolvable} channel channel for commandCache
-     * @param {UserResolvable} user user for commandCache
-     * @returns commandCache wrapped in a CommandCache class
+     * @param {ChannelResolvable} channel Channel for commandCache
+     * @param {UserResolvable} user User for commandCache
+     * @param {OptionalFields<GuildObject>} [fields] Only those fields should be loaded (Can also be a single value)
+     * @returns CommandCacheWrapper if it found one
      * @memberof Database
      */
-    async getCommandCache(channel: ChannelResolvable, user: UserResolvable) {
-        let channelObj = this.validateCommandCacheChannel(channel);
+    async findCommandCache(channel: ChannelResolvable, user: UserResolvable, fields?: OptionalFields<CommandCacheObject>) {
+        let channelObj = resolveChannel(channel);
         let userObj = await resolveUser(user);
         let cacheKey = this.getCommandCacheKey(channelObj, userObj);
 
         let commandCache = this.cache.commandCaches.get(cacheKey);
-        if (commandCache && commandCache.delete > Date.now()) return commandCache;
-
-        let commandCacheDoc = await this.findCommandCacheDoc(channelObj.id, userObj.id);
-        if (!commandCacheDoc) return undefined;
-        commandCache = new CommandCache(commandCacheDoc, userObj, channelObj);
-        this.cache.commandCaches.set(cacheKey, commandCache);
+        if (!commandCache) return undefined;
+        if (commandCache.removed) {
+            this.cache.commandCaches.delete(cacheKey);
+            return undefined;
+        }
+        commandCache.load(fields);
         return commandCache;
     }
 
     /**
-     * deletes all old command caches
+     * deletes all old CommandCaches
      *
      * @returns
      * @memberof Database
      */
     cleanCommandCaches() {
         for (const cache of this.cache.commandCaches) {
-            if (cache[1].delete > Date.now()) continue;
+            if (!cache[1].isExpired() && !cache[1].removed) continue;
             this.cache.commandCaches.delete(cache[0]);
         }
         return this.mainDB.commandCache.deleteMany({ delete: { $lt: Date.now() } }).exec();
@@ -390,11 +384,11 @@ export class Database {
      * Gets a UserWrapper for a given user and caches it
      *
      * @param {UserResolvable} userResolvable User for which to get a wrapper
-     * @param {(keyof UserObject | (keyof UserObject)[])} [fields] Only those fields should be loaded (Can also be a single value)
+     * @param {OptionalFields<UserObject>} [fields] Only those fields should be loaded (Can also be a single value)
      * @returns UserWrapper for the specified user
      * @memberof Database
      */
-    async getUserWrapper(userResolvable: UserResolvable, fields?: keyof UserObject | (keyof UserObject)[]) {
+    async getUserWrapper(userResolvable: UserResolvable, fields?: OptionalFields<UserObject>) {
         let user = await resolveUser(userResolvable);
 
         let userWrapper = this.cache.users.get(user.id);

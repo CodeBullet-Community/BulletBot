@@ -1,18 +1,26 @@
-import { PresenceData, Snowflake } from 'discord.js';
+import { PresenceData, Snowflake, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
 import _ from 'lodash';
 import { ObjectId } from 'mongodb';
 import mongoose = require('mongoose');
 
-import { CommandName } from '../commands';
+import { CommandName, commandInterface } from '../commands';
 
 /**
  * A document that extends on a specific Object
  */
 export type ExDocument<T> = T & mongoose.Document;
 /**
- * Array of keys of a specific
+ * A key of an Object
+ */
+export type ObjectKey = string | number | symbol;
+/**
+ * Array of keys of a specific Object
  */
 export type Keys<T> = (keyof T)[];
+/**
+ * Array of keys or a single key of a specific Object
+ */
+export type OptionalFields<T> = keyof T | Keys<T>;
 
 // usageLimits
 export interface UsageLimits {
@@ -338,22 +346,31 @@ export interface LogMegalogIgnore {
     channel?: Snowflake // channel ID
 }
 
-// command cache
-export interface CommandCacheObject {
+// CommandCache
+export interface CommandCache {
+    channel: Snowflake | DMChannel | TextChannel;
+    user: Snowflake | User;
+    command: CommandName | commandInterface;
+    permLevel: number;
+    cache: any;
+    expirationTimestamp: number | Date;
+}
+export interface CommandCacheObject extends CommandCache {
     channel: Snowflake;
     user: Snowflake;
     command: CommandName;
+    permLevel: number;
     cache: any;
-    delete: number;
+    expirationTimestamp: number;
 }
-
 export type CommandCacheDoc = ExDocument<CommandCacheObject>;
 export const commandCacheSchema = new mongoose.Schema({
     channel: String,
     user: String,
     command: String,
+    permLevel: Number,
     cache: mongoose.Schema.Types.Mixed,
-    delete: Number
+    expirationTimestamp: Number
 });
 
 // user

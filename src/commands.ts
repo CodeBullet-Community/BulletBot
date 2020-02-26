@@ -2,7 +2,7 @@ import { Collection, Guild, Message } from 'discord.js';
 import * as fs from 'fs';
 
 import { Bot } from '.';
-import { CommandCache } from './database//wrappers/commandCache';
+import { CommandCacheWrapper } from './database/wrappers/commandCacheWrapper';
 import { GuildWrapper, GuildWrapperResolvable } from './database/wrappers/guildWrapper';
 import { CommandUsageLimits } from './database/schemas';
 import { durationToString, permToString } from './utils/parsers';
@@ -120,11 +120,11 @@ export interface commandInterface {
      * @param {GuildWrapper} guildWrapper guild wrapper is only provided if dm is false
      * @param {boolean} dm if message came from dms
      * @param {BenchmarkTimestamp} requestTime var for performance tracking
-     * @param {CommandCache} [commandCache] optional parameter, if command was called with cache
+     * @param {CommandCacheWrapper} [commandCache] optional parameter, if command was called with cache
      * @returns if command was successful. True and undefined means yes. If it yes, the cooldown gets set if a time is specified
      * @memberof commandInterface
      */
-    run(message: Message, args: string, permLevel: PermLevel, dm: boolean, guildWrapper: GuildWrapper, requestTime: BenchmarkTimestamp, commandCache?: CommandCache): Promise<boolean>;
+    run(message: Message, args: string, permLevel: PermLevel, dm: boolean, guildWrapper: GuildWrapper, requestTime: BenchmarkTimestamp, commandCache?: CommandCacheWrapper): Promise<boolean>;
 }
 
 export type CommandName = string
@@ -262,7 +262,7 @@ export class Commands {
      * runs command with cache
      *
      * @param {Message} message message from where the request came from
-     * @param {CommandCache} commandCache command cache
+     * @param {CommandCacheWrapper} commandCache CommandCache
      * @param {PermLevels} permLevel perm level or member that send the message
      * @param {boolean} dm if message is from a dm
      * @param {GuildWrapper} guildWrapper guild wrapper is only provided if dm is false
@@ -270,7 +270,7 @@ export class Commands {
      * @returns
      * @memberof Commands
      */
-    async runCachedCommand(message: Message, commandCache: CommandCache, permLevel: PermLevels, dm: boolean, guildWrapper: GuildWrapper, requestTime: BenchmarkTimestamp) {
+    async runCachedCommand(message: Message, commandCache: CommandCacheWrapper, permLevel: PermLevels, dm: boolean, guildWrapper: GuildWrapper, requestTime: BenchmarkTimestamp) {
         var cmd = this.commands.get(commandCache.command.name);
         if (!cmd) {
             commandCache.remove();
