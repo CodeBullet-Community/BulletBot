@@ -34,7 +34,9 @@ export class UserWrapper extends Wrapper<UserObject> implements UserObject {
      */
     constructor(id: Snowflake, user: User) {
         super(Bot.database.mainDB.users, { id: id }, ['id'], keys<UserObject>());
-        this.data.id = id;
+        let tempData = this.cloneData();
+        tempData.id = id
+        this.data.next(tempData);
         this.user = user;
     }
 
@@ -76,23 +78,26 @@ export class UserWrapper extends Wrapper<UserObject> implements UserObject {
         if (scope !== 'global')
             query.$set[`commandLastUsed.global.${command}`] = timestamp;
         await this.update(query);
-        this._setCommandLastUsed(scope, command, timestamp);
-        this._setCommandLastUsed('global', command, timestamp);
-        return this.data.commandLastUsed[scope][command] = timestamp;
+        let tempData = this.cloneData();
+        this._setCommandLastUsed(tempData, scope, command, timestamp);
+        this._setCommandLastUsed(tempData, 'global', command, timestamp);
+        this.data.next(tempData);
+        return timestamp;
     }
 
     /**
      * Private helper function that only sets the local values
      *
      * @private
+     * @param {Partial<UserObject>} data UserObject that should be manipulated
      * @param {CommandScope} scope Guild id / 'dm' / 'global'
      * @param {string} command Name of the command
      * @param {number} timestamp When the command was last used
      * @memberof UserWrapper
      */
-    private _setCommandLastUsed(scope: CommandScope, command: CommandName, timestamp: number) {
-        if (!this.data.commandLastUsed[scope]) this.data.commandLastUsed[scope] = {};
-        this.data.commandLastUsed[scope][command] = timestamp;
+    private _setCommandLastUsed(data: Partial<UserObject>, scope: CommandScope, command: CommandName, timestamp: number) {
+        if (!data.commandLastUsed[scope]) data.commandLastUsed[scope] = {};
+        data.commandLastUsed[scope][command] = timestamp;
     }
 
     /**
@@ -110,7 +115,9 @@ export class UserWrapper extends Wrapper<UserObject> implements UserObject {
         query.$unset[scope] = 0;
         await this.update(query);
         let deletedScope = this.commandLastUsed[scope];
-        delete this.data.commandLastUsed[scope];
+        let tempData = this.cloneData();
+        delete tempData.commandLastUsed[scope];
+        this.data.next(tempData);
         return deletedScope;
     }
 

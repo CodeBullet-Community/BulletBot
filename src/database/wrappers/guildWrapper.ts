@@ -62,7 +62,9 @@ export class GuildWrapper extends Wrapper<GuildObject> implements GuildObject {
      */
     constructor(id: Snowflake, guild?: Guild) {
         super(Bot.database.mainDB.guilds, { id: id }, ['id'], keys<GuildObject>());
-        this.data.id = id;
+        let tempData = this.cloneData();
+        tempData.id = id;
+        this.data.next(tempData);
 
         if (guild)
             this.guild = guild;
@@ -92,7 +94,9 @@ export class GuildWrapper extends Wrapper<GuildObject> implements GuildObject {
         let query: any = { $set: { prefix: prefix } };
         if (!prefix) query = { $unset: { prefix: 0 } };
         await this.update(query);
-        this.data.prefix = prefix;
+        let tempData = this.cloneData();
+        tempData.prefix = prefix;
+        this.data.next(tempData);
     }
 
     /**
@@ -166,7 +170,9 @@ export class GuildWrapper extends Wrapper<GuildObject> implements GuildObject {
         let query = { $addToSet: {} };
         query.$addToSet[`ranks.${rank}`] = [snowflake];
         await this.update(query);
-        this.data.ranks[rank].push(snowflake);
+        let tempData = this.cloneData();
+        tempData.ranks[rank].push(snowflake);
+        this.data.next(tempData);
         return this.ranks[rank];
     }
 
@@ -185,7 +191,9 @@ export class GuildWrapper extends Wrapper<GuildObject> implements GuildObject {
         let query = { $pull: {} };
         query.$pull[`ranks.${rank}`] = snowflake;
         await this.update(query);
-        this.data.ranks[rank].splice(this.ranks[rank].indexOf(snowflake), 1);
+        let tempData = this.cloneData();
+        tempData.ranks[rank].splice(this.ranks[rank].indexOf(snowflake), 1);
+        this.data.next(tempData);
         return this.ranks[rank];
     }
 
@@ -218,7 +226,9 @@ export class GuildWrapper extends Wrapper<GuildObject> implements GuildObject {
         let query = { $set: {} };
         query.$set[`commandSettings.${command}`] = settings;
         await this.update(query);
-        this.data.commandSettings[command] = settings;
+        let tempData = this.cloneData();
+        tempData.commandSettings[command] = settings;
+        this.data.next(tempData);
         return settings;
     }
 
@@ -257,7 +267,9 @@ export class GuildWrapper extends Wrapper<GuildObject> implements GuildObject {
         await this.update(query);
 
         settings._enabled = value;
-        this.data.commandSettings[command] = settings;
+        let tempData = this.cloneData();
+        tempData.commandSettings[command] = settings;
+        this.data.next(tempData);
         return value;
     }
 
@@ -438,7 +450,9 @@ export class GuildWrapper extends Wrapper<GuildObject> implements GuildObject {
         let query = { $set: {} };
         query.$set[`megalog.${func}`] = channelID;
         await this.update(query);
-        this.data.megalog[func] = channelID;
+        let tempData = this.cloneData();
+        tempData.megalog[func] = channelID;
+        this.data.next(tempData);
         return channelID;
     }
 
@@ -456,7 +470,9 @@ export class GuildWrapper extends Wrapper<GuildObject> implements GuildObject {
         let query = { $unset: {} };
         query.$unset[`megalog.${func}`] = 0;
         await this.update(query);
-        delete this.data.megalog[func];
+        let tempData = this.cloneData();
+        delete tempData.megalog[func];
+        this.data.next(tempData);
         return channelId;
     }
 
@@ -511,7 +527,9 @@ export class GuildWrapper extends Wrapper<GuildObject> implements GuildObject {
         let query = { $pull: {} };
         query.$pull['megalog.ignoreChannels'] = channelID;
         await this.update(query);
-        _.remove(this.data.megalog.ignoreChannels, channelID);
+        let tempData = this.cloneData();
+        _.remove(tempData.megalog.ignoreChannels, channelID);
+        this.data.next(tempData);
         return this.megalog.ignoreChannels;
     }
 
@@ -530,7 +548,9 @@ export class GuildWrapper extends Wrapper<GuildObject> implements GuildObject {
         let query = { $addToSet: {} };
         query.$addToSet['megalog.ignoreChannels'] = channelObj.id;
         await this.update(query);
-        this.data.megalog.ignoreChannels.push(channelObj.id);
+        let tempData = this.cloneData();
+        tempData.megalog.ignoreChannels.push(channelObj.id);
+        this.data.next(tempData);
         return this.megalog.ignoreChannels;
     }
 

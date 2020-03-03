@@ -27,6 +27,7 @@
         "mongoose": "^5.7.8",
         "pjson": "^1.0.9",
         "request": "^2.88.0",
+        "rxjs": "^6.5.4",
         "ts-transformer-keys": "^0.4.1",
         "xml2js": "^0.4.22"
     },

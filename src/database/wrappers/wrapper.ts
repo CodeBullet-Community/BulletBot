@@ -1,6 +1,9 @@
-import { Schema, Model, Document, Query } from "mongoose";
-import _ from "lodash";
-import { ExDocument, Keys, OptionalFields, ObjectKey } from "../schemas";
+import _ from 'lodash';
+import { Model } from 'mongoose';
+import { BehaviorSubject } from 'rxjs';
+import { distinctUntilChanged } from 'rxjs/operators';
+
+import { ExDocument, Keys, ObjectKey, OptionalFields } from '../schemas';
 
 /**
  * Wrapper for mongoDB documents. 
@@ -17,7 +20,7 @@ export class Wrapper<T extends Object> {
     private readonly uniqueQuery: any;
     private loadedFields: Keys<T>;
     private readonly allFields: Keys<T>;
-    protected data: Partial<T>;
+    protected data: BehaviorSubject<Partial<T>>;
     removed: boolean;
 
     /**
@@ -33,7 +36,7 @@ export class Wrapper<T extends Object> {
         this.uniqueQuery = uniqueQuery;
         this.loadedFields = preloadedFields;
         this.allFields = allFields;
-        this.data = {};
+        this.data = new BehaviorSubject({});
         this.allFields.forEach(key => this.setProperty(key));
         this.removed = false;
     }
@@ -62,9 +65,10 @@ export class Wrapper<T extends Object> {
 
     /**
      * Creates a document for this wrapper with the provided content. 
-     * By default it first checks if there is already a document and if so doesn't create one.
+     * It first checks if there is already a document and if so (by default) doesn't create one. 
+     * If overwrite is true and a document already exists it first deletes the old one.
      * 
-     * IMPORTANT: The wrapper doesn't check if the document is correct and can actually be found by it's uniqueQuery.
+     * IMPORTANT: The wrapper doesn't check if the document is correct and can actually be found by its uniqueQuery.
      *
      * @param {T} content The content of the document
      * @param {boolean} [overwrite=false] If it should overwrite the old document (Default false)
@@ -81,22 +85,53 @@ export class Wrapper<T extends Object> {
     }
 
     /**
+     * Subscribes to the raw data. If field provided it only subscribes to the changes of a specific field.
+     *
+     * @param {(data: T) => any} func Function that should be called for subscription
+     * @param {keyof T} [field] Subscribe only on changes to this value
+     * @returns
+     * @memberof Wrapper
+     */
+    subToData(func: (data: T) => any, field?: keyof T) {
+        let piped = field == null ? this.data : this.data.pipe(
+            distinctUntilChanged((prev, curr) => _.isEqual(prev[field], curr[field]))
+        )
+        return piped.subscribe(func);
+    }
+
+    /**
+     * Clones the data object so it can be manipulated
+     *
+     * @returns
+     * @memberof Wrapper
+     */
+    cloneData() {
+        return _.cloneDeep(this.data.value);
+    }
+
+    /**
      * Loads fields from a provided object. 
      * The object is seen as fully loaded, so undefined fields will also be used.
      *
      * @param {T} obj The object to load from
-     * @param {boolean} [replace=true] If already loaded fields should be replaced
+     * @param {boolean} [overwrite=true] If already loaded fields should be replaced
      * @returns The resulting data object
      * @memberof Wrapper
      */
-    loadFromObject(obj: T, replace = true) {
+    loadFromObject(obj: T, overwrite = true) {
         this.loadedFields = [...this.allFields];
-        for (const key of this.allFields) {
-            if (this.loadedFields.includes(key) && !replace)
+        return this.mergeData(obj, [...this.allFields], overwrite);
+    }
+
+    private mergeData(obj: T, fieldsToMerge: Keys<T>, overwrite = false) {
+        let tempData = this.cloneData();
+        for (const key of fieldsToMerge) {
+            if (!overwrite && this.loadedFields.includes(key))
                 continue;
-            this.data[key] = obj[key];
+            tempData[key] = obj[key];
         }
-        return this.data;
+        this.data.next(tempData);
+        return tempData;
     }
 
     /**
@@ -124,7 +159,7 @@ export class Wrapper<T extends Object> {
                 console.warn(new Error(`The wrapper property "${key}" has been accessed before being loaded. Please first check if a property is already loaded with "Wrapper.load()".`));
                 return undefined;
             }
-            return this.data[key];
+            return this.data.value;
         });
     }
 
@@ -208,9 +243,7 @@ export class Wrapper<T extends Object> {
         let doc = await this.getDoc(loadFields);
         if (!doc) return undefined;
 
-        for (const key of loadFields || this.allFields)
-            this.data[key] = doc[key];
-        return loadFields;
+        return this.mergeData(doc, loadFields || this.allFields, true);
     }
 
     /**

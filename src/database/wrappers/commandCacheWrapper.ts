@@ -1,11 +1,24 @@
-import { DMChannel, GroupDMChannel, TextChannel, User, UserResolvable, ChannelResolvable } from "discord.js";
-import { CommandCacheDoc, CommandCache, CommandCacheObject } from "../schemas";
-import { commandInterface, CommandResolvable } from "../../commands";
-import { resolveCommand, resolveChannel, resolveUser } from "../../utils/resolvers";
-import { Wrapper } from "./wrapper";
-import { Bot } from "../..";
-import { keys } from "ts-transformer-keys";
-import { PermLevel } from "../../utils/permissions";
+import { ChannelResolvable, DMChannel, TextChannel, User } from 'discord.js';
+import { keys } from 'ts-transformer-keys';
+
+import { Bot } from '../..';
+import { commandInterface, CommandResolvable } from '../../commands';
+import { PermLevel } from '../../utils/permissions';
+import { resolveChannel, resolveCommand } from '../../utils/resolvers';
+import { CommandCache, CommandCacheObject } from '../schemas';
+import { Wrapper } from './wrapper';
+
+/**
+ * Only returns TextChannels or DMChannels
+ *
+ * @param {ChannelResolvable} channel Channel to get and check
+ * @returns TextChannel or DMChannel
+ */
+function getTextBasedChannel(channel: ChannelResolvable) {
+    let channelObj = resolveChannel(channel);
+    if (!(channelObj instanceof TextChannel || channelObj instanceof DMChannel)) return undefined;
+    return channelObj;
+}
 
 /**
  * Wrapper for the CommandCache object and document so everything can easily be access through one object
@@ -15,14 +28,16 @@ import { PermLevel } from "../../utils/permissions";
  * @implements {commandCacheObject}
  */
 export class CommandCacheWrapper extends Wrapper<CommandCacheObject> implements CommandCache {
-    private channelObj: DMChannel | TextChannel;
+    private _channel: DMChannel | TextChannel;
     readonly channel: DMChannel | TextChannel;
-    private userObj: User;
+    private _user: User;
     readonly user: User;
+    private _command: commandInterface;
     readonly command: commandInterface;
     readonly permLevel: number;
     readonly cache: any;
     readonly expirationTimestamp: number;
+    private _expirationDate: Date;
     readonly expirationDate: Date;
 
     /**
@@ -34,19 +49,25 @@ export class CommandCacheWrapper extends Wrapper<CommandCacheObject> implements 
      * @memberof CommandCacheWrapper
      */
     constructor(channel: ChannelResolvable, user: User) {
-        let channelObj = resolveChannel(channel);
-        if (!(channelObj instanceof TextChannel || channelObj instanceof DMChannel))
+        let channelObj = getTextBasedChannel(channel);
+        if (!channelObj)
             throw new Error('Invalid channel type was provided. CommandCache channels can only be of type TextChannel or DMChannel.');
 
         super(Bot.database.mainDB.commandCache, { channel: channelObj.id, user: user.id }, ['channel', 'user'], keys<CommandCacheObject>());
+        let tempData = this.cloneData();
+        tempData.channel = channelObj.id;
+        tempData.user = user.id;
+        this.data.next(tempData);
 
-        this.channelObj = channelObj;
-        this.userObj = user;
+        this.subToData(data => this._channel = getTextBasedChannel(data.channel), 'channel');
+        this.subToData(async data => this._user = await Bot.client.fetchUser(data.user), 'user');
+        this.subToData(data => this._command = Bot.commands.get(data.command), 'command');
+        this.subToData(data => this._expirationDate = new Date(data.expirationTimestamp), 'expirationTimestamp');
 
-        this.setCustomProperty('channel', () => this.channelObj);
-        this.setCustomProperty('user', () => this.userObj);
-        this.setCustomProperty('command', () => Bot.commands.get(this.data.command));
-        this.setCustomProperty('expirationDate', () => new Date(this.data.expirationTimestamp));
+        this.setCustomProperty('channel', () => this._channel);
+        this.setCustomProperty('user', () => this._user);
+        this.setCustomProperty('command', () => this._command);
+        this.setCustomProperty('expirationDate', () => this._expirationDate);
     }
 
     /**
@@ -77,10 +98,6 @@ export class CommandCacheWrapper extends Wrapper<CommandCacheObject> implements 
             return undefined;
         }
 
-        this.data.command = commandObj.name;
-        this.data.permLevel = permLevel;
-        this.data.cache = cache;
-        this.data.expirationTimestamp = expirationTimestamp;
         return this;
     }
 
@@ -94,7 +111,9 @@ export class CommandCacheWrapper extends Wrapper<CommandCacheObject> implements 
     async setCache(cache: any) {
         let query = { $set: { cache: cache } };
         await this.update(query);
-        this.data.cache = cache;
+        let tempData = this.cloneData();
+        tempData.cache = cache;
+        this.data.next(tempData);
         return cache;
     }
 
@@ -120,7 +139,9 @@ export class CommandCacheWrapper extends Wrapper<CommandCacheObject> implements 
     async setExpirationTimestamp(expirationTimestamp: number) {
         let query = { $set: { expirationTimestamp: expirationTimestamp } };
         await this.update(query);
-        this.data.expirationTimestamp = expirationTimestamp;
+        let tempData = this.cloneData();
+        tempData.expirationTimestamp = expirationTimestamp;
+        this.data.next(tempData);
         this.updateLoadedFields(['expirationTimestamp']);
         return expirationTimestamp;
     }
