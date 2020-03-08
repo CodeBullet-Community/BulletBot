@@ -4,7 +4,7 @@ import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { durationToString, stringToMember } from '../../utils/parsers';
-import { CaseActions, CaseDoc } from '../../database/schemas';
+import { CaseAction, CaseDoc } from '../../database/schemas/main/case';
 
 var command: commandInterface = {
     name: 'case',
@@ -154,13 +154,13 @@ function resolveTotalCases(query) {
     for (let i = 0; query.length > i; i++) {
         caseResolved.total += 1;
         switch (query[i].action) {
-            case CaseActions.ban: caseResolved.ban++; break;
-            case CaseActions.warn: caseResolved.warn++; break;
-            case CaseActions.mute: caseResolved.mute++; break;
-            case CaseActions.kick: caseResolved.kick++; break;
-            case CaseActions.softban: caseResolved.softban++; break;
-            case CaseActions.unmute: caseResolved.unmute++; break;
-            case CaseActions.unban: caseResolved.unban++; break;
+            case CaseAction.Ban: caseResolved.ban++; break;
+            case CaseAction.Warn: caseResolved.warn++; break;
+            case CaseAction.Mute: caseResolved.mute++; break;
+            case CaseAction.Kick: caseResolved.kick++; break;
+            case CaseAction.Softban: caseResolved.softban++; break;
+            case CaseAction.Unmute: caseResolved.unmute++; break;
+            case CaseAction.Unban: caseResolved.unban++; break;
         }
     }
     return caseResolved;
@@ -274,9 +274,9 @@ function capitalizeFirstLetter(string) {
  */
 function resolveColor(action: string) {
     switch (action) {
-        case CaseActions.warn: return Bot.settings.embedColors.warn;
-        case CaseActions.ban || CaseActions.kick || CaseActions.mute || CaseActions.softban: return Bot.settings.embedColors.negative;
-        case CaseActions.unmute || CaseActions.unban: return Bot.settings.embedColors.positive;
+        case CaseAction.Warn: return Bot.settings.embedColors.warn;
+        case CaseAction.Ban || CaseAction.Kick || CaseAction.Mute || CaseAction.Softban: return Bot.settings.embedColors.negative;
+        case CaseAction.Unmute || CaseAction.Unban: return Bot.settings.embedColors.positive;
         default: return Bot.settings.embedColors.default;
     }
 }

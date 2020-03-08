@@ -4,11 +4,11 @@ import * as fs from 'fs';
 import { Bot } from '.';
 import { CommandCacheWrapper } from './database/wrappers/commandCacheWrapper';
 import { GuildWrapper, GuildWrapperResolvable } from './database/wrappers/guildWrapper';
-import { CommandUsageLimits } from './database/schemas';
 import { durationToString, permToString } from './utils/parsers';
 import { PermLevel, PermLevels } from './utils/permissions';
 import { resolveCommand, resolveGuildWrapper } from './utils/resolvers';
 import { BenchmarkTimestamp } from './utils/time';
+import { CommandUsageLimits } from './database/schemas/global';
 
 /**
  * definition of a command with all it's properties and functions

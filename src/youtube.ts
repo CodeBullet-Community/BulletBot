@@ -7,9 +7,9 @@ import xml2js = require('xml2js');
 
 import { Bot } from '.';
 import { callback, googleAPIKey } from './bot-config.json';
-import { WebhookDoc, WebhookObject, webhookSchema } from './database/schemas';
 import { sendMentionMessage } from './utils/messages';
 import { Durations } from './utils/time';
+import { WebhookObject, WebhookDoc, webhookSchema } from './database/schemas/webhooks/_webhooks';
 
 const xmlParser = new xml2js.Parser({ explicitArray: false });
 

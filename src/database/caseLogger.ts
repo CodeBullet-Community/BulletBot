@@ -1,8 +1,9 @@
 import mongoose = require('mongoose');
-import { CaseDoc, CaseObject, caseSchema, GuildDoc, guildSchema, CaseActions, CaseAction } from './schemas';
 import { Guild, GuildMember, RichEmbed, User, } from 'discord.js';
 import { Bot } from '..';
 import { durationToString } from "../utils/parsers";
+import { GuildDoc, guildSchema } from './schemas/main/guild';
+import { CaseDoc, caseSchema, CaseAction, CaseObject } from './schemas/main/case';
 
 /**
  * Manages the connection to the case collection in the main database. It logs all cases that will be created in discord.
@@ -60,7 +61,7 @@ export class CaseLogger {
 
     async logKick(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string) {
         let color = Bot.settings.embedColors.negative;
-        return await this.logCase(guild, member.user, mod, CaseActions.kick, color, reason);
+        return await this.logCase(guild, member.user, mod, CaseAction.Kick, color, reason);
     }
 
     /**
@@ -73,7 +74,7 @@ export class CaseLogger {
      */
     async logBan(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string, duration?: number) {
         let color = Bot.settings.embedColors.negative;
-        return await this.logCase(guild, member.user, mod, CaseActions.ban, color, reason, duration);
+        return await this.logCase(guild, member.user, mod, CaseAction.Ban, color, reason, duration);
     }
 
     /**
@@ -85,7 +86,7 @@ export class CaseLogger {
      */
     async logSoftban(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string) {
         let color = Bot.settings.embedColors.negative;
-        return await this.logCase(guild, member.user, mod, CaseActions.softban, color, reason);
+        return await this.logCase(guild, member.user, mod, CaseAction.Softban, color, reason);
     }
 
     /**
@@ -97,7 +98,7 @@ export class CaseLogger {
      */
     async logUnban(guild: Guild, user: User, mod: GuildMember, reason?: string) {
         let color = Bot.settings.embedColors.positive;
-        return await this.logCase(guild, user, mod, CaseActions.unban, color, reason);
+        return await this.logCase(guild, user, mod, CaseAction.Unban, color, reason);
     }
 
     /**
@@ -110,7 +111,7 @@ export class CaseLogger {
      */
     async logMute(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string, duration?: number) {
         let color = Bot.settings.embedColors.negative;
-        return await this.logCase(guild, member.user, mod, CaseActions.mute, color, reason, duration);
+        return await this.logCase(guild, member.user, mod, CaseAction.Mute, color, reason, duration);
     }
 
     /**
@@ -122,7 +123,7 @@ export class CaseLogger {
      */
     async logUnmute(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string) {
         let color = Bot.settings.embedColors.positive;
-        return await this.logCase(guild, member.user, mod, CaseActions.unmute, color, reason);
+        return await this.logCase(guild, member.user, mod, CaseAction.Unmute, color, reason);
     }
 
     /**
@@ -134,7 +135,7 @@ export class CaseLogger {
      */
     async logWarn(guild: Guild, member: GuildMember, mod: GuildMember, reason: string) {
         let color = Bot.settings.embedColors.warn;
-        return await this.logCase(guild, member.user, mod, CaseActions.warn, color, reason);
+        return await this.logCase(guild, member.user, mod, CaseAction.Warn, color, reason);
     }
 
     /**

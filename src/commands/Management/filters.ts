@@ -3,9 +3,10 @@ import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { PermLevels } from '../../utils/permissions';
-import { LogTypes, FiltersObject } from '../../database/schemas';
 import { GuildWrapper } from '../../database/wrappers/guildWrapper';
 import { BenchmarkTimestamp } from '../../utils/time';
+import { FiltersObject } from '../../database/schemas/main/filter';
+import { LogAction } from '../../database/schemas/main/log';
 
 /**
  * sends a list of filters with their short description
@@ -166,7 +167,7 @@ var command: commandInterface = {
                     Bot.mStats.logMessageSend();
                     Bot.mStats.logCommandUsage(command.name, 'enable');
                     // log that the filter was enabled
-                    Bot.logger.logFilter(guildWrapper, message.member, filter, LogTypes.add);
+                    Bot.logger.logFilter(guildWrapper, message.member, filter, LogAction.Add);
                     break;
                 case 'disable':
                     argIndex++;
@@ -201,7 +202,7 @@ var command: commandInterface = {
                     Bot.mStats.logMessageSend();
                     Bot.mStats.logCommandUsage(command.name, 'disable');
                     // log that the filter was disabled
-                    Bot.logger.logFilter(guildWrapper, message.member, filter, LogTypes.remove);
+                    Bot.logger.logFilter(guildWrapper, message.member, filter, LogAction.Remove);
                     break;
                 default:
                     if (!argsArray[argIndex]) { // check if filter was specified

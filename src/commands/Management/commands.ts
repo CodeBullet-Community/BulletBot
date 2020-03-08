@@ -3,8 +3,8 @@ import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { PermLevels } from '../../utils/permissions';
-import { LogTypes } from '../../database/schemas';
 import { GuildWrapper } from '../../database/wrappers/guildWrapper';
+import { LogAction } from '../../database/schemas/main/log';
 
 async function getCommandList(guildWrapper: GuildWrapper, title: string, criteria: (command: commandInterface) => Promise<boolean>) {
     let embed = new RichEmbed();
@@ -123,7 +123,7 @@ var command: commandInterface = {
             Bot.mStats.logMessageSend();
             Bot.mStats.logCommandUsage(command.name, enable ? 'enable' : 'disable');
             // log that command was enabled
-            Bot.logger.logCommand(guildWrapper, message.member, cmd, enable ? LogTypes.add : LogTypes.remove);
+            Bot.logger.logCommand(guildWrapper, message.member, cmd, enable ? LogAction.Add : LogAction.Remove);
             return true;
         } catch (e) {
             sendError(message.channel, e);

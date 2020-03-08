@@ -4,9 +4,9 @@ import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { stringToRole, stringToMember } from '../../utils/parsers';
-import { guildRanks, GuildRank } from '../../database/schemas';
 import { GuildWrapper } from '../../database/wrappers/guildWrapper';
-import { LogTypes } from '../../database/schemas';
+import { GuildRank, guildRanks } from '../../database/schemas/main/guild';
+import { LogAction } from '../../database/schemas/main/log';
 
 function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -125,7 +125,7 @@ let command: commandInterface = {
             if (result) {
                 message.channel.send(`Successfully added ${snowflakeObj.name} to the rank \`${rank}\``);
                 // log the staff change
-                await logOperation(message.guild, message.member, operation ? LogTypes.add : LogTypes.remove, rank, snowflakeObj.id, snowflakeObj.isRole);
+                await logOperation(message.guild, message.member, operation ? LogAction.Add : LogAction.Remove, rank, snowflakeObj.id, snowflakeObj.isRole);
             } else {
                 message.channel.send(`${snowflakeObj.name} is already a in the rank \`${rank}\``);
             }

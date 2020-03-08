@@ -4,10 +4,11 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToChannel } from '../../utils/parsers';
 import { PermLevels } from '../../utils/permissions';
-import { WebhookObject, LogTypes } from '../../database/schemas';
 import { googleAPIKey, youtube } from '../../bot-config.json';
 import { google } from 'googleapis';
 import { getYTChannelID } from '../../youtube';
+import { WebhookObject } from '../../database/schemas/webhooks/_webhooks';
+import { LogAction } from '../../database/schemas/main/log';
 
 /**
  * helper function for repeated code, which gets the youtube channel ID and the channel for the webhook
@@ -180,7 +181,7 @@ var command: commandInterface = {
                     } else {
                         message.channel.send(`Successfully added webhook to ${input.channel} for https://youtube.com/channel/${input.YTChannelID}`);
                         // log that webhook was created
-                        Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogTypes.add);
+                        Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogAction.Add);
                     }
                     break;
                 case 'rem':
@@ -200,7 +201,7 @@ var command: commandInterface = {
                     } else {
                         message.channel.send(`Successfully removed webhook to ${input.channel} for https://youtube.com/channel/${input.YTChannelID}`);
                         // log that webhook was removed
-                        Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogTypes.remove);
+                        Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogAction.Remove);
                     }
                     Bot.mStats.logMessageSend();
                     break;
@@ -236,7 +237,7 @@ var command: commandInterface = {
                             if (webhookDoc && webhookDoc.channel == newChannel.id) {
                                 message.channel.send(`Successfully changed webhook channel from ${input.channel} to ${newChannel}`);
                                 // log that the channel was changed
-                                Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogTypes.change, true);
+                                Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogAction.change, true);
                             } else {
                                 message.channel.send(`change was unsuccessful`);
                             }
@@ -264,7 +265,7 @@ var command: commandInterface = {
                             if (webhookDoc && webhookDoc.feed == newYTChannelID) {
                                 message.channel.send(`Successfully changed webhook feed from https://youtube.com/channel/${input.YTChannelID} to https://youtube.com/channel/${webhookDoc.feed}`);
                                 // log that the feed was changed
-                                Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogTypes.add);
+                                Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogAction.Add);
                             } else {
                                 message.channel.send(`change was unsuccessful`);
                             }
@@ -297,7 +298,7 @@ var command: commandInterface = {
                             if (webhookDoc && webhookDoc.message == newText) {
                                 message.channel.send(`Successfully changed webhook message to \`${newText}\``);
                                 // log that message was changed
-                                Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogTypes.change, undefined, true);
+                                Bot.logger.logWebhook(message.guild, message.member, 'youtube', webhookDoc, LogAction.change, undefined, true);
                             } else {
                                 message.channel.send(`change was unsuccessful`);
                             }

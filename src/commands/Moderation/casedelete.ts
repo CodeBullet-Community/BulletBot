@@ -4,7 +4,7 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { stringToMember } from '../../utils/parsers';
 import { Durations } from '../../utils/time';
-import { caseActionsArray } from '../../database/schemas';
+import { CaseAction, caseActions } from '../../database/schemas/main/case';
 
 var command: commandInterface = {
     name: 'casedelete',
@@ -31,7 +31,7 @@ var command: commandInterface = {
         additionalFields: [
             {
                 name: 'Types:',
-                value: caseActionsArray.join(', ')
+                value: caseActions.join(', ')
             }
         ]
     },
@@ -86,8 +86,9 @@ var command: commandInterface = {
                 let type: string;
                 // if type is specified also filter by type
                 if (argsArray[argIndex]) {
-                    if (!caseActionsArray.includes(argsArray[argIndex])) { // if case action doesn't exist
-                        message.channel.send('Invalid Type. Use one of the following:\n' + caseActionsArray.join(', '));
+                    //@ts-ignore
+                    if (!caseActions.includes(argsArray[argIndex])) { // if case action doesn't exist
+                        message.channel.send('Invalid Type. Use one of the following:\n' + caseActions.join(', '));
                         Bot.mStats.logMessageSend();
                         return false;
                     } else {
@@ -95,7 +96,7 @@ var command: commandInterface = {
                         argIndex++;
                     }
                 } else if (!userID) { // if no type was specified and it isn't being filtered by a user
-                    message.channel.send('Please provide one of the following types:\n' + caseActionsArray.join(', '));
+                    message.channel.send('Please provide one of the following types:\n' + caseActions.join(', '));
                     Bot.mStats.logMessageSend();
                     return false;
                 }

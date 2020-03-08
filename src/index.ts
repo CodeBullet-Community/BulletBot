@@ -11,7 +11,6 @@ import { Database } from './database/database';
 import { Logger } from './database/logger';
 import { MStats } from './database/mStats';
 import { PActions } from './database/pActions';
-import { LogTypes, megalogGroups } from './database/schemas';
 import { Settings } from './database/settings';
 import { updateDatabaseAfter1_2_8 } from './database/update';
 import { GuildWrapper } from './database/wrappers/guildWrapper';
@@ -39,6 +38,7 @@ import {
 import { PermLevels } from './utils/permissions';
 import { Durations } from './utils/time';
 import { YTWebhookManager } from './youtube';
+import { megalogGroups } from './database/schemas/main/guild.js';
 
 try {
     keys();

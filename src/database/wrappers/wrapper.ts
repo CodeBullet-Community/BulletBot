@@ -2,8 +2,8 @@ import _ from 'lodash';
 import { Model } from 'mongoose';
 import { BehaviorSubject } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
+import { ExDocument, Keys, ObjectKey, OptionalFields } from '../schemas/global';
 
-import { ExDocument, Keys, ObjectKey, OptionalFields } from '../schemas';
 
 /**
  * Wrapper for mongoDB documents. 

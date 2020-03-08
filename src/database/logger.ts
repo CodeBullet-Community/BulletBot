@@ -8,19 +8,9 @@ import { filterInterface } from '../filters';
 import { filterAction, filterActions } from '../utils/filters';
 import { actionToString } from '../utils/parsers';
 import { GuildWrapper } from './wrappers/guildWrapper';
-import {
-    GuildDoc,
-    GuildRank,
-    guildSchema,
-    LogActions,
-    LogDoc,
-    LogObject,
-    logSchema,
-    LogTypes,
-    MegalogFunction,
-    WebhookDoc,
-    WebhookService,
-} from './schemas';
+import { GuildDoc, guildSchema, GuildRank, WebhookService, MegalogFunction } from './schemas/main/guild';
+import { LogDoc, logSchema, LogObject, LogType, LogAction } from './schemas/main/log';
+import { WebhookDoc } from './schemas/webhooks/_webhooks';
 
 /**
  * Manages connection to main database with the logs collection. It logs actions into the the database and if a log channel was define also into discord.
@@ -93,7 +83,7 @@ export class Logger {
         // logs logs in database
         var logObject: LogObject = {
             guild: guild.id,
-            action: LogActions.staff,
+            action: LogType.Staff,
             mod: mod.id,
             timestamp: date.getTime(),
             info: {
@@ -152,7 +142,7 @@ export class Logger {
         var logObject: LogObject = {
             guild: guild.id,
             mod: mod.id,
-            action: LogActions.webhook,
+            action: LogType.Webhook,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -184,13 +174,13 @@ export class Logger {
         }
         var action = '';
         switch (type) {
-            case LogTypes.add:
+            case LogAction.Add:
                 action = 'Created';
                 break;
-            case LogTypes.remove:
+            case LogAction.Remove:
                 action = 'Deleted';
                 break;
-            case LogTypes.change:
+            case LogAction.change:
                 action = 'Changed';
                 break;
         }
@@ -310,7 +300,7 @@ export class Logger {
         var logObject: LogObject = {
             guild: guildWrapper.id,
             mod: mod.id,
-            action: LogActions.filter,
+            action: LogType.Filter,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -368,7 +358,7 @@ export class Logger {
         var logObject: LogObject = {
             guild: guildWrapper.id,
             mod: mod.id,
-            action: LogActions.command,
+            action: LogType.Command,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -427,7 +417,7 @@ export class Logger {
         var logObject: LogObject = {
             guild: guild.id,
             mod: mod.id,
-            action: LogActions.prefix,
+            action: LogType.Prefix,
             timestamp: date.getTime(),
             info: {
                 old: oldPrefix,
@@ -477,13 +467,13 @@ export class Logger {
      *
      * @param {Guild} guild guild where change was made
      * @param {GuildMember} admin admin that made the change
-     * @param {LogTypes} type whether command was added or removed
+     * @param {LogAction} type whether command was added or removed
      * @param {MegalogFunction[]} functions functions which were added / removed
      * @param {Channel} channel specifies the channed where the logging function has been placed
      * @returns
      * @memberof Logger
      */
-    async logMegalog(guild: Guild, admin: GuildMember, type: LogTypes.add | LogTypes.remove, functions: MegalogFunction[], channel?: Channel) {
+    async logMegalog(guild: Guild, admin: GuildMember, type: LogAction.Add | LogAction.Remove, functions: MegalogFunction[], channel?: Channel) {
         var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
@@ -492,7 +482,7 @@ export class Logger {
         var logObject: LogObject = {
             guild: guild.id,
             mod: admin.id,
-            action: LogActions.megalog,
+            action: LogType.Megalog,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -535,12 +525,12 @@ export class Logger {
      *
      * @param {Guild} guild guild where change was made
      * @param {GuildMember} admin admin that made the change
-     * @param {(LogTypes.add | LogTypes.remove)} type whether command was added or removed
+     * @param {(LogAction.Add | LogAction.Remove)} type whether command was added or removed
      * @param {TextChannel} channel channel that has been added/removed
      * @returns
      * @memberof Logger
      */
-    async logMegalogIgnore(guild: Guild, admin: GuildMember, type: LogTypes.add | LogTypes.remove, channel: TextChannel) {
+    async logMegalogIgnore(guild: Guild, admin: GuildMember, type: LogAction.Add | LogAction.Remove, channel: TextChannel) {
         var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
@@ -549,7 +539,7 @@ export class Logger {
         var logObject: LogObject = {
             guild: guild.id,
             mod: admin.id,
-            action: LogActions.megalogIgnore,
+            action: LogType.MegalogIgnore,
             timestamp: date.getTime(),
             info: {
                 type: type,

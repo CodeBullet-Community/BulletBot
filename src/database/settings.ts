@@ -5,7 +5,8 @@ import { Bot } from '..';
 import { globalUpdateInterval } from '../bot-config.json';
 import { CommandResolvable } from '../commands';
 import { resolveCommand } from '../utils/resolvers';
-import { CommandUsageLimits, GlobalSettingsDoc, GlobalSettingsObject, globalSettingsSchema, UsageLimits } from './schemas';
+import { GlobalSettingsObject, GlobalSettingsDoc, globalSettingsSchema } from './schemas/settings/settings';
+import { UsageLimits, CommandUsageLimits } from './schemas/global';
 
 /**
  * Connects to the settings database and caches the global settings.

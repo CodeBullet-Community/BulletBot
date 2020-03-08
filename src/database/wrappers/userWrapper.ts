@@ -3,8 +3,9 @@ import { keys } from 'ts-transformer-keys';
 
 import { Bot } from '../..';
 import { CommandName } from '../../commands';
-import { CommandScope, CommandUsageLimits, UserObject } from '../schemas';
 import { Wrapper } from './wrapper';
+import { UserObject, CommandScope } from '../schemas/main/user';
+import { CommandUsageLimits } from '../schemas/global';
 
 /**
  * Wrapper for user doc/object. Provides additional functions and easier data handling

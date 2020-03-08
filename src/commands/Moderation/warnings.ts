@@ -4,7 +4,7 @@ import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { stringToMember } from '../../utils/parsers';
-import { CaseDoc, CaseActions } from '../../database/schemas';
+import { CaseDoc, CaseAction } from '../../database/schemas/main/case';
 
 /**
  * creates a array of embeds with each max 10 warnings
@@ -16,9 +16,9 @@ import { CaseDoc, CaseActions } from '../../database/schemas';
 async function createWarningsEmbeds(guild: Guild, member?: GuildMember): Promise<RichEmbed[]> {
     let cases: CaseDoc[]
     if (member) { // either get the  warnings for the member or the whole guild
-        cases = await Bot.caseLogger.cases.find({ guild: guild.id, user: member.id, action: CaseActions.warn }).exec();
+        cases = await Bot.caseLogger.cases.find({ guild: guild.id, user: member.id, action: CaseAction.Warn }).exec();
     } else {
-        cases = await Bot.caseLogger.cases.find({ guild: guild.id, action: CaseActions.warn }).exec();
+        cases = await Bot.caseLogger.cases.find({ guild: guild.id, action: CaseAction.Warn }).exec();
     }
     if (!cases.length) return []; // incase no warn cases were found
     let detailEmbedArray: RichEmbed[] = [];

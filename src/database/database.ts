@@ -1,35 +1,31 @@
+import { ChannelResolvable, Collection, GuildResolvable, Snowflake, UserResolvable } from 'discord.js';
 import mongoose = require('mongoose');
-import {
-    GuildDoc,
-    LogDoc,
-    FiltersDoc,
-    CommandCacheDoc,
-    guildSchema,
-    filtersSchema,
-    logSchema,
-    commandCacheSchema,
-    UserDoc,
-    userSchema,
-    CaseDoc,
-    caseSchema,
-    PActionDoc,
-    pActionSchema,
-    GuildObject,
-    UserObject,
-    CommandCacheObject,
-    OptionalFields
-} from './schemas';
 import { setInterval } from 'timers';
-import { cleanInterval } from '../bot-config.json';
-import { DMChannel, GroupDMChannel, TextChannel, Collection, Snowflake, GuildResolvable, UserResolvable, ChannelResolvable } from 'discord.js';
+
 import { Bot } from '..';
-import { toNano } from '../utils/time';
-import { UserWrapper } from './wrappers/userWrapper';
-import { GuildWrapper } from './wrappers/guildWrapper';
-import { resolveGuild, resolveUser, resolveUserID, resolveChannelID, resolveChannel, resolveCommand } from '../utils/resolvers';
+import { cleanInterval } from '../bot-config.json';
 import { CommandResolvable } from '../commands';
-import { CommandCacheWrapper } from './wrappers/commandCacheWrapper';
 import { PermLevel } from '../utils/permissions';
+import {
+    resolveChannel,
+    resolveChannelID,
+    resolveCommand,
+    resolveGuild,
+    resolveUser,
+    resolveUserID,
+} from '../utils/resolvers';
+import { toNano } from '../utils/time';
+import { OptionalFields } from './schemas/global.js';
+import { CaseDoc, caseSchema } from './schemas/main/case.js';
+import { CommandCacheDoc, CommandCacheObject, commandCacheSchema } from './schemas/main/commandCache.js';
+import { FiltersDoc, filtersSchema } from './schemas/main/filter.js';
+import { GuildDoc, GuildObject, guildSchema } from './schemas/main/guild.js';
+import { LogDoc, logSchema } from './schemas/main/log.js';
+import { PActionDoc, pActionSchema } from './schemas/main/pAction.js';
+import { UserDoc, UserObject, userSchema } from './schemas/main/user.js';
+import { CommandCacheWrapper } from './wrappers/commandCacheWrapper';
+import { GuildWrapper } from './wrappers/guildWrapper';
+import { UserWrapper } from './wrappers/userWrapper';
 
 /**
  * Manages all connections to the main database and settings database

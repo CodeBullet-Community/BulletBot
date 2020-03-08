@@ -3,8 +3,8 @@ import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { Durations, timeFormat } from '../../utils/time';
-import { PActionActions } from '../../database/schemas';
 import dateFormat = require('dateformat');
+import { PActionAction } from '../../database/schemas/main/pAction';
 
 var command: commandInterface = {
     name: 'mutes',
@@ -28,7 +28,7 @@ var command: commandInterface = {
             // get all muted members (permMuted) and temp muted (pActionDocs)
             if (message.guild.large) await message.guild.fetchMembers();
             let permMuted = message.guild.members.filter(x => x.roles.find(y => y.name.toLowerCase() == 'muted') != undefined);
-            let pActionDocs = await Bot.pActions.pActions.find({ action: PActionActions.mute, 'info.guild': message.guild.id }, ['to', 'info.user']).exec();
+            let pActionDocs = await Bot.pActions.pActions.find({ action: PActionAction.Unmute, 'info.guild': message.guild.id }, ['to', 'info.user']).exec();
 
             // create string for temp muted and subtract the members from permMuted array
             let tempMutedString = '';

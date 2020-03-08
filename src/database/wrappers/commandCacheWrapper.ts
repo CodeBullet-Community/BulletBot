@@ -5,8 +5,8 @@ import { Bot } from '../..';
 import { commandInterface, CommandResolvable } from '../../commands';
 import { PermLevel } from '../../utils/permissions';
 import { resolveChannel, resolveCommand } from '../../utils/resolvers';
-import { CommandCache, CommandCacheObject } from '../schemas';
 import { Wrapper } from './wrapper';
+import { CommandCacheObject, CommandCache } from '../schemas/main/commandCache';
 
 /**
  * Only returns TextChannels or DMChannels

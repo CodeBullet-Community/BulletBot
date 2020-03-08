@@ -3,8 +3,8 @@ import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { Durations, timeFormat } from '../../utils/time';
-import { PActionActions } from '../../database/schemas';
 import dateFormat = require('dateformat');
+import { PActionAction } from '../../database/schemas/main/pAction';
 
 var command: commandInterface = {
     name: 'bans',
@@ -27,7 +27,7 @@ var command: commandInterface = {
         try {
             // get all banned members and temp muted members
             let permBanned = await message.guild.fetchBans();
-            let pActionDocs = await Bot.pActions.pActions.find({ action: PActionActions.ban, 'info.guild': message.guild.id }, ['to', 'info.user']).exec();
+            let pActionDocs = await Bot.pActions.pActions.find({ action: PActionAction.Unban, 'info.guild': message.guild.id }, ['to', 'info.user']).exec();
 
             // create string for temp banned and subtract the members from permBanned array
             let tempBannedString = '';

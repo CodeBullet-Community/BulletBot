@@ -5,27 +5,14 @@ import mongoose = require('mongoose');
 import { Bot } from '..';
 import { CommandName } from '../commands';
 import { BenchmarkTimestamp, Durations, toNano } from '../utils/time';
-import {
-    BotSuggestionDoc,
-    botSuggestionSchema,
-    BugDoc,
-    bugSchema,
-    createEmptyMStatsObject,
-    ErrorDoc,
-    errorSchema,
-    MegalogFunction,
-    megalogGroups,
-    MStatsAllTimeDoc,
-    mStatsAllTimeSchema,
-    MStatsDayDoc,
-    MStatsDayObject,
-    mStatsDaySchema,
-    MStatsHourDoc,
-    MStatsHourObject,
-    mStatsHourSchema,
-    MStatsObject,
-    WebhookService,
-} from './schemas';
+import { megalogGroups, MegalogFunction, WebhookService } from './schemas/main/guild';
+import { createEmptyMStatsObject, MStatsObject } from './schemas/mStats/_mStats';
+import { MStatsAllTimeDoc, mStatsAllTimeSchema } from './schemas/mStats/allTime';
+import { BugDoc, bugSchema } from './schemas/mStats/bug';
+import { MStatsDayDoc, mStatsDaySchema, MStatsDayObject } from './schemas/mStats/daily';
+import { ErrorDoc, errorSchema } from './schemas/mStats/error';
+import { MStatsHourDoc, MStatsHourObject, mStatsHourSchema } from './schemas/mStats/hourly';
+import { BotSuggestionDoc, botSuggestionSchema } from './schemas/mStats/suggestion';
 
 /**
  * Manages all connections and documents in the mStats database. It's a very independent class with only minimal actual input (besides the action logging) required.

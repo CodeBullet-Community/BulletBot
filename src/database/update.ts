@@ -2,7 +2,9 @@ import { Snowflake } from 'discord.js';
 import mongoose = require('mongoose');
 
 import { cluster } from '../bot-config.json';
-import { ExDocument, GuildObject, guildSchema, UserObject, userSchema } from './schemas.js';
+import { ExDocument } from './schemas/global.js';
+import { GuildObject, guildSchema } from './schemas/main/guild.js';
+import { UserObject, userSchema } from './schemas/main/user.js';
 
 // guild
 interface OldGuildObject extends GuildObject {

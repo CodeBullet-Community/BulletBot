@@ -2,9 +2,9 @@ import { Collection, Guild, Message } from 'discord.js';
 import * as fs from 'fs';
 
 import { Bot } from '.';
-import { FiltersObject } from './database/schemas';
 import { executeActions, filterAction } from './utils/filters';
 import { sendError } from './utils/messages';
+import { FiltersObject } from './database/schemas/main/filter';
 
 /* ------------NOTE--------------*/
 /*  

@@ -1,10 +1,10 @@
-import { commandInterface } from '../../commands';
-import { PermLevels } from '../../utils/permissions';
-import { Bot } from '../..';
-import { sendError } from '../../utils/messages';
-import { Durations, timeFormat } from '../../utils/time';
-import { GuildObject } from '../../database/schemas';
 import dateFormat = require('dateformat');
+
+import { Bot } from '../..';
+import { commandInterface } from '../../commands';
+import { sendError } from '../../utils/messages';
+import { PermLevels } from '../../utils/permissions';
+import { Durations, timeFormat } from '../../utils/time';
 
 var command: commandInterface = {
     name: 'locks',

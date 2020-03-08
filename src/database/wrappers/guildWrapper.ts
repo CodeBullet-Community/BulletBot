@@ -1,13 +1,24 @@
+import { ChannelResolvable, Guild, GuildMemberResolvable, GuildResolvable, Snowflake, TextChannel } from 'discord.js';
+import _, { PropertyPath } from 'lodash';
 import mongoose = require('mongoose');
-import { Guild, GuildResolvable, GuildMemberResolvable, Snowflake, ChannelResolvable, TextChannel } from "discord.js";
-import { CommandUsageLimits, WebhookService, UsageLimits, GuildObject, GuildRank, guildRanks, CommandSettings, MegalogFunction, megalogGroups } from "../schemas";
-import { Bot } from '../..';
-import { PermLevels } from '../../utils/permissions';
-import { CommandResolvable, CommandName } from '../../commands';
-import { resolveCommand, resolveGuildMember, resolveChannel, resolveChannelID } from '../../utils/resolvers';
-import { Wrapper } from './wrapper';
-import _, { PropertyPath } from "lodash";
 import { keys } from 'ts-transformer-keys';
+
+import { Bot } from '../..';
+import { CommandName, CommandResolvable } from '../../commands';
+import { PermLevels } from '../../utils/permissions';
+import { resolveChannel, resolveChannelID, resolveCommand, resolveGuildMember } from '../../utils/resolvers';
+import { CommandUsageLimits, UsageLimits } from '../schemas/global';
+import {
+    CommandSettings,
+    GuildObject,
+    GuildRank,
+    guildRanks,
+    MegalogFunction,
+    megalogGroups,
+    WebhookService,
+    BBGuild
+} from '../schemas/main/guild';
+import { Wrapper } from './wrapper';
 
 export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
 
@@ -18,7 +29,7 @@ export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
  * @class GuildWrapper
  * @implements {guildObject}
  */
-export class GuildWrapper extends Wrapper<GuildObject> implements GuildObject {
+export class GuildWrapper extends Wrapper<GuildObject> implements BBGuild {
     guild: Guild;
     id: Snowflake;
     prefix?: string;

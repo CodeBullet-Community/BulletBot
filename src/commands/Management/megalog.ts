@@ -4,9 +4,10 @@ import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { stringToChannel } from '../../utils/parsers';
-import { megalogGroups, LogTypes, MegalogFunction } from '../../database/schemas';
 import { GuildWrapper } from '../../database/wrappers/guildWrapper';
 import { BenchmarkTimestamp } from '../../utils/time';
+import { megalogGroups, MegalogFunction } from '../../database/schemas/main/guild';
+import { LogAction } from '../../database/schemas/main/log';
 
 async function createMegalogInfoEmbed(guildWrapper: GuildWrapper) {
     let embed = new RichEmbed();
@@ -80,7 +81,7 @@ async function toggleMegalogFunction(message: Message, guildWrapper: GuildWrappe
     }
 
     // log that the functions have been enabled
-    await Bot.logger.logMegalog(message.guild, message.member, enable ? LogTypes.add : LogTypes.remove, changedFunctions, channel);
+    await Bot.logger.logMegalog(message.guild, message.member, enable ? LogAction.Add : LogAction.Remove, changedFunctions, channel);
 
     // send confirmation message
     Bot.mStats.logResponseTime(command.name, requestTime);
@@ -109,7 +110,7 @@ async function toggleMegalogIgnore(message: Message, guildWrapper: GuildWrapper,
     let result = await (ignore ? guildWrapper.addMegalogIgnoreChannel(channel) : guildWrapper.removeMegalogIgnoreChannel(channel));
 
     if (result)
-        Bot.logger.logMegalogIgnore(message.guild, message.member, ignore ? LogTypes.add : LogTypes.remove, channel);
+        Bot.logger.logMegalogIgnore(message.guild, message.member, ignore ? LogAction.Add : LogAction.Remove, channel);
 
     // send confirmation message
     Bot.mStats.logResponseTime(command.name, requestTime);
