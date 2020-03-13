@@ -26,6 +26,12 @@ function stringSimilarity(s1: string, s2: string) {
     return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength.toString());
 }
 
+function extractString(str: string, regex: RegExp) {
+    let result = regex.exec(str);
+    if (result?.length < 2) return undefined;
+    return result[1];
+}
+
 /**
  * helper function for stringSimilarity
  *
@@ -79,27 +85,7 @@ function editDistance(s1: string, s2: string) {
  * @returns
  */
 export async function stringToMember(guild: Guild, text: string, byUsername = true, byNickname = true, bySimilar: boolean = true) {
-    // extract id form mention
-    if (/<@(\d*)>/g.test(text)) {
-        var result = /<@(\d*)>/g.exec(text);
-        if (result != null) {
-            text = result[1];
-        }
-    }
-    // extract id form mention of a user with a nickname
-    if (/<@!(\d*)>/g.test(text)) {
-        var result = /<@!(\d*)>/g.exec(text);
-        if (result != null) {
-            text = result[1];
-        }
-    }
-    // extract the name from "example#1234"
-    if (/([^#@:]{2,32})#\d{4}/g.test(text)) {
-        var result = /([^#@:]{2,32})#\d{4}/g.exec(text);
-        if (result != null) {
-            text = result[1];
-        }
-    }
+    text = extractString(text, /<@!?(\d*)>/) || extractString(text, /([^#@:]{2,32})#\d{4}/) || text;
     guild = await guild.fetchMembers()
 
     // by id
@@ -121,6 +107,18 @@ export async function stringToMember(guild: Guild, text: string, byUsername = tr
         }
     }
     return member;
+}
+
+/**
+ * Extracts the id from a string and the fetches the User
+ *
+ * @export
+ * @param {string} text Text to extract id from
+ * @returns User
+ */
+export function stringToUser(text: string) {
+    text = extractString(text, /<@!?(\d*)>/) || text;
+    return Bot.client.fetchUser(text);
 }
 
 /**
@@ -150,13 +148,7 @@ export function stringToRole(guild: Guild, text: string, byName = true, bySimila
         return '@everyone';
     }
 
-    // extract id from role mention
-    if (/<@&(\d*)>/g.test(text)) {
-        var result = /<@&(\d*)>/g.exec(text);
-        if (result != null) {
-            text = result[1];
-        }
-    }
+    text = extractString(text, /<@&(\d*)>/) || text;
 
     // by id
     var role = guild.roles.get(text);
@@ -191,13 +183,8 @@ export function stringToRole(guild: Guild, text: string, byName = true, bySimila
  */
 export function stringToChannel(guild: Guild, text: string, byName = true, bySimilar = true) {
     if (!guild) return null;
-    // extract id from channel mention
-    if (/<#(\d*)>/g.test(text)) {
-        var result = /<#(\d*)>/g.exec(text);
-        if (result != null) {
-            text = result[1];
-        }
-    }
+    text = extractString(text, /<#(\d*)>/) || text;
+
     let channel = guild.channels.get(text);
     if (!channel && byName) channel = guild.channels.find(x => x.name == text);
     if (!channel && bySimilar) {
