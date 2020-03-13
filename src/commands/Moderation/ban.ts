@@ -37,29 +37,29 @@ var command: commandInterface = {
             let argsArray = args.split(' ').filter(x => x.length != 0); // split arguments string by spaces
 
             let user = await stringToUser(argsArray[argIndex]);
-            if (!user) { // check if it found the specified member
-                message.channel.send('Couldn\'t find specified member');
+            if (!user) { // check if it found the specified user
+                message.channel.send('Couldn\'t find specified user');
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            if (user.id == message.author.id) { // check if the requester is the same member
+            if (user.id == message.author.id) { // check if the requester is the same user
                 message.channel.send('You can\'t ban yourself');
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            if (user.id == Bot.client.user.id) { // check if the member is the bot
+            if (user.id == Bot.client.user.id) { // check if the user is the bot
                 message.channel.send('Don\'t ban me :frowning:');
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            if (!await message.guild.me.hasPermission("BAN_MEMBERS")) { // check if the bot has the permissions to ban members
+            if (!await message.guild.me.hasPermission("BAN_MEMBERS")) { // check if the bot has the permissions to ban users
                 message.channel.send("I do not have the permissions to do that");
                 Bot.mStats.logMessageSend();
                 return false;
             }
             argIndex++;
 
-            // parse time to ban member
+            // parse time to ban user
             let time = await stringToDuration(argsArray[argIndex]);
             let stringTime = time ? durationToString(time) : 'forever';
 
@@ -70,11 +70,11 @@ var command: commandInterface = {
             let caseObject = await Bot.caseLogger.logBan(message.guild, user, message.member, reason, time ? time : undefined);
             // incase a time was set, make a pActions unban task
             if (time) Bot.pActions.addBan(message.guild.id, user.id, message.createdTimestamp + time, caseObject.caseID, message.createdTimestamp);
-            // dm to member that they has been banned
+            // dm to user that they has been banned
             try {
                 await user.send(`You were banned in **${message.guild.name}** for ${stringTime} ${reason ? 'because of following reason:\n' + reason : ''}`);
             } catch { }
-            // ban member
+            // ban user
             message.guild.ban(user, { reason: reason, days: 7 });
 
             // send confirmation message

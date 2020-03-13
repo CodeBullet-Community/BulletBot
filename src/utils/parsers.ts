@@ -124,9 +124,13 @@ export async function stringToMember(guild: Guild, text: string, byUsername = tr
  * @param {string} text Text to extract id from
  * @returns User
  */
-export function stringToUser(text: string) {
+export async function stringToUser(text: string) {
     text = extractString(text, /<@!?(\d*)>/) || text;
-    return Bot.client.fetchUser(text);
+    try {
+        return await Bot.client.fetchUser(text);
+    } catch{
+        return undefined;
+    }
 }
 
 /**
