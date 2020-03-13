@@ -26,10 +26,18 @@ function stringSimilarity(s1: string, s2: string) {
     return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength.toString());
 }
 
+/**
+ * Executes a RegExp on a string and returns last result of first search if successful
+ *
+ * @param {string} str String to search in
+ * @param {RegExp} regex RegExp to search with
+ * @returns
+ */
 function extractString(str: string, regex: RegExp) {
     let result = regex.exec(str);
-    if (result?.length < 2) return undefined;
-    return result[1];
+    if (!result)
+        return undefined;
+    return result[result.length - 1];
 }
 
 /**
