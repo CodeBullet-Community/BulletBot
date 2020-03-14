@@ -5,7 +5,7 @@ import { Bot } from '../..';
 import { commandInterface, CommandResolvable } from '../../commands';
 import { PermLevel } from '../../utils/permissions';
 import { resolveChannel, resolveCommand } from '../../utils/resolvers';
-import { Wrapper } from './wrapper';
+import { DocWrapper } from './docWrapper';
 import { CommandCacheObject, CommandCache } from '../schemas/main/commandCache';
 
 /**
@@ -27,7 +27,7 @@ function getTextBasedChannel(channel: ChannelResolvable) {
  * @class CommandCache
  * @implements {commandCacheObject}
  */
-export class CommandCacheWrapper extends Wrapper<CommandCacheObject> implements CommandCache {
+export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implements CommandCache {
     private _channel: DMChannel | TextChannel;
     readonly channel: DMChannel | TextChannel;
     private _user: User;

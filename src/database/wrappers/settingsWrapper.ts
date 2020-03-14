@@ -1,5 +1,5 @@
 import { GlobalSettingsObject } from "../schemas/settings/settings";
-import { Wrapper } from "./wrapper";
+import { DocWrapper } from "./docWrapper";
 import { UsageLimits, CommandUsageLimits } from "../schemas/global";
 import { PresenceData, Snowflake, UserResolvable } from "discord.js";
 import { CommandName, CommandResolvable } from "../../commands";
@@ -14,10 +14,10 @@ import _ from "lodash";
  *
  * @export
  * @class SettingsWrapper
- * @extends {Wrapper<GlobalSettingsObject>}
+ * @extends {DocWrapper<GlobalSettingsObject>}
  * @implements {GlobalSettingsObject}
  */
-export class SettingsWrapper extends Wrapper<GlobalSettingsObject> implements GlobalSettingsObject {
+export class SettingsWrapper extends DocWrapper<GlobalSettingsObject> implements GlobalSettingsObject {
     readonly prefix: string;
     readonly presence: PresenceData;
     readonly embedColors: {

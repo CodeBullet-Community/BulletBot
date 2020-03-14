@@ -3,7 +3,7 @@ import { keys } from 'ts-transformer-keys';
 
 import { Bot } from '../..';
 import { CommandName } from '../../commands';
-import { Wrapper } from './wrapper';
+import { DocWrapper } from './docWrapper';
 import { UserObject, CommandScope } from '../schemas/main/user';
 import { CommandUsageLimits } from '../schemas/global';
 
@@ -18,10 +18,10 @@ import { CommandUsageLimits } from '../schemas/global';
  *
  * @export
  * @class UserWrapper
- * @extends {Wrapper<UserObject>}
+ * @extends {DocWrapper<UserObject>}
  * @implements {userObject}
  */
-export class UserWrapper extends Wrapper<UserObject> implements UserObject {
+export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
     user: User;
     id: string;
     commandLastUsed: { [key: string]: { [key: string]: number; }; };

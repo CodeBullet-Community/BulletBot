@@ -11,10 +11,10 @@ import { ExDocument, Keys, ObjectKey, OptionalFields } from '../schemas/global';
  * general interfacing with the document on the database 
  *
  * @export
- * @class Wrapper
+ * @class DocWrapper
  * @template T
  */
-export class Wrapper<T extends Object> {
+export class DocWrapper<T extends Object> {
 
     private readonly model: Model<ExDocument<T>>;
     private readonly uniqueQuery: any;
@@ -24,12 +24,13 @@ export class Wrapper<T extends Object> {
     removed: boolean;
 
     /**
-     *Creates an instance of Wrapper.
+     * Creates an instance of DocWrapper.
+     * 
      * @param {Model<T>} model Model of collection where the document is stored in
      * @param {*} uniqueQuery Query conditions for finding the document corresponding to the wrapper 
      * @param {Keys<T>} preloadedFields Fields that are already set by the extenders constructor
      * @param {Keys<T>} allFields Array of all the fields that the object can have (Use keys<T>() from 'ts-transformer-keys') to get them
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     constructor(model: Model<ExDocument<T>>, uniqueQuery: any, preloadedFields: Keys<T>, allFields: Keys<T>) {
         this.model = model;
@@ -47,7 +48,7 @@ export class Wrapper<T extends Object> {
      * @private
      * @param {Keys<T>} [fields] What parts of the document should be returned
      * @returns The document if it was found
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     protected getDoc(fields?: Keys<T>) {
         return this.model.findOne(this.uniqueQuery, fields ? fields.join(' ') : undefined).exec();
@@ -57,7 +58,7 @@ export class Wrapper<T extends Object> {
      * Checks if the document corresponding to this wrapper exists
      *
      * @returns
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     async docExists() {
         return await this.getDoc([]) ? true : false;
@@ -68,12 +69,12 @@ export class Wrapper<T extends Object> {
      * It first checks if there is already a document and if so (by default) doesn't create one. 
      * If overwrite is true and a document already exists it first deletes the old one.
      * 
-     * IMPORTANT: The wrapper doesn't check if the document is correct and can actually be found by its uniqueQuery.
+     * IMPORTANT: The wrapper doesn't check if the document is correct or can actually be found by its uniqueQuery.
      *
      * @param {T} content The content of the document
      * @param {boolean} [overwrite=false] If it should overwrite the old document (Default false)
      * @returns The created document if it was created
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     async createDoc(content: T, overwrite = false) {
         let oldDocExists = await this.docExists();
@@ -89,7 +90,7 @@ export class Wrapper<T extends Object> {
      *
      * @param {keyof T} field Field to watch for changes on
      * @returns Piped Observable 
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     subToField(field: keyof T) {
         return this.data.pipe(
@@ -101,7 +102,7 @@ export class Wrapper<T extends Object> {
      * Clones the data object so it can be manipulated
      *
      * @returns
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     cloneData() {
         return _.cloneDeep(this.data.value);
@@ -114,7 +115,7 @@ export class Wrapper<T extends Object> {
      * @param {T} obj The object to load from
      * @param {boolean} [overwrite=true] If already loaded fields should be replaced
      * @returns The resulting data object
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     loadFromObject(obj: T, overwrite = true) {
         this.loadedFields = [...this.allFields];
@@ -137,7 +138,7 @@ export class Wrapper<T extends Object> {
      *
      * @param {Keys<T>} [fields] If set it only reloads those fields (can also be not yet loaded fields)
      * @returns
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     async resync(fields?: Keys<T>) {
         let result = await this.load(fields || this.loadedFields, true);
@@ -149,7 +150,7 @@ export class Wrapper<T extends Object> {
      *
      * @private
      * @param {string} key Field to define a getter for
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     private setProperty(key: keyof T) {
         this.setCustomProperty(key, () => {
@@ -167,7 +168,7 @@ export class Wrapper<T extends Object> {
      * @protected
      * @param {ObjectKey} key What key should be used
      * @param {() => any} getter Getter to set
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     protected setCustomProperty(key: ObjectKey, getter: () => any) {
         Object.defineProperty(this, key, {
@@ -196,7 +197,7 @@ export class Wrapper<T extends Object> {
      *
      * @param {string} [field] What field to check. If not specified the entire document will be checked
      * @returns If the specified part is loaded
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     isLoaded(field?: keyof T) {
         if (!this.loadedFields) return true;
@@ -210,7 +211,7 @@ export class Wrapper<T extends Object> {
      * @private
      * @param {Keys<T>} [fields] Fields that were newly loaded
      * @returns Which fields weren't loaded before
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     protected updateLoadedFields(fields?: Keys<T>) {
         if (!this.loadedFields)
@@ -230,7 +231,7 @@ export class Wrapper<T extends Object> {
      * @param {OptionalFields<T>} [fields] Fields to load (Can also be a single field)
      * @param {boolean} [force=false] If already loaded fields should also be reloaded
      * @returns Which fields were newly loaded
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     async load(fields?: OptionalFields<T>, force = false) {
         fields = fields ? [].concat(fields) : undefined;
@@ -248,7 +249,7 @@ export class Wrapper<T extends Object> {
      * Removes the corresponding document from the database
      *
      * @returns
-     * @memberof Wrapper
+     * @memberof DocWrapper
      */
     remove() {
         this.removed = true;

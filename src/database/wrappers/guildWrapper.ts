@@ -18,7 +18,7 @@ import {
     WebhookService,
     BBGuild
 } from '../schemas/main/guild';
-import { Wrapper } from './wrapper';
+import { DocWrapper } from './docWrapper';
 
 export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
 
@@ -29,7 +29,7 @@ export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
  * @class GuildWrapper
  * @implements {guildObject}
  */
-export class GuildWrapper extends Wrapper<GuildObject> implements BBGuild {
+export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
     guild: Guild;
     id: Snowflake;
     prefix?: string;
@@ -328,7 +328,7 @@ export class GuildWrapper extends Wrapper<GuildObject> implements BBGuild {
         let member = await resolveGuildMember(this.guild, memberResolvable);
 
         // if bot master
-        if (Bot.settings.getBotMasters().includes(member.id))
+        if ((await Bot.settings.getBotMasters()).includes(member.id))
             return PermLevels.botMaster;
 
         // if admin
