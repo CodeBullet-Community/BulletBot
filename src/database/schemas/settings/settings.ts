@@ -19,14 +19,12 @@ export interface GlobalSettingsObject {
     };
     botMasters: Snowflake[];
     commands: {
-        // key is command name
-        [K in CommandName]: {
+        [Command in CommandName]: {
             [key: string]: any;
         };
     };
     filters: {
-        // key is filter name
-        [key: string]: {
+        [filter: string]: {
             [key: string]: any;
         }
     };

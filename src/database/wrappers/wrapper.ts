@@ -85,18 +85,16 @@ export class Wrapper<T extends Object> {
     }
 
     /**
-     * Subscribes to the raw data. If field provided it only subscribes to the changes of a specific field.
+     * Pipes the data through distinctUntilChanged so it subscribers only get called if a certain field has changed
      *
-     * @param {(data: T) => any} func Function that should be called for subscription
-     * @param {keyof T} [field] Subscribe only on changes to this value
-     * @returns
+     * @param {keyof T} field Field to watch for changes on
+     * @returns Piped Observable 
      * @memberof Wrapper
      */
-    subToData(func: (data: T) => any, field?: keyof T) {
-        let piped = field == null ? this.data : this.data.pipe(
+    subToField(field: keyof T) {
+        return this.data.pipe(
             distinctUntilChanged((prev, curr) => _.isEqual(prev[field], curr[field]))
-        )
-        return piped.subscribe(func);
+        );
     }
 
     /**

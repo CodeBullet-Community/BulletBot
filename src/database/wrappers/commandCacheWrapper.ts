@@ -59,10 +59,10 @@ export class CommandCacheWrapper extends Wrapper<CommandCacheObject> implements 
         tempData.user = user.id;
         this.data.next(tempData);
 
-        this.subToData(data => this._channel = getTextBasedChannel(data.channel), 'channel');
-        this.subToData(async data => this._user = await Bot.client.fetchUser(data.user), 'user');
-        this.subToData(data => this._command = Bot.commands.get(data.command), 'command');
-        this.subToData(data => this._expirationDate = new Date(data.expirationTimestamp), 'expirationTimestamp');
+        this.subToField('channel').subscribe(data => this._channel = getTextBasedChannel(data.channel));
+        this.subToField('user').subscribe(async data => this._user = await Bot.client.fetchUser(data.user));
+        this.subToField('command').subscribe(data => this._command = Bot.commands.get(data.command));
+        this.subToField('expirationTimestamp').subscribe(data => this._expirationDate = new Date(data.expirationTimestamp));
 
         this.setCustomProperty('channel', () => this._channel);
         this.setCustomProperty('user', () => this._user);

@@ -1,9 +1,10 @@
-import * as discord from 'discord.js';
+import { Client, User, Guild } from 'discord.js';
 import exitHook = require('exit-hook');
 import fs = require('fs');
+import { Observable } from 'rxjs';
 import { keys } from 'ts-transformer-keys';
 
-import { botToken, callback, cluster, crashProof } from './bot-config.json';
+import { botToken, crashProof, mongoURI } from './bot-config.json';
 import { Catcher } from './catcher';
 import { Commands } from './commands';
 import { CaseLogger } from './database/caseLogger';
@@ -11,9 +12,10 @@ import { Database } from './database/database';
 import { Logger } from './database/logger';
 import { MStats } from './database/mStats';
 import { PActions } from './database/pActions';
-import { Settings } from './database/settings';
+import { megalogGroups } from './database/schemas/main/guild.js';
 import { updateDatabaseAfter1_2_8 } from './database/update';
 import { GuildWrapper } from './database/wrappers/guildWrapper';
+import { SettingsWrapper } from './database/wrappers/settingsWrapper.js';
 import { Filters } from './filters';
 import {
     cacheAttachment,
@@ -38,7 +40,6 @@ import {
 import { PermLevels } from './utils/permissions';
 import { Durations } from './utils/time';
 import { YTWebhookManager } from './youtube';
-import { megalogGroups } from './database/schemas/main/guild.js';
 
 try {
     keys();
@@ -80,71 +81,6 @@ process.on('unhandledRejection', async (reason, promise) => {
     console.error(error, "Promise:", promise);
 });
 
-/**
- * static class that holds objects. This is made so you can call everything from everywhere
- *
- * @export
- * @class Bot
- */
-export class Bot {
-    static client: discord.Client;
-    static commands: Commands;
-    static filters: Filters;
-    static youtube: YTWebhookManager;
-    static database: Database;
-    static mStats: MStats;
-    static catcher: Catcher;
-    static logger: Logger;
-    static pActions: PActions;
-    static caseLogger: CaseLogger;
-    static settings: Settings;
-
-    /**
-     * the static version of a constructor
-     *
-     * @static
-     * @param {discord.Client} client
-     * @param {Commands} commands
-     * @param {Filters} filters
-     * @param {YTWebhookManager} youtube
-     * @param {Database} database
-     * @param {MStats} mStats
-     * @param {Catcher} catcher
-     * @param {Logger} logger
-     * @param {CaseLogger} caseLogger
-     * @memberof Bot
-     */
-    static init(client: discord.Client, commands: Commands, filters: Filters, youtube: YTWebhookManager,
-        database: Database, mStats: MStats, catcher: Catcher, logger: Logger, pActions: PActions,
-        caseLogger: CaseLogger, settings: Settings) {
-        this.client = client;
-        this.commands = commands;
-        this.filters = filters;
-        this.youtube = youtube;
-        this.database = database;
-        this.mStats = mStats;
-        this.catcher = catcher;
-        this.logger = logger;
-        this.pActions = pActions;
-        this.caseLogger = caseLogger;
-        this.settings = settings;
-    }
-}
-
-// init all modules
-var mStats = new MStats(cluster);
-var database = new Database(cluster);
-var logger = new Logger(cluster);
-var client = new discord.Client({ disableEveryone: true });
-var commands = new Commands(__dirname + '/commands/');
-var filters = new Filters(__dirname + '/filters/');
-var youtube = new YTWebhookManager(cluster);
-var catcher = new Catcher(callback.port);
-let pActions = new PActions(cluster);
-var caseLogger = new CaseLogger(cluster);
-let settings = new Settings(cluster);
-Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger, pActions, caseLogger, settings);
-
 // when bot shuts down save the mStats cache
 exitHook(() => {
     if (!Bot.mStats.hourly) return;
@@ -155,49 +91,76 @@ exitHook(() => {
     console.log("cached data saved");
 });
 
-// write the current timestamp to a file. This can be used to determine if the bot has crashed or is disconnected.
-setInterval(() => {
-    if (client.status === 0) {
-        fs.writeFileSync(crashProof.file, Date.now());
-    }
-}, crashProof.interval);
+/**
+ * static class that holds objects. This is made so you can call everything from everywhere
+ *
+ * @export
+ * @class Bot
+ */
+export class Bot {
+    static client: Client;
+    static commands: Commands;
+    static filters: Filters;
+    static youtube: YTWebhookManager;
+    static database: Database;
+    static mStats: MStats;
+    static catcher: Catcher;
+    static logger: Logger;
+    static pActions: PActions;
+    static caseLogger: CaseLogger;
+    static settings: SettingsWrapper;
 
-/* for events below check the discord.js docs */
+    private static botToken: string;
+    private static mongoURI: string;
 
-client.on('ready', async () => {
-    // updates the database with guilds he left and joined while offline.
-    let existingGuilds = await Bot.database.mainDB.guilds.distinct('guild').exec();
-    let guildsToRemove = existingGuilds.filter(x => !client.guilds.get(x));
-    let guildsToAdd = client.guilds.filter(x => !existingGuilds.includes(x.id));
-    console.info(`Adding ${guildsToAdd.size} guilds and removing ${guildsToRemove.length} guilds`);
-    for (const guildID of guildsToRemove) { // removes all guilds that the bot left while it was down
-        Bot.database.removeGuild(guildID)
-    }
-    for (const guild of guildsToAdd.array()) { // adds all guilds that the bot joined while it was down
-        Bot.database.addGuild(guild.id);
+    constructor(botToken: string, mongoURI: string) {
+        Bot.botToken = botToken;
+        Bot.mongoURI = mongoURI;
     }
 
-    Bot.client.user.setActivity('I\'m ready!');
-    console.log('I\'m ready!');
-});
+    static async init() {
+        console.log('Bot is starting up...');
 
-client.on('error', async (error: any) => {
-    Bot.mStats.logError(error);
-    console.error('from client.on():', error);
-    // this is just some temporary code to debug a certain problem we can't recreate. Probably will be removed soon as that error never occurred again
-    if (error.target) {
-        console.log('error.target', error.target);
-        if (error.target._events) {
-            console.log('error.target._events', error.target._events);
-        }
-        if (error.target.WebSocket) {
-            console.log('error.target.WebSocket', error.target.WebSocket);
-            if (error.target.WebSocket._events) {
-                console.log('error.target.WebSocket._events', error.target.WebSocket._events);
-            }
-        }
+        this.mStats = new MStats(this.mongoURI);
+        await this.mStats.init();
+
+        this.database = new Database(this.mongoURI);
+        await this.database.init();
+
+        this.settings = new SettingsWrapper();
+        await this.settings.load();
+
+        this.logger = new Logger(this.database);
+        this.caseLogger = new CaseLogger(this.database);
+        this.pActions = new PActions(this.database);
+
+        this.catcher = new Catcher(this.database);
+        this.youtube = new YTWebhookManager(this.database);
+
+        this.client = new Client({ disableEveryone: true });
+        await this.client.login(this.botToken);
     }
-});
+
+    private static subscribeToClientEvents() {
+        this.client.on('ready', this.onReady);
+        this.client.on('error', this.onError);
+    }
+
+    private static async onReady() {
+        Bot.client.user.setActivity('I\'m ready!');
+        console.log('I\'m ready!');
+    }
+
+    private static onError(error: Error) {
+        Bot.mStats.logError(error);
+        console.error('Discord Client Error:', error);
+    }
+
+}
+
+// start
+new Bot(botToken, mongoURI);
+Bot.init();
 
 client.on('message', async message => {
     if (message.author.id != client.user.id) cacheAttachment(message); // megalog attachment caches the message

@@ -1,5 +1,5 @@
 import { ChannelResolvable, Collection, GuildResolvable, Snowflake, UserResolvable } from 'discord.js';
-import mongoose = require('mongoose');
+import { Connection, createConnection, Model } from 'mongoose';
 import { setInterval } from 'timers';
 
 import { Bot } from '..';
@@ -23,9 +23,12 @@ import { GuildDoc, GuildObject, guildSchema } from './schemas/main/guild.js';
 import { LogDoc, logSchema } from './schemas/main/log.js';
 import { PActionDoc, pActionSchema } from './schemas/main/pAction.js';
 import { UserDoc, UserObject, userSchema } from './schemas/main/user.js';
+import { GlobalSettingsDoc, globalSettingsSchema } from './schemas/settings/settings';
 import { CommandCacheWrapper } from './wrappers/commandCacheWrapper';
 import { GuildWrapper } from './wrappers/guildWrapper';
 import { UserWrapper } from './wrappers/userWrapper';
+import { SettingsWrapper } from './wrappers/settingsWrapper';
+import { mongoURI } from '../bot-config.json';
 
 /**
  * Manages all connections to the main database and settings database
@@ -35,69 +38,107 @@ import { UserWrapper } from './wrappers/userWrapper';
  */
 export class Database {
     /**
-     * represents the main database with all collections and the actual connection
+     * The main database with all collections and the actual connection
      *
-     * @type {{connection: mongoose.Connection;guilds: mongoose.Model<GuildDoc>;staff: mongoose.Model<staffDoc>;prefix: mongoose.Model<prefixDoc>;commands: mongoose.Model<commandsDoc>;filters: mongoose.Model<FiltersDoc>;logs: mongoose.Model<LogDoc>;commandCache: mongoose.Model<CommandCacheDoc>;}}
      * @memberof Database
      */
     mainDB: {
-        connection: mongoose.Connection;
-        guilds: mongoose.Model<GuildDoc>;
-        filters: mongoose.Model<FiltersDoc>;
-        logs: mongoose.Model<LogDoc>;
-        commandCache: mongoose.Model<CommandCacheDoc>;
-        users: mongoose.Model<UserDoc>;
-        cases: mongoose.Model<CaseDoc>;
-        pActions: mongoose.Model<PActionDoc>;
+        connection: Connection;
+        guilds: Model<GuildDoc>;
+        filters: Model<FiltersDoc>;
+        logs: Model<LogDoc>;
+        commandCache: Model<CommandCacheDoc>;
+        users: Model<UserDoc>;
+        cases: Model<CaseDoc>;
+        pActions: Model<PActionDoc>;
     };
 
+    /**
+     * The settings database with all collections and the actual connection
+     */
+    settingsDB: {
+        connection: Connection;
+        settings: Model<GlobalSettingsDoc>;
+    }
+
+    /**
+     * Cache of different collections
+     */
     cache: {
         guilds: Collection<Snowflake, GuildWrapper>;
         users: Collection<Snowflake, UserWrapper>;
         commandCaches: Collection<String, CommandCacheWrapper>; // key is `${channel.id} {user.id}`
     };
 
-    /**
-     * Creates an instance of Database and connections to the main and settings database.
-     * 
-     * @param {{ url: string, suffix: string }} clusterInfo object containing the url and suffix for the cluster
-     * @memberof Database
-     */
-    constructor(clusterInfo: { url: string, suffix: string }) {
-        // create connection with main database
-        var mainCon = mongoose.createConnection(clusterInfo.url + '/main' + clusterInfo.suffix, { useNewUrlParser: true });
-        mainCon.on('error', error => {
-            console.error('connection error:', error);
-            Bot.mStats.logError(error);
-        });
-        mainCon.once('open', function () {
-            console.log('connected to /main database');
-            // setup model (doc definition) for every collection
-            Bot.database.mainDB = {
+    private mongoURI: string;
+
+    constructor(mongoURI: string) {
+        this.mongoURI = mongoURI;
+        Bot.database.cache = {
+            guilds: new Collection(),
+            users: new Collection(),
+            commandCaches: new Collection()
+        };
+    }
+
+    async init() {
+        try {
+            let mainCon = await this.connectToDatabase('main');
+            console.log('connected to "main" database');
+            this.mainDB = {
                 connection: mainCon,
-                guilds: mainCon.model('guild', guildSchema, 'guilds'),
-                filters: mainCon.model('filters', filtersSchema, 'filters'),
-                logs: mainCon.model('log', logSchema, 'logs'),
-                commandCache: mainCon.model('commandCache', commandCacheSchema, 'commandCaches'),
-                users: mainCon.model('user', userSchema, 'users'),
-                cases: mainCon.model('cases', caseSchema, 'cases'),
-                pActions: mainCon.model('pActions', pActionSchema, 'pAction')
+                guilds: mainCon.model('guild', guildSchema),
+                filters: mainCon.model('filters', filtersSchema),
+                logs: mainCon.model('log', logSchema),
+                commandCache: mainCon.model('commandCache', commandCacheSchema),
+                users: mainCon.model('user', userSchema),
+                cases: mainCon.model('cases', caseSchema),
+                pActions: mainCon.model('pActions', pActionSchema)
             };
 
-            Bot.database.cache = {
-                guilds: new Collection(),
-                users: new Collection(),
-                commandCaches: new Collection()
+            let settingsCon = await this.connectToDatabase('settings');
+            console.log('connected to "settings" database');
+            this.settingsDB = {
+                connection: settingsCon,
+                settings: settingsCon.model('settings', globalSettingsSchema)
             };
+        } catch (err) {
+            console.error('Connecting to MongoDB cluster failed');
+            throw err;
+        }
 
-            // clean unused data from database at a certain interval
-            setInterval(async () => {
-                await Bot.database.cleanGuilds();
-                Bot.database.cleanCommandCaches();
-                Bot.database.cleanUsers();
-                //console.log('cleaned database');
-            }, cleanInterval);
-            console.info(`cleaning database every ${cleanInterval}ms`);
+        setInterval(async () => {
+            await Bot.database.cleanGuilds();
+            Bot.database.cleanCommandCaches();
+            Bot.database.cleanUsers();
+            //console.log('cleaned database');
+        }, cleanInterval);
+        console.info(`cleaning database every ${cleanInterval}ms`);
+    }
+
+    subscribeToClientEvents() {
+        Bot.client.on('ready', this.checkGuildDocExistence);
+    }
+
+    private async checkGuildDocExistence() {
+        let existingGuilds = await Bot.database.mainDB.guilds.distinct('guild').exec();
+        let guildsToRemove = existingGuilds.filter(x => !Bot.client.guilds.get(x));
+        let guildsToAdd = Bot.client.guilds.filter(x => !existingGuilds.includes(x.id));
+
+        console.info(`Adding ${guildsToAdd.size} guilds and removing ${guildsToRemove.length} guilds`);
+        for (const guildID of guildsToRemove) {
+            await Bot.database.removeGuild(guildID);
+        }
+        for (const guild of guildsToAdd.array()) { // adds all guilds that the bot joined while it was down
+            await Bot.database.addGuild(guild.id);
+        }
+    }
+
+    private connectToDatabase(database: string) {
+        return createConnection(this.mongoURI, {
+            useNewUrlParser: true,
+            dbName: database,
+            reconnectTries: Infinity
         });
     }
 
