@@ -237,7 +237,7 @@ export class Commands {
         }
 
         // get command usage limits
-        let commandUsageLimits = Bot.settings.getCommandUsageLimits(command);
+        let commandUsageLimits = await Bot.settings.getCommandUsageLimits(command);
         if (!dm) {
             commandUsageLimits = await guildWrapper.getCommandUsageLimits(command);
         }
