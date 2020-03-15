@@ -1,18 +1,17 @@
-import { Message, Guild } from 'discord.js';
-import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
+import { commandInterface } from '../../commands';
 import { sendError } from '../../utils/messages';
-import { permToString } from '../../utils/parsers';
-import { CommandCache } from '../../database/schemas';
+import { PermLevels } from '../../utils/permissions';
+import { Durations } from '../../utils/time';
 
-const abc = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+const abc = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+const waitTime = Durations.second * 10;
 
 var command: commandInterface = {
     name: 'abc',
     path: '',
     dm: true,
-    permLevel: permLevels.member,
+    permLevel: PermLevels.member,
     togglable: true,
     help: {
         shortDescription: 'Does the abc with you',
@@ -24,7 +23,7 @@ var command: commandInterface = {
             '{command}'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number], commandCache?: CommandCache) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime, commandCache?) => {
         try {
             Bot.mStats.logResponseTime(command.name, requestTime);
             Bot.mStats.logCommandUsage(command.name);
@@ -34,23 +33,24 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 message.channel.send(abc[0]);
                 Bot.mStats.logMessageSend();
-                // create command cache for user
-                new CommandCache(undefined, message.channel, message.author, command.name, 10000, { index: 0 });
+                // create CommandCache for user
+                Bot.database.createCommandCache(message.channel, message.author, command, permLevel, Date.now() + waitTime, 0);
             } else {
-                if (abc[commandCache.cache.index + 1] == args.toLocaleLowerCase()) { // if user replied with the correct character
-                    commandCache.cache.index += 2;
+                await commandCache.load('cache');
+                if (abc[commandCache.cache + 1] == args.toLocaleLowerCase()) { // if user replied with the correct character
+                    await commandCache.setCache(commandCache.cache + 2);
 
-                    if (abc[commandCache.cache.index]) { // if alphabet is finished or not
-                        message.channel.send(abc[commandCache.cache.index]);
+                    if (abc[commandCache.cache]) { // if alphabet is finished or not
+                        message.channel.send(abc[commandCache.cache]);
                         Bot.mStats.logMessageSend();
-                        commandCache.save(10000);
+                        await commandCache.extendExpirationTimestamp(waitTime)
                     } else {
                         message.channel.send('alphabet was finished');
                         Bot.mStats.logMessageSend();
                         commandCache.remove();
                     }
                 } else {
-                    message.channel.send(`You were supposed to send \`${abc[commandCache.cache.index + 1]}\``);
+                    message.channel.send(`You were supposed to send \`${abc[commandCache.cache + 1]}\``);
                     Bot.mStats.logMessageSend();
                     commandCache.remove();
                 }

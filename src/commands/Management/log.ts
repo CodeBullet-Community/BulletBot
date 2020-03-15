@@ -1,15 +1,14 @@
-import { Message, RichEmbed, Guild } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, stringToChannel } from '../../utils/parsers';
-import { permLevels } from '../../utils/permissions';
+import { stringToChannel } from '../../utils/parsers';
+import { PermLevels } from '../../utils/permissions';
 
 var command: commandInterface = {
     name: 'log',
     path: '',
     dm: false,
-    permLevel: permLevels.admin,
+    permLevel: PermLevels.admin,
     togglable: false,
     help: {
         shortDescription: 'let\'s you set the log channel',
@@ -26,7 +25,7 @@ var command: commandInterface = {
             '{command} list'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             var argIndex = 0;
             if (args.length == 0) { // send help embed if no arguments provided

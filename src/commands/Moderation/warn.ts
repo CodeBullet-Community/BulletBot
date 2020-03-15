@@ -1,18 +1,17 @@
-import { Message, Guild } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, stringToMember, durationToString } from '../../utils/parsers';
-import { durations } from '../../utils/time';
+import { stringToMember } from '../../utils/parsers';
+import { Durations } from '../../utils/time';
 
 var command: commandInterface = {
     name: 'warn',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
-    cooldownLocal: durations.second,
+    cooldownLocal: Durations.second,
     help: {
         shortDescription: 'Warn members for role violations',
         longDescription: 'Warn member for a rule break or something similar',
@@ -23,7 +22,7 @@ var command: commandInterface = {
             '{command} @jeff#1234 being a jerk'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             if (args.length == 0) { // send help embed if no arguments provided
                 message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));

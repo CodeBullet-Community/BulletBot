@@ -1,9 +1,18 @@
-import mongoose = require('mongoose');
-import { mStatsAllTimeDoc, mStatsDayDoc, mStatsHourDoc, mStatsAllTimeSchema, mStatsDaySchema, mStatsHourSchema, mStatsHourObject, mStatsObject, errorDoc, errorSchema, mStatsDayObject, megalogFunctions, createEmptyMStatsObject, bugDoc, botSuggestionDoc, bugSchema, botSuggestionSchema } from './schemas';
-import { Bot } from '..';
-import { durations, toNano } from '../utils/time';
 import crypto = require('crypto');
 import { Message } from 'discord.js';
+import mongoose = require('mongoose');
+
+import { Bot } from '..';
+import { CommandName } from '../commands';
+import { BenchmarkTimestamp, Durations, toNano } from '../utils/time';
+import { megalogGroups, MegalogFunction, WebhookService } from './schemas/main/guild';
+import { createEmptyMStatsObject, MStatsObject } from './schemas/mStats/_mStats';
+import { MStatsAllTimeDoc, mStatsAllTimeSchema } from './schemas/mStats/allTime';
+import { BugDoc, bugSchema } from './schemas/mStats/bug';
+import { MStatsDayDoc, mStatsDaySchema, MStatsDayObject } from './schemas/mStats/daily';
+import { ErrorDoc, errorSchema } from './schemas/mStats/error';
+import { MStatsHourDoc, MStatsHourObject, mStatsHourSchema } from './schemas/mStats/hourly';
+import { BotSuggestionDoc, botSuggestionSchema } from './schemas/mStats/suggestion';
 
 /**
  * Manages all connections and documents in the mStats database. It's a very independent class with only minimal actual input (besides the action logging) required.
@@ -24,44 +33,44 @@ export class MStats {
     /**
      * model for allTime collection
      *
-     * @type {mongoose.Model<mStatsAllTimeDoc>}
+     * @type {mongoose.Model<MStatsAllTimeDoc>}
      * @memberof MStats
      */
-    allTime: mongoose.Model<mStatsAllTimeDoc>;
+    allTime: mongoose.Model<MStatsAllTimeDoc>;
     /**
      * model for daily collection
      *
-     * @type {mongoose.Model<mStatsDayDoc>}
+     * @type {mongoose.Model<MStatsDayDoc>}
      * @memberof MStats
      */
-    daily: mongoose.Model<mStatsDayDoc>;
+    daily: mongoose.Model<MStatsDayDoc>;
     hourly: {
-        model: mongoose.Model<mStatsHourDoc>;
-        doc: mStatsHourDoc;
+        model: mongoose.Model<MStatsHourDoc>;
+        doc: MStatsHourDoc;
         pingTestCounter: number;
         interval: NodeJS.Timeout;
     }
     /**
      * model for errors collection
      *
-     * @type {mongoose.Model<errorDoc>}
+     * @type {mongoose.Model<ErrorDoc>}
      * @memberof MStats
      */
-    errors: mongoose.Model<errorDoc>;
+    errors: mongoose.Model<ErrorDoc>;
     /**
      * model for bugs collection
      *
-     * @type {mongoose.Model<bugDoc>}
+     * @type {mongoose.Model<BugDoc>}
      * @memberof MStats
      */
-    bugs: mongoose.Model<bugDoc>;
+    bugs: mongoose.Model<BugDoc>;
     /**
      * model for suggestions collection
      *
-     * @type {mongoose.Model<botSuggestionDoc>}
+     * @type {mongoose.Model<BotSuggestionDoc>}
      * @memberof MStats
      */
-    suggestions: mongoose.Model<botSuggestionDoc>;
+    suggestions: mongoose.Model<BotSuggestionDoc>;
 
     /**
      * Creates an instance of MStats, connects to the database and starts all timers. It calls the private async init function.
@@ -96,17 +105,17 @@ export class MStats {
     private async init() {
         var date = new Date();
         var UTC = date.getTime();
-        var day = UTC - (UTC % durations.day);
+        var day = UTC - (UTC % Durations.day);
         var hour = date.getUTCHours();
 
-        var model = this.connection.model<mStatsHourDoc>('hour', mStatsHourSchema, 'hourly');
+        var model = this.connection.model<MStatsHourDoc>('hour', mStatsHourSchema, 'hourly');
 
         // checks if there are hours saved from other days
         let existingDays: number[] = await model.distinct('day').exec();
         if (existingDays.includes(day)) existingDays.splice(existingDays.indexOf(day), 1);
         for (const existingDay of existingDays) {
             if (!await this.daily.findOne({ day: existingDay })) { // only make a new day doc if there isn't one
-                let hourObjects: mStatsHourObject[] = (await model.find({ day: existingDay }).exec()).map(x => x.toObject());
+                let hourObjects: MStatsHourObject[] = (await model.find({ day: existingDay }).exec()).map(x => x.toObject());
 
                 let mergedObject: any;
                 if (hourObjects.length != 1) {
@@ -161,25 +170,25 @@ export class MStats {
             pingTestCounter: pingTestCounter,
             interval: null
         };
-        this.hourly.interval = this.createHourInterval(durations.minute / 6, durations.hour - (UTC % durations.hour) - durations.minute);
+        this.hourly.interval = this.createHourInterval(Durations.minute / 6, Durations.hour - (UTC % Durations.hour) - Durations.minute);
 
         setTimeout(() => { // timeout and interval for the next hour and all hours after that
             this.changeHour();
             setInterval(() => {
                 this.changeHour();
-            }, durations.hour);
-        }, durations.hour - (UTC % durations.hour) + 1000);
+            }, Durations.hour);
+        }, Durations.hour - (UTC % Durations.hour) + 1000);
     }
 
     /**
      * saves the hour document and fill out total and ping stats
      *
-     * @param {{ model: mongoose.Model<mStatsHourDoc>; doc: mStatsHourDoc; pingTestCounter: number; interval: NodeJS.Timeout;}} hourly hourly property if the class. It need this, because it can't get it when it's in a timeout.
+     * @param {{ model: mongoose.Model<MStatsHourDoc>; doc: MStatsHourDoc; pingTestCounter: number; interval: NodeJS.Timeout;}} hourly hourly property if the class. It need this, because it can't get it when it's in a timeout.
      * @returns
      * @memberof MStats
      */
     async saveHour(hourly: {
-        model: mongoose.Model<mStatsHourDoc>; doc: mStatsHourDoc;
+        model: mongoose.Model<MStatsHourDoc>; doc: MStatsHourDoc;
         pingTestCounter: number; interval: NodeJS.Timeout;
     }) {
         try {
@@ -201,10 +210,10 @@ export class MStats {
             }
             hourly.doc.webhooks.youtube.total = await Bot.youtube.webhooks.countDocuments().exec();
             // total enabled megalog functions
-            for (const megalogFunction of megalogFunctions.all) {
+            for (const megalogFunction of megalogGroups.all) {
                 let query = {};
-                query[megalogFunction] = { $exists: true };
-                hourly.doc.megalog.enabled[megalogFunction] = await Bot.database.mainDB.megalogs.countDocuments(query).exec();
+                query[`megalog.${megalogFunction}`] = { $exists: true };
+                hourly.doc.megalog.enabled[megalogFunction] = await Bot.database.mainDB.guilds.countDocuments(query).exec();
             }
 
             // marks nested objects as modified so they also get saved
@@ -228,7 +237,7 @@ export class MStats {
      * @returns
      * @memberof MStats
      */
-    private createHourInterval(timeout: number, clearTimeout: number = durations.hour - durations.minute) {
+    private createHourInterval(timeout: number, clearTimeout: number = Durations.hour - Durations.minute) {
         var interval = setInterval(this.saveHour, timeout, this.hourly);
         setTimeout(() => {
             clearInterval(interval);
@@ -245,7 +254,7 @@ export class MStats {
     private async changeHour() {
         var date = new Date();
         var UTC = date.getTime();
-        var day = UTC - (UTC % durations.day);
+        var day = UTC - (UTC % Durations.day);
         var hour = date.getUTCHours();
 
         await this.saveHour(this.hourly);
@@ -261,7 +270,7 @@ export class MStats {
         this.hourly.doc = new this.hourly.model(hourObject);
         await this.saveHour(this.hourly);
         this.hourly.pingTestCounter = 0; // resets ping test counter because there weren't any ping test save into this document
-        this.hourly.interval = this.createHourInterval(durations.minute); // creates another hour save interval because the other one was cleared
+        this.hourly.interval = this.createHourInterval(Durations.minute); // creates another hour save interval because the other one was cleared
         console.log(`MStats hour from ${oldHourObject.hour} to ${hour}`);
     }
 
@@ -274,8 +283,8 @@ export class MStats {
      */
     async changeDay(day: number) {
         var hourDocs = await this.hourly.model.find({ day: day }).exec();
-        var hourObjects: mStatsHourObject[] = [];
-        let newestHourObject: mStatsHourObject;
+        var hourObjects: MStatsHourObject[] = [];
+        let newestHourObject: MStatsHourObject;
         for (const hour of hourDocs) { // loads all hour docs and deletes them
             let hourObject = hour.toObject();
             if (!newestHourObject || newestHourObject.hour < hourObject.hour)
@@ -296,7 +305,7 @@ export class MStats {
         var allTimeDoc = await this.allTime.findOne();
         if (!allTimeDoc) { // make a new all time doc if no one was found
             mergedObject.from = day;
-            mergedObject.to = day + durations.day;
+            mergedObject.to = day + Durations.day;
             allTimeDoc = new this.allTime(mergedObject);
             allTimeDoc.markModified('commands');
             allTimeDoc.markModified('filters');
@@ -305,10 +314,10 @@ export class MStats {
             console.log('made new all time doc');
             return;
         }
-        let dayObject: mStatsDayObject = dayDoc.toObject();
+        let dayObject: MStatsDayObject = dayDoc.toObject();
         var allTimeObject = this.mergeStats([allTimeDoc.toObject(), dayObject], dayObject); // merges day doc with existing all time
         allTimeDoc.set(allTimeObject);
-        allTimeDoc.to = day + durations.day; // updates the to timestamp
+        allTimeDoc.to = day + Durations.day; // updates the to timestamp
         await allTimeDoc.save();
         console.log(`updated all time. ${hourObjects.length} hours recorded for day ${day}`);
     }
@@ -316,13 +325,13 @@ export class MStats {
     /**
      * merges an array of mStats objects into a single on
      *
-     * @param {mStatsObject[]} docs
-     * @param {mStatsObject} newestDoc the newest doc in the array. Is used to define guildsTotal and webhooks.[service].total properties
+     * @param {MStatsObject[]} docs
+     * @param {MStatsObject} newestDoc the newest doc in the array. Is used to define guildsTotal and webhooks.[service].total properties
      * @returns
      * @memberof MStats
      */
-    mergeStats(docs: mStatsObject[], newestDoc: mStatsObject) {
-        var mergedDoc: mStatsObject = createEmptyMStatsObject();
+    mergeStats(docs: MStatsObject[], newestDoc: MStatsObject) {
+        var mergedDoc: MStatsObject = createEmptyMStatsObject();
         for (const doc of docs) {
             mergedDoc.messagesReceived += doc.messagesReceived;
             mergedDoc.messagesSend += doc.messagesSend;
@@ -463,7 +472,7 @@ export class MStats {
      * @returns the updated/created error doc
      * @memberof MStats
      */
-    async logError(error: Error, command?: string) {
+    async logError(error: Error, command?: CommandName) {
         if (!this.hourly) return;
         this.hourly.doc.errorsTotal += 1;
         // if command is specified also log it in the command stats
@@ -501,11 +510,11 @@ export class MStats {
     /**
      * logs a command usage
      *
-     * @param {string} command command name
+     * @param {CommandName} command command name
      * @param {string} [subCommand] sub command name (like 'list' or 'remove')
      * @memberof MStats
      */
-    logCommandUsage(command: string, subCommand?: string) {
+    logCommandUsage(command: CommandName, subCommand?: string) {
         if (!this.hourly) return;
         this.hourly.doc.commandTotal += 1;
         if (!subCommand) {
@@ -527,12 +536,12 @@ export class MStats {
     /**
      * logs responds time of a command. This doesn't include the ping, but only the time between receiving the message and sending the first response.
      *
-     * @param {string} command command name
-     * @param {number} requestTime timestamp when the bot received the message
+     * @param {CommandName} command command name
+     * @param {BenchmarkTimestamp} requestTime timestamp when the bot received the message
      * @returns
      * @memberof MStats
      */
-    logResponseTime(command: string, requestTime: [number, number]) {
+    logResponseTime(command: CommandName, requestTime: BenchmarkTimestamp) {
         if (!this.hourly) return;
         var latency = toNano(process.hrtime(requestTime));
         if (!this.hourly.doc.commands) {
@@ -577,7 +586,7 @@ export class MStats {
      * @param {('created' | 'changed' | 'deleted')} action created/changed/deleted
      * @memberof MStats
      */
-    logWebhookAction(service: string, action: 'created' | 'changed' | 'deleted') {
+    logWebhookAction(service: WebhookService, action: 'created' | 'changed' | 'deleted') {
         if (!this.hourly) return;
         if (!this.hourly.doc.webhooks) {
             this.hourly.doc.webhooks = {};
@@ -591,20 +600,17 @@ export class MStats {
     /**
      * logs a log that the megalogger created
      *
-     * @param {string} megalogFunction which function made the log
+     * @param {MegalogFunction} megalogFunction which function made the log
      * @returns
      * @memberof MStats
      */
-    logMegalogLog(megalogFunction: 'channelCreate' | 'channelDelete' | 'channelUpdate' | 'ban' | 'unban' |
-        'memberJoin' | 'memberLeave' | 'nicknameChange' | 'memberRolesChange' | 'guildNameChange' |
-        'messageDelete' | 'attachmentCache' | 'messageEdit' | 'reactionAdd' | 'reactionRemove' |
-        'roleCreate' | 'roleDelete' | 'roleUpdate' | 'voiceTransfer' | 'voiceMute' | 'voiceDeaf') {
+    logMegalogLog(megalogFunction: MegalogFunction) {
         if (!this.hourly) return;
         if (!this.hourly.doc.megalog)
             this.hourly.doc.megalog = createEmptyMStatsObject().megalog;
         if (!this.hourly.doc.megalog.logged)
             this.hourly.doc.megalog.logged = createEmptyMStatsObject().megalog.logged;
-        if (!megalogFunctions.all.includes(megalogFunction)) {
+        if (!megalogGroups.all.includes(megalogFunction)) {
             console.warn(`Invalid input in mStats.logMegalogLog function: ${megalogFunction}`);
             return;
         }
@@ -624,9 +630,9 @@ export class MStats {
      * @returns
      * @memberof MStats
      */
-    logBug(message: Message, bug:string) {
+    logBug(message: Message, bug: string) {
         if (!this.hourly) return;
-        this.hourly.doc.bugs ++;
+        this.hourly.doc.bugs++;
         return new this.bugs({
             user: message.author.id,
             guild: message.guild ? message.guild.id : undefined,
@@ -644,7 +650,7 @@ export class MStats {
      */
     logBotSuggestion(message: Message, suggestion: string) {
         if (!this.hourly) return;
-        this.hourly.doc.botSuggestions ++;
+        this.hourly.doc.botSuggestions++;
         return new this.suggestions({
             user: message.author.id,
             guild: message.guild ? message.guild.id : undefined,

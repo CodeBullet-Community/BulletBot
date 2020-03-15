@@ -1,15 +1,15 @@
-import { Message, RichEmbed, Guild } from 'discord.js';
+import { Message } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString } from '../../utils/parsers';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
+import { BenchmarkTimestamp } from '../../utils/time';
 
 var command: commandInterface = {
     name: 'prefix',
     path: '',
     dm: false,
-    permLevel: permLevels.admin,
+    permLevel: PermLevels.admin,
     togglable: false,
     help: {
         shortDescription: 'sets custom prefix',
@@ -25,29 +25,26 @@ var command: commandInterface = {
             '{command} reset'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message: Message, args: string, permLevel: number, dm: boolean, guildWrapper, requestTime: BenchmarkTimestamp) => {
         try {
             if (args.length == 0) { // if no argument was provided reply with prefix
                 Bot.mStats.logResponseTime(command.name, requestTime);
-                message.channel.send(`My prefix is \`${await Bot.database.getPrefix(message.guild)}\``);
+                message.channel.send(`My prefix is \`${await guildWrapper.getPrefix()}\``);
                 Bot.mStats.logCommandUsage(command.name, 'list');
                 Bot.mStats.logMessageSend();
                 return false;
             }
 
-            // load prefix settings from database
-            var prefixDoc = await Bot.database.mainDB.prefix.findOne({ guild: message.guild.id });
-
-            if (args == 'reset' || args == Bot.database.settingsDB.cache.prefix) { // if user wants to reset the prefix to default
-                if (prefixDoc) { // if a custom prefix is currently set
-                    var oldPrefix: string = prefixDoc.toObject().prefix; // cache old prefix for logging
-                    prefixDoc.remove(); // remove setting doc which makes the bot use the default
+            var oldPrefix = await guildWrapper.getPrefix();
+            if (args == 'reset' || args == Bot.settings.prefix) { // if user wants to reset the prefix to default
+                if (guildWrapper.prefix) { // if a custom prefix is currently set
+                    await guildWrapper.setPrefix();
 
                     // send confirmation message
                     Bot.mStats.logResponseTime(command.name, requestTime);
-                    message.channel.send(`Successfully reset the prefix to \`${Bot.database.settingsDB.cache.prefix}\``);
+                    message.channel.send(`Successfully reset the prefix to \`${Bot.settings.prefix}\``);
                     // log that prefix has been changed
-                    Bot.logger.logPrefix(message.guild, message.member, oldPrefix, Bot.database.settingsDB.cache.prefix);
+                    Bot.logger.logPrefix(message.guild, message.member, oldPrefix, Bot.settings.prefix);
                 } else {
                     Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send(`This server doesn't have a custom prefix`);
@@ -63,14 +60,7 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            var oldPrefix = Bot.database.settingsDB.cache.prefix; // cache old prefix for logging
-            if (!prefixDoc) { // when the prefix settings doc doesn't exist (so the default is set)
-                prefixDoc = new Bot.database.mainDB.prefix({ guild: message.guild.id, prefix: args });
-            } else {
-                oldPrefix = prefixDoc.toObject().prefix;
-                prefixDoc.prefix = args;
-            }
-            prefixDoc.save(); // save changes to the database
+            await guildWrapper.setPrefix(args);
 
             // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);

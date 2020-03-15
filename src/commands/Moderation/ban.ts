@@ -1,18 +1,17 @@
-import { Message, Guild } from 'discord.js';
-import { commandInterface } from '../../commands';
-import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
+import { commandInterface } from '../../commands';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString, stringToMember, stringToDuration, stringToUser } from '../../utils/parsers';
-import { durations } from '../../utils/time';
+import { durationToString, stringToDuration, stringToUser } from '../../utils/parsers';
+import { PermLevels } from '../../utils/permissions';
+import { Durations } from '../../utils/time';
 
 var command: commandInterface = {
     name: 'ban',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
-    cooldownLocal: durations.second,
+    cooldownLocal: Durations.second,
     help: {
         shortDescription: 'Ban members',
         longDescription: 'Ban members for a certain or indefinite time. Reason is always optional, but is highly recommended.',
@@ -26,7 +25,7 @@ var command: commandInterface = {
             '{command} @jeff#1234 1d12h20m1s requesting a very specific ban duration'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             if (args.length == 0) { // send help embed if no arguments provided
                 message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));

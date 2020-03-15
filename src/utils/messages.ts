@@ -1,6 +1,8 @@
-import { Guild, Role, TextChannel, DMChannel, GroupDMChannel, Message } from 'discord.js';
-import { stringToRole } from './parsers';
+import { DMChannel, GroupDMChannel, Guild, Message, Role, TextChannel } from 'discord.js';
+
 import { Bot } from '..';
+import { stringToRole } from './parsers';
+import { BenchmarkTimestamp } from './time';
 
 /**
  * Mentions any role and user in content. 
@@ -15,7 +17,7 @@ import { Bot } from '..';
  * @param {number} [requestTime] if call comes from a command the request timestamp should be passed
  * @param {string} [commandName] if call comes from a command the name of the command should be passed
  */
-export async function sendMentionMessage(guild: Guild, channel: TextChannel, content: string, disableEveryone = false, embed?: any, editMessage?: Message, requestTime?: [number, number], commandName?: string) {
+export async function sendMentionMessage(guild: Guild, channel: TextChannel, content: string, disableEveryone = false, embed?: any, editMessage?: Message, requestTime?: BenchmarkTimestamp, commandName?: string) {
     var regex: RegExpExecArray;
     const roleRegex = /{{role:(.*)}}/gm;
     // [ '{{role:[role]}}' , [role object] ]

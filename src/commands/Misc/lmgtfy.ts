@@ -1,15 +1,13 @@
-import { Message, Guild } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString } from '../../utils/parsers';
 
 var command: commandInterface = {
     name: 'lmgtfy',
     path: '',
     dm: true,
-    permLevel: permLevels.member,
+    permLevel: PermLevels.member,
     togglable: true,
     help: {
         shortDescription: 'Let Me Google That For You link generator',
@@ -22,7 +20,7 @@ var command: commandInterface = {
         ]
     },
     // TODO: implement different  search engines such as DDG for bangs and img search etc?
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             args = args.trim();
             if (args.length == 0) { // send help embed if no arguments provided

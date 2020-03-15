@@ -1,12 +1,16 @@
+import { Channel, Guild, GuildMember, Message, Role, TextChannel, User } from 'discord.js';
 import mongoose = require('mongoose');
-import { logDoc, logSchema, guildDoc, guildSchema, logObject, logActions, webhookDoc, logTypes, logMegalog } from './schemas';
-import { Guild, Role, User, GuildMember, Message, Channel, TextChannel, } from 'discord.js';
-import { commandInterface } from '../commands';
+
 import { Bot } from '..';
+import { youtube } from '../bot-config.json';
+import { commandInterface } from '../commands';
 import { filterInterface } from '../filters';
 import { filterAction, filterActions } from '../utils/filters';
 import { actionToString } from '../utils/parsers';
-import { youtube } from '../bot-config.json';
+import { GuildWrapper } from './wrappers/guildWrapper';
+import { GuildDoc, guildSchema, GuildRank, WebhookService, MegalogFunction } from './schemas/main/guild';
+import { LogDoc, logSchema, LogObject, LogType, LogAction } from './schemas/main/log';
+import { WebhookDoc } from './schemas/webhooks/_webhooks';
 
 /**
  * Manages connection to main database with the logs collection. It logs actions into the the database and if a log channel was define also into discord.
@@ -27,17 +31,17 @@ export class Logger {
     /**
      * model for guilds collection
      *
-     * @type {mongoose.Model<guildDoc>}
+     * @type {mongoose.Model<GuildDoc>}
      * @memberof Logger
      */
-    guilds: mongoose.Model<guildDoc>;
+    guilds: mongoose.Model<GuildDoc>;
     /**
      * model for logs collection
      *
-     * @type {mongoose.Model<logDoc>}
+     * @type {mongoose.Model<LogDoc>}
      * @memberof Logger
      */
-    logs: mongoose.Model<logDoc>;
+    logs: mongoose.Model<LogDoc>;
 
     /**
      * Creates an instance of Logger, connections to main database and inits all models.
@@ -65,21 +69,21 @@ export class Logger {
      * @param {Guild} guild guild where it actually was changed
      * @param {GuildMember} mod the member that made the change request
      * @param {(0 | 1)} type add or remove
-     * @param {('admins' | 'mods' | 'immune')} rank admins/mods/immune
+     * @param {GuildRank} rank admins/mods/immune
      * @param {Role} [role] the added/removed role
      * @param {User} [user] the added/removed user
      * @returns
      * @memberof Logger
      */
-    async logStaff(guild: Guild, mod: GuildMember, type: 0 | 1, rank: 'admins' | 'mods' | 'immune', role?: Role, user?: User) {
+    async logStaff(guild: Guild, mod: GuildMember, type: 0 | 1, rank: GuildRank, role?: Role, user?: User) {
         var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
 
         // logs logs in database
-        var logObject: logObject = {
+        var logObject: LogObject = {
             guild: guild.id,
-            action: logActions.staff,
+            action: LogType.Staff,
             mod: mod.id,
             timestamp: date.getTime(),
             info: {
@@ -102,7 +106,7 @@ export class Logger {
         var embed: any = {
             "embed": {
                 "description": `${role ? 'Role ' + role.toString() : 'User' + user.toString()} was ${type ? 'removed' : 'added'} to ${rank} rank by ${mod.toString()}`,
-                "color": Bot.database.settingsDB.cache.embedColors.default,
+                "color": Bot.settings.embedColors.default,
                 "timestamp": date.toISOString(),
                 "author": {
                     "name": rankName + " Rank:"
@@ -121,24 +125,24 @@ export class Logger {
      *
      * @param {Guild} guild guild where action was made
      * @param {GuildMember} mod member that made the action request
-     * @param {string} service name of service
-     * @param {webhookDoc} webhookDoc the final state of the webhook doc
+     * @param {WebhookService} service name of service
+     * @param {WebhookDoc} webhookDoc the final state of the webhook doc
      * @param {(0 | 1 | 2)} type added/removed/changed
      * @param {boolean} [changedChannel] if channel was changed
      * @param {boolean} [changedMessage] if message was changed
      * @returns
      * @memberof Logger
      */
-    async logWebhook(guild: Guild, mod: GuildMember, service: string, webhookDoc: webhookDoc, type: 0 | 1 | 2, changedChannel?: boolean, changedMessage?: boolean) {
+    async logWebhook(guild: Guild, mod: GuildMember, service: WebhookService, webhookDoc: WebhookDoc, type: 0 | 1 | 2, changedChannel?: boolean, changedMessage?: boolean) {
         var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
 
         // logs log in database
-        var logObject: logObject = {
+        var logObject: LogObject = {
             guild: guild.id,
             mod: mod.id,
-            action: logActions.webhook,
+            action: LogType.Webhook,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -170,13 +174,13 @@ export class Logger {
         }
         var action = '';
         switch (type) {
-            case logTypes.add:
+            case LogAction.Add:
                 action = 'Created';
                 break;
-            case logTypes.remove:
+            case LogAction.Remove:
                 action = 'Deleted';
                 break;
-            case logTypes.change:
+            case LogAction.change:
                 action = 'Changed';
                 break;
         }
@@ -221,7 +225,6 @@ export class Logger {
      * @memberof Logger
      */
     async logFilterCatch(message: Message, filter: filterInterface, reason: string, actions: filterAction[]) {
-        var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: message.guild.id }).exec();
         if (!guildDoc) return;
 
@@ -246,7 +249,7 @@ export class Logger {
         logChannel.send({
             "embed": {
                 "description": filter.shortHelp,
-                "color": Bot.database.settingsDB.cache.embedColors.default,
+                "color": Bot.settings.embedColors.default,
                 "timestamp": message.createdAt.toISOString(),
                 "thumbnail": {
                     "url": message.member.user.displayAvatarURL
@@ -281,23 +284,23 @@ export class Logger {
     /**
      * logs a filter toggle in database and log channel
      *
-     * @param {Guild} guild guild where filter was toggled
+     * @param {GuildWrapper} guildWrapper guild where filter was toggled
      * @param {GuildMember} mod member that requested the toggle
      * @param {filterInterface} filter filter that was toggled
      * @param {(0 | 1)} type enabled or disabled
      * @returns
      * @memberof Logger
      */
-    async logFilter(guild: Guild, mod: GuildMember, filter: filterInterface, type: 0 | 1) {
+    async logFilter(guildWrapper: GuildWrapper, mod: GuildMember, filter: filterInterface, type: 0 | 1) {
         var date = new Date();
-        var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
+        var guildDoc = await this.guilds.findOne({ guild: guildWrapper.id }).exec();
         if (!guildDoc) return;
 
         // logs log in database
-        var logObject: logObject = {
-            guild: guild.id,
+        var logObject: LogObject = {
+            guild: guildWrapper.id,
             mod: mod.id,
-            action: logActions.filter,
+            action: LogType.Filter,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -311,13 +314,13 @@ export class Logger {
         Bot.mStats.logLog();
 
         // logs log in log channel if one is specified
-        var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
+        var logChannel: any = guildWrapper.guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
         logChannel.send({
             'embed': {
                 'description': `Filter \`${filter.name}\` was  ${type ? 'disabled' : 'enabled'} by ${mod.toString()}`,
-                'color': Bot.database.settingsDB.cache.embedColors.default,
+                'color': Bot.settings.embedColors.default,
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Filter Change:'
@@ -329,7 +332,7 @@ export class Logger {
                     },
                     {
                         'name': `${type ? 'Enable' : 'Disable'} Filter:`,
-                        'value': `${await Bot.database.getPrefix(guild)}filters ${type ? 'enable' : 'disable'} ${filter.name}`
+                        'value': `${await guildWrapper.getPrefix()}filters ${type ? 'enable' : 'disable'} ${filter.name}`
                     }
                 ]
             }
@@ -339,23 +342,23 @@ export class Logger {
     /**
      * logs the toggling of a command in database and log channel
      *
-     * @param {Guild} guild guild where command was toggled
+     * @param {GuildWrapper} guildWrapper guild where command was toggled
      * @param {GuildMember} mod member that requested the toggle
      * @param {commandInterface} command command that was actually toggled
      * @param {(0 | 1)} type enabled or disabled
      * @returns
      * @memberof Logger
      */
-    async logCommand(guild: Guild, mod: GuildMember, command: commandInterface, type: 0 | 1) {
+    async logCommand(guildWrapper: GuildWrapper, mod: GuildMember, command: commandInterface, type: 0 | 1) {
         var date = new Date();
-        var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
+        var guildDoc = await this.guilds.findOne({ guild: guildWrapper.id }).exec();
         if (!guildDoc) return;
 
         // logs log in database
-        var logObject: logObject = {
-            guild: guild.id,
+        var logObject: LogObject = {
+            guild: guildWrapper.id,
             mod: mod.id,
-            action: logActions.command,
+            action: LogType.Command,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -369,13 +372,13 @@ export class Logger {
         Bot.mStats.logLog();
 
         // logs log in log channel if one is specified
-        var logChannel: any = guild.channels.get(guildDoc.toObject().logChannel);
+        var logChannel: any = guildWrapper.guild.channels.get(guildDoc.toObject().logChannel);
         if (!logChannel) return;
         Bot.mStats.logMessageSend();
         logChannel.send({
             'embed': {
                 'description': `Command \`${command.name}\` was  ${type ? 'disabled' : 'enabled'} by ${mod.toString()}`,
-                'color': Bot.database.settingsDB.cache.embedColors.default,
+                'color': Bot.settings.embedColors.default,
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Command Change:',
@@ -388,7 +391,7 @@ export class Logger {
                     },
                     {
                         'name': `${type ? 'Re-enable' : 'Disable'} Command:`,
-                        'value': `${await Bot.database.getPrefix(guild)}commands ${type ? 'enable' : 'disable'} ${command.name}`
+                        'value': `${await guildWrapper.getPrefix()}commands ${type ? 'enable' : 'disable'} ${command.name}`
                     }
                 ]
             }
@@ -411,10 +414,10 @@ export class Logger {
         if (!guildDoc) return;
 
         // logs log in database
-        var logObject: logObject = {
+        var logObject: LogObject = {
             guild: guild.id,
             mod: mod.id,
-            action: logActions.prefix,
+            action: LogType.Prefix,
             timestamp: date.getTime(),
             info: {
                 old: oldPrefix,
@@ -434,7 +437,7 @@ export class Logger {
         logChannel.send({
             'embed': {
                 'description': `The prefix was changed by ${mod.toString()}`,
-                'color': Bot.database.settingsDB.cache.embedColors.default,
+                'color': Bot.settings.embedColors.default,
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Changed Prefix:'
@@ -442,17 +445,17 @@ export class Logger {
                 'fields': [
                     {
                         'name': 'New:',
-                        'value': newPrefix,
+                        'value': newPrefix || Bot.settings.prefix,
                         'inline': true
                     },
                     {
                         'name': 'Old:',
-                        'value': oldPrefix,
+                        'value': oldPrefix || Bot.settings.prefix,
                         'inline': true
                     },
                     {
                         'name': 'Reset command:',
-                        'value': Bot.database.settingsDB.cache.prefix + 'prefix reset'
+                        'value': Bot.settings.prefix + 'prefix reset'
                     }
                 ]
             }
@@ -464,22 +467,22 @@ export class Logger {
      *
      * @param {Guild} guild guild where change was made
      * @param {GuildMember} admin admin that made the change
-     * @param {logTypes} type whether command was added or removed
-     * @param {string[]} functions functions which were added / removed
+     * @param {LogAction} type whether command was added or removed
+     * @param {MegalogFunction[]} functions functions which were added / removed
      * @param {Channel} channel specifies the channed where the logging function has been placed
      * @returns
      * @memberof Logger
      */
-    async logMegalog(guild: Guild, admin: GuildMember, type: logTypes.add | logTypes.remove, functions: string[], channel?: Channel) {
+    async logMegalog(guild: Guild, admin: GuildMember, type: LogAction.Add | LogAction.Remove, functions: MegalogFunction[], channel?: Channel) {
         var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
 
         // logs log in database
-        var logObject: logObject = {
+        var logObject: LogObject = {
             guild: guild.id,
             mod: admin.id,
-            action: logActions.megalog,
+            action: LogType.Megalog,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -501,7 +504,7 @@ export class Logger {
         logChannel.send({
             'embed': {
                 'description': `${functionLength} ${functionLength > 1 ? "functions were" : "function was"} ${type.valueOf() ? 'disabled' : 'enabled'} by ${admin.toString()}`,
-                'color': type.valueOf() ? Bot.database.settingsDB.cache.embedColors.negative : Bot.database.settingsDB.cache.embedColors.positive, // bad or good?
+                'color': type.valueOf() ? Bot.settings.embedColors.negative : Bot.settings.embedColors.positive, // bad or good?
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Megalog Logging Change',
@@ -522,21 +525,21 @@ export class Logger {
      *
      * @param {Guild} guild guild where change was made
      * @param {GuildMember} admin admin that made the change
-     * @param {(logTypes.add | logTypes.remove)} type whether command was added or removed
+     * @param {(LogAction.Add | LogAction.Remove)} type whether command was added or removed
      * @param {TextChannel} channel channel that has been added/removed
      * @returns
      * @memberof Logger
      */
-    async logMegalogIgnore(guild: Guild, admin: GuildMember, type: logTypes.add | logTypes.remove, channel: TextChannel) {
+    async logMegalogIgnore(guild: Guild, admin: GuildMember, type: LogAction.Add | LogAction.Remove, channel: TextChannel) {
         var date = new Date();
         var guildDoc = await this.guilds.findOne({ guild: guild.id }).exec();
         if (!guildDoc) return;
 
         // logs log in database
-        var logObject: logObject = {
+        var logObject: LogObject = {
             guild: guild.id,
             mod: admin.id,
-            action: logActions.megalogIgnore,
+            action: LogType.MegalogIgnore,
             timestamp: date.getTime(),
             info: {
                 type: type,
@@ -555,7 +558,7 @@ export class Logger {
         logChannel.send({
             'embed': {
                 'description': `${channel} has been ${type.valueOf() ? 'removed from' : 'added to'} ignored channels by ${admin}`,
-                'color': type.valueOf() ? Bot.database.settingsDB.cache.embedColors.negative : Bot.database.settingsDB.cache.embedColors.positive, // bad or good?
+                'color': type.valueOf() ? Bot.settings.embedColors.negative : Bot.settings.embedColors.positive, // bad or good?
                 'timestamp': date.toISOString(),
                 'author': {
                     'name': 'Megalog Logging Change',

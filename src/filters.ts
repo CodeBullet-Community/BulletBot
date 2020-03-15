@@ -1,10 +1,10 @@
-import { Collection, Message, Guild } from "discord.js";
-import * as fs from "fs";
-import { Bot } from ".";
-import { filterAction, executeActions } from "./utils/filters";
+import { Collection, Guild, Message } from 'discord.js';
+import * as fs from 'fs';
 
-import { sendError } from "./utils/messages";
-import { filtersObject } from "./database/schemas";
+import { Bot } from '.';
+import { executeActions, filterAction } from './utils/filters';
+import { sendError } from './utils/messages';
+import { FiltersObject } from './database/schemas/main/filter';
 
 /* ------------NOTE--------------*/
 /*  
@@ -155,7 +155,7 @@ export class Filters {
         try {
             var filtersDoc = await Bot.database.findFiltersDoc(message.guild.id);// loads filter doc to see which filters are active
             if (!filtersDoc) return;
-            var filterObject: filtersObject = filtersDoc.toObject();
+            var filterObject: FiltersObject = filtersDoc.toObject();
 
             for (const filter of this.filters.array()) {
                 if (!filterObject.filters[filter.name] || !filterObject.filters[filter.name]._enabled) continue;

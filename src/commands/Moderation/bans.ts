@@ -1,20 +1,18 @@
-import { Message, Guild } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString } from '../../utils/parsers';
-import { durations, timeFormat } from '../../utils/time';
-import { pActionActions } from '../../database/schemas';
+import { Durations, timeFormat } from '../../utils/time';
 import dateFormat = require('dateformat');
+import { PActionAction } from '../../database/schemas/main/pAction';
 
 var command: commandInterface = {
     name: 'bans',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
-    cooldownLocal: durations.second,
+    cooldownLocal: Durations.second,
     help: {
         shortDescription: 'Lists all banned members',
         longDescription: 'Lists all temporary and permanently banned members',
@@ -25,11 +23,11 @@ var command: commandInterface = {
             '{command}'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             // get all banned members and temp muted members
             let permBanned = await message.guild.fetchBans();
-            let pActionDocs = await Bot.pActions.pActions.find({ action: pActionActions.ban, 'info.guild': message.guild.id }, ['to', 'info.user']).exec();
+            let pActionDocs = await Bot.pActions.pActions.find({ action: PActionAction.Unban, 'info.guild': message.guild.id }, ['to', 'info.user']).exec();
 
             // create string for temp banned and subtract the members from permBanned array
             let tempBannedString = '';
@@ -61,7 +59,7 @@ var command: commandInterface = {
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send({
                 "embed": {
-                    "color": Bot.database.settingsDB.cache.embedColors.default,
+                    "color": Bot.settings.embedColors.default,
                     "timestamp": new Date().toISOString(),
                     "author": {
                         "name": "Banned Members",

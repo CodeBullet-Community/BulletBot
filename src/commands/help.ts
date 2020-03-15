@@ -1,25 +1,26 @@
-import { Message, RichEmbed, Guild } from 'discord.js';
+import { Message, RichEmbed } from 'discord.js';
 import { commandInterface } from '../commands';
-import { permLevels } from '../utils/permissions';
+import { PermLevels } from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
-import { permToString } from '../utils/parsers';
+import { GuildWrapper } from '../database/wrappers/guildWrapper';
+import { BenchmarkTimestamp } from '../utils/time';
 
 /**
  * sends a list of commands with their short description
  *
- * @param {Guild} guild guild to get the prefix from
+ * @param {GuildWrapper} guildWrapper Guild to get the prefix from
  * @param {Message} message message it should reply to
  * @param {*} strucObject structure Object with commands and subcategories it should list
  * @param {string} path the path to that structure Object
- * @param {[number, number]} requestTime when the list was requested to measure response time
+ * @param {BenchmarkTimestamp} requestTime when the list was requested to measure response time
  */
-async function sendCommandList(guild: Guild, message: Message, strucObject: any, path: string, requestTime: [number, number]) {
+async function sendCommandList(guildWrapper: GuildWrapper, message: Message, strucObject: any, path: string, requestTime: BenchmarkTimestamp) {
     // create embed and set basic information
     var output = new RichEmbed();
     output.setAuthor('Command List:', Bot.client.user.displayAvatarURL);
     if (path) output.setFooter('Path: ~' + path);
-    output.setColor(Bot.database.settingsDB.cache.embedColors.help);
+    output.setColor(Bot.settings.embedColors.help);
 
     // list subcategories
     var categories = Object.keys(strucObject).filter(x => strucObject[x]._categoryName);
@@ -32,11 +33,12 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
     }
 
     // list commands
+    let prefix = await guildWrapper.getPrefix();
     var commands = Object.keys(strucObject).filter(x => strucObject[x].help);
     for (var i = 0; i < commands.length; i++) {
         var f = Bot.commands.get(commands[i]);
-        if (f.permLevel == permLevels.botMaster) continue; // ignores commands only for bot masters
-        output.addField((await Bot.database.getPrefix(guild)) + f.name, f.help.shortDescription);
+        if (f.permLevel == PermLevels.botMaster) continue; // ignores commands only for bot masters
+        output.addField(prefix + f.name, f.help.shortDescription);
     }
 
     // send embed
@@ -50,7 +52,7 @@ var command: commandInterface = {
     name: 'help',
     path: '',
     dm: false,
-    permLevel: permLevels.member,
+    permLevel: PermLevels.member,
     togglable: false,
     help: {
         shortDescription: 'gives a command list and help',
@@ -64,10 +66,10 @@ var command: commandInterface = {
             '{command} whois'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             if (args.length == 0) {
-                sendCommandList(message.guild, message, Bot.commands.structure, undefined, requestTime);
+                sendCommandList(guildWrapper, message, Bot.commands.structure, undefined, requestTime);
                 return false;
             }
 
@@ -85,7 +87,7 @@ var command: commandInterface = {
                             strucObject = strucObject[keys[i].toLowerCase()];
                         }
                     }
-                    sendCommandList(message.guild, message, strucObject, args, requestTime);
+                    sendCommandList(guildWrapper, message, strucObject, args, requestTime);
                     return false;
                 } else {
                     message.channel.send('Couldn\'t find specified command');

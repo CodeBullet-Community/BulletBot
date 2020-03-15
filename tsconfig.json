@@ -8,7 +8,15 @@
         "module": "commonjs",
         "resolveJsonModule": true,
         "esModuleInterop": true,
-        "noImplicitUseStrict": true
+        "noImplicitUseStrict": true,
+        "sourceMap": true,
+        "plugins": [
+            {
+                "transform": "ts-transformer-keys/transformer"
+            }
+        ]
     },
-    "exclude": ["src/commands/[command-name].ts"]
+    "exclude": [
+        "src/commands/[command-name].ts"
+    ]
 }

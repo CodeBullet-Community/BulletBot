@@ -1,15 +1,13 @@
-import { Message, RichEmbed, Guild } from 'discord.js';
 import { commandInterface } from '../commands';
-import { permLevels } from '../utils/permissions';
+import { PermLevels } from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
-import { permToString } from '../utils/parsers';
 
 var command: commandInterface = {
     name: 'ping',
     path: '',
     dm: true,
-    permLevel: permLevels.member,
+    permLevel: PermLevels.member,
     togglable: false,
     help: {
         shortDescription: 'checks bots responsiveness',
@@ -21,7 +19,7 @@ var command: commandInterface = {
             '{command}'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             Bot.mStats.logResponseTime(command.name, requestTime);
             const m: any = await message.channel.send('Ping?');

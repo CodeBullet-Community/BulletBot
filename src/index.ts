@@ -1,20 +1,51 @@
-import * as discord from 'discord.js';
+import { Client, User, Guild } from 'discord.js';
 import exitHook = require('exit-hook');
-import { Commands } from './commands';
-import { Filters } from './filters';
-import { YTWebhookManager } from './youtube';
-import { Catcher } from './catcher';
-import { Logger } from './database/logger';
-import { Database } from './database/database';
-import { MStats } from './database/mStats';
-import { botToken, cluster, callback, crashProof } from './bot-config.json';
-import { permLevels, getPermLevel } from './utils/permissions';
-import { logTypes } from './database/schemas';
-import { durations } from './utils/time';
 import fs = require('fs');
-import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate, logVoiceTransfer, logVoiceMute, logVoiceDeaf } from './megalogger';
+import { Observable } from 'rxjs';
+import { keys } from 'ts-transformer-keys';
+
+import { botToken, crashProof, mongoURI } from './bot-config.json';
+import { Catcher } from './catcher';
+import { Commands } from './commands';
+import { CaseLogger } from './database/caseLogger';
+import { Database } from './database/database';
+import { Logger } from './database/logger';
+import { MStats } from './database/mStats';
 import { PActions } from './database/pActions';
-import { CaseLogger } from "./database/caseLogger";
+import { megalogGroups } from './database/schemas/main/guild.js';
+import { updateDatabaseAfter1_2_8 } from './database/update';
+import { GuildWrapper } from './database/wrappers/guildWrapper';
+import { SettingsWrapper } from './database/wrappers/settingsWrapper.js';
+import { Filters } from './filters';
+import {
+    cacheAttachment,
+    logBan,
+    logChannelToggle,
+    logChannelUpdate,
+    logGuildName,
+    logMember,
+    logMemberRoles,
+    logMessageBulkDelete,
+    logMessageDelete,
+    logMessageEdit,
+    logNickname,
+    logReactionRemoveAll,
+    logReactionToggle,
+    logRoleToggle,
+    logRoleUpdate,
+    logVoiceDeaf,
+    logVoiceMute,
+    logVoiceTransfer,
+} from './megalogger';
+import { PermLevels } from './utils/permissions';
+import { Durations } from './utils/time';
+import { YTWebhookManager } from './youtube';
+
+try {
+    keys();
+} catch{
+    throw new Error(`Code wasn't correctly compiled. Use 'ttsc' instead of 'tsc' so plugins also get compiled`);
+}
 
 // add console logging info
 require('console-stamp')(console, {
@@ -50,6 +81,16 @@ process.on('unhandledRejection', async (reason, promise) => {
     console.error(error, "Promise:", promise);
 });
 
+// when bot shuts down save the mStats cache
+exitHook(() => {
+    if (!Bot.mStats.hourly) return;
+    console.log('Saving cached data...');
+    Bot.mStats.saveHour(Bot.mStats.hourly);
+    var until = new Date().getTime() + Durations.second;
+    while (until > new Date().getTime()) { }
+    console.log("cached data saved");
+});
+
 /**
  * static class that holds objects. This is made so you can call everything from everywhere
  *
@@ -57,7 +98,7 @@ process.on('unhandledRejection', async (reason, promise) => {
  * @class Bot
  */
 export class Bot {
-    static client: discord.Client;
+    static client: Client;
     static commands: Commands;
     static filters: Filters;
     static youtube: YTWebhookManager;
@@ -67,103 +108,59 @@ export class Bot {
     static logger: Logger;
     static pActions: PActions;
     static caseLogger: CaseLogger;
+    static settings: SettingsWrapper;
 
-    /**
-     * the static version of a constructor
-     *
-     * @static
-     * @param {discord.Client} client
-     * @param {Commands} commands
-     * @param {Filters} filters
-     * @param {YTWebhookManager} youtube
-     * @param {Database} database
-     * @param {MStats} mStats
-     * @param {Catcher} catcher
-     * @param {Logger} logger
-     * @param {CaseLogger} caseLogger
-     * @memberof Bot
-     */
-    static init(client: discord.Client, commands: Commands, filters: Filters, youtube: YTWebhookManager,
-        database: Database, mStats: MStats, catcher: Catcher, logger: Logger, pActions: PActions, caseLogger: CaseLogger) {
-        this.client = client;
-        this.commands = commands;
-        this.filters = filters;
-        this.youtube = youtube;
-        this.database = database;
-        this.mStats = mStats;
-        this.catcher = catcher;
-        this.logger = logger;
-        this.pActions = pActions;
-        this.caseLogger = caseLogger;
+    private static botToken: string;
+    private static mongoURI: string;
+
+    constructor(botToken: string, mongoURI: string) {
+        Bot.botToken = botToken;
+        Bot.mongoURI = mongoURI;
     }
+
+    static async init() {
+        console.log('Bot is starting up...');
+
+        this.mStats = new MStats(this.mongoURI);
+        await this.mStats.init();
+
+        this.database = new Database(this.mongoURI);
+        await this.database.init();
+
+        this.settings = new SettingsWrapper();
+        await this.settings.load();
+
+        this.logger = new Logger(this.database);
+        this.caseLogger = new CaseLogger(this.database);
+        this.pActions = new PActions(this.database);
+
+        this.catcher = new Catcher(this.database);
+        this.youtube = new YTWebhookManager(this.database);
+
+        this.client = new Client({ disableEveryone: true });
+        await this.client.login(this.botToken);
+    }
+
+    private static subscribeToClientEvents() {
+        this.client.on('ready', this.onReady);
+        this.client.on('error', this.onError);
+    }
+
+    private static async onReady() {
+        Bot.client.user.setActivity('I\'m ready!');
+        console.log('I\'m ready!');
+    }
+
+    private static onError(error: Error) {
+        Bot.mStats.logError(error);
+        console.error('Discord Client Error:', error);
+    }
+
 }
 
-// init all modules
-var mStats = new MStats(cluster);
-var database = new Database(cluster);
-var logger = new Logger(cluster);
-var client = new discord.Client({ disableEveryone: true });
-var commands = new Commands(__dirname + '/commands/');
-var filters = new Filters(__dirname + '/filters/');
-var youtube = new YTWebhookManager(cluster);
-var catcher = new Catcher(callback.port);
-let pActions = new PActions(cluster);
-var caseLogger = new CaseLogger(cluster);
-Bot.init(client, commands, filters, youtube, database, mStats, catcher, logger, pActions, caseLogger);
-
-// when bot shuts down save the mStats cache
-exitHook(() => {
-    if (!Bot.mStats.hourly) return;
-    console.log('Saving cached data...');
-    Bot.mStats.saveHour(Bot.mStats.hourly);
-    var until = new Date().getTime() + durations.second;
-    while (until > new Date().getTime()) { }
-    console.log("cached data saved");
-});
-
-// write the current timestamp to a file. This can be used to determine if the bot has crashed or is disconnected.
-setInterval(() => {
-    if (client.status === 0) {
-        fs.writeFileSync(crashProof.file, Date.now());
-    }
-}, crashProof.interval);
-
-/* for events below check the discord.js docs */
-
-client.on('ready', async () => {
-    // updates the database with guilds he left and joined while offline.
-    let existingGuilds = await Bot.database.mainDB.guilds.distinct('guild').exec();
-    let guildsToRemove = existingGuilds.filter(x => !client.guilds.get(x));
-    let guildsToAdd = client.guilds.filter(x => !existingGuilds.includes(x.id));
-    console.info(`Adding ${guildsToAdd.size} guilds and removing ${guildsToRemove.length} guilds`);
-    for (const guildID of guildsToRemove) { // removes all guilds that the bot left while it was down
-        Bot.database.removeGuild(guildID)
-    }
-    for (const guild of guildsToAdd.array()) { // adds all guilds that the bot joined while it was down
-        Bot.database.addGuild(guild.id);
-    }
-
-    Bot.client.user.setActivity('I\'m ready!');
-    console.log('I\'m ready!');
-});
-
-client.on('error', async (error: any) => {
-    Bot.mStats.logError(error);
-    console.error('from client.on():', error);
-    // this is just some temporary code to debug a certain problem we can't recreate. Probably will be removed soon as that error never occurred again
-    if (error.target) {
-        console.log('error.target', error.target);
-        if (error.target._events) {
-            console.log('error.target._events', error.target._events);
-        }
-        if (error.target.WebSocket) {
-            console.log('error.target.WebSocket', error.target.WebSocket);
-            if (error.target.WebSocket._events) {
-                console.log('error.target.WebSocket._events', error.target.WebSocket._events);
-            }
-        }
-    }
-});
+// start
+new Bot(botToken, mongoURI);
+Bot.init();
 
 client.on('message', async message => {
     if (message.author.id != client.user.id) cacheAttachment(message); // megalog attachment caches the message
@@ -174,47 +171,49 @@ client.on('message', async message => {
     if (!message.guild)
         dm = true;
 
-    // get command cache if there is one
-    let commandCache = await Bot.database.getCommandCache(message.channel, message.author);
+    // get CommandCache if there is one
+    let commandCache = await Bot.database.findCommandCache(message.channel, message.author);
+
+    // get guild wrapper
+    let guildWrapper: GuildWrapper = undefined;
+    if (!dm)
+        guildWrapper = await Bot.database.getGuildWrapper(message.guild);
+
+    // directly calls command when CommandCache exists
+    if (commandCache) {
+        Bot.commands.runCachedCommand(message, commandCache, commandCache.permLevel, dm, guildWrapper, requestTime);
+        return;
+    }
 
     // if message is only a mention of the bot, he dms help
     if (message.content == '<@' + Bot.client.user.id + '>' && !commandCache) {
-        message.author.createDM().then(dmChannel => {
-            message.channel = dmChannel;
-            Bot.commands.runCommand(message, '', 'help', permLevels.member, true, requestTime);
-            Bot.commands.runCommand(message, 'help', 'help', permLevels.member, true, requestTime);
-        });
+        message.channel = await message.author.createDM();
+        Bot.commands.runCommand(message, '', 'help', PermLevels.member, true, guildWrapper, requestTime);
+        Bot.commands.runCommand(message, 'help', 'help', PermLevels.member, true, guildWrapper, requestTime);
         return;
     }
 
-    var permLevel = permLevels.member;
-    if (!dm) {// gets perm level of member if message isn't from dms
-        permLevel = await getPermLevel(message.member);
-    }
+    // get perm level
+    let permLevel = PermLevels.member;
+    if (!dm) permLevel = await guildWrapper.getPermLevel(message.member);
 
-    if (commandCache) { // directly calls command when command cache exists
-        Bot.commands.runCachedCommand(message, commandCache, permLevel, dm, requestTime);
-        return;
-    }
 
-    var prefix = await Bot.database.getPrefix(message.guild);
+
+    let prefix = await guildWrapper.getPrefix();
     if (!message.content.startsWith(prefix)) {
-        if (!message.content.toLowerCase().startsWith(Bot.database.settingsDB.cache.prefix + 'prefix')) { // also checks if it contains ?!prefix
-            if (!dm && permLevel == permLevels.member) {
+        if (!message.content.toLowerCase().startsWith(Bot.settings.prefix + 'prefix')) { // also checks if it contains ?!prefix
+            if (!dm && permLevel == PermLevels.member) {
                 Bot.filters.filterMessage(message); // filters message if from guild and if a member send it
             }
             return;
         }
-    }
-    // if the command is ?!prefix isn't ?!
-    if (prefix != Bot.database.settingsDB.cache.prefix && message.content.startsWith(Bot.database.settingsDB.cache.prefix)) {
-        prefix = Bot.database.settingsDB.cache.prefix; // sets prefix if message starts with ?!prefix
+        prefix = Bot.settings.prefix;
     }
 
-    var command = message.content.split(' ')[0].slice(prefix.length).toLowerCase(); // gets command name
-    var args = message.content.slice(prefix.length + command.length + 1); // gets arguments
+    let command = message.content.split(' ')[0].slice(prefix.length).toLowerCase(); // gets command name
+    let args = message.content.slice(prefix.length + command.length + 1); // gets arguments
 
-    Bot.commands.runCommand(message, args, command, permLevel, dm, requestTime); // runs command
+    Bot.commands.runCommand(message, args, command, permLevel, dm, guildWrapper, requestTime); // runs command
 });
 
 client.on('messageUpdate', async (oldMessage: discord.Message, newMessage: discord.Message) => {
@@ -262,22 +261,10 @@ client.on('channelDelete', async channel => {
         for (const webhookDoc of youtubeWebhookDocs) {
             Bot.youtube.deleteWebhook(channel.guild.id, channel.id, webhookDoc.toObject().feed);
         }
-        let megalogDoc = await Bot.database.findMegalogDoc(channel.guild.id); // checks if there are any megalogger functions for that channel
-        if (megalogDoc) {
-            let modified = false;
-            if (megalogDoc.ignoreChannels.includes(channel.id)) {
-                megalogDoc.ignoreChannels.splice(megalogDoc.ignoreChannels.indexOf(channel.id), 1);
-                modified = true;
-            }
-            let megalogObject = megalogDoc.toObject();
-            for (const key in megalogObject) {
-                if (megalogObject[key] == channel.id) {
-                    megalogDoc[key] = undefined;
-                    modified = true;
-                }
-            }
-            if (modified) megalogDoc.save();
-        }
+        let guildWrapper = await Bot.database.getGuildWrapper(channel.guild, 'megalog');
+        for (const func of megalogGroups.all)
+            if (guildWrapper.megalog[func] == channel.id)
+                await guildWrapper.disableMegalogFunction(func);
     }
 });
 
@@ -314,24 +301,18 @@ client.on('guildMemberAdd', async member => {
 client.on('guildMemberRemove', async member => {
     if (member.user.id != client.user.id)
         logMember(member, false);
-    // delete all references of this member in the database (ofc not entire user doc)
-    var permLevel = await getPermLevel(member); // removes guild member from ranks if he/She was assigned any
-    if (permLevel == permLevels.admin) {
-        Bot.database.removeFromRank(member.guild.id, 'admins', undefined, member.id);
-        Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, 'admins', undefined, member.user);
-    }
-    if (permLevel == permLevels.mod) {
-        Bot.database.removeFromRank(member.guild.id, 'mods', undefined, member.id);
-        Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, 'mods', undefined, member.user);
-    }
-    if (permLevel == permLevels.immune) {
-        Bot.database.removeFromRank(member.guild.id, 'immune', undefined, member.id);
-        Bot.logger.logStaff(member.guild, member.guild.me, logTypes.remove, 'immune', undefined, member.user);
-    }
-    var userDoc = await Bot.database.findUserDoc(member.id);
-    if (userDoc && userDoc.commandCooldown && userDoc.commandCooldown[member.guild.id]) {
-        delete userDoc.commandCooldown[member.guild.id];
-        userDoc.markModified('commandCooldown.' + member.guild.id);
+
+    let guildWrapper = await Bot.database.getGuildWrapper(member.guild);
+    for (const rank of ['admins', 'mods', 'immune'])
+        // @ts-ignore
+        if (await guildWrapper.removeFromRank(rank, undefined, member, false))
+            // @ts-ignore
+            Bot.logger.logStaff(member.guild, member.guild.me, LogTypes.remove, rank, undefined, member.user);
+
+    let userDoc = await Bot.database.findUserDoc(member.id);
+    if (userDoc && userDoc.commandLastUsed && userDoc.commandLastUsed[member.guild.id]) {
+        delete userDoc.commandLastUsed[member.guild.id];
+        userDoc.markModified('commandLastUsed.' + member.guild.id);
         userDoc.save();
     }
 });
@@ -355,20 +336,13 @@ client.on('roleCreate', async role => {
 
 client.on('roleDelete', async role => {
     logRoleToggle(role, false);
-    var staffDoc = await Bot.database.findStaffDoc(role.guild.id); // removes role from ranks if it was assigned to any
-    if (!staffDoc) return;
-    if (staffDoc.admins.roles.includes(role.id)) {
-        Bot.database.removeFromRank(role.guild.id, 'admins', role.id);
-        Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, 'admins', role);
-    }
-    if (staffDoc.mods.roles.includes(role.id)) {
-        Bot.database.removeFromRank(role.guild.id, 'mods', role.id);
-        Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, 'mods', role);
-    }
-    if (staffDoc.immune.roles.includes(role.id)) {
-        Bot.database.removeFromRank(role.guild.id, 'immune', role.id);
-        Bot.logger.logStaff(role.guild, role.guild.me, logTypes.remove, 'immune', role);
-    }
+
+    let guildWrapper = await Bot.database.getGuildWrapper(role.guild);
+    for (const rank of ['admins', 'mods', 'immune'])
+        // @ts-ignore
+        if (await guildWrapper.removeFromRank(rank, role, undefined, false))
+            // @ts-ignore
+            Bot.logger.logStaff(role.guild, role.guild.me, LogTypes.remove, rank, role);
 });
 
 client.on('roleUpdate', async (oldRole: discord.Role, newRole: discord.Role) => {
@@ -383,21 +357,11 @@ client.on('warn', async info => {
     console.warn(info);
 });
 
-let loginInterval = setInterval(() => {
-    if (!Bot.database.mainDB) return; // if not connected to cluster
-    Bot.client.login(botToken); // logs into discord after 2 seconds
-    clearInterval(loginInterval);
-}, 2000);
 
-// enforce presence every hour
-setInterval(() => {
-    if (Bot.client.status != 0) return;
-    if (Bot.database.settingsDB.cache) {
-        if (Bot.database.settingsDB.cache.presence && (Bot.database.settingsDB.cache.presence.status || Bot.database.settingsDB.cache.presence.game || Bot.database.settingsDB.cache.presence.afk)) {
-            Bot.client.user.setPresence(Bot.database.settingsDB.cache.presence);
-        } else {
-            Bot.client.user.setActivity(undefined);
-            Bot.client.user.setStatus('online');
-        }
-    }
-}, durations.hour);
+updateDatabaseAfter1_2_8().then(() => {
+    let loginInterval = setInterval(() => {
+        if (!Bot.database.mainDB) return; // if not connected to cluster
+        Bot.client.login(botToken); // logs into discord after 2 seconds
+        clearInterval(loginInterval);
+    }, 2000);
+});

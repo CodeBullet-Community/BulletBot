@@ -3,8 +3,9 @@ import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString } from '../../utils/parsers';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import request = require("request");
+import { BenchmarkTimestamp } from '../../utils/time';
 
 /**
  * selects a random element of a array
@@ -21,9 +22,9 @@ function selectRandom(array: any[]) {
  *
  * @param {Message} message messages to reply to
  * @param {string} API API which to ask for a image from
- * @param {[number,number]} requestTime when image was requested to measure response time
+ * @param {BenchmarkTimestamp} requestTime when image was requested to measure response time
  */
-function sendRandomImage(message: Message, API: string, requestTime: [number, number]) {
+function sendRandomImage(message: Message, API: string, requestTime: BenchmarkTimestamp) {
     new Promise<RichEmbed>((resolve, reject) => {
         request.get(API, (error, response, body) => {
             if (error) reject(error);
@@ -39,7 +40,7 @@ function sendRandomImage(message: Message, API: string, requestTime: [number, nu
             var embed = new RichEmbed();
             embed.setAuthor('requested by: ' + setname + ' (' + message.author.tag + ')', message.author.displayAvatarURL);
             embed.setImage(JSON.parse(body).link);
-            embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
+            embed.setColor(Bot.settings.embedColors.default);
 
             // send embed
             Bot.mStats.logResponseTime(command.name, requestTime);
@@ -55,7 +56,7 @@ var command: commandInterface = {
     name: 'animal',
     path: '',
     dm: true,
-    permLevel: permLevels.member,
+    permLevel: PermLevels.member,
     togglable: true,
     help: {
         shortDescription: 'returns cute animal images',
@@ -75,7 +76,7 @@ var command: commandInterface = {
             }
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             if (args.length == 0) { // if no argument was given send the help embed
                 message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
@@ -84,7 +85,7 @@ var command: commandInterface = {
             }
             args = args.toLowerCase();
 
-            var apis = Bot.database.settingsDB.cache.commands[command.name].apis; // get api urls
+            var apis = Bot.settings.commands[command.name].apis; // get api urls
             var animals = Object.keys(apis);
 
             if (args == 'random') { // when it should randomly choose a animal

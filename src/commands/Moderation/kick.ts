@@ -1,18 +1,17 @@
-import { Message, Guild } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels, getPermLevel } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString, stringToMember } from '../../utils/parsers';
-import { durations } from '../../utils/time';
+import { stringToMember } from '../../utils/parsers';
+import { Durations } from '../../utils/time';
 
 var command: commandInterface = {
     name: 'kick',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
-    cooldownLocal: durations.second,
+    cooldownLocal: Durations.second,
     help: {
         shortDescription: 'Kick members',
         longDescription: 'Kick a member from this server',
@@ -25,7 +24,7 @@ var command: commandInterface = {
             '{command} @jeff#1234 for not being a good boi'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             if (args.length == 0) { // send help embed if no arguments provided
                 message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
@@ -51,7 +50,7 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            if (await getPermLevel(member) >= permLevels.mod) { // check if member is mod or higher
+            if (await guildWrapper.getPermLevel(member) >= PermLevels.mod) { // check if member is mod or higher
                 message.channel.send('You can\'t kick that member');
                 Bot.mStats.logMessageSend();
                 return false;

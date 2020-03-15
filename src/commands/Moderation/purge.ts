@@ -1,11 +1,12 @@
 // purge.ts: this file defines the ?!purge command and implements its features
 // TODO: add a since [message ID]  subcommand
-import { Message, Guild, TextChannel, SnowflakeUtil } from 'discord.js';
+import { Message, TextChannel } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, stringToChannel, stringToMember } from '../../utils/parsers';
+import { stringToMember } from '../../utils/parsers';
+import { BenchmarkTimestamp } from '../../utils/time';
 
 /**
  * An enum which describes the possible types of messages that can be filtered
@@ -51,7 +52,7 @@ var command: commandInterface = {
     name: 'purge',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
     help: {
         shortDescription: 'Command deletes last x messages',
@@ -75,7 +76,7 @@ var command: commandInterface = {
             '{command} has invite 3',
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             if (args.length == 0) {
                 message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
@@ -87,8 +88,8 @@ var command: commandInterface = {
             // checks whether there is a maximum purge number. if not, it will use
             // 1000 as the default and warn you about it being unconfigured
             let maxMessages = 1000;
-            if (Bot.database.settingsDB.cache.commands[command.name] && Bot.database.settingsDB.cache.commands[command.name].maxMessages) {
-                maxMessages = Bot.database.settingsDB.cache.commands[command.name].maxMessages;
+            if (Bot.settings.commands[command.name] && Bot.settings.commands[command.name].maxMessages) {
+                maxMessages = Bot.settings.commands[command.name].maxMessages;
             } else {
                 console.warn(`WARNINGS: PLEASE SET THE 'maxMessages' PROPERTY FOR THE PURGE COMMAND IN THE GLOBAL DOC`);
             }
@@ -235,7 +236,7 @@ var command: commandInterface = {
     }
 };
 
-async function executeBulkDeletion(message: Message, numberOfMessages: number, requestTime: [number, number], criteria?: purgeCommandCriteria, subCommand?: string) {
+async function executeBulkDeletion(message: Message, numberOfMessages: number, requestTime: BenchmarkTimestamp, criteria?: purgeCommandCriteria, subCommand?: string) {
     // delete the ?!purge command
     await message.delete();
 

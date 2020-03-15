@@ -1,16 +1,16 @@
-import { Message, RichEmbed, Guild, GuildMember } from 'discord.js';
+import { RichEmbed, Guild, GuildMember } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels, getPermLevel } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { durationToString, permToString, stringToChannel, stringToMember, stringToRole } from '../../utils/parsers';
-import { caseActions, caseActionsArray, caseDoc } from '../../database/schemas';
+import { CaseAction, CaseDoc, caseActions } from '../../database/schemas/main/case';
 
 var command: commandInterface = {
     name: 'case',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
     help: {
         shortDescription: 'delete, list or view cases',
@@ -35,11 +35,11 @@ var command: commandInterface = {
         additionalFields: [
             {
                 name: 'Types:',
-                value: caseActionsArray.join(', ')
+                value: caseActions.join(', ')
             }
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             if (args.length === 0) { // send help embed if no arguments provided
                 message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
@@ -97,7 +97,7 @@ var command: commandInterface = {
                     Bot.mStats.logMessageSend();
                     return false;
                 }
-                let embed = await createSpecificEmbed(message.guild, argsArray[argIndex]);
+                let embed = await createSpecificEmbed(message.guild, Number(argsArray[argIndex]));
                 Bot.mStats.logResponseTime(command.name, requestTime);
                 message.channel.send(embed);
                 Bot.mStats.logMessageSend();
@@ -132,7 +132,7 @@ var command: commandInterface = {
                             Bot.mStats.logMessageSend();
                             return false;
                         }
-    
+
                         // get member
                         let member = await stringToMember(message.guild, argsArray[argIndex], false, false, false);
                         if (member) {
@@ -146,8 +146,9 @@ var command: commandInterface = {
                     let type: string;
                     // if type is specified also filter by type
                     if (argsArray[argIndex]) {
-                        if (!caseActionsArray.includes(argsArray[argIndex])) { // if case action doesn't exist
-                            message.channel.send('Invalid Type. Use one of the following:\n' + caseActionsArray.join(', '));
+                        // @ts-ignore
+                        if (!caseActions.includes(argsArray[argIndex])) { // if case action doesn't exist
+                            message.channel.send('Invalid Type. Use one of the following:\n' + caseActions.join(', '));
                             Bot.mStats.logMessageSend();
                             return false;
                         } else {
@@ -155,19 +156,19 @@ var command: commandInterface = {
                             argIndex++;
                         }
                     } else if (!userID) { // if no type was specified and it isn't being filtered by a user
-                        message.channel.send('Please provide one of the following types:\n' + caseActionsArray.join(', '));
+                        message.channel.send('Please provide one of the following types:\n' + caseActions.join(', '));
                         Bot.mStats.logMessageSend();
                         return false;
                     }
-    
+
                     // build query
                     let query: any = { guild: message.guild.id };
                     if (userID) query.user = userID;
                     if (type) query.action = type;
-    
+
                     // delete cases that fit the query
                     let result = await Bot.caseLogger.cases.deleteMany(query).exec();
-    
+
                     // send confirmation message
                     Bot.mStats.logResponseTime(command.name, requestTime);
                     message.channel.send(`:white_check_mark: **Successfully deleted ${result.n} ${type ? type + ' ' : ''}case${result.n != 1 ? 's' : ''}${userID ? ` from <@${userID}>` : ''}**`);
@@ -220,7 +221,7 @@ async function createTotalEmbed(guild: Guild, member?: GuildMember) {
     // create embed
     let embed = new RichEmbed();
     embed.setAuthor(name, avatar);
-    embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
+    embed.setColor(Bot.settings.embedColors.default);
     embed.setDescription(`All cases for ${subject}`);
     embed.addField("Count", `Total: ${cases.total}\nWarn: ${cases.warn}\n Mute: ${cases.mute}\nKick: ${cases.kick}\nSoftban: ${cases.softban}\nBan: ${cases.ban}\nUnmute: ${cases.unmute}\nUnban: ${cases.unban}`);
     embed.setFooter(`ID: ${id}`);
@@ -240,13 +241,13 @@ function resolveTotalCases(query) {
     for (let i = 0; query.length > i; i++) {
         caseResolved.total += 1;
         switch (query[i].action) {
-            case caseActions.ban: caseResolved.ban++; break;
-            case caseActions.warn: caseResolved.warn++; break;
-            case caseActions.mute: caseResolved.mute++; break;
-            case caseActions.kick: caseResolved.kick++; break;
-            case caseActions.softban: caseResolved.softban++; break;
-            case caseActions.unmute: caseResolved.unmute++; break;
-            case caseActions.unban: caseResolved.unban++; break;
+            case CaseAction.Ban: caseResolved.ban++; break;
+            case CaseAction.Warn: caseResolved.warn++; break;
+            case CaseAction.Mute: caseResolved.mute++; break;
+            case CaseAction.Kick: caseResolved.kick++; break;
+            case CaseAction.Softban: caseResolved.softban++; break;
+            case CaseAction.Unmute: caseResolved.unmute++; break;
+            case CaseAction.Unban: caseResolved.unban++; break;
         }
     }
     return caseResolved;
@@ -260,7 +261,7 @@ function resolveTotalCases(query) {
  * @returns
  */
 async function createDetailEmbeds(guild: Guild, member?: GuildMember) {
-    let cases: caseDoc[]
+    let cases: CaseDoc[]
     if (member) { // get either all cases from a member or the whole guild
         cases = await Bot.caseLogger.findByMember(guild.id, member.id);
     } else {
@@ -269,14 +270,14 @@ async function createDetailEmbeds(guild: Guild, member?: GuildMember) {
     let detailEmbedArray = [];
     let caseIndex = 0;
     let numOfCases = cases.length;
-    let tempCase: caseDoc;
+    let tempCase: CaseDoc;
     let tempMod;
     let tempMember;
     let embed;
 
     while ((cases.length - caseIndex) > 0) { // runs until there are no cases left
         embed = new RichEmbed();
-        embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
+        embed.setColor(Bot.settings.embedColors.default);
         // puts 10 cases into an embed
         for (let i = 0; i < 10 && numOfCases > i; i++) {
             tempCase = cases[caseIndex];
@@ -307,7 +308,7 @@ async function createDetailEmbeds(guild: Guild, member?: GuildMember) {
  * @param {string} caseID case ID
  * @returns
  */
-async function createSpecificEmbed(guild: Guild, caseID: string) {
+async function createSpecificEmbed(guild: Guild, caseID: number) {
     // get case
     let tempCase = await Bot.caseLogger.findByCase(guild.id, caseID);
     if (!tempCase) {
@@ -360,10 +361,10 @@ function capitalizeFirstLetter(string) {
  */
 function resolveColor(action: string) {
     switch (action) {
-        case caseActions.warn: return Bot.database.settingsDB.cache.embedColors.warn;
-        case caseActions.ban || caseActions.kick || caseActions.mute || caseActions.softban: return Bot.database.settingsDB.cache.embedColors.negative;
-        case caseActions.unmute || caseActions.unban: return Bot.database.settingsDB.cache.embedColors.positive;
-        default: return Bot.database.settingsDB.cache.embedColors.default;
+        case CaseAction.Warn: return Bot.settings.embedColors.warn;
+        case CaseAction.Ban || CaseAction.Kick || CaseAction.Mute || CaseAction.Softban: return Bot.settings.embedColors.negative;
+        case CaseAction.Unmute || CaseAction.Unban: return Bot.settings.embedColors.positive;
+        default: return Bot.settings.embedColors.default;
     }
 }
 

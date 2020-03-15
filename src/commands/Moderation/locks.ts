@@ -1,20 +1,18 @@
-import { Message, Guild } from 'discord.js';
-import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
-import { Bot } from '../..';
-import { sendError } from '../../utils/messages';
-import { permToString, durationToString } from '../../utils/parsers';
-import { durations, timeFormat } from '../../utils/time';
-import { guildObject } from '../../database/schemas';
 import dateFormat = require('dateformat');
+
+import { Bot } from '../..';
+import { commandInterface } from '../../commands';
+import { sendError } from '../../utils/messages';
+import { PermLevels } from '../../utils/permissions';
+import { Durations, timeFormat } from '../../utils/time';
 
 var command: commandInterface = {
     name: 'locks',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
-    cooldownLocal: durations.second,
+    cooldownLocal: Durations.second,
     help: {
         shortDescription: 'Lists all locked channels',
         longDescription: 'Lists all temporary and permanently locked channels',
@@ -25,7 +23,7 @@ var command: commandInterface = {
             '{command}'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             let guildDoc = await Bot.database.findGuildDoc(message.guild.id, ['locks']);
             if (!guildDoc) {
@@ -33,7 +31,6 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            let guildObject: guildObject = guildDoc.toObject();
             // turn guild.locks into two arrays
             let permLockedArray = [];
             let tempLockedArray = [];
@@ -71,7 +68,7 @@ var command: commandInterface = {
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send({
                 "embed": {
-                    "color": Bot.database.settingsDB.cache.embedColors.default,
+                    "color": Bot.settings.embedColors.default,
                     "timestamp": new Date().toISOString(),
                     "author": {
                         "name": "Locked Channels",

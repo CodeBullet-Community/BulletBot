@@ -1,10 +1,10 @@
-import { Message, Guild, GuildMember, RichEmbed } from 'discord.js';
+import { Guild, GuildMember, RichEmbed } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString, stringToMember } from '../../utils/parsers';
-import { caseDoc, caseActions } from '../../database/schemas';
+import { stringToMember } from '../../utils/parsers';
+import { CaseDoc, CaseAction } from '../../database/schemas/main/case';
 
 /**
  * creates a array of embeds with each max 10 warnings
@@ -14,24 +14,24 @@ import { caseDoc, caseActions } from '../../database/schemas';
  * @returns {Promise<RichEmbed[]>}
  */
 async function createWarningsEmbeds(guild: Guild, member?: GuildMember): Promise<RichEmbed[]> {
-    let cases: caseDoc[]
+    let cases: CaseDoc[]
     if (member) { // either get the  warnings for the member or the whole guild
-        cases = await Bot.caseLogger.cases.find({ guild: guild.id, user: member.id, action: caseActions.warn }).exec();
+        cases = await Bot.caseLogger.cases.find({ guild: guild.id, user: member.id, action: CaseAction.Warn }).exec();
     } else {
-        cases = await Bot.caseLogger.cases.find({ guild: guild.id, action: caseActions.warn }).exec();
+        cases = await Bot.caseLogger.cases.find({ guild: guild.id, action: CaseAction.Warn }).exec();
     }
     if (!cases.length) return []; // incase no warn cases were found
     let detailEmbedArray: RichEmbed[] = [];
     let caseIndex = 0;
     let numOfCases = cases.length;
-    let tempCase: caseDoc;
+    let tempCase: CaseDoc;
     let tempMod;
     let tempMember;
     let embed;
 
     while ((cases.length - caseIndex) > 0) { // runs until there are no warn cases left
         embed = new RichEmbed();
-        embed.setColor(Bot.database.settingsDB.cache.embedColors.default);
+        embed.setColor(Bot.settings.embedColors.default);
         // puts 10 warnings into an embed
         for (let i = 0; i < 10 && numOfCases > i; i++) {
             tempCase = cases[caseIndex];
@@ -60,7 +60,7 @@ var command: commandInterface = {
     name: 'warnings',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
     help: {
         shortDescription: 'List warnings of guild/members',
@@ -74,7 +74,7 @@ var command: commandInterface = {
             '{command} @jeff#1234'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
 
             let member: GuildMember;

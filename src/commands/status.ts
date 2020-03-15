@@ -1,17 +1,15 @@
-import { Message, RichEmbed, Guild } from 'discord.js';
 import { commandInterface } from '../commands';
-import { permLevels } from '../utils/permissions';
+import { PermLevels } from '../utils/permissions';
 import { Bot } from '..';
 import { sendError } from '../utils/messages';
-import { permToString } from '../utils/parsers';
-import { getDurationDiff, timeFormat, durations, getDistributedDuration } from '../utils/time';
+import { timeFormat, getDistributedDuration } from '../utils/time';
 import dateFormat = require('dateformat');
 
 var command: commandInterface = {
     name: 'status',
     path: '',
     dm: true,
-    permLevel: permLevels.botMaster,
+    permLevel: PermLevels.botMaster,
     togglable: false,
     help: {
         shortDescription: 'gives bot status',
@@ -23,14 +21,14 @@ var command: commandInterface = {
             '{command}'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             Bot.mStats.logResponseTime(command.name, requestTime);
             const m: any = await message.channel.send("Pong");
             let uptime = getDistributedDuration(Bot.client.uptime);
             m.edit({
                 "embed": {
-                    "color": Bot.database.settingsDB.cache.embedColors.default,
+                    "color": Bot.settings.embedColors.default,
                     "timestamp": new Date().toISOString(),
                     "author": {
                         "name": "BulletBot Status",

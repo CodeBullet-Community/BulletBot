@@ -1,9 +1,14 @@
-import { Message, Collection, Guild } from 'discord.js';
+import { Collection, Guild, Message } from 'discord.js';
 import * as fs from 'fs';
+
 import { Bot } from '.';
-import { CommandCache, UserWrapper } from './database/schemas';
-import { permLevels } from './utils/permissions';
-import { permToString, durationToString } from './utils/parsers';
+import { CommandCacheWrapper } from './database/wrappers/commandCacheWrapper';
+import { GuildWrapper, GuildWrapperResolvable } from './database/wrappers/guildWrapper';
+import { durationToString, permToString } from './utils/parsers';
+import { PermLevel, PermLevels } from './utils/permissions';
+import { resolveCommand, resolveGuildWrapper } from './utils/resolvers';
+import { BenchmarkTimestamp } from './utils/time';
+import { CommandUsageLimits } from './database/schemas/global';
 
 /**
  * definition of a command with all it's properties and functions
@@ -15,10 +20,10 @@ export interface commandInterface {
     /**
      * name of filter
      *
-     * @type {string}
+     * @type {CommandName}
      * @memberof commandInterface
      */
-    name: string;
+    name: CommandName;
     /**
      * optional property that should be set as empty string. It can change the actual position in the structure. The categories are separated by /
      *
@@ -41,10 +46,10 @@ export interface commandInterface {
      *  3. admin
      *  4. bot master
      *
-     * @type {(0 | 1 | 2 | 3 | 4)}
+     * @type {PermLevel}
      * @memberof commandInterface
      */
-    permLevel: 0 | 1 | 2 | 3 | 4;
+    permLevel: PermLevel;
     /**
      * if command can be toggled in guilds
      *
@@ -111,15 +116,19 @@ export interface commandInterface {
      *
      * @param {Message} message message that requested the command
      * @param {string} args arguments
-     * @param {number} permLevel permLevel of the user that requested the command
+     * @param {PermLevel} permLevel permLevel of the user that requested the command
+     * @param {GuildWrapper} guildWrapper guild wrapper is only provided if dm is false
      * @param {boolean} dm if message came from dms
-     * @param {[number, number]} requestTime var for performance tracking
-     * @param {CommandCache} [commandCache] optional parameter, if command was called with cache
+     * @param {BenchmarkTimestamp} requestTime var for performance tracking
+     * @param {CommandCacheWrapper} [commandCache] optional parameter, if command was called with cache
      * @returns if command was successful. True and undefined means yes. If it yes, the cooldown gets set if a time is specified
      * @memberof commandInterface
      */
-    run(message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number], commandCache?: CommandCache): Promise<boolean>;
+    run(message: Message, args: string, permLevel: PermLevel, dm: boolean, guildWrapper: GuildWrapper, requestTime: BenchmarkTimestamp, commandCache?: CommandCacheWrapper): Promise<boolean>;
 }
+
+export type CommandName = string
+export type CommandResolvable = CommandName | commandInterface;
 
 /**
  * loads all commands and runs all commands
@@ -207,59 +216,62 @@ export class Commands {
      * @param {string} command command name
      * @param {number} permLevel perm level or member that send the message
      * @param {boolean} dm if message is from a dm
-     * @param {[number, number]} requestTime var for performance tracking
+     * @param {GuildWrapper} guildWrapper guild wrapper is only provided if dm is false
+     * @param {BenchmarkTimestamp} requestTime var for performance tracking
      * @returns
      * @memberof Commands
      */
-    async runCommand(message: Message, args: string, command: string, permLevel: permLevels, dm: boolean, requestTime: [number, number]) {
+    async runCommand(message: Message, args: string, command: CommandName, permLevel: PermLevels, dm: boolean, guildWrapper: GuildWrapper, requestTime: BenchmarkTimestamp) {
         var cmd = this.commands.get(command);
-        if (!cmd) return; // returns if it can't find the command
-        if (!cmd.dm && dm) { // sends the embed help if the request is from a dm and the command doesn't support dms
+        // command not found
+        if (!cmd) return false;
+        // sends help embed if command isn't DM capable
+        if (!cmd.dm && dm) {
             message.channel.send(this.getHelpEmbed(cmd));
-            return;
+            return false;
         }
-        if (permLevel < cmd.permLevel && !dm) return; //  returns if the member doesn't have enough perms
-        let user: UserWrapper;
-        if (cmd.cooldownGlobal || cmd.cooldownLocal) {
-            user = await Bot.database.getUser(message.author);
-            if (user) {
-                if (cmd.cooldownLocal && Date.now() < user.getCooldown((dm ? 'dm' : message.guild.id), command))
-                    return;
-                if (cmd.cooldownGlobal && Date.now() < user.getCooldown('global', command))
-                    return;
-            }
-        }
-        if (!dm && cmd.togglable) { // check if command is disabled if request is from a guild and the command is togglable
-            var commandSettings = await Bot.database.getCommandSettings(message.guild.id, command);
-            if (commandSettings && !commandSettings._enabled) return;
+        // member doesn't have permission
+        if (permLevel < cmd.permLevel && !dm) {
+            message.channel.send(`Permission denied. You have to be ${permToString(cmd.permLevel)}`); // returns if the member doesn't have enough perms
+            return false;
         }
 
-        let output = await cmd.run(message, args, permLevel, dm, requestTime); // run command
-
-        if ((cmd.cooldownGlobal || cmd.cooldownLocal) && output !== false) { // set cooldown if cooldown is defined and command was successful
-            if (!user)
-                user = new UserWrapper(undefined, message.author);
-            if (cmd.cooldownGlobal)
-                user.setCooldown('global', command, message.createdTimestamp + cmd.cooldownGlobal, false);
-            if (cmd.cooldownLocal)
-                user.setCooldown((dm ? 'dm' : message.guild.id), command, Date.now() + cmd.cooldownLocal, false);
-            user.save();
+        // get command usage limits
+        let commandUsageLimits = Bot.settings.getCommandUsageLimits(command);
+        if (!dm) {
+            commandUsageLimits = await guildWrapper.getCommandUsageLimits(command);
         }
+
+        // check if user can use command
+        let scope = (dm ? 'dm' : message.guild.id);
+        let user = await Bot.database.getUserWrapper(message.author, 'commandLastUsed');
+        if (!(await user.canUseCommand(scope, command, commandUsageLimits))) return false;
+
+        if (!dm && !(await guildWrapper.commandIsEnabled(command))) return false;
+
+        let output = await cmd.run(message, args, permLevel, dm, guildWrapper, requestTime); // run command
+
+        // set cooldown if cooldown is defined and command was successful
+        if ((commandUsageLimits.globalCooldown || commandUsageLimits.localCooldown) && output !== false)
+            await user.setCommandLastUsed(scope, command, message.createdTimestamp);
+
+        return output;
     }
 
     /**
      * runs command with cache
      *
      * @param {Message} message message from where the request came from
-     * @param {CommandCache} commandCache command cache
-     * @param {permLevels} permLevel perm level or member that send the message
+     * @param {CommandCacheWrapper} commandCache CommandCache
+     * @param {PermLevels} permLevel perm level or member that send the message
      * @param {boolean} dm if message is from a dm
-     * @param {[number, number]} requestTime var for performance tracking
+     * @param {GuildWrapper} guildWrapper guild wrapper is only provided if dm is false
+     * @param {BenchmarkTimestamp} requestTime var for performance tracking
      * @returns
      * @memberof Commands
      */
-    async runCachedCommand(message: Message, commandCache: CommandCache, permLevel: permLevels, dm: boolean, requestTime: [number, number]) {
-        var cmd = this.commands.get(commandCache.command);
+    async runCachedCommand(message: Message, commandCache: CommandCacheWrapper, permLevel: PermLevels, dm: boolean, guildWrapper: GuildWrapper, requestTime: BenchmarkTimestamp) {
+        var cmd = this.commands.get(commandCache.command.name);
         if (!cmd) {
             commandCache.remove();
             return;
@@ -269,7 +281,7 @@ export class Commands {
             commandCache.remove();
             return;
         }
-        cmd.run(message, message.content, permLevel, dm, requestTime, commandCache); // run command
+        cmd.run(message, message.content, permLevel, dm, guildWrapper, requestTime, commandCache); // run command
     }
 
     /**
@@ -279,7 +291,7 @@ export class Commands {
      * @returns
      * @memberof Commands
      */
-    get(command: string) {
+    get(command: CommandName) {
         return this.commands.get(command);
     }
 
@@ -291,16 +303,15 @@ export class Commands {
      * @returns
      * @memberof Commands
      */
-    async getHelpEmbed(command: string | commandInterface, guild?: string | Guild) {
-        if (typeof command === "string")
-            command = this.commands.get(command);
-        if (!command)
-            throw new Error("Command was not set or found. Value of command: " + command);
-        if (guild instanceof Guild) guild = guild.id;
+    async getHelpEmbed(commandResolvable: CommandResolvable, guildWrapperResolvable?: GuildWrapperResolvable) {
+        let command = resolveCommand(commandResolvable);
+        let guildWrapper = await resolveGuildWrapper(guildWrapperResolvable);
+        let commandUsageLimits = await guildWrapper.getCommandUsageLimits(commandResolvable);
 
-        let prefix = await Bot.database.getPrefix(undefined, guild);
+
+        let prefix = await guildWrapper.getPrefix();
         let embed = {
-            color: Bot.database.settingsDB.cache.embedColors.help,
+            color: Bot.settings.embedColors.help,
             author: {
                 name: `Command: ${prefix}${command.name}`
             },
@@ -335,16 +346,16 @@ export class Commands {
             ]
         };
 
-        if (command.cooldownGlobal)
+        if (commandUsageLimits.globalCooldown)
             embed.fields.splice(4, 0, {
                 name: 'Global Cooldown',
-                value: durationToString(command.cooldownGlobal),
+                value: durationToString(commandUsageLimits.globalCooldown),
                 inline: true
             });
-        if (command.cooldownLocal)
+        if (commandUsageLimits.localCooldown)
             embed.fields.splice(4, 0, {
                 name: 'Local Cooldown',
-                value: durationToString(command.cooldownLocal),
+                value: durationToString(commandUsageLimits.localCooldown),
                 inline: true
             });
 
@@ -354,6 +365,24 @@ export class Commands {
                 embed.fields.splice(1, 0, field);
 
         return { embed };
+    }
+
+    /**
+     * Merges the provided usage limits provided with those specified in the command
+     *
+     * @param {CommandResolvable} commandResolvable Command for which to get usage limits
+     * @param {CommandUsageLimits} commandUsageLimits Usage limits to merge
+     * @returns {CommandUsageLimits} Merged usage limits
+     * @memberof Commands
+     */
+    getCommandUsageLimits(commandResolvable: CommandResolvable, commandUsageLimits: CommandUsageLimits): CommandUsageLimits {
+        let command = resolveCommand(commandResolvable);
+
+        return {
+            globalCooldown: commandUsageLimits.globalCooldown || command.cooldownGlobal,
+            localCooldown: commandUsageLimits.localCooldown || command.cooldownLocal,
+            enabled: commandUsageLimits.enabled !== undefined ? commandUsageLimits.enabled : true
+        };
     }
 
 }

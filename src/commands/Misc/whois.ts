@@ -1,10 +1,10 @@
 import { Message, RichEmbed, Guild, GuildMember } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels, getPermLevel } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, stringToMember } from '../../utils/parsers';
-import { getDayDiff, timeFormat } from '../../utils/time';
+import { getDayDiff, timeFormat, BenchmarkTimestamp } from '../../utils/time';
 import dateFormat = require('dateformat');
 
 async function getJoinRank(ID: string, guild: Guild) { // Call it with the ID of the user and the guild
@@ -41,10 +41,10 @@ function ordinalSuffixOf(i: number) {
 
 function getPresenceColor(member: GuildMember) {
     switch (member.user.presence.status) {
-        case "dnd": return Bot.database.settingsDB.cache.embedColors.negative;
-        case "idle": return Bot.database.settingsDB.cache.embedColors.warn;
-        case "offline": return Bot.database.settingsDB.cache.embedColors.neutral;
-        case "online": return Bot.database.settingsDB.cache.embedColors.positive;
+        case "dnd": return Bot.settings.embedColors.negative;
+        case "idle": return Bot.settings.embedColors.warn;
+        case "offline": return Bot.settings.embedColors.neutral;
+        case "online": return Bot.settings.embedColors.positive;
     }
 }
 
@@ -136,7 +136,7 @@ async function createMemberEmbed(member: GuildMember, permLevel: number, request
     };
 
     // if the requester is a mod or higher, it also adds the case counts
-    if (requesterPermLevel >= permLevels.mod) {
+    if (requesterPermLevel >= PermLevels.mod) {
         let caseDocs = await Bot.caseLogger.cases.find({ user: member.id, guild: member.guild.id }, ['action']).exec();
         let summary = { unmute: 0, mute: 0, unban: 0, ban: 0, kick: 0, warn: 0, softban: 0 };
         for (const caseDoc of caseDocs)
@@ -158,9 +158,9 @@ async function createMemberEmbed(member: GuildMember, permLevel: number, request
  * @param {GuildMember} member member to get info of
  * @param {number} permLevel permission level of the member
  * @param {number} requesterPermLevel the permission level of the info requester
- * @param {[number, number]} requestTime when the info was requested to measure response time
+ * @param {BenchmarkTimestamp} requestTime when the info was requested to measure response time
  */
-async function sendMemberInfo(message: Message, member: GuildMember, permLevel: number, requesterPermLevel: number, requestTime: [number, number]) {
+async function sendMemberInfo(message: Message, member: GuildMember, permLevel: number, requesterPermLevel: number, requestTime: BenchmarkTimestamp) {
     var embed = await createMemberEmbed(member, permLevel, requesterPermLevel)
     Bot.mStats.logResponseTime(command.name, requestTime);
     message.channel.send(embed);
@@ -172,7 +172,7 @@ var command: commandInterface = {
     name: 'whois',
     path: '',
     dm: false,
-    permLevel: permLevels.member,
+    permLevel: PermLevels.member,
     togglable: false,
     help: {
         shortDescription: 'returns infos about a user',
@@ -186,7 +186,7 @@ var command: commandInterface = {
             '{command} @Bullet Bot#1234'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             if (args.length === 0) { // send info of requester if no arguments provided
                 await sendMemberInfo(message, message.member, permLevel, permLevel, requestTime);
@@ -200,7 +200,7 @@ var command: commandInterface = {
                 Bot.mStats.logMessageSend();
                 return false;
             }
-            await sendMemberInfo(message, member, await getPermLevel(member), permLevel, requestTime);
+            await sendMemberInfo(message, member, await guildWrapper.getPermLevel(member), permLevel, requestTime);
         } catch (e) {
             sendError(message.channel, e);
             Bot.mStats.logError(e, command.name);

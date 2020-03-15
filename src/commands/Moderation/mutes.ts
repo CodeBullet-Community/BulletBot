@@ -1,20 +1,18 @@
-import { Message, Guild } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString } from '../../utils/parsers';
-import { durations, timeFormat } from '../../utils/time';
-import { pActionActions } from '../../database/schemas';
+import { Durations, timeFormat } from '../../utils/time';
 import dateFormat = require('dateformat');
+import { PActionAction } from '../../database/schemas/main/pAction';
 
 var command: commandInterface = {
     name: 'mutes',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
-    cooldownLocal: durations.second,
+    cooldownLocal: Durations.second,
     help: {
         shortDescription: 'Lists all muted members',
         longDescription: 'Lists all temporary and permanently muted members.',
@@ -25,12 +23,12 @@ var command: commandInterface = {
             '{command}'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             // get all muted members (permMuted) and temp muted (pActionDocs)
             if (message.guild.large) await message.guild.fetchMembers();
             let permMuted = message.guild.members.filter(x => x.roles.find(y => y.name.toLowerCase() == 'muted') != undefined);
-            let pActionDocs = await Bot.pActions.pActions.find({ action: pActionActions.mute, 'info.guild': message.guild.id }, ['to', 'info.user']).exec();
+            let pActionDocs = await Bot.pActions.pActions.find({ action: PActionAction.Unmute, 'info.guild': message.guild.id }, ['to', 'info.user']).exec();
 
             // create string for temp muted and subtract the members from permMuted array
             let tempMutedString = '';
@@ -63,7 +61,7 @@ var command: commandInterface = {
             Bot.mStats.logResponseTime(command.name, requestTime);
             message.channel.send({
                 "embed": {
-                    "color": Bot.database.settingsDB.cache.embedColors.default,
+                    "color": Bot.settings.embedColors.default,
                     "timestamp": new Date().toISOString(),
                     "author": {
                         "name": "Muted Members",

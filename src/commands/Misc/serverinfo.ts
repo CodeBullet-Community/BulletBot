@@ -1,9 +1,7 @@
-import { Message, RichEmbed, Guild } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString } from '../../utils/parsers';
 import { getDayDiff, timeFormat } from '../../utils/time';
 import dateFormat = require('dateformat');
 
@@ -11,7 +9,7 @@ var command: commandInterface = {
     name: 'serverinfo',
     path: '',
     dm: false,
-    permLevel: permLevels.member,
+    permLevel: PermLevels.member,
     togglable: false,
     help: {
         shortDescription: 'returns infos about the server',
@@ -23,7 +21,7 @@ var command: commandInterface = {
             '{command}'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             var date = new Date();
             var age = getDayDiff(message.guild.createdTimestamp, date.getTime());
@@ -31,7 +29,7 @@ var command: commandInterface = {
             var botCount = message.guild.members.filter(member => member.user.bot).size;
             var embed = {
                 "embed": {
-                    "color": Bot.database.settingsDB.cache.embedColors.default,
+                    "color": Bot.settings.embedColors.default,
                     "timestamp": date.toISOString(),
                     "footer": {
                         "text": "ID: " + message.guild.id + ' | Region: ' + message.guild.region

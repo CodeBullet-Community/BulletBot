@@ -1,10 +1,9 @@
-import { Message, Guild } from 'discord.js';
+import { Guild } from 'discord.js';
 import { commandInterface } from '../../commands';
-import { permLevels } from '../../utils/permissions';
+import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
-import { permToString, durationToString } from '../../utils/parsers';
-import { durations } from '../../utils/time';
+import { Durations } from '../../utils/time';
 
 async function getBannedUser(guild: Guild, text: string) {
     let bans = await guild.fetchBans();
@@ -17,9 +16,9 @@ var command: commandInterface = {
     name: 'unban',
     path: '',
     dm: false,
-    permLevel: permLevels.mod,
+    permLevel: PermLevels.mod,
     togglable: false,
-    cooldownLocal: durations.second,
+    cooldownLocal: Durations.second,
     help: {
         shortDescription: 'Unban users',
         longDescription: 'Unban users',
@@ -30,7 +29,7 @@ var command: commandInterface = {
             '{command} 418112403419430915 didn\'t steal my ice cream after all'
         ]
     },
-    run: async (message: Message, args: string, permLevel: number, dm: boolean, requestTime: [number, number]) => {
+    run: async (message, args, permLevel, dm, guildWrapper, requestTime) => {
         try {
             if (args.length == 0) { // send help embed if no arguments provided
                 message.channel.send(await Bot.commands.getHelpEmbed(command, message.guild));
@@ -51,7 +50,7 @@ var command: commandInterface = {
             // make a case
             Bot.caseLogger.logUnban(message.guild, user, message.member, reason);
             // dm to user that he has been unbanned
-            user.send(`You were unbanned in **${message.guild.name}**${reason ? ' for:\n' + reason : ''}`).catch(error => { });
+            user.send(`You were unbanned in **${message.guild.name}**${reason ? ' for:\n' + reason : ''}`).catch(() => { });
 
             // unban user
             message.guild.unban(user);
