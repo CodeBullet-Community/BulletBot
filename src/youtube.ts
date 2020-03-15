@@ -108,13 +108,13 @@ export function addYoutubeCatcher(app: express.Application) {
                 // runs through all subscriptions for that youtube channel
                 for (const webhookDoc of webhookDocs) {
                     const webhookObject: WebhookObject = webhookDoc.toObject();
-                    var guild = Bot.client.guilds.get(webhookObject.guild);
+                    var guild = Bot.client.guilds.cache.get(webhookObject.guild);
                     if (!guild) {
                         console.warn("in youtube webhookcatcher guild " + webhookObject.guild + " wasn't found");
                         webhookDoc.remove();
                     }
                     // gets channel to send notification in
-                    var channel: any = guild.channels.get(webhookObject.channel);
+                    var channel: any = guild.channels.cache.get(webhookObject.channel);
                     if (!channel) webhookDoc.remove();
                     var message: string = webhookObject.message;
                     // replaces {{link}}, {{title}}, {{channelName}}, {{channelLink}}

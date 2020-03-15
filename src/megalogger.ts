@@ -1,4 +1,4 @@
-import { Channel, GuildChannel, TextChannel, Role, GuildMember, Guild, User, Message, Attachment, Collection, MessageReaction, DMChannel } from "discord.js";
+import { Channel, GuildChannel, TextChannel, Role, GuildMember, Guild, User, Message, MessageAttachment, Collection, MessageReaction, DMChannel } from "discord.js";
 import { Bot } from ".";
 import { timeFormat, getDurationDiff, getDayDiff } from "./utils/time";
 import dateFormat = require('dateformat');
@@ -119,73 +119,73 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
         });
         Bot.mStats.logMessageSend();
     }
-
-    // get permission difference between the old and new channel
-    let permDiff = oldChannel.permissionOverwrites.filter(x => {
-        if (newChannel.permissionOverwrites.find(y => y.allowed.bitfield == x.allowed.bitfield) && newChannel.permissionOverwrites.find(y => y.denied.bitfield == x.denied.bitfield))
-            return false;
-        return true;
-    }).concat(newChannel.permissionOverwrites.filter(x => {
-        if (oldChannel.permissionOverwrites.find(y => y.allowed.bitfield == x.allowed.bitfield) && oldChannel.permissionOverwrites.find(y => y.denied.bitfield == x.denied.bitfield))
-            return false;
-        return true;
-    }));
-    if (permDiff.size) {
-        let embed = { // base embed
-            "embed": {
-                "description": `**Channel permissions changed of ${newChannel.toString()}**\n*note:* check [docs](https://discordapp.com/developers/docs/topics/permissions) to see what the numbers mean`,
-                "color": Bot.settings.embedColors.default,
-                "timestamp": new Date().toISOString(),
-                "footer": {
-                    "text": "ID: " + newChannel.id
-                },
-                "author": {
-                    "name": newChannel.guild.name,
-                    "icon_url": newChannel.guild.iconURL
-                },
-                "fields": []
-            }
-        };
-        for (const permID of permDiff.keys()) { // add a field for changed role or member
-            // load both overwrites into variables
-            let oldPerm: any = oldChannel.permissionOverwrites.get(permID) || {};
-            let newPerm: any = newChannel.permissionOverwrites.get(permID) || {};
-            let oldBitfields = {
-                allowed: oldPerm.allowed ? oldPerm.allowed.bitfield : 0,
-                denied: oldPerm.denied ? oldPerm.denied.bitfield : 0
+    /* // TODO: in 
+        // get permission difference between the old and new channel
+        let permDiff = oldChannel.permissionOverwrites.filter(x => {
+            if (newChannel.permissionOverwrites.find(y => y.allowed.bitfield == x.allowed.bitfield) && newChannel.permissionOverwrites.find(y => y.denied.bitfield == x.denied.bitfield))
+                return false;
+            return true;
+        }).concat(newChannel.permissionOverwrites.filter(x => {
+            if (oldChannel.permissionOverwrites.find(y => y.allowed.bitfield == x.allowed.bitfield) && oldChannel.permissionOverwrites.find(y => y.denied.bitfield == x.denied.bitfield))
+                return false;
+            return true;
+        }));
+        if (permDiff.size) {
+            let embed = { // base embed
+                "embed": {
+                    "description": `**Channel permissions changed of ${newChannel.toString()}**\n*note:* check [docs](https://discordapp.com/developers/docs/topics/permissions) to see what the numbers mean`,
+                    "color": Bot.settings.embedColors.default,
+                    "timestamp": new Date().toISOString(),
+                    "footer": {
+                        "text": "ID: " + newChannel.id
+                    },
+                    "author": {
+                        "name": newChannel.guild.name,
+                        "icon_url": newChannel.guild.iconURL
+                    },
+                    "fields": []
+                }
             };
-            let newBitfields = {
-                allowed: newPerm.allowed ? newPerm.allowed.bitfield : 0,
-                denied: newPerm.denied ? newPerm.denied.bitfield : 0
-            };
-
-            // load roles / guildmember for that overwrite
-            var role: Role;
-            var member: GuildMember;
-            if (oldPerm.type == 'role' || newPerm.type == 'role')
-                role = newChannel.guild.roles.get(newPerm.id || oldPerm.id);
-            if (oldPerm.type == 'member' || newPerm.type == 'member')
-                member = await newChannel.guild.fetchMember(newPerm.id || oldPerm.id);
-
-            // make text about what changed
-            let value = '';
-            if (oldBitfields.allowed !== newBitfields.allowed) {
-                value += `Allowed Perms: \`${oldBitfields.allowed}\` to \`${newBitfields.allowed}\`\n`;
+            for (const permID of permDiff.keys()) { // add a field for changed role or member
+                // load both overwrites into variables
+                let oldPerm: any = oldChannel.permissionOverwrites.get(permID) || {};
+                let newPerm: any = newChannel.permissionOverwrites.get(permID) || {};
+                let oldBitfields = {
+                    allowed: oldPerm.allowed ? oldPerm.allowed.bitfield : 0,
+                    denied: oldPerm.denied ? oldPerm.denied.bitfield : 0
+                };
+                let newBitfields = {
+                    allowed: newPerm.allowed ? newPerm.allowed.bitfield : 0,
+                    denied: newPerm.denied ? newPerm.denied.bitfield : 0
+                };
+    
+                // load roles / guildmember for that overwrite
+                var role: Role;
+                var member: GuildMember;
+                if (oldPerm.type == 'role' || newPerm.type == 'role')
+                    role = newChannel.guild.roles.get(newPerm.id || oldPerm.id);
+                if (oldPerm.type == 'member' || newPerm.type == 'member')
+                    member = await newChannel.guild.fetchMember(newPerm.id || oldPerm.id);
+    
+                // make text about what changed
+                let value = '';
+                if (oldBitfields.allowed !== newBitfields.allowed) {
+                    value += `Allowed Perms: \`${oldBitfields.allowed}\` to \`${newBitfields.allowed}\`\n`;
+                }
+                if (oldBitfields.denied !== newBitfields.denied) {
+                    value += `Denied Perms: \`${oldBitfields.denied}\` to \`${newBitfields.denied}\``;
+                }
+                if (!value.length) value = 'Overwrite got deleted';
+    
+                // add field to embed
+                embed.embed.fields.push({
+                    "name": role ? role.name + ` (ID: ${role.id}):` : member.user.username + ` (ID: ${member.id}):`,
+                    "value": value
+                });
             }
-            if (oldBitfields.denied !== newBitfields.denied) {
-                value += `Denied Perms: \`${oldBitfields.denied}\` to \`${newBitfields.denied}\``;
-            }
-            if (!value.length) value = 'Overwrite got deleted';
-
-            // add field to embed
-            embed.embed.fields.push({
-                "name": role ? role.name + ` (ID: ${role.id}):` : member.user.username + ` (ID: ${member.id}):`,
-                "value": value
-            });
-        }
-        await logChannel.send(embed);
-        Bot.mStats.logMessageSend();
-    }
+            await logChannel.send(embed);
+            Bot.mStats.logMessageSend();
+        }*/
     Bot.mStats.logMegalogLog('channelUpdate');
 }
 
@@ -329,8 +329,8 @@ export async function logNickname(oldMember: GuildMember, newMember: GuildMember
  */
 export async function logMemberRoles(oldMember: GuildMember, newMember: GuildMember) {
     // check if member roles even were changed
-    let rolesAdded = newMember.roles.filter(x => !oldMember.roles.get(x.id));
-    let rolesRemoved = oldMember.roles.filter(x => !newMember.roles.get(x.id));
+    let rolesAdded = newMember.roles.cache.filter(x => !oldMember.roles.cache.get(x.id));
+    let rolesRemoved = oldMember.roles.cache.filter(x => !newMember.roles.cache.get(x.id));
     if (rolesAdded.size == 0 && rolesRemoved.size == 0) return;
 
     let guildWrapper = await Bot.database.getGuildWrapper(newMember.guild, 'megalog');
@@ -538,7 +538,7 @@ export async function logMessageBulkDelete(messages: Collection<string, Message>
             }
         }
     }
-    let attachment = new Attachment(Buffer.from(humanLog, 'utf-8'), 'DeletedMessages.txt'); // send attachment
+    let attachment = new MessageAttachment(Buffer.from(humanLog, 'utf-8'), 'DeletedMessages.txt'); // send attachment
 
     // send actual log with the attachment as input for https://txt.discord.website/
     //@ts-ignore
@@ -587,7 +587,7 @@ async function getAttachmentCache(message: Message, timerange = 3000) {
     let guildWrapper = await Bot.database.getGuildWrapper(message.guild, 'megalog');
     let cacheChannel = await guildWrapper.getMegalogChannel('attachmentCache');
     if (!cacheChannel) return;
-    var cache = await cacheChannel.fetchMessages({ limit: 20, around: message.id }); // loads 20 messages that were send around that time
+    var cache = await cacheChannel.messages.fetch({ limit: 20, around: message.id }); // loads 20 messages that were send around that time
     var cacheMessage = cache.find(x => x.content.includes(`BulletBotCacheTagThing: ${message.url}`)); // get attachment cache with the specific id
     if (!cacheMessage || !cacheMessage.attachments.size) return;
     return cacheMessage.attachments;
@@ -911,15 +911,15 @@ export async function logRoleUpdate(oldRole: Role, newRole: Role) {
  * @memberof megalogger
  */
 export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildMember) {
-    if (oldMember.voiceChannelID == newMember.voiceChannelID) return;
+    if (oldMember.voice.channelID == newMember.voice.channelID) return;
     let guildWrapper = await Bot.database.getGuildWrapper(newMember.guild, 'megalog');
     let logChannel = await guildWrapper.getMegalogChannel('voiceTransfer');
     if (!logChannel) return;
 
     await logChannel.send({
         "embed": {
-            "description": `**${newMember.toString()} moved from voice channels ${oldMember.voiceChannel ? oldMember.voiceChannel : 'None'} to ${newMember.voiceChannel ? newMember.voiceChannel : 'None'}**`,
-            "color": Bot.settings.embedColors[!oldMember.voiceChannelID ? 'positive' : (!newMember.voiceChannelID ? 'negative' : 'default')],
+            "description": `**${newMember.toString()} moved from voice channels ${oldMember.voice.channel ? oldMember.voice.channel : 'None'} to ${newMember.voice.channel ? newMember.voice.channel : 'None'}**`,
+            "color": Bot.settings.embedColors[!oldMember.voice.channelID ? 'positive' : (!newMember.voice.channelID ? 'negative' : 'default')],
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": "User: " + newMember.id
@@ -944,7 +944,7 @@ export async function logVoiceTransfer(oldMember: GuildMember, newMember: GuildM
  * @memberof megalogger
  */
 export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMember) {
-    if (oldMember.mute == newMember.mute) return; // check if member mute state changed
+    if (oldMember.voice.mute == newMember.voice.mute) return; // check if member mute state changed
     let guildWrapper = await Bot.database.getGuildWrapper(newMember.guild, 'megalog');
     // check megalog settings if this should get logged
     let logChannel = await guildWrapper.getMegalogChannel('voiceMute');
@@ -952,8 +952,8 @@ export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMembe
 
     await logChannel.send({
         "embed": {
-            "description": `**${newMember} was voice ${newMember.mute ? '' : 'un'}muted in ${newMember.voiceChannel}**`,
-            "color": Bot.settings.embedColors[newMember.mute ? 'negative' : 'positive'],
+            "description": `**${newMember} was voice ${newMember.voice.mute ? '' : 'un'}muted in ${newMember.voice.channel}**`,
+            "color": Bot.settings.embedColors[newMember.voice.mute ? 'negative' : 'positive'],
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": "User: " + newMember.id
@@ -978,16 +978,16 @@ export async function logVoiceMute(oldMember: GuildMember, newMember: GuildMembe
  * @memberof megalogger
  */
 export async function logVoiceDeaf(oldMember: GuildMember, newMember: GuildMember) {
-    if (oldMember.deaf == newMember.deaf) return; // changed if member deaf state changed
+    if (oldMember.voice.deaf == newMember.voice.deaf) return; // changed if member deaf state changed
     let guildWrapper = await Bot.database.getGuildWrapper(newMember.guild, 'megalog');
     // check megalog settings if this should get logged
     let logChannel = await guildWrapper.getMegalogChannel('voiceDeaf');
     if (!logChannel) return;
-    
+
     await logChannel.send({
         "embed": {
-            "description": `**${newMember} was voice ${newMember.deaf ? '' : 'un'}deafed in ${newMember.voiceChannel}**`,
-            "color": Bot.settings.embedColors[newMember.deaf ? 'negative' : 'positive'],
+            "description": `**${newMember} was voice ${newMember.voice.deaf ? '' : 'un'}deafed in ${newMember.voice.channel}**`,
+            "color": Bot.settings.embedColors[newMember.voice.deaf ? 'negative' : 'positive'],
             "timestamp": new Date().toISOString(),
             "footer": {
                 "text": "User: " + newMember.id

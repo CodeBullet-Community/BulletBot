@@ -75,6 +75,8 @@ function editDistance(s1: string, s2: string) {
     return costs[s2.length];
 }
 
+// TODO: move to GuildWrapper
+
 /**
  * Parses string into GuildMember object.
  * If the username isn't accurate the function will use the stringSimilarity method.
@@ -95,20 +97,20 @@ function editDistance(s1: string, s2: string) {
  */
 export async function stringToMember(guild: Guild, text: string, byUsername = true, byNickname = true, bySimilar: boolean = true) {
     text = extractString(text, /<@!?(\d*)>/) || extractString(text, /([^#@:]{2,32})#\d{4}/) || text;
-    guild = await guild.fetchMembers()
+    await guild.members.fetch();
 
     // by id
-    var member = guild.members.get(text);
+    var member = guild.members.cache.get(text);
     if (!member && byUsername)
         // by username
-        member = guild.members.find(x => x.user.username == text);
+        member = guild.members.cache.find(x => x.user.username == text);
     if (!member && byNickname)
         // by nickname
-        member = guild.members.find(x => x.nickname == text);
+        member = guild.members.cache.find(x => x.nickname == text);
 
     if (!member && bySimilar) {
         // closest matching username
-        member = guild.members.reduce(function (prev, curr) {
+        member = guild.members.cache.reduce(function (prev, curr) {
             return (stringSimilarity(curr.user.username, text) > stringSimilarity(prev.user.username, text) ? curr : prev);
         });
         if (stringSimilarity(member.user.username, text) < 0.4) {
@@ -128,7 +130,7 @@ export async function stringToMember(guild: Guild, text: string, byUsername = tr
 export async function stringToUser(text: string) {
     text = extractString(text, /<@!?(\d*)>/) || text;
     try {
-        return await Bot.client.fetchUser(text);
+        return await Bot.client.users.fetch(text);
     } catch{
         return undefined;
     }
@@ -164,14 +166,14 @@ export function stringToRole(guild: Guild, text: string, byName = true, bySimila
     text = extractString(text, /<@&(\d*)>/) || text;
 
     // by id
-    var role = guild.roles.get(text);
+    var role = guild.roles.cache.get(text);
     if (!role && byName) {
         // by name
-        role = guild.roles.find(x => x.name == text);
+        role = guild.roles.cache.find(x => x.name == text);
     }
     if (!role && bySimilar) {
         // closest matching name
-        role = guild.roles.reduce(function (prev, curr) {
+        role = guild.roles.cache.reduce(function (prev, curr) {
             return (stringSimilarity(curr.name, text) > stringSimilarity(prev.name, text) ? curr : prev);
         });
         if (stringSimilarity(role.name, text) < 0.4) {
@@ -198,11 +200,11 @@ export function stringToChannel(guild: Guild, text: string, byName = true, bySim
     if (!guild) return null;
     text = extractString(text, /<#(\d*)>/) || text;
 
-    let channel = guild.channels.get(text);
-    if (!channel && byName) channel = guild.channels.find(x => x.name == text);
+    let channel = guild.channels.cache.get(text);
+    if (!channel && byName) channel = guild.channels.cache.find(x => x.name == text);
     if (!channel && bySimilar) {
         // closest matching name
-        channel = guild.channels.reduce(function (prev, curr) {
+        channel = guild.channels.cache.reduce(function (prev, curr) {
             return (stringSimilarity(curr.name, text) > stringSimilarity(prev.name, text) ? curr : prev);
         });
         if (stringSimilarity(channel.name, text) < 0.4) {
@@ -211,6 +213,8 @@ export function stringToChannel(guild: Guild, text: string, byName = true, bySim
     }
     return channel;
 }
+
+// TODO: move to say command
 
 /**
  * Parses a string into a JSON object for Embed.
@@ -256,6 +260,8 @@ export function actionToString(action: filterAction) {
     }
 }
 
+
+// TODO: move to GuildWrapper
 /**
  * stringifies permission level
  * - 0: member
@@ -287,6 +293,8 @@ export function permToString(permLevel: number) {
     }
 }
 
+
+// TODO: move to Time class
 /**
  * converts milliseconds into a string. Examples:
  * - 3m 4s

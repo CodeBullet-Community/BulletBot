@@ -1,9 +1,11 @@
-import { DMChannel, GroupDMChannel, Guild, Message, Role, TextChannel } from 'discord.js';
+import { DMChannel, Guild, Message, Role, TextChannel } from 'discord.js';
 
 import { Bot } from '..';
 import { stringToRole } from './parsers';
 import { BenchmarkTimestamp } from './time';
 
+
+// TODO: probably will soon be deprecated, but move to GuildWrapper 
 /**
  * Mentions any role and user in content. 
  * {{role:[role]}} will be parsed to a mention.
@@ -46,11 +48,11 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
     // send message
     if (requestTime) Bot.mStats.logResponseTime(commandName, requestTime);
     if (!/^\s*$/.test(content)) {
-        if(embed) {
+        if (embed) {
             embed.disableEveryone = disableEveryone
-        }else embed = {disableEveryone: disableEveryone };
+        } else embed = { disableEveryone: disableEveryone };
         if (editMessage) {
-            if(!embed.embed) embed.embed = embed;
+            if (!embed.embed) embed.embed = embed;
             await editMessage.edit(content, embed);
         } else {
             await channel.send(content, embed);
@@ -58,7 +60,7 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
     }
 
     // resets all mentionable properties
-    for (const role of changedRoles) { 
+    for (const role of changedRoles) {
         role.setMentionable(false, 'BulletBot mention revert').catch((reason) => {
             console.error('error while reverting mentionable property:', reason);
             Bot.mStats.logError(new Error('error while reverting mentionable property:' + reason));
@@ -74,7 +76,7 @@ export async function sendMentionMessage(guild: Guild, channel: TextChannel, con
  * @param {*} error the actual error
  * @returns
  */
-export function sendError(channel: TextChannel | DMChannel | GroupDMChannel, error: any) {
+export function sendError(channel: TextChannel | DMChannel, error: any) {
     console.error(error);
     Bot.mStats.logMessageSend();
     return channel.send('Oops something went wrong. #BlameEvan');

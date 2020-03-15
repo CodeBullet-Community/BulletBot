@@ -47,7 +47,7 @@ export async function executeAction(message: Message, action: filterAction) {
             case filterActions.nothing:
                 return true;
             case filterActions.delete:
-                await message.delete(action.delay);
+                await message.delete({ timeout: action.delay });
                 return true;
             case filterActions.send:
                 await message.reply(action.message);
