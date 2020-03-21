@@ -1,18 +1,12 @@
-import { Snowflake, User } from 'discord.js';
+import { User } from 'discord.js';
+import { Model } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
 
-import { Bot } from '../..';
 import { CommandName } from '../../commands';
+import { CommandUsageLimits, ExDocument } from '../schemas/global';
+import { CommandScope, UserObject } from '../schemas/main/user';
 import { DocWrapper } from './docWrapper';
-import { UserObject, CommandScope } from '../schemas/main/user';
-import { CommandUsageLimits } from '../schemas/global';
 
-/**
- * Wrapper for user doc/object. Provides additional functions and easier data handling
- *
- * @export
- * @class UserWrapper
- */
 /**
  * Wrapper for the user object and document so everything can easily be access through one object
  *
@@ -22,25 +16,50 @@ import { CommandUsageLimits } from '../schemas/global';
  * @implements {userObject}
  */
 export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
+    /**
+     * User object from Discord.js
+     *
+     * @type {User}
+     * @memberof UserWrapper
+     */
     user: User;
-    id: string;
-    commandLastUsed: { [key: string]: { [key: string]: number; }; };
+    /**
+     * ID of the user
+     *
+     * @type {string}
+     * @memberof UserWrapper
+     */
+    readonly id: string;
+    /**
+     * When the user last used a command in what scope
+     *
+     * @type {{ [key: string]: { [key: string]: number; }; }}
+     * @memberof UserWrapper
+     */
+    readonly commandLastUsed: { [key: string]: { [key: string]: number; }; };
 
     /**
      * Creates an instance of UserWrapper.
      * 
-     * @param {userDoc} userDoc existing user doc
-     * @param {User} [user] user for either new doc or existing one
+     * @param {Model<ExDocument<UserObject>>} model Model for users collection
+     * @param {User} user User to wrap
      * @memberof UserWrapper
      */
-    constructor(id: Snowflake, user: User) {
-        super(Bot.database.mainDB.users, { id: id }, ['id'], keys<UserObject>());
+    constructor(model: Model<ExDocument<UserObject>>, user: User) {
+        super(model, { id: user.id }, ['id'], keys<UserObject>());
         let tempData = this.cloneData();
-        tempData.id = id
+        tempData.id = user.id
         this.data.next(tempData);
         this.user = user;
     }
 
+    /**
+     * Check if scope is valid
+     *
+     * @private
+     * @param {string} scope
+     * @memberof UserWrapper
+     */
     private checkCommandScope(scope: string) {
         if (isNaN(Number(scope)) && scope != 'dm' && scope != 'global')
             throw new Error("Scope should be guild id, 'dm' or 'global' but is '" + scope + "'");

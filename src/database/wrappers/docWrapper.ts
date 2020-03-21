@@ -2,8 +2,26 @@ import _ from 'lodash';
 import { Model } from 'mongoose';
 import { BehaviorSubject } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
+
 import { ExDocument, Keys, ObjectKey, OptionalFields } from '../schemas/global';
 
+/**
+ * Options defining what and how fields should be loaded in a wrapper
+ */
+export type LoadOptions<T extends Object> = {
+    /**
+     * What fields should be loaded
+     *
+     * @type {OptionalFields<T>}
+     */
+    fields?: OptionalFields<T>;
+    /**
+     * If already loaded fields should also be reloaded
+     *
+     * @type {boolean}
+     */
+    reload?: boolean;
+} | OptionalFields<T>;
 
 /**
  * Wrapper for mongoDB documents. 
@@ -122,6 +140,16 @@ export class DocWrapper<T extends Object> {
         return this.mergeData(obj, [...this.allFields], overwrite);
     }
 
+    /**
+     * Merges loaded data with the already loaded data
+     *
+     * @private
+     * @param {T} obj Data to merge
+     * @param {Keys<T>} fieldsToMerge Fields that should be merged
+     * @param {boolean} [overwrite=false] If already loaded fields should be overwritten
+     * @returns
+     * @memberof DocWrapper
+     */
     private mergeData(obj: T, fieldsToMerge: Keys<T>, overwrite = false) {
         let tempData = this.cloneData();
         for (const key of fieldsToMerge) {
@@ -141,7 +169,7 @@ export class DocWrapper<T extends Object> {
      * @memberof DocWrapper
      */
     async resync(fields?: Keys<T>) {
-        let result = await this.load(fields || this.loadedFields, true);
+        let result = await this.load({ fields: fields || this.loadedFields, reload: true });
         return result ? this : undefined;
     }
 
@@ -225,19 +253,50 @@ export class DocWrapper<T extends Object> {
     }
 
     /**
+     * Extracts fields that should be loaded from LoadOptions
+     *
+     * @private
+     * @param {LoadOptions<T>} options Options to extract fields from
+     * @returns {Keys<T>} Fields that should be loaded
+     * @memberof DocWrapper
+     */
+    private extractFieldsToLoad(options: LoadOptions<T>): Keys<T> {
+        if (!options) return;
+        if (Array.isArray(options)) return options;
+        if (typeof options !== 'object') return [options];
+        if (options.fields) return [].concat(options.fields);
+        return undefined;
+    }
+
+    /**
+     * Extracts if fields should be reloaded from LoadOptions
+     *
+     * @private
+     * @param {LoadOptions<T>} options Options to extract it from
+     * @returns If fields should be reloaded
+     * @memberof DocWrapper
+     */
+    private extractIfReload(options: LoadOptions<T>) {
+        if (!options) return false;
+        // @ts-ignore
+        if (options.reload) return true;
+        return false;
+    }
+
+    /**
      * Loads specified not loaded fields. 
      * If force is true it loads all specified fields regardless of if they are already loaded.
      *
-     * @param {OptionalFields<T>} [fields] Fields to load (Can also be a single field)
-     * @param {boolean} [force=false] If already loaded fields should also be reloaded
-     * @returns Which fields were newly loaded
+     * @param {LoadOptions<T>} [options] Options for loading (default loads all fields)
+     * @returns Loaded data
      * @memberof DocWrapper
      */
-    async load(fields?: OptionalFields<T>, force = false) {
-        fields = fields ? [].concat(fields) : undefined;
+    async load(options?: LoadOptions<T>) {
+        let fields = this.extractFieldsToLoad(options);
+        let reload = this.extractIfReload(options);
         let loadFields = this.updateLoadedFields(fields);
-        if (!loadFields.length && !force) return [];
-        if (force) loadFields = fields;
+        if (!loadFields.length && !reload) return [];
+        if (reload) loadFields = fields;
 
         let doc = await this.getDoc(loadFields);
         if (!doc) return undefined;
