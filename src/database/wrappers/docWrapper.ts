@@ -135,9 +135,10 @@ export class DocWrapper<T extends Object> {
      * @returns The resulting data object
      * @memberof DocWrapper
      */
-    loadFromObject(obj: T, overwrite = true) {
-        this.loadedFields = [...this.allFields];
-        return this.mergeData(obj, [...this.allFields], overwrite);
+    loadFromObject(obj: T) {
+        this.data.next(obj);
+        this.loadedFields = undefined;
+        return this;
     }
 
     /**
