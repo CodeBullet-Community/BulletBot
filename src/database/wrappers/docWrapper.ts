@@ -4,6 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 
 import { ExDocument, Keys, ObjectKey, OptionalFields } from '../schemas/global';
+import { WrapperSynchronizer } from './wrapperSynchronizer';
 
 /**
  * Options defining what and how fields should be loaded in a wrapper
@@ -30,15 +31,60 @@ export type LoadOptions<T extends Object> = {
  *
  * @export
  * @class DocWrapper
- * @template T
+ * @template T Object which it wraps
  */
 export class DocWrapper<T extends Object> {
 
-    private readonly model: Model<ExDocument<T>>;
-    private readonly uniqueQuery: any;
-    private loadedFields: Keys<T>;
-    private readonly allFields: Keys<T>;
-    protected data: BehaviorSubject<Partial<T>>;
+    /**
+     * Model for document this wrapper holds
+     *
+     * @type {Model<ExDocument<T>>}
+     * @memberof DocWrapper
+     */
+    readonly model: Model<ExDocument<T>>;
+    /**
+     * Unique query that identifies the document
+     *
+     * @type {*}
+     * @memberof DocWrapper
+     */
+    readonly uniqueQuery: any;
+    /**
+     * Fields that are currently loaded
+     *
+     * @type {Keys<T>}
+     * @memberof DocWrapper
+     */
+    loadedFields: Keys<T>;
+    /**
+     * All fields that the document has (all keys of base document)
+     *
+     * @type {Keys<T>}
+     * @memberof DocWrapper
+     */
+    readonly allFields: Keys<T>;
+    /**
+     * Cached data
+     *
+     * @type {BehaviorSubject<Partial<T>>}
+     * @memberof DocWrapper
+     */
+    readonly data: BehaviorSubject<Partial<T>>;
+    /**
+     * Synchronizer for active synchronization with database
+     *
+     * @private
+     * @type {WrapperSynchronizer<T>}
+     * @memberof DocWrapper
+     */
+    private synchronizer?: WrapperSynchronizer<T>;
+    /**
+     * If document was deleted from database 
+     * (Only tracks deletions after creation of wrapper and assumes that document exists when first created)
+     *
+     * @type {boolean}
+     * @memberof DocWrapper
+     */
     removed: boolean;
 
     /**
@@ -47,7 +93,7 @@ export class DocWrapper<T extends Object> {
      * @param {Model<T>} model Model of collection where the document is stored in
      * @param {*} uniqueQuery Query conditions for finding the document corresponding to the wrapper 
      * @param {Keys<T>} preloadedFields Fields that are already set by the extenders constructor
-     * @param {Keys<T>} allFields Array of all the fields that the object can have (Use keys<T>() from 'ts-transformer-keys') to get them
+     * @param {Keys<T>} allFields Array of all the fields that the object can have (Use keys<T>() from 'ts-transformer-keys' to get them)
      * @memberof DocWrapper
      */
     constructor(model: Model<ExDocument<T>>, uniqueQuery: any, preloadedFields: Keys<T>, allFields: Keys<T>) {
@@ -175,6 +221,33 @@ export class DocWrapper<T extends Object> {
     }
 
     /**
+     * Enables active synchronization. 
+     * If synchronizer for specified fields already exist it will only return the synchronizer.
+     * Not providing already synced fields will result in them no longer being synchronized.
+     *
+     * @param {Keys<T>} [fields] What fields should be synchronized 
+     * @returns Synchronizer 
+     * @memberof DocWrapper
+     */
+    enableSync(fields?: Keys<T>) {
+        if (!_.isEqual(_.sortBy(this.synchronizer?.syncedFields), _.sortBy(fields)))
+            this.synchronizer = new WrapperSynchronizer(this, fields);
+        return this.synchronizer;
+    }
+
+    /**
+     * Disables active synchronization if not already disabled
+     *
+     * @returns
+     * @memberof DocWrapper
+     */
+    async disableSync() {
+        if (!this.synchronizer) return;
+        this.synchronizer.close();
+        delete this.synchronizer;
+    }
+
+    /**
      * Creates a getter for a specific field that connects with 
      *
      * @private
@@ -242,7 +315,7 @@ export class DocWrapper<T extends Object> {
      * @returns Which fields weren't loaded before
      * @memberof DocWrapper
      */
-    protected updateLoadedFields(fields?: Keys<T>) {
+    updateLoadedFields(fields?: Keys<T>) {
         if (!this.loadedFields)
             return [];
         if (!fields)
