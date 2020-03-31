@@ -1,12 +1,12 @@
 import { Client, UserResolvable } from 'discord.js';
 
+import { Bot } from '../../..';
 import { Database } from '../../database';
 import { UserObject, userSchema } from '../../schemas/main/user';
 import { LoadOptions } from '../../wrappers/docWrapper';
 import { UserWrapper } from '../../wrappers/userWrapper';
+import { CacheManager } from '../cacheManager';
 import { FetchOptions } from '../collectionManager';
-import { WrapperManager } from '../wrapperManager';
-import { Bot } from '../../..';
 
 
 /**
@@ -14,9 +14,9 @@ import { Bot } from '../../..';
  *
  * @export
  * @class UserManager
- * @extends {WrapperManager<UserObject>}
+ * @extends {CacheManager<UserObject>}
  */
-export class UserManager extends WrapperManager<UserObject> {
+export class UserManager extends CacheManager<UserObject> {
 
     private readonly bot: Bot;
 

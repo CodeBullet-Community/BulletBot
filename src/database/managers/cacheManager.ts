@@ -10,29 +10,29 @@ import { CollectionManager } from './collectionManager';
  *
  * @export
  * @abstract
- * @class WrapperManager
+ * @class CacheManager
  * @extends {CollectionManager<T, DocWrapper<T>>}
  * @template T What object is in the collection and is wrapped
  */
-export abstract class WrapperManager<T extends Object> extends CollectionManager<T, DocWrapper<T>> {
+export abstract class CacheManager<T extends Object> extends CollectionManager<T, DocWrapper<T>> {
 
     /**
      * Cache holding all cached DocWrappers
      *
      * @protected
      * @type {Collection<string, DocWrapper<T>>}
-     * @memberof WrapperManager
+     * @memberof CacheManager
      */
     protected cache: Collection<string, DocWrapper<T>>;
 
     /**
-     * Creates an instance of WrapperManager.
+     * Creates an instance of CacheManager.
      * 
      * @param {Database} database Database class to get connection
      * @param {string} databaseName Name of database the collection is in
      * @param {string} modelName Name of the model
      * @param {Schema<T>} schema Schema for this collection (should include default collection name)
-     * @memberof WrapperManager
+     * @memberof CacheManager
      */
     constructor(database: Database, databaseName: string, modelName: string, schema: Schema<T>) {
         super(database, databaseName, modelName, schema);
@@ -46,7 +46,7 @@ export abstract class WrapperManager<T extends Object> extends CollectionManager
      * @abstract
      * @param {*} args Arguments to change cache key
      * @returns {string} Key to use in cache
-     * @memberof WrapperManager
+     * @memberof CacheManager
      */
     protected abstract getCacheKey(...args): string;
 
@@ -57,7 +57,7 @@ export abstract class WrapperManager<T extends Object> extends CollectionManager
      * @param {string} cacheKey Cache key to search in cache
      * @param {LoadOptions<T>} [options] LoadOptions to pass to cached DocWrapper (default does nothing)
      * @returns DocWrapper, if cached, loaded as specified
-     * @memberof WrapperManager
+     * @memberof CacheManager
      */
     protected async getCached(cacheKey: string, options?: LoadOptions<T>) {
         let wrapper = this.cache.get(cacheKey);
@@ -72,7 +72,7 @@ export abstract class WrapperManager<T extends Object> extends CollectionManager
      * @abstract
      * @param {*} args Query arguments and LoadOptions
      * @returns {Promise<DocWrapper<T>>} DocWrapper if found
-     * @memberof WrapperManager
+     * @memberof CacheManager
      */
     abstract async get(...args): Promise<DocWrapper<T>>;
 }
