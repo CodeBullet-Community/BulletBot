@@ -92,16 +92,17 @@ export class DocWrapper<T extends Object> {
      * 
      * @param {Model<T>} model Model of collection where the document is stored in
      * @param {*} uniqueQuery Query conditions for finding the document corresponding to the wrapper 
-     * @param {Keys<T>} preloadedFields Fields that are already set by the extenders constructor
+     * @param {Partial<T>} obj Already know part of document. All keys in this document will added to loadedFields
      * @param {Keys<T>} allFields Array of all the fields that the object can have (Use keys<T>() from 'ts-transformer-keys' to get them)
      * @memberof DocWrapper
      */
-    constructor(model: Model<ExDocument<T>>, uniqueQuery: any, preloadedFields: Keys<T>, allFields: Keys<T>) {
+    constructor(model: Model<ExDocument<T>>, uniqueQuery: any, obj: Partial<T>, allFields: Keys<T>) {
         this.model = model;
         this.uniqueQuery = uniqueQuery;
-        this.loadedFields = preloadedFields;
+        // @ts-ignore
+        this.loadedFields = Object.keys(obj);
         this.allFields = allFields;
-        this.data = new BehaviorSubject({});
+        this.data = new BehaviorSubject(obj);
         this.allFields.forEach(key => this.setProperty(key));
         this.removed = false;
     }

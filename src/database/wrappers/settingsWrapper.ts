@@ -1,13 +1,13 @@
-import { GlobalSettingsObject } from "../schemas/settings/settings";
+import { GlobalSettingsObject, GlobalSettingsDoc } from "../schemas/settings/settings";
 import { DocWrapper } from "./docWrapper";
 import { UsageLimits, CommandUsageLimits } from "../schemas/global";
-import { PresenceData, Snowflake, UserResolvable } from "discord.js";
-import { CommandName, CommandResolvable } from "../../commands";
+import { PresenceData, Snowflake, UserResolvable, Client } from "discord.js";
+import { CommandName, CommandResolvable, Commands } from "../../commands";
 import { Bot } from "../..";
 import { keys } from "ts-transformer-keys";
 import { map } from "rxjs/operators";
-import { resolveCommand, resolveUserID } from "../../utils/resolvers";
 import _ from "lodash";
+import { Model } from "mongoose";
 
 /**
  * Wrapper for the GlobalSettingsObject so everything can easily be access through one object
@@ -40,14 +40,17 @@ export class SettingsWrapper extends DocWrapper<GlobalSettingsObject> implements
         }
     };
     readonly usageLimits?: UsageLimits;
+    private bot: Bot
 
     /**
      * Creates an instance of SettingsWrapper.
      * 
      * @memberof SettingsWrapper
      */
-    constructor() {
-        super(Bot.database.settingsDB.settings, {}, [], keys<GlobalSettingsObject>());
+    constructor(model: Model<GlobalSettingsDoc>, bot: Bot) {
+        super(model, {}, {}, keys<GlobalSettingsObject>());
+
+        this.bot = bot;
 
         this.subToField('presence').pipe(
             map(data => data.presence)
@@ -64,11 +67,11 @@ export class SettingsWrapper extends DocWrapper<GlobalSettingsObject> implements
      */
     private async setBotStatus(presence: PresenceData) {
         if (!presence || presence == {}) {
-            await Bot.client.user.setActivity(undefined);
-            await Bot.client.user.setStatus('online');
+            await this.bot.client.user.setActivity(undefined);
+            await this.bot.client.user.setStatus('online');
             return;
         }
-        await Bot.client.user.setPresence(this.presence);
+        await this.bot.client.user.setPresence(this.presence);
     }
 
     /**
@@ -91,9 +94,9 @@ export class SettingsWrapper extends DocWrapper<GlobalSettingsObject> implements
      */
     async getCommandUsageLimits(commandResolvable: CommandResolvable) {
         await this.load('usageLimits');
-        let command = resolveCommand(commandResolvable);
+        let command = this.bot.commands.resolve(commandResolvable);
         let usageLimits = _.get(this.usageLimits, `commands.${command.name}`) || {};
-        return Bot.commands.getCommandUsageLimits(command, usageLimits);
+        return this.bot.commands.getCommandUsageLimits(command, usageLimits);
     }
 
     /**
@@ -104,7 +107,7 @@ export class SettingsWrapper extends DocWrapper<GlobalSettingsObject> implements
      */
     async getBotMasters() {
         await this.load('botMasters');
-        return Bot.settings.botMasters;
+        return this.botMasters;
     }
 
 
@@ -116,8 +119,8 @@ export class SettingsWrapper extends DocWrapper<GlobalSettingsObject> implements
      * @memberof SettingsWrapper
      */
     async isBotMasters(user: UserResolvable) {
-        let userId = resolveUserID(user);
-        return (await this.getBotMasters()).includes(userId);
+        let userID = this.bot.client.users.resolveID(user);
+        return (await this.getBotMasters()).includes(userID);
     }
 
 }

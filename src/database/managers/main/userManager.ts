@@ -6,6 +6,7 @@ import { LoadOptions } from '../../wrappers/docWrapper';
 import { UserWrapper } from '../../wrappers/userWrapper';
 import { FetchOptions } from '../collectionManager';
 import { WrapperManager } from '../wrapperManager';
+import { Bot } from '../../..';
 
 
 /**
@@ -17,6 +18,8 @@ import { WrapperManager } from '../wrapperManager';
  */
 export class UserManager extends WrapperManager<UserObject> {
 
+    private readonly bot: Bot;
+
     /**
      * Creates an instance of UserManager.
      * 
@@ -24,8 +27,9 @@ export class UserManager extends WrapperManager<UserObject> {
      * @param {Database} database Database holding all database connections
      * @memberof UserManager
      */
-    constructor(private client: Client, database: Database) {
+    constructor(bot: Bot, database: Database) {
         super(database, 'main', 'user', userSchema);
+        this.bot = bot;
     }
 
     /**
@@ -62,7 +66,7 @@ export class UserManager extends WrapperManager<UserObject> {
      * @memberof UserManager
      */
     get(user: UserResolvable, options?: LoadOptions<UserObject>) {
-        let userID = this.client.users.resolveID(user);
+        let userID = this.bot.client.users.resolveID(user);
         let cacheKey = this.getCacheKey(userID);
         return this.getCached(cacheKey, options);
     }
@@ -77,7 +81,7 @@ export class UserManager extends WrapperManager<UserObject> {
      * @memberof UserManager
      */
     async fetch(user: UserResolvable, options?: FetchOptions<UserObject>) {
-        let userObj = this.client.users.resolve(user);
+        let userObj = this.bot.client.users.resolve(user);
         let cacheKey = this.getCacheKey(userObj.id);
         let wrapper = await this.getCached(cacheKey, options);
         if (!wrapper)

@@ -1,24 +1,12 @@
-import { ChannelResolvable, DMChannel, TextChannel, User } from 'discord.js';
+import { ChannelResolvable, DMChannel, TextChannel, User, Client } from 'discord.js';
 import { keys } from 'ts-transformer-keys';
 
-import { Bot } from '../..';
-import { commandInterface, CommandResolvable } from '../../commands';
+import { commandInterface, CommandResolvable, Commands } from '../../commands';
 import { PermLevel } from '../../utils/permissions';
-import { resolveChannel, resolveCommand } from '../../utils/resolvers';
 import { DocWrapper } from './docWrapper';
-import { CommandCacheObject, CommandCache } from '../schemas/main/commandCache';
-
-/**
- * Only returns TextChannels or DMChannels
- *
- * @param {ChannelResolvable} channel Channel to get and check
- * @returns TextChannel or DMChannel
- */
-function getTextBasedChannel(channel: ChannelResolvable) {
-    let channelObj = resolveChannel(channel);
-    if (!(channelObj instanceof TextChannel || channelObj instanceof DMChannel)) return undefined;
-    return channelObj;
-}
+import { CommandCacheObject, CommandCache, CommandCacheDoc } from '../schemas/main/commandCache';
+import { Model } from 'mongoose';
+import { Bot } from '../..';
 
 /**
  * Wrapper for the CommandCache object and document so everything can easily be access through one object
@@ -39,6 +27,7 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
     readonly expirationTimestamp: number;
     private _expirationDate: Date;
     readonly expirationDate: Date;
+    private readonly bot: Bot;
 
     /**
      * Creates an instance of CommandCacheWrapper with basic values to identify the CommandCache.
@@ -48,20 +37,22 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
      * @param {User} user
      * @memberof CommandCacheWrapper
      */
-    constructor(channel: ChannelResolvable, user: User) {
+    constructor(model: Model<CommandCacheDoc>, bot: Bot, channel: ChannelResolvable, user: User) {
         let channelObj = getTextBasedChannel(channel);
         if (!channelObj)
             throw new Error('Invalid channel type was provided. CommandCache channels can only be of type TextChannel or DMChannel.');
 
-        super(Bot.database.mainDB.commandCache, { channel: channelObj.id, user: user.id }, ['channel', 'user'], keys<CommandCacheObject>());
-        let tempData = this.cloneData();
-        tempData.channel = channelObj.id;
-        tempData.user = user.id;
-        this.data.next(tempData);
+        let obj = {
+            channel: channelObj.id,
+            user: user.id
+        };
+        super(model, { channel: channelObj.id, user: user.id }, obj, keys<CommandCacheObject>());
+
+        this.bot = bot;
 
         this.subToField('channel').subscribe(data => this._channel = getTextBasedChannel(data.channel));
-        this.subToField('user').subscribe(async data => this._user = await Bot.client.fetchUser(data.user));
-        this.subToField('command').subscribe(data => this._command = Bot.commands.get(data.command));
+        this.subToField('user').subscribe(async data => this._user = await this.bot.client.users.fetch(data.user));
+        this.subToField('command').subscribe(data => this._command = this.bot.commands.get(data.command));
         this.subToField('expirationTimestamp').subscribe(data => this._expirationDate = new Date(data.expirationTimestamp));
 
         this.setCustomProperty('channel', () => this._channel);
@@ -81,7 +72,7 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
      * @memberof CommandCacheWrapper
      */
     async init(command: CommandResolvable, permLevel: PermLevel, cache: object, expirationTimestamp: number) {
-        let commandObj = resolveCommand(command);
+        let commandObj = this.bot.commands.resolve(command);
         if (!commandObj)
             throw new Error('CommandResolvable failed to resolve to command');
 
@@ -99,6 +90,19 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
         }
 
         return this;
+    }
+
+    /**
+     * Only returns TextChannels or DMChannels
+     *
+     * @param {ChannelResolvable} channel Channel to get and check
+     * @returns TextChannel or DMChannel
+     * @memberof CommandCacheWrapper
+     */
+    getTextBasedChannel(channel: ChannelResolvable) {
+        let channelObj = this.bot.client.channels.resolve(channel);
+        if (!(channelObj instanceof TextChannel || channelObj instanceof DMChannel)) return undefined;
+        return channelObj;
     }
 
     /**

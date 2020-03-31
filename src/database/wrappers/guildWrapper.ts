@@ -1,22 +1,30 @@
-import { ChannelResolvable, Guild, GuildMemberResolvable, GuildResolvable, Snowflake, TextChannel } from 'discord.js';
+import {
+    ChannelResolvable,
+    Guild,
+    GuildChannelResolvable,
+    GuildMemberResolvable,
+    GuildResolvable,
+    Snowflake,
+    TextChannel,
+} from 'discord.js';
 import _, { PropertyPath } from 'lodash';
-import mongoose = require('mongoose');
+import { Model, Schema } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
 
 import { Bot } from '../..';
 import { CommandName, CommandResolvable } from '../../commands';
 import { PermLevels } from '../../utils/permissions';
-import { resolveChannel, resolveChannelID, resolveCommand, resolveGuildMember } from '../../utils/resolvers';
 import { CommandUsageLimits, UsageLimits } from '../schemas/global';
 import {
+    BBGuild,
     CommandSettings,
+    GuildDoc,
     GuildObject,
     GuildRank,
     guildRanks,
     MegalogFunction,
     megalogGroups,
     WebhookService,
-    BBGuild
 } from '../schemas/main/guild';
 import { DocWrapper } from './docWrapper';
 
@@ -30,19 +38,19 @@ export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
  * @implements {guildObject}
  */
 export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
-    guild: Guild;
-    id: Snowflake;
-    prefix?: string;
-    logChannel: Snowflake;
-    caseChannel: Snowflake;
-    totalCases: number;
-    logs: mongoose.Schema.Types.ObjectId[];
-    modmailChannel: Snowflake;
-    webhooks: {
+    readonly guild: Guild;
+    readonly id: Snowflake;
+    readonly prefix?: string;
+    readonly logChannel: Snowflake;
+    readonly caseChannel: Snowflake;
+    readonly totalCases: number;
+    readonly logs: Schema.Types.ObjectId[];
+    readonly modmailChannel: Snowflake;
+    readonly webhooks: {
         // key is service name
-        [K in WebhookService]?: mongoose.Schema.Types.ObjectId[];
+        [K in WebhookService]?: Schema.Types.ObjectId[];
     };
-    locks: {
+    readonly locks: {
         // channel id
         [K in Snowflake]: {
             until?: number;
@@ -50,19 +58,20 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
             neutralOverwrites: Snowflake[];
         };
     };
-    usageLimits?: UsageLimits;
-    ranks: {
+    readonly usageLimits?: UsageLimits;
+    readonly ranks: {
         admins: Snowflake[]; // role and user ids
         mods: Snowflake[]; // role and user ids
         immune: Snowflake[]; // role and user ids
     };
-    commandSettings: {
+    readonly commandSettings: {
         // key is command name
         [K in CommandName]: CommandSettings
     };
-    megalog: {
+    readonly megalog: {
         ignoreChannels: Snowflake[];
     } & { [T in MegalogFunction]: Snowflake };
+    private readonly bot: Bot;
 
     /**
      * Creates an instance of GuildWrapper.
@@ -71,16 +80,11 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * @param {Guild} [guild] optional guild object (so constructor doesn't have to search for it)
      * @memberof GuildWrapper
      */
-    constructor(id: Snowflake, guild?: Guild) {
-        super(Bot.database.mainDB.guilds, { id: id }, ['id'], keys<GuildObject>());
-        let tempData = this.cloneData();
-        tempData.id = id;
-        this.data.next(tempData);
+    constructor(model: Model<GuildDoc>, bot: Bot, guild: Guild) {
+        super(model, { id: guild.id }, { id: guild.id }, keys<GuildObject>());
 
-        if (guild)
-            this.guild = guild;
-        else
-            this.guild = Bot.client.guilds.get(id);
+        this.bot = this.bot;
+        this.guild = guild;
     }
 
     /**
@@ -92,7 +96,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
     async getPrefix() {
         await this.load('prefix');
         if (this.prefix) return this.prefix;
-        return Bot.settings.prefix;
+        return this.bot.settings.prefix;
     }
 
     /**
@@ -119,7 +123,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
     async getCaseChannel() {
         this.load('caseChannel');
         if (!this.caseChannel) return undefined;
-        return this.guild.channels.get(this.caseChannel);
+        return this.guild.channels.cache.get(this.caseChannel);
     }
 
     /**
@@ -131,7 +135,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
     async getLogChannel() {
         this.load('logChannel');
         if (!this.logChannel) return undefined;
-        return this.guild.channels.get(this.logChannel);
+        return this.guild.channels.cache.get(this.logChannel);
     }
 
     /**
@@ -142,7 +146,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * @memberof GuildWrapper
      */
     getCase(caseID: number) {
-        return Bot.caseLogger.findByCase(this.id, caseID);
+        return this.bot.caseLogger.findByCase(this.id, caseID);
     }
 
     /**
@@ -153,7 +157,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * @memberof GuildWrapper
      */
     removeCase(caseID: number) {
-        return Bot.caseLogger.deleteCase(this.id, caseID);
+        return this.bot.caseLogger.deleteCase(this.id, caseID);
     }
 
     /**
@@ -163,7 +167,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * @memberof GuildWrapper
      */
     getCases() {
-        return Bot.caseLogger.findByGuild(this.id);
+        return this.bot.caseLogger.findByGuild(this.id);
     }
 
     /**
@@ -220,7 +224,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     async getCommandSettings(command: CommandName) {
         await this.load('commandSettings');
-        if (!Bot.commands.get(command)) return undefined;
+        if (!this.bot.commands.get(command)) return undefined;
         return this.commandSettings[command] || {};
     }
 
@@ -233,7 +237,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * @memberof GuildWrapper
      */
     async setCommandSettings(command: CommandName, settings: CommandSettings) {
-        if (!Bot.commands.get(command)) return undefined;
+        if (!this.bot.commands.get(command)) return undefined;
         let query = { $set: {} };
         query.$set[`commandSettings.${command}`] = settings;
         await this.update(query);
@@ -252,7 +256,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     async commandIsEnabled(command: CommandName) {
         await this.load('commandSettings');
-        if (!Bot.commands.get(command)) return undefined;
+        if (!this.bot.commands.get(command)) return undefined;
         if (!this.commandSettings[command] || this.commandSettings[command]._enabled) return true;
         return false;
     }
@@ -267,7 +271,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     async toggleCommand(command: CommandName, value?: boolean) {
         await this.load('commandSettings');
-        let commandObj = Bot.commands.get(command);
+        let commandObj = this.bot.commands.get(command);
         if (!commandObj || !commandObj.togglable) return undefined;
 
         let settings = await this.getCommandSettings(command);
@@ -293,7 +297,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     async getUsageLimits(path: PropertyPath = '') {
         await this.load('usageLimits');
-        let globalUsageLimits: any = _.at<any>(Bot.settings.usageLimits, path) || {};
+        let globalUsageLimits: any = _.at<any>(this.bot.settings.usageLimits, path) || {};
         let guildUsageLimits: any = _.at<any>(this.usageLimits, path) || {};
         return _.merge(globalUsageLimits, guildUsageLimits);
     }
@@ -306,9 +310,9 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * @memberof GuildWrapper
      */
     async getCommandUsageLimits(commandResolvable: CommandResolvable): Promise<CommandUsageLimits> {
-        let command = resolveCommand(commandResolvable);
+        let command = this.bot.commands.resolve(commandResolvable);
         let usageLimits = await this.getUsageLimits(`commands.${command.name}`);
-        return Bot.commands.getCommandUsageLimits(command, usageLimits);
+        return this.bot.commands.getCommandUsageLimits(command, usageLimits);
     }
 
     /**
@@ -317,7 +321,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      *  - immune: 1
      *  - mod: 2
      *  - admin: 3 
-     *  - botMaster: 4
+     *  - this.botMaster: 4
      *
      * @export
      * @param {GuildMemberResolvable} member member to get perm level from
@@ -325,10 +329,10 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     async getPermLevel(memberResolvable: GuildMemberResolvable): Promise<PermLevels> {
         await this.load('ranks');
-        let member = await resolveGuildMember(this.guild, memberResolvable);
+        let member = await this.guild.members.resolve(memberResolvable);
 
         // if bot master
-        if ((await Bot.settings.getBotMasters()).includes(member.id))
+        if ((await this.bot.settings.botMasters).includes(member.id))
             return PermLevels.botMaster;
 
         // if admin
@@ -336,13 +340,13 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
             return PermLevels.admin;
 
         if (this.ranks.admins.includes(member.id)
-            || member.roles.find(role => this.ranks.admins.includes(role.id)))
+            || member.roles.cache.find(role => this.ranks.admins.includes(role.id)))
             return PermLevels.admin;
         if (this.ranks.mods.includes(member.id)
-            || member.roles.find(role => this.ranks.mods.includes(role.id)))
+            || member.roles.cache.find(role => this.ranks.mods.includes(role.id)))
             return PermLevels.mod;
         if (this.ranks.immune.includes(member.id)
-            || member.roles.find(role => this.ranks.immune.includes(role.id)))
+            || member.roles.cache.find(role => this.ranks.immune.includes(role.id)))
             return PermLevels.immune;
         return PermLevels.member;
     }
@@ -369,7 +373,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * @memberof GuildWrapper
      */
     async getRankMemberIDs(rank: GuildRank): Promise<Snowflake[]> {
-        return (await this.getRankIDs(rank)).filter(id => !this.guild.roles.get(id));
+        return (await this.getRankIDs(rank)).filter(id => !this.guild.roles.cache.get(id));
     }
 
     /**
@@ -381,7 +385,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     async getRankMembers(rank: GuildRank) {
         let userIDs = await this.getRankMemberIDs(rank);
-        let users = userIDs.map(id => this.guild.fetchMember(id))
+        let users = userIDs.map(id => this.guild.members.fetch(id))
         return await Promise.all(users);
     }
 
@@ -393,7 +397,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * @memberof GuildWrapper
      */
     async getRankRoleIDs(rank: GuildRank): Promise<Snowflake[]> {
-        return (await this.getRankIDs(rank)).filter(id => this.guild.roles.get(id));
+        return (await this.getRankIDs(rank)).filter(id => this.guild.roles.cache.get(id));
     }
 
     /**
@@ -404,7 +408,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * @memberof GuildWrapper
      */
     async getRankRoles(rank: GuildRank) {
-        return (await this.getRankRoleIDs(rank)).map(id => this.guild.roles.get(id));
+        return (await this.getRankRoleIDs(rank)).map(id => this.guild.roles.cache.get(id));
     }
 
     /**
@@ -441,7 +445,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     async getMegalogChannel(func: MegalogFunction) {
         let channelID = await this.getMegalogChannelID(func);
-        let channel = this.guild.channels.get(channelID);
+        let channel = this.guild.channels.cache.get(channelID);
         if (!(channel instanceof TextChannel)) return undefined;
         return channel;
     }
@@ -456,7 +460,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     async setMegalogChannel(func: MegalogFunction, channel: ChannelResolvable) {
         this.load('megalog');
-        let channelID = resolveChannelID(channel);
+        let channelID = this.bot.client.channels.resolveID(channel);
         if (await this.getMegalogChannelID(func) == channelID) return undefined;
         let query = { $set: {} };
         query.$set[`megalog.${func}`] = channelID;
@@ -506,7 +510,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     async getMegalogIgnoreChannels(): Promise<TextChannel[]> {
         let IDs = await this.getMegalogIgnoreChannelIDs();
-        let channels = IDs.map(id => this.guild.channels.get(id));
+        let channels = IDs.map(id => this.guild.channels.cache.get(id));
         // @ts-ignore
         return channels.filter(channel => channel instanceof TextChannel);
     }
@@ -514,26 +518,26 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
     /**
      * Checks if a channel should be ignored by the megalog
      *
-     * @param {ChannelResolvable} channel Channel to check
+     * @param {GuildChannelResolvable} channel Channel to check
      * @returns If the channel should be ignored by the megalog
      * @memberof GuildWrapper
      */
-    async megalogIsIgnored(channel: ChannelResolvable) {
+    async megalogIsIgnored(channel: GuildChannelResolvable) {
         this.load('megalog');
-        let channelID = resolveChannelID(channel);
+        let channelID = this.guild.channels.resolveID(channel);
         return this.megalog.ignoreChannels.includes(channelID);
     }
 
     /**
      * Removes a channel from the megalog ignore list if the channel is in that list
      *
-     * @param {ChannelResolvable} channel Channel to remove
+     * @param {GuildChannelResolvable} channel Channel to remove
      * @returns Resulting ignore list if channel was removed
      * @memberof GuildWrapper
      */
-    async removeMegalogIgnoreChannel(channel: ChannelResolvable) {
+    async removeMegalogIgnoreChannel(channel: GuildChannelResolvable) {
         this.load('megalog');
-        let channelID = resolveChannelID(channel);
+        let channelID = this.guild.channels.resolveID(channel);
         if (!this.megalog.ignoreChannels.includes(channelID)) return undefined;
         let query = { $pull: {} };
         query.$pull['megalog.ignoreChannels'] = channelID;
@@ -547,13 +551,13 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
     /**
      * Adds a channel to the megalog ignore list if it doesn't already exist
      *
-     * @param {ChannelResolvable} channel Channel to add
+     * @param {GuildChannelResolvable} channel Channel to add
      * @returns Resulting ignore list if channel was added
      * @memberof GuildWrapper
      */
-    async addMegalogIgnoreChannel(channel: ChannelResolvable) {
+    async addMegalogIgnoreChannel(channel: GuildChannelResolvable) {
         this.load('megalog');
-        let channelObj = resolveChannel(channel);
+        let channelObj = this.guild.channels.resolve(channel);
         if (!(channelObj instanceof TextChannel)) return undefined;
         if (this.megalog.ignoreChannels.includes(channelObj.id)) return undefined;
         let query = { $addToSet: {} };

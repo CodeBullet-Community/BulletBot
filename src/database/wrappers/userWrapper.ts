@@ -4,7 +4,7 @@ import { keys } from 'ts-transformer-keys';
 
 import { CommandName } from '../../commands';
 import { CommandUsageLimits, ExDocument } from '../schemas/global';
-import { CommandScope, UserObject } from '../schemas/main/user';
+import { CommandScope, UserObject, UserDoc } from '../schemas/main/user';
 import { DocWrapper } from './docWrapper';
 
 /**
@@ -41,15 +41,12 @@ export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
     /**
      * Creates an instance of UserWrapper.
      * 
-     * @param {Model<ExDocument<UserObject>>} model Model for users collection
+     * @param {Model<UserDoc>} model Model for users collection
      * @param {User} user User to wrap
      * @memberof UserWrapper
      */
-    constructor(model: Model<ExDocument<UserObject>>, user: User) {
-        super(model, { id: user.id }, ['id'], keys<UserObject>());
-        let tempData = this.cloneData();
-        tempData.id = user.id
-        this.data.next(tempData);
+    constructor(model: Model<UserDoc>, user: User) {
+        super(model, { id: user.id }, { id: user.id }, keys<UserObject>());
         this.user = user;
     }
 

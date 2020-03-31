@@ -92,33 +92,33 @@ exitHook(() => {
 });
 
 /**
- * static class that holds objects. This is made so you can call everything from everywhere
+ * class that holds objects. This is made so you can call everything from everywhere
  *
  * @export
  * @class Bot
  */
 export class Bot {
-    static client: Client;
-    static commands: Commands;
-    static filters: Filters;
-    static youtube: YTWebhookManager;
-    static database: Database;
-    static mStats: MStats;
-    static catcher: Catcher;
-    static logger: Logger;
-    static pActions: PActions;
-    static caseLogger: CaseLogger;
-    static settings: SettingsWrapper;
+    client: Client;
+    commands: Commands;
+    filters: Filters;
+    youtube: YTWebhookManager;
+    database: Database;
+    mStats: MStats;
+    catcher: Catcher;
+    logger: Logger;
+    pActions: PActions;
+    caseLogger: CaseLogger;
+    settings: SettingsWrapper;
 
-    private static botToken: string;
-    private static mongoURI: string;
+    private botToken: string;
+    private mongoURI: string;
 
     constructor(botToken: string, mongoURI: string) {
-        Bot.botToken = botToken;
-        Bot.mongoURI = mongoURI;
+        this.botToken = botToken;
+        this.mongoURI = mongoURI;
     }
 
-    static async init() {
+    async init() {
         console.log('Bot is starting up...');
 
         this.mStats = new MStats(this.mongoURI);
@@ -141,17 +141,17 @@ export class Bot {
         await this.client.login(this.botToken);
     }
 
-    private static subscribeToClientEvents() {
+    private subscribeToClientEvents() {
         this.client.on('ready', this.onReady);
         this.client.on('error', this.onError);
     }
 
-    private static async onReady() {
+    private async onReady() {
         Bot.client.user.setActivity('I\'m ready!');
         console.log('I\'m ready!');
     }
 
-    private static onError(error: Error) {
+    private onError(error: Error) {
         Bot.mStats.logError(error);
         console.error('Discord Client Error:', error);
     }
@@ -159,8 +159,8 @@ export class Bot {
 }
 
 // start
-new Bot(botToken, mongoURI);
-Bot.init();
+let bot = new Bot(botToken, mongoURI);
+bot.init();
 
 client.on('message', async message => {
     if (message.author.id != client.user.id) cacheAttachment(message); // megalog attachment caches the message
