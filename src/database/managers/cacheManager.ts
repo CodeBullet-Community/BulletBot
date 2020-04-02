@@ -75,4 +75,20 @@ export abstract class CacheManager<T extends Object> extends CollectionManager<T
      * @memberof CacheManager
      */
     abstract async get(...args): Promise<DocWrapper<T>>;
+
+    /**
+     * Removes all wrappers form the cache where Wrapper.removed is true
+     *
+     * @returns How many cache entries have been removed
+     * @memberof CacheManager
+     */
+    cleanCache() {
+        let deleteCount = 0;
+        for (const [key, wrapper] of this.cache.entries()) {
+            if (!wrapper.removed) continue;
+            this.cache.delete(key);
+            deleteCount++;
+        }
+        return deleteCount;
+    }
 }
