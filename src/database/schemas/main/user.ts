@@ -3,10 +3,7 @@ import { CommandName } from "../../../commands";
 import { ExDocument } from "../global";
 import { Schema } from "mongoose";
 
-/**
- * Scope where a command can be used
- */
-export type CommandScope = 'dm' | 'global' | Snowflake;
+export type UserCommandScope = 'dm' | 'global'
 
 /**
  * Object holding data that BulletBot stores about a User
@@ -14,7 +11,7 @@ export type CommandScope = 'dm' | 'global' | Snowflake;
 export interface UserObject {
     id: Snowflake; // user id
     commandLastUsed: {
-        [Scope in CommandScope]?: {
+        [Scope in UserCommandScope]?: {
             [Command in CommandName]: number; // timestamp until it can be reused again
         };
     };
