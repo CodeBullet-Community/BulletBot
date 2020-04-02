@@ -66,14 +66,14 @@ export class CaseLogger {
     /**
      * Logs a ban into the database and sends an case embed if case channel if provided
      * @param {Guild} guild where the member was banned from
-     * @param {GuildMember} member member that was banned
+     * @param {User} user member that was banned
      * @param {GuildMember} mod mod that banned the member
      * @param {string} reason the reason why the member was banned (optional)
      * @param {number} duration duration of the ban (optional)
      */
-    async logBan(guild: Guild, member: GuildMember, mod: GuildMember, reason?: string, duration?: number) {
+    async logBan(guild: Guild, user: User, mod: GuildMember, reason?: string, duration?: number) {
         let color = Bot.database.settingsDB.cache.embedColors.negative;
-        return await this.logCase(guild, member.user, mod, caseActions.ban, color, reason, duration);
+        return await this.logCase(guild, user, mod, caseActions.ban, color, reason, duration);
     }
 
     /**
