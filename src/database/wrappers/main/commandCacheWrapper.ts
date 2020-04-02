@@ -1,12 +1,12 @@
 import { ChannelResolvable, DMChannel, TextChannel, User, Client } from 'discord.js';
 import { keys } from 'ts-transformer-keys';
 
-import { commandInterface, CommandResolvable, Commands } from '../../commands';
-import { PermLevel } from '../../utils/permissions';
-import { DocWrapper } from './docWrapper';
-import { CommandCacheObject, CommandCache, CommandCacheDoc } from '../schemas/main/commandCache';
+import { commandInterface, CommandResolvable, Commands } from '../../../commands';
+import { PermLevel } from '../../../utils/permissions';
+import { DocWrapper } from '../docWrapper';
+import { CommandCacheObject, CommandCache, CommandCacheDoc } from '../../schemas/main/commandCache';
 import { Model } from 'mongoose';
-import { Bot } from '../..';
+import { Bot } from '../../..';
 
 /**
  * Wrapper for the CommandCache object and document so everything can easily be access through one object

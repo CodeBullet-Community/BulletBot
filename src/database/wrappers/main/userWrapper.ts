@@ -2,10 +2,10 @@ import { User } from 'discord.js';
 import { Model } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
 
-import { CommandName } from '../../commands';
-import { CommandUsageLimits, ExDocument } from '../schemas/global';
-import { CommandScope, UserObject, UserDoc } from '../schemas/main/user';
-import { DocWrapper } from './docWrapper';
+import { CommandName } from '../../../commands';
+import { CommandUsageLimits, ExDocument } from '../../schemas/global';
+import { CommandScope, UserObject, UserDoc } from '../../schemas/main/user';
+import { DocWrapper } from '../docWrapper';
 
 /**
  * Wrapper for the user object and document so everything can easily be access through one object

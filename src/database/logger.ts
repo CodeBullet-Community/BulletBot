@@ -7,7 +7,7 @@ import { commandInterface } from '../commands';
 import { filterInterface } from '../filters';
 import { filterAction, filterActions } from '../utils/filters';
 import { actionToString } from '../utils/parsers';
-import { GuildWrapper } from './wrappers/guildWrapper';
+import { GuildWrapper } from './wrappers/main/guildWrapper';
 import { GuildDoc, guildSchema, GuildRank, WebhookService, MegalogFunction } from './schemas/main/guild';
 import { LogDoc, logSchema, LogObject, LogType, LogAction } from './schemas/main/log';
 import { WebhookDoc } from './schemas/webhooks/_webhooks';

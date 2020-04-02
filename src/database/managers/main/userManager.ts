@@ -4,7 +4,7 @@ import { Bot } from '../../..';
 import { Database } from '../../database';
 import { UserObject, userSchema } from '../../schemas/main/user';
 import { LoadOptions } from '../../wrappers/docWrapper';
-import { UserWrapper } from '../../wrappers/userWrapper';
+import { UserWrapper } from '../../wrappers/main/userWrapper';
 import { CacheManager } from '../cacheManager';
 import { FetchOptions } from '../collectionManager';
 

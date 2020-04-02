@@ -3,7 +3,7 @@ import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { PermLevels } from '../../utils/permissions';
-import { GuildWrapper } from '../../database/wrappers/guildWrapper';
+import { GuildWrapper } from '../../database/wrappers/main/guildWrapper';
 import { LogAction } from '../../database/schemas/main/log';
 
 async function getCommandList(guildWrapper: GuildWrapper, title: string, criteria: (command: commandInterface) => Promise<boolean>) {

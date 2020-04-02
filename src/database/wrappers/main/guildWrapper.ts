@@ -11,10 +11,10 @@ import _, { PropertyPath } from 'lodash';
 import { Model, Schema } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
 
-import { Bot } from '../..';
-import { CommandName, CommandResolvable } from '../../commands';
-import { PermLevels } from '../../utils/permissions';
-import { CommandUsageLimits, UsageLimits } from '../schemas/global';
+import { Bot } from '../../..';
+import { CommandName, CommandResolvable } from '../../../commands';
+import { PermLevels } from '../../../utils/permissions';
+import { CommandUsageLimits, UsageLimits } from '../../schemas/global';
 import {
     BBGuild,
     CommandSettings,
@@ -25,8 +25,8 @@ import {
     MegalogFunction,
     megalogGroups,
     WebhookService,
-} from '../schemas/main/guild';
-import { DocWrapper } from './docWrapper';
+} from '../../schemas/main/guild';
+import { DocWrapper } from '../docWrapper';
 
 export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
 

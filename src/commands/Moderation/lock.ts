@@ -5,7 +5,7 @@ import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { durationToString, stringToDuration, stringToChannel } from '../../utils/parsers';
 import { Durations } from '../../utils/time';
-import { GuildWrapper } from '../../database/wrappers/guildWrapper';
+import { GuildWrapper } from '../../database/wrappers/main/guildWrapper';
 import { GuildObject } from '../../database/schemas/main/guild';
 
 /**

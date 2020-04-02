@@ -14,8 +14,8 @@ import { MStats } from './database/mStats';
 import { PActions } from './database/pActions';
 import { megalogGroups } from './database/schemas/main/guild.js';
 import { updateDatabaseAfter1_2_8 } from './database/update';
-import { GuildWrapper } from './database/wrappers/guildWrapper';
-import { SettingsWrapper } from './database/wrappers/settingsWrapper.js';
+import { GuildWrapper } from './database/wrappers/main/guildWrapper';
+import { SettingsWrapper } from './database/wrappers/settings/settingsWrapper.js';
 import { Filters } from './filters';
 import {
     cacheAttachment,

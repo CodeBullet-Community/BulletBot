@@ -4,7 +4,7 @@ import { PermLevels } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { stringToRole, stringToMember } from '../../utils/parsers';
-import { GuildWrapper } from '../../database/wrappers/guildWrapper';
+import { GuildWrapper } from '../../database/wrappers/main/guildWrapper';
 import { GuildRank, guildRanks } from '../../database/schemas/main/guild';
 import { LogAction } from '../../database/schemas/main/log';
 

@@ -3,7 +3,7 @@ import { commandInterface } from '../../commands';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { PermLevels } from '../../utils/permissions';
-import { GuildWrapper } from '../../database/wrappers/guildWrapper';
+import { GuildWrapper } from '../../database/wrappers/main/guildWrapper';
 import { BenchmarkTimestamp } from '../../utils/time';
 import { FiltersObject } from '../../database/schemas/main/filter';
 import { LogAction } from '../../database/schemas/main/log';

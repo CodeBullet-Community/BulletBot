@@ -1,9 +1,9 @@
-import { GlobalSettingsObject, GlobalSettingsDoc } from "../schemas/settings/settings";
-import { DocWrapper } from "./docWrapper";
-import { UsageLimits, CommandUsageLimits } from "../schemas/global";
+import { GlobalSettingsObject, GlobalSettingsDoc } from "../../schemas/settings/settings";
+import { DocWrapper } from "../docWrapper";
+import { UsageLimits, CommandUsageLimits } from "../../schemas/global";
 import { PresenceData, Snowflake, UserResolvable, Client } from "discord.js";
-import { CommandName, CommandResolvable, Commands } from "../../commands";
-import { Bot } from "../..";
+import { CommandName, CommandResolvable, Commands } from "../../../commands";
+import { Bot } from "../../..";
 import { keys } from "ts-transformer-keys";
 import { map } from "rxjs/operators";
 import _ from "lodash";
