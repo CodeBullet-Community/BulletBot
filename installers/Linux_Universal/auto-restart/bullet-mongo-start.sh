@@ -45,8 +45,8 @@
 #
 ################################################################################
 #
-    addresses=$_MAIL_TO # The email addresses that the Status Report is sent to
-    send_status=$_SEND_STATUS # Determines if the Status Report can be/is sent
+    addresses=$MailTo # The email addresses that the Status Report is sent to
+    send_status=$SendStatus # Determines if the Status Report can be/is sent
     attempt_mongo_restart=true
 
     # The '--no-hostname' flag for journalctl only works with systemd 230 and
@@ -76,7 +76,7 @@
                 elif [[ ! $(echo $addresses | grep -E -o "\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}\b") \
                         ]]; then
                     send_status=false
-                    echo "[WARNING] One or more or the email addresses in" \
+                    echo "[WARNING] One or more of the email addresses in" \
                         "'bullet-monog-start.conf' are invalid" >&2
                 fi
             else
