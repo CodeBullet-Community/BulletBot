@@ -83,11 +83,15 @@ export class UserManager extends CacheManager<UserObject> {
     async fetch(user: UserResolvable, options?: FetchOptions<UserObject>) {
         let userObj = this.bot.client.users.resolve(user);
         let cacheKey = this.getCacheKey(userObj.id);
+
         let wrapper = await this.getCached(cacheKey, options);
         if (!wrapper)
             wrapper = new UserWrapper(this.model, userObj);
-        if (!wrapper.load(options) && options?.create)
+
+        let loadedFields = await wrapper.load({ fields: options.fields, reload: true });
+        if (loadedFields === undefined && options?.create)
             await wrapper.createDoc(this.getDefaultObject(userObj.id), false);
+
         return wrapper;
     }
 

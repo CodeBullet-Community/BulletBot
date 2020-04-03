@@ -134,7 +134,7 @@ export class DocWrapper<T extends Object> {
      * It first checks if there is already a document and if so (by default) doesn't create one. 
      * If overwrite is true and a document already exists it first deletes the old one.
      * 
-     * IMPORTANT: The wrapper doesn't check if the document is correct or can actually be found by its uniqueQuery.
+     * IMPORTANT: This function doesn't check if the document is correct or can actually be found by its uniqueQuery.
      *
      * @param {T} content The content of the document
      * @param {boolean} [overwrite=false] If it should overwrite the old document (Default false)
@@ -375,8 +375,9 @@ export class DocWrapper<T extends Object> {
 
         let doc = await this.getDoc(loadFields);
         if (!doc) return undefined;
+        this.mergeData(doc, loadFields || this.allFields, true)
 
-        return this.mergeData(doc, loadFields || this.allFields, true);
+        return loadFields;
     }
 
     /**

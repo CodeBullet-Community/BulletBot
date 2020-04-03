@@ -3,8 +3,7 @@ import { Model } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
 
 import { CommandName } from '../../../commands';
-import { CommandUsageLimits, ExDocument } from '../../schemas/global';
-import { CommandScope, UserObject, UserDoc } from '../../schemas/main/user';
+import { UserCommandScope, UserDoc, UserObject } from '../../schemas/main/user';
 import { DocWrapper } from '../docWrapper';
 
 /**
@@ -36,7 +35,11 @@ export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
      * @type {{ [key: string]: { [key: string]: number; }; }}
      * @memberof UserWrapper
      */
-    readonly commandLastUsed: { [key: string]: { [key: string]: number; }; };
+    readonly commandLastUsed: {
+        [Scope in UserCommandScope]?: {
+            [Command in CommandName]: number;
+        };
+    };
 
     /**
      * Creates an instance of UserWrapper.
@@ -51,108 +54,115 @@ export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
     }
 
     /**
-     * Check if scope is valid
+     *  Check if string is valid UserCommandScope
      *
-     * @private
-     * @param {string} scope
+     * @param {UserCommandScope} scope string to check
+     * @param {boolean} [noError=false] (default false) if no error should be thrown
+     * @returns {scope is UserCommandScope}
      * @memberof UserWrapper
      */
-    private checkCommandScope(scope: string) {
-        if (isNaN(Number(scope)) && scope != 'dm' && scope != 'global')
+    checkCommandScope(scope: UserCommandScope, noError = false): scope is UserCommandScope {
+        let check = scope == 'dm' || scope == 'global';
+        if (!noError && !check)
             throw new Error("Scope should be guild id, 'dm' or 'global' but is '" + scope + "'");
+        return check;
     }
 
     /**
-     * returns when the command was last used by the user. returns 0 if it never was used before
+     * Gets when command was last used by the user in specified scope
      *
-     * @param {CommandScope} scope guild id / 'dm' / 'global'
-     * @param {string} command command name
-     * @returns timestamp when the command was last used by the user
+     * @param {UserCommandScope} scope Which scope to check
+     * @param {CommandName} command Command to check
+     * @returns Timestamp when command was last used (0 when never)
      * @memberof UserWrapper
      */
-    async getCommandLastUsed(scope: string, command: CommandName) {
+    async getCommandLastUsed(scope: UserCommandScope, command: CommandName) {
         await this.load('commandLastUsed');
         this.checkCommandScope(scope);
-        if (!this.commandLastUsed || !this.commandLastUsed[scope] || !this.commandLastUsed[scope][command])
+        if (!this.commandLastUsed?.[scope]?.[command])
             return 0;
         return this.commandLastUsed[scope][command];
     }
 
     /**
-     * Sets when the user last used the command. always also sets in global scope
+     * Sets a new last used timestamp for command in specified scope and global
      *
-     * @param {CommandScope} scope Guild id / 'dm' / 'global'
-     * @param {string} command Name of the command
-     * @param {number} timestamp When the command was last used
-     * @returns The timestamp if it was successfully set
+     * @param {UserCommandScope} scope Scope to set last used timestamp
+     * @param {CommandName} command Command to set last used timestamp
+     * @param {number} timestamp When command was last used
      * @memberof UserWrapper
      */
-    async setCommandLastUsed(scope: CommandScope, command: CommandName, timestamp: number) {
+    async setCommandLastUsed(scope: UserCommandScope, command: CommandName, timestamp: number) {
         await this.load('commandLastUsed');
         this.checkCommandScope(scope);
+
         let query = { $set: {} };
         query.$set[`commandLastUsed.${scope}.${command}`] = timestamp;
         if (scope !== 'global')
             query.$set[`commandLastUsed.global.${command}`] = timestamp;
         await this.update(query);
+
         let tempData = this.cloneData();
         this._setCommandLastUsed(tempData, scope, command, timestamp);
         this._setCommandLastUsed(tempData, 'global', command, timestamp);
         this.data.next(tempData);
-        return timestamp;
     }
 
     /**
-     * Private helper function that only sets the local values
+     * Private helper function that sets commandLastUsed in provided data
      *
      * @private
      * @param {Partial<UserObject>} data UserObject that should be manipulated
-     * @param {CommandScope} scope Guild id / 'dm' / 'global'
-     * @param {string} command Name of the command
+     * @param {UserCommandScope} scope Scope where to set commandLastUsed
+     * @param {string} commandName Name of the command
      * @param {number} timestamp When the command was last used
      * @memberof UserWrapper
      */
-    private _setCommandLastUsed(data: Partial<UserObject>, scope: CommandScope, command: CommandName, timestamp: number) {
+    private _setCommandLastUsed(data: Partial<UserObject>, scope: UserCommandScope, commandName: CommandName, timestamp: number) {
         if (!data.commandLastUsed[scope]) data.commandLastUsed[scope] = {};
-        data.commandLastUsed[scope][command] = timestamp;
+        data.commandLastUsed[scope][commandName] = timestamp;
     }
 
     /**
      * Deletes all command last used infos of a specific scope.
      *
-     * @param {CommandScope} scope What scope to delete
-     * @returns The deleted scope if it was deleted
+     * @param {UserCommandScope} scope What scope to delete
+     * @returns The deleted scope if it had content before
      * @memberof UserWrapper
      */
-    async resetCommandLastUsed(scope: CommandScope) {
+    async resetCommandLastUsed(scope: UserCommandScope) {
         await this.load('commandLastUsed');
         this.checkCommandScope(scope);
-        if (!this.commandLastUsed[scope]) return;
+        if (!this.commandLastUsed[scope]) return undefined;
+
         let query = { $unset: {} };
         query.$unset[scope] = 0;
         await this.update(query);
+
         let deletedScope = this.commandLastUsed[scope];
+
         let tempData = this.cloneData();
         delete tempData.commandLastUsed[scope];
         this.data.next(tempData);
+
         return deletedScope;
     }
 
     /**
-     * If this user can use the command based on usage limits
+     * Not yet implemented
      *
-     * @param {CommandScope} scope guild id / 'dm' / 'global'
-     * @param {string} commandName name of the command
-     * @param {CommandUsageLimits} limits usage limits
-     * @returns boolean if the user can use the command
+     * @param {string} commandName
+     * @returns
      * @memberof UserWrapper
      */
-    async canUseCommand(scope: CommandScope, commandName: string, limits: CommandUsageLimits) {
-        if (!limits.enabled) return false;
+    async canUseCommand(commandName: string) {
+        // TODO: implement it with usageLimits
+        throw new Error('Not yet implemented');
+        /* if (!limits.enabled) return false;
         if (limits.localCooldown && Date.now() < ((await this.getCommandLastUsed(scope, commandName)) + limits.localCooldown))
             return false;
         if (limits.globalCooldown && Date.now() < ((await this.getCommandLastUsed('global', commandName)) + limits.globalCooldown))
             return false;
-        return true;
+        return true; */
     }
 }
