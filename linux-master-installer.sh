@@ -3,9 +3,8 @@
 ################################################################################
 #
 # This master installer looks at the operating system, architecture, bit type,
-# etc., to determine whether or not BulletBot and/or the installers are
-# compatible...
-# Once the system is deemed compatible, the appropriate sub-master installer
+# etc., to determine whether or not the system is supported by BulletBot.
+# Once the system is deemed as supported, the appropriate sub-master installer
 # will be chosen, downloaded (if it isn't already), then executed.
 #
 ################################################################################
@@ -41,6 +40,16 @@
     master_installer="/home/bulletbot/linux-master-installer.sh"
     export master_installer
 
+#
+################################################################################
+#
+# Error [ traps ]
+#
+################################################################################
+#
+    trap "echo -e \"\n\nScript forcefully stopped\nExiting...\" && exit" SIGINT \
+        SIGTSTP SIGTERM
+    
 #
 ################################################################################
 #
@@ -233,7 +242,8 @@
     echo "SYSTEM INFO"
     echo "Bit Type: $bits"
     echo "Architecture: $arch"
-    echo "Linux Distro: $pname"
+    echo -n "Linux Distro: "
+    if [[ -n $pname ]]; then echo "$pname"; else echo "$distro"; fi
     echo "Linux Distro Version: $ver"
     echo ""
 
