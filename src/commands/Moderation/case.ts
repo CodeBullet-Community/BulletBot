@@ -108,7 +108,7 @@ var command: commandInterface = {
             if (argsArray[argIndex] == 'delete') {
                 argIndex++;
                 if (!isNaN(parseInt(argsArray[argIndex]))) { // checks if a valid case ID was provided
-                    let caseID = parseInt(args);
+                    let caseID = parseInt(argsArray[argIndex]);
                     // try to delete case and send failure message incase it fails
                     if (!await Bot.caseLogger.deleteCase(message.guild.id, caseID)) {
                         message.channel.send('Please provide a valid case ID');
