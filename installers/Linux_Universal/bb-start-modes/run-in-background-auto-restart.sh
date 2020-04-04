@@ -2,8 +2,10 @@
 
 ################################################################################
 #
-# Runs BulletBot in the background, as a service on your system.
-# If BulletBot is already running in this mode, he'll be restarted instead
+# Runs BulletBot in the background, as a service on your system, with
+# auto-restart on system reboot. This means that if the system is rebooted or
+# is turned back on, BulletBot will automatically be started. If
+# BulletBot is already running in this mode, he'll be restarted instead.
 #
 # Note: All variables (excluding $timer and $start_time) are exported from
 # 'linux-master-installer.sh', and 'debian-ubuntu-installer.sh' or
@@ -14,7 +16,7 @@
     timer=20
 
     clear
-    printf "We will now run BulletBot in the background. "
+    printf "We will now run BulletBot in the background with auto-restart on system reboot. "
     read -p "Press [Enter] to begin."
 
     # Saves the current time and date, which will be used with journalctl
@@ -23,20 +25,51 @@
 #
 ################################################################################
 #
-# Dealing with 'bullet-mongo-start.service'
+# Dealing with the creation, enabling, and starting of 
+# 'bullet-mongo-start.service'
 #
 ################################################################################
 #
-    # If 'bullet-mongo-start.service' is enabled
-    if [[ $start_service_status = 0 ]]; then
-        echo "Disabling 'bullet-mongo-start.service'..."
-        systemctl disable bullet-mongo-start.service || {
-            echo "${red}Failed to disable 'bullet-mongo-start.service'" >&2
-            echo "${cyan}This service must be disabled in order to run" \
-                "BulletBot in this run mode"
+    # If 'bullet-mongo-start.service' exists and is not enabled
+    if [[ -f $start_service && $start_service_status != 0 ]]; then
+        echo "Enabling 'bullet-mongo-start.service'..."
+        systemctl enable bullet-mongo-start.service || {
+            echo "${red}Failed to enable 'bullet-mongo-start.service'" >&2
+            echo "${cyan}This service must be enabled in order to run" \
+                "BulletBot in this run mode${nc}"
             read -p "Press [Enter] to return to the installer menu"
             exit 1
         }
+    # If 'bullet-mongo-start.service' does not exist
+    elif [[ ! -f $start_service ]]; then
+        echo "Creating 'bullet-mongo-start.service'..."
+        ./installers/Linux_Universal/auto-restart/auto-restart-updater.sh || {
+            echo "${red}Failed to create 'bullet-mongo-start.service'" >&2
+            echo "${cyan}This service must exist in order to run BulletBot in" \
+                "this run mode${nc}"
+            read -p "Press [Enter] to return to the installer menu"
+            exit 1
+        }
+        # Reloads systemd daemons to account for the added service
+        systemctl daemon-reload
+        echo "Enabling 'bullet-mongo-start.service'..."
+        systemctl enable bullet-mongo-start.service || {
+            echo "${red}Failed to enable 'bullet-mongo-start.service'" >&2
+            echo "${cyan}This service must be enabled in order to run" \
+                "BulletBot in this run mode${nc}"
+            read -p "Press [Enter] to return to the installer menu"
+            exit 1
+        }
+    fi
+
+    # If 'bullet-mongo-start.sh' doesn't exist
+    if [[ ! -f $start_script ]]; then
+        echo "${red}'bullet-mongo-start.sh' does not exist" >&2
+        echo "${cyan}'bullet-mongo-start.sh' is required to use this run mode"
+        echo "Re-download bulletbot using the installers, then retry starting" \
+            "BulletBot in this run mode${nc}"
+        read -p "Press [Enter] to return to the installer menu"
+        exit 1
     fi
 
 #
@@ -61,7 +94,7 @@
             read -p "Press [Enter] to return to the installer menu"
             exit 1
         }
-        echo "Waiting 20 seconds for 'bulletbot.service to start..."
+        echo "Waiting 20 seconds for 'bulletbot.service' to start..."
     fi
 
 #
@@ -88,5 +121,6 @@
     echo -e "Please check the logs above to make sure that there aren't any" \
         "errors, and if there are, to resolve whatever issue is causing them\n"
 
-    echo "${green}BulletBot is now running in the background${nc}"
+    echo "${green}BulletBot is now running in the background with auto-restart" \
+        "on system reboot${nc}"
     read -p "Press [Enter] to return to the installer menu"
