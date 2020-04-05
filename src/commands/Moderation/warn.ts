@@ -43,7 +43,8 @@ var command: commandInterface = {
             // make a case
             Bot.caseLogger.logWarn(message.guild, user, message.member, reason);
             // dm to member that they has been warned
-            user.send(`You were warned in **${message.guild.name}** for:\n${reason}`);
+            if (!user.user.bot)
+                user.send(`You were warned in **${message.guild.name}** for:\n${reason}`);
 
             // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
