@@ -1,5 +1,42 @@
 site_name: BulletBot
+site_description: Wiki for everything about BulletBot, a general purpose Discord bot
 repo_url: https://github.com/CodeBullet-Community/BulletBot
+
+theme:
+    name: material
+    favicon: media/BulletBot.svg
+    logo: media/BulletBot.svg
+    features:
+        - instant
+        - tabs
+
+plugins:
+    - search
+    - minify:
+        minify_html: true
+
+extra:
+    social:
+        - icon: fontawesome/brands/github
+          link: https://github.com/CodeBullet-Community/BulletBot
+        - icon: fontawesome/brands/discord
+          link: https://discord.gg/74py7yd
+
+markdown_extensions:
+    - codehilite:
+        guess_lang: false
+        linenums: true
+    - admonition
+    - pymdownx.details
+    - pymdownx.inlinehilite
+    - pymdownx.tabbed
+    - pymdownx.tasklist:
+        custom_checkbox: true
+    - pymdownx.tilde
+    - toc:
+        permalink: true
+    - meta
+    - footnotes
 
 nav:
     - Home: index.md
@@ -20,7 +57,6 @@ nav:
         - Readme: Commands/Commands-Readme.md
         - Commands List: Commands/Commands.md
     - In Depth Explanations: In-Depth-Explanations.md
-
     - Dev Documentation:
         - Readme: dev-documentation/README.md
         - Structure: dev-documentation/structure.md
@@ -29,7 +65,3 @@ nav:
             - mStats: dev-documentation/database/mStats.md
             - settings: dev-documentation/database/settings.md
             - webhooks: dev-documentation/database/webhooks.md
-theme:
-    name: material
-    favicon: media/BulletBot.svg
-    logo: media/BulletBot.svg
