@@ -38,7 +38,7 @@ First, you will have to install the required software to compile and run the bot
   * Download and install guide: <https://docs.mongodb.com/manual/administration/install-on-linux/>
   * Note: Do not start or enable `mongod.service`, after MongoDB has been installed.
 
-It is recommended to install [MongoDB Compass](https://docs.mongodb.com/compass/master/install/) alongside MongoDB, as it can make connecting to the database easier. For instructions on how to use/setup MongoDB Compass, follow [this guide](MongoDB-Compass).
+It is recommended to install [MongoDB Compass](https://docs.mongodb.com/compass/master/install/) alongside MongoDB, as it can make connecting to the database easier. For instructions on how to use/setup MongoDB Compass, follow [this guide](/Helpful-Guides/MongoDB-Compass/).
 
 ### 2. Install Node.js Global Packages
 
@@ -170,7 +170,7 @@ Follow the instructions below to add the settings document to the MongoDB databa
 
 In addition to the settings document, as mentioned above, a `bot-config.json` file needs to be created.
 
-First and foremost, if you haven't already [created an application/bot](Creating-&-Inviting-A-Bot#creating-a-discord-application--bot), do so now. You'll need the bot key that is generated when setting up BulletBot's config file. Once you have done this, you can continue and set up the config file.
+First and foremost, if you haven't already [created an application/bot](/Helpful-Guides/Creating-&-Inviting-A-Bot/#creating-a-discord-application), do so now. You'll need the bot key that is generated when setting up BulletBot's config file. Once you have done this, you can continue and set up the config file.
 
 We will want to put the following template into `BulletBot/out/bot-config.json` (if the code is already compiled) or `BulletBot/src/bot-config.json` (if the code has not been compiled):
 

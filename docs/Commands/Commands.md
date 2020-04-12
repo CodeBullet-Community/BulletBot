@@ -19,10 +19,10 @@ This page lists all of the commands that can be used with BulletBot, description
 |    **?!help**     | Gives a command list and help                                 |    Member     |
 |    **?!info**     | Returns infos about bot                                       |    Member     |
 |    **?!ping**     | Check bots responsiveness                                     |    Member     |
-|   **?!status**    | Gives status of different parts of the bot (bot masters only) |  Bot Master   |
+|   **?!status**    | Gives status of different parts of the bot                    |  Bot Master   |
 |                   |                                                               |               |
 | **_MANAGEMENT_**  |                                                               |               |
-|    **?!admin**    | For managing the admin rank                                  |     Admin     |
+|    **?!admin**    | For managing the admin rank                                   |     Admin     |
 |  **?!commands**   | Let's you toggle commands                                     |     Admin     |
 |   **?!filters**   | Let's you toggle filters                                      |     Admin     |
 |   **?!immune**    | For managing the immune rank                                  |     Admin     |

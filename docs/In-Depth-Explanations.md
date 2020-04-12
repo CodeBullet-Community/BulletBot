@@ -21,7 +21,7 @@ Many of the terms used throughout the guides, documentation, and scripts, are th
 
 The master installer (`linux-master-installer.sh`) is used for identifying and determining whether BulletBot supports the system it's running on. After confirming that the system is supported, the master installer then executes the [sub-master installer](#sub-master-installers) that corresponds to it's designed Linux Distribution.
 
-Note: Just because the master installer determines that the system is not supported, does not mean that the system is not compatible. What the master installer deems as "supported", is an [Officially Supported Linux Distribution](Linux-Prod-Setup-Guide#officially-supported-linux-distributions). These distributions are Linux Distros that BulletBot has been tested and are confirmed to work on. So even if a system is not "officially supported", that does not mean that it won't work on that system.
+Note: Just because the master installer determines that the system is not supported, does not mean that the system is not compatible. What the master installer deems as "supported", is an [Officially Supported Linux Distribution](/Setup-Guides/Production/Linux-Prod-Setup-Guide/#officially-supported-linux-distributions). These distributions are Linux Distros that BulletBot has been tested and are confirmed to work on. So even if a system is not "officially supported", that does not mean that it won't work on that system.
 
 #### Sub-Master Installers
 
@@ -85,11 +85,11 @@ As mentioned in the description of the [service file](#service-file), if `bullet
 
 ### Commands Module
 
-This module loads and manages all commands. Its main class is located at [`src/commands.ts`](../blob/master/src/commands.ts). Commands are stored in two different variables. One is a single array of all commands, and the other is an object structured with subcategories (`strucObject`). The subcategory names in the strucObject are all lowercase, and there is a property named `_categoryName` which holds the unmodified name of the subcategory.
+This module loads and manages all commands. Its main class is located at [`src/commands.ts`](https://github.com/CodeBullet-Community/BulletBot/blob/master/src/commands.ts). Commands are stored in two different variables. One is a single array of all commands, and the other is an object structured with subcategories (`strucObject`). The subcategory names in the strucObject are all lowercase, and there is a property named `_categoryName` which holds the unmodified name of the subcategory.
 
 #### Commands File Structure
 
-The Commands module imports the commands based on their location in the [`commands`](../blob/master/src/commands) directory. If they are in a subdirectory, they will be loaded into a subcategory of the subdirectories name. Because of this, the file location and subdirectory names are essential. The actual name of the file holding the command isn't crucial, as the module takes the name specified in the command object.
+The Commands module imports the commands based on their location in the [`commands`](https://github.com/CodeBullet-Community/BulletBot/blob/master/src/commands) directory. If they are in a subdirectory, they will be loaded into a subcategory of the subdirectories name. Because of this, the file location and subdirectory names are essential. The actual name of the file holding the command isn't crucial, as the module takes the name specified in the command object.
 
 ### Filters Module
 
@@ -97,11 +97,11 @@ The Filters module is build up like the Commands Module.
 
 ### MStats Module
 
-MStats module stands for "management statistics module", which is responsible for logging statistical data about bot usage to the database. It caches all data and saves it to the database at a certain interval (every 10 seconds). Each hour (at `XX:00:01`), it creates a new hour document to save to. After a day (at `00:00:01`), it also summarizes the statistics of the last 24 hours and saves it to a day document and also adds its information to an all-time document, which is a summary of all statistical data. The hour documents of the last day will then be deleted from the database, which means the first 24 hours the stats are precise to the hour and after that only to the day. For more information about what the MStats module stores see the [database documentation](docs/database/mStats.md)
+MStats module stands for "management statistics module", which is responsible for logging statistical data about bot usage to the database. It caches all data and saves it to the database at a certain interval (every 10 seconds). Each hour (at `XX:00:01`), it creates a new hour document to save to. After a day (at `00:00:01`), it also summarizes the statistics of the last 24 hours and saves it to a day document and also adds its information to an all-time document, which is a summary of all statistical data. The hour documents of the last day will then be deleted from the database, which means the first 24 hours the stats are precise to the hour and after that only to the day. For more information about what the MStats module stores see the [database documentation](https://github.com/CodeBullet-Community/BulletBot/blob/master/docs/dev-documentation/database/mStats.md)
 
 ### PActions Module
 
-The PActions module is responsible for saving time delayed tasks and then executing them. Its name stands for `pending Actions`. All tasks that are scheduled with this module get saved to the `main` database in the `pActions` collection. This is done to ensure that the tasks still get executed when the bot randomly crashes. If nodes native function `setTimeout` would have been used, there wouldn't have been a way to save this somewhere. The PActions module periodically checks the database for tasks that need to be executed. The interval between checks is defined by the `pActionsInterval` (in milliseconds) in the `bot-config.json` file. When a task is executed, PActions will treat the argument differently depending on the tasks action ID, which are defined in the [`schema.ts` file](../blob/master/src/database/schemas.ts#L540)
+The PActions module is responsible for saving time delayed tasks and then executing them. Its name stands for `pending Actions`. All tasks that are scheduled with this module get saved to the `main` database in the `pActions` collection. This is done to ensure that the tasks still get executed when the bot randomly crashes. If nodes native function `setTimeout` would have been used, there wouldn't have been a way to save this somewhere. The PActions module periodically checks the database for tasks that need to be executed. The interval between checks is defined by the `pActionsInterval` (in milliseconds) in the `bot-config.json` file. When a task is executed, PActions will treat the argument differently depending on the tasks action ID, which are defined in the [`schema.ts` file](https://github.com/CodeBullet-Community/BulletBot/blob/master/src/database/schemas.ts#L540)
 
 ### Webhook System
 
@@ -113,7 +113,7 @@ For YouTube webhooks, the bot uses the PubSubHubbub protocol and the [hub](https
 
 ### Command Cache
 
-Some commands require the user to reply with more information (`?!abc` as an example). To do this, BulletBot uses something called command caches. This allows a command to temporarily store data the user previously provided and also makes the bot send the reply message which doesn't have the prefix with the command to the specific command. For this to also work in DMs, the cache only stores the channel and the user ID, not the server ID. Then each time the bot receives a message, it checks if there is a command cache for that user and channel. If there is one, it will call the command as it normally would but also passes the command cache as a parameter. What the command does with that depends on the command. To check how the command cache document is build up check out the [database documentation](../blob/master/docs/database/main.md#commandcaches-collection-document).
+Some commands require the user to reply with more information (`?!abc` as an example). To do this, BulletBot uses something called command caches. This allows a command to temporarily store data the user previously provided and also makes the bot send the reply message which doesn't have the prefix with the command to the specific command. For this to also work in DMs, the cache only stores the channel and the user ID, not the server ID. Then each time the bot receives a message, it checks if there is a command cache for that user and channel. If there is one, it will call the command as it normally would but also passes the command cache as a parameter. What the command does with that depends on the command. To check how the command cache document is build up check out the [database documentation](https://github.com/CodeBullet-Community/BulletBot/master/docs/docs/dev-documentation/database/main.md#commandcaches-collection-document).
 
 ### Rank/Permission System
 
