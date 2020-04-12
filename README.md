@@ -10,14 +10,14 @@ As this is Discord bot all contributors are on Discord. We have a server for the
 
 ## Getting Started
 
-There are two types of guides in the [wiki](https://github.com/CodeBullet-Community/BulletBot/wiki). One is for actually running the bot on a server 24/7 and the other one is for setting up a development environment for your self.
+There are two types of guides for setting BulletBot up. One is for running the bot from the most recent release (production) and the other one is for setting up a development environment for your self.
 
 - Production Setup:
-  - [Linux](https://github.com/CodeBullet-Community/BulletBot/wiki/Linux-Prod-Setup-Guide)
+  - [Linux](https://bulletbot.readthedocs.io/en/latest/Setup-Guides/Production/Linux-Prod-Setup-Guide/)
   - No Windows guide (You can add one if you like)
 - Development Setup:
-  - [Windows](https://github.com/CodeBullet-Community/BulletBot/wiki/Windows-Dev-Setup-Guide)
-  - [Linux](https://github.com/CodeBullet-Community/BulletBot/wiki/Linux-Dev-Setup-Guide)
+  - [Windows](https://bulletbot.readthedocs.io/en/latest/Setup-Guides/Development/Linux-Dev-Setup-Guide/)
+  - [Linux](https://bulletbot.readthedocs.io/en/latest/Setup-Guides/Development/Windows-Dev-Setup-Guide/)
 
 If you need help you can ask on the Discord server.
 
