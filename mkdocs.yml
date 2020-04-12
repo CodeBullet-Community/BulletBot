@@ -1,0 +1,35 @@
+site_name: BulletBot
+repo_url: https://github.com/CodeBullet-Community/BulletBot
+
+nav:
+    - Home: index.md
+    - Setup Guides:
+        - Production:
+            - Linux: Setup-Guides/Production/Linux-Prod-Setup-Guide.md
+        - Development:
+            - Linux: Setup-Guides/Development/Linux-Dev-Setup-Guide.md
+            - Windows: Setup-Guides/Development/Windows-Dev-Setup-Guide.md
+    - Helpful Guides:
+        - Create A Bot: Helpful-Guides/Creating-&-Inviting-A-Bot.md
+        - Invite A Bot: Helpful-Guides/Creating-&-Inviting-A-Bot.md
+        - Bot Token: Helpful-Guides/Bot-Token.md
+        - Google API Key: Helpful-Guides/Google-API-Setup.md
+        - MongoDB Compass: Helpful-Guides/MongoDB-Compass.md
+        - BSSR: Helpful-Guides/BulletBot-Startup-Status-Reports.md
+    - Commands:
+        - Readme: Commands/Commands-Readme.md
+        - Commands List: Commands/Commands.md
+    - In Depth Explanations: In-Depth-Explanations.md
+
+    - Dev Documentation:
+        - Readme: dev-documentation/README.md
+        - Structure: dev-documentation/structure.md
+        - Database: 
+            - main: dev-documentation/database/main.md
+            - mStats: dev-documentation/database/mStats.md
+            - settings: dev-documentation/database/settings.md
+            - webhooks: dev-documentation/database/webhooks.md
+theme:
+    name: material
+    favicon: media/BulletBot.svg
+    logo: media/BulletBot.svg
