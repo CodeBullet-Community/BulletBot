@@ -47,7 +47,7 @@ nav:
       - Introduction: index.md
       - Commands: Commands/Commands-Readme.md
       - Commands List: Commands/Commands.md
-  - Installation:
+  - Production:
       - Setup Guides:
           - Linux: Setup-Guides/Production/Linux-Prod-Setup-Guide.md
       - Helpful Guides:
