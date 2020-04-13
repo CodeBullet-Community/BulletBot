@@ -16,6 +16,8 @@ plugins:
   - search
   - minify:
       minify_html: true
+  - git-revision-date-localized:
+      type: date
 
 extra:
   social:

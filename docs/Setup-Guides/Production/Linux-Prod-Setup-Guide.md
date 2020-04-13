@@ -4,9 +4,8 @@ This setup guide will instruct and explain the process in which BulletBot is set
 
 If you are doing dev work on BulletBot or just want to set him up manually, please follow the [Linux Dev Setup Guide](/Setup-Guides/Development/Linux-Dev-Setup-Guide/).
 
-### Important Note Before Continuing
-
-As a note, some of the contents of this setup guide are only applicable to BulletBot v1.2.8 and later. Due to improper writing/handling of past documentation, there is no proper documentation that can be referred to for versions older than v1.2.8.
+!!! important "Important note before continuing"
+    Some of the contents of this setup guide are only applicable to BulletBot [v1.2.8](https://github.com/CodeBullet-Community/BulletBot/releases/tag/v1.2.8) and later. Due to improper writing/handling of past documentation, there is no proper documentation that can be referred to for versions older than v1.2.8.
 
 ## Officially Supported Linux Distributions
 
@@ -35,7 +34,8 @@ These are the versions of MongoDB and Node.js that are installed via the install
 * MongoDB: Version 4.2.x
 * Node.js: Version 13.x
 
-Please note that if you instead install older versions of the two pieces of software, refer to the table above for compatible versions of each software that corresponds to their respective Linux Distributions.
+!!! note
+    If you instead install older versions of the two pieces of software, refer to the table above for compatible versions of each software that corresponds to their respective Linux Distributions.
 
 ## Getting Started
 
@@ -43,9 +43,11 @@ To start the setup process, first download the master installer: `cd ~/ && wget 
 
 Execute the master installer using `sudo bash linux-master-installer.sh`, then download BulletBot via option `1` in the installer menu.
 
-* If you know what you are doing and rather download a specific release (such as a pre-release), download the corresponding master installer via: `cd ~/ && wget -N https://github.com/CodeBullet-Community/BulletBot/releases/download/[tag]/linux-master-installer.sh && sudo chmod +x linux-master-installer.sh`
-  * Replace `[tag]` with the tag/version number of the release you want to download the master installer from.
-  * Please note that if you use this method, you might not get the results that you are expecting, since the master and sub-master installers will usually grab files from the most recent release. Pre-releases, on the other hand, will only grab items from the release it was in.
+??? info "Downloading from a specific release"
+    If you rather download a specific release (such as a pre-release), download the corresponding master installer via: `cd ~/ && wget -N https://github.com/CodeBullet-Community/BulletBot/releases/download/[tag]/linux-master-installer.sh && sudo chmod +x linux-master-installer.sh`
+    
+    * Replace `[tag]` with the tag/version number of the release you want to download the master installer from.
+    * Please note that if you use this method, you might not get the results that you are expecting, since the master and sub-master installers will usually grab files from the most recent release. Pre-releases, on the other hand, will only grab items from the release it was in.
 
 ### Running the Master Installer for the First Time
 
@@ -111,8 +113,10 @@ Here is an example of what it might look like:
 
 If you want to use [authentication](#adding-authentication) in combination with MongoDB (which is highly recommended), the configurations for the config file will be a little different compared to if you were to use MongoDB without authentication.
 
-Please refer [above](#51-setting-up-bot-configjson-without-mongodb-authentication) for information on fields 1 and 4, as they are the same no matter if authentication is enabled or not.
+??? info "Fields 1 and 4"
+    Please refer [above](#51-setting-up-bot-configjson-without-mongodb-authentication) for information on fields 1 and 4, as they are the same no matter if authentication is enabled or disabled.
 
+1. N/A
 2. `Enter the MongoDB URL (i.e. mongodb://localhost:[port]):`
     * When using authentication, this field cannot be left empty. At the bare minimum, you must enter `mongodb://bulletbot:[bulletbot MongoDB password]@localhost:[port]`. More can be added to the URL, but what is shown is the bare minimum for what the suffix can be.
       * Replace `[bulletbot MongoDB password]` with a password that you'll be giving the bulletbot user when setting up [MongoDB Authentication](#adding-authentication).
@@ -121,15 +125,12 @@ Please refer [above](#51-setting-up-bot-configjson-without-mongodb-authenticatio
     * If you plan on doing some advanced things with MongoDB, use [this link](https://docs.mongodb.com/manual/reference/connection-string/) to help you properly configure the URL.
 3. `Enter the MongoDB URL suffix (i.e. ?authSource=admin):`
     * Similar to field 2, this field cannot be left empty. At the bare minimum, you must enter `?authSource=admin`. More can be added to the suffix, but what is shown is the bare minimum for what the suffix can be.
+4. N/A
 
 Here is an example of what it might look like:
 ![BulletBot Config File Setup With Authentication](../../media/BulletBot-Config-Setup-With-Authentication.png)
 
-#### 5.3. Other Notes On `bot-config.json`
-
-For help with the MongoDB URL and MongoDB Suffix field (the second and third fields), refer to <https://docs.mongodb.com/manual/reference/connection-string/.>
-
-##### Webhooks
+#### 5.3 Webhooks
 
 Prior to BulletBot v1.2.11, if you wanted to use webhooks, you would have to manually edit `bot-config.json` and replace `[ip address or domain name]` with your system's public IP Address or domain name. All releases starting from and after v1.2.11, will automatically add your system's IP Address to the config file.
 
@@ -164,6 +165,7 @@ Follow the instructions below to add the settings document to the MongoDB databa
 2. Switch to the `settings` collection: `use settings`
 3. Insert the following document:
 
+        :::json
         db.settings.insert(
         {
             "prefix": "?!",
@@ -210,7 +212,8 @@ Follow the instructions below to add the settings document to the MongoDB databa
 
 Enabling authentication causes MongoDB to require all users who connect to the database to authenticate/login to an existing user in the database. It is highly recommended that you enable this feature so that the cluster is secure and so that you can remotely access it, for example, with [MongoDB Compass](https://www.mongodb.com/products/compass).
 
-* For instructions on how to use/setup MongoDB Compass, follow [this guide](/Helpful-Guides/MongoDB-Compass/).
+!!! info
+    For instructions on how to use/setup MongoDB Compass, follow [this guide](/Helpful-Guides/MongoDB-Compass/).
 
 Follow the instructions below to enable authentication. Make sure to replace `[admin password]` with a password you'll remember, and `[bulletbot password]` with the password you used when setting up BulletBot's config file.
 
@@ -218,6 +221,7 @@ Follow the instructions below to enable authentication. Make sure to replace `[a
 2. Switch to the `admin` database, which stores all users: `use admin`
 3. Create an admin user:
 
+        :::json
         db.createUser(
         {
             user: "admin",
@@ -241,6 +245,7 @@ Follow the instructions below to enable authentication. Make sure to replace `[a
 
 4. Create a user for BulletBot:
 
+        :::json
         db.createUser(
         {
             user: "bulletbot",
@@ -267,7 +272,8 @@ Follow the instructions below to enable authentication. Make sure to replace `[a
         )
 
 5. Check if both users were added with `db.getUsers()`. The output should look like this:
-
+        
+        :::json
         [
                 {
                     "_id" : "admin.admin",
@@ -326,30 +332,36 @@ Follow the instructions below to enable authentication. Make sure to replace `[a
 6. Exit the mongo shell: `exit`
 7. If you have the cluster running with [replication](https://docs.mongodb.com/manual/replication/) enabled, you will have to add a key file. To do this, do the following:
 
+        :::bash
         openssl rand -base64 756 > [path to key file]
         chmod 400 [path to key file]
         chown mongodb:root [path to key file]
 
     It's recommended that the key file is placed in the same directory as the `mongod.conf` file (default at `/etc/mongod.conf`) and is named `mongod.key`. You will also have to copy the key file to the other servers and repeat the `chmod` and `chown` command.
+
 8. Open `/etc/mongod.conf` with root privilege, using your favorite editor, and add the following:
 
+        :::yaml
         security:
             authorization: "enabled"
             keyFile: "[path to key file]" ## (only add this line when replication is enabled)
 
     If there is already a `security` property, just append the `authorization` property to it or change it to enabled. If replication is enabled, you will have to change the same stuff in the other config files on the other servers.
+
 9. Restart mongod.service: `sudo systemctl restart mongod`
 
-Note: In this guide, we only add the `admin` and `bulletbot` users. If you want, you can add other users to it, which shouldn't affect the bot.
+!!! note
+    In this guide, we only add the `admin` and `bulletbot` users. If you want, you can add other users to it, which shouldn't affect the bot.
 
 ## Running BulletBot
-
-A more in-depth look at the run modes can be read in the [In-Depth Explanations](/In-Depth-Explanations/#running-bulletbot) wiki.
 
 ![Run Modes 1](../../media/Run-Modes-1.png)
 ![Run Modes 2](../../media/Run-Modes-2.png)
 
 *The images above may look different to how they actually look, depending on what version of BulletBot you are running.*
+
+!!! info
+    A more in-depth look at the run modes can be read in the [In-Depth Explanations](/In-Depth-Explanations/#running-bulletbot) wiki.
 
 ### Run Modes
 

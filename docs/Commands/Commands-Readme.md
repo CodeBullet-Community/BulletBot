@@ -34,6 +34,5 @@ Just like the ranks above, users can be added and removed from this role via `?!
 
 By default, every non-admin user is apart of the member rank. Members have the most basic permissions and can't use any command requiring the bot owner, admin, or mod rank.
 
-## IMPORTANT
-
-Because ranks such as the bot master, admin, and mod are capable of negating server, role, and user permissions, be careful to whom you give these ranks.
+!!! important
+    Because ranks such as the bot master, admin, and mod are capable of negating server, role, and user permissions, be careful to whom you give these ranks.

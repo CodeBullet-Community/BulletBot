@@ -33,7 +33,8 @@ A recommended folder structure in your project folder would be the following:
 └── docs (location of docs build by TypeDoc)
 ```
 
-Note: The rest of this guide will assume you have this folder structure.
+!!! note
+    The rest of this guide will assume you have this folder structure.
 
 #### 3.2. Cloning The Repo
 
@@ -80,7 +81,8 @@ BulletBot needs a settings document in the database to work. The difference betw
 1. Open mongo shell: `mongo --port [port]` (default port 27017)
 2. Switch to the `settings` collection: `use settings`
 3. Insert the following document: `db.settings.insert([document])`
-
+        
+        :::json
         {
             "prefix": "?!",
             "embedColors": {
@@ -144,9 +146,8 @@ Additionally to the settings document the bot has, as mentioned above, a `bot-co
 }
 ```
 
-Note:
-
-- The Google API key and callback is only required when you want to use webhooks
+!!! note
+    * The Google API key and callback is only required when you want to use webhooks
 
 ### 7. Run Bot
 
@@ -231,7 +232,6 @@ If you want to build the documentation with TypeDoc run the following command in
 typedoc --out ..\docs\ .\src\ --tsconfig .\tsconfig.json --mode file --name BulletBot --readme .\README.md --media .\media\
 ```
 
-Note:
-
-- You will have to have TypeDoc installed (look in 2)
-- You will need to rebuild the documentation every time you want to update it to the new source
+!!! note
+    * You will have to have TypeDoc installed (look in 2)
+    * You will need to rebuild the documentation every time you want to update it to the new source

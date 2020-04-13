@@ -8,10 +8,9 @@ This document is broken up into two parts: [Installers](#installers) and [Bullet
 
 As their name implies, the installers are designed for installing and setting up BulletBot. On top of this, they keep BulletBot up to date by giving users the option to download the newest release, run BulletBot in different run modes, and so on.
 
-Note:
-
-* The installers are designed to only work on Linux based systems.
-* Some of the contents in this section ([installers](#installers)) are only applicable to BulletBot v1.2.11.
+!!! important
+    * The installers are designed to only work on Linux based systems.
+    * Some of the contents in this section ([installers](#installers)) are only applicable to BulletBot v1.2.11.
 
 ### Installer Hierarchy
 
@@ -21,7 +20,8 @@ Many of the terms used throughout the guides, documentation, and scripts, are th
 
 The master installer (`linux-master-installer.sh`) is used for identifying and determining whether BulletBot supports the system it's running on. After confirming that the system is supported, the master installer then executes the [sub-master installer](#sub-master-installers) that corresponds to it's designed Linux Distribution.
 
-Note: Just because the master installer determines that the system is not supported, does not mean that the system is not compatible. What the master installer deems as "supported", is an [Officially Supported Linux Distribution](/Setup-Guides/Production/Linux-Prod-Setup-Guide/#officially-supported-linux-distributions). These distributions are Linux Distros that BulletBot has been tested and are confirmed to work on. So even if a system is not "officially supported", that does not mean that it won't work on that system.
+??? info "Unsupported doesn't mean incompatible"
+    Just because the master installer determines that the system is not supported, does not mean that the system is not compatible. What the master installer deems as "supported", is an [Officially Supported Linux Distribution](/Setup-Guides/Production/Linux-Prod-Setup-Guide/#officially-supported-linux-distributions). These distributions are Linux Distros that BulletBot has been tested and are confirmed to work on. So even if a system is not "officially supported", that does not mean that it won't work on that system.
 
 #### Sub-Master Installers
 
@@ -46,10 +46,9 @@ There are two main reasons for the creation of this user:
 
 BulletBot is run by a service called `bulletbot.service`, which is created when the installers are executed for the first time.
 
-Note that `bulletbot.service`:
-
-* should never be enabled
-* is run by the `bulletbot` user
+!!! note
+    * `bulletbot.service` should never be enabled.
+    * `bulletbot.service` is run by the `bulletbot` user.
 
 BulletBot has two main methods/modes of running:
 
@@ -73,7 +72,8 @@ The purpose of the service file is to initiate the auto-restart process. It is d
 
 This service is the sole decider of whether or not BulletBot is run with or without auto-restart. When the service is enabled, BulletBot will run WITH auto-restart, but if disabled, it will run WITHOUT auto-restart.
 
-* Note: Is NOT run by the `bulletbot` user, because the service needs to run as the root user to allow `bullet-mongo-start.sh` to start `bulletbot.service`.
+!!! note
+    `bullet-mongo-start.service` is NOT run by the `bulletbot` user, because the service needs to run as the root user to allow `bullet-mongo-start.sh` to start `bulletbot.service`.
 
 #### Run BulletBot in the background
 

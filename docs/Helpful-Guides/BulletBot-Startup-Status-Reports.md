@@ -28,9 +28,8 @@ Service exit status codes:
 -------- End of bullet-mongo-start.service startup log --------
 ```
 
-### Important Note Before Continuing
-
-This feature (which will be referred to as BSSR for the rest of this guide) is only available in [v1.2.11](https://github.com/CodeBullet-Community/BulletBot/releases/tag/v1.2.11) and [later](https://github.com/CodeBullet-Community/BulletBot/releases).
+!!! important "Important note before continuing"
+    This feature (which will be referred to as BSSR for the rest of this guide) is only available in [v1.2.11](https://github.com/CodeBullet-Community/BulletBot/releases/tag/v1.2.11) and [later](https://github.com/CodeBullet-Community/BulletBot/releases).
 
 ## Configuring Auto-Restart
 
@@ -47,7 +46,8 @@ Follow the instructions below to enable BSSR:
     * You may add more than one address to this variable, using a comma to separate each one
 7. Save and exit the file
 
-Note: All modifications to the config file should always be done to `bullet-mongo-start.local`, as `bullet-mongo-start.conf` is overwritten every time you download/update BulletBot.
+!!! warning "Configuration modifications"
+    All modifications to the config file should always be done to `bullet-mongo-start.local`, as `bullet-mongo-start.conf` is overwritten every time you download/update BulletBot.
 
 ## Setting Up Postfix
 
@@ -75,9 +75,7 @@ The password file will reside in the Postfix configuration directory. The file c
 
 1. Create or edit `/etc/postfix/sasl_passwd` using your favorite text editor (use sudo when opening/creating the file).
 2. Add the line: `[smtp.gmail.com]:587 username@gmail.com:password`
-
-    - Make sure to replace username with your Gmail username and password with a Gmail app password.
-
+    * Make sure to replace username with your Gmail username and password with a Gmail app password.
 3. Save and exit the file.
 4. Change the permissions of the file: `sudo chmod 600 /etc/postfix/sasl_passwd`
 
@@ -138,7 +136,7 @@ All the information on how to set Postfix up was taken from different sources on
 
 Sources:
 
-* https://www.howtoforge.com/tutorial/configure-postfix-to-use-gmail-as-a-mail-relay/
-* https://www.linode.com/docs/email/postfix/configure-postfix-to-send-mail-using-gmail-and-google-apps-on-debian-or-ubuntu/#generate-an-app-password-for-postfix
-* https://kifarunix.com/configure-postfix-to-use-gmail-smtp-on-ubuntu-18-04/
-* https://devops.ionos.com/tutorials/configure-a-postfix-relay-through-gmail-on-centos-7/
+* <https://www.howtoforge.com/tutorial/configure-postfix-to-use-gmail-as-a-mail-relay/>
+* <https://www.linode.com/docs/email/postfix/configure-postfix-to-send-mail-using-gmail-and-google-apps-on-debian-or-ubuntu/#generate-an-app-password-for-postfix>
+* <https://kifarunix.com/configure-postfix-to-use-gmail-smtp-on-ubuntu-18-04/>
+* <https://devops.ionos.com/tutorials/configure-a-postfix-relay-through-gmail-on-centos-7/>

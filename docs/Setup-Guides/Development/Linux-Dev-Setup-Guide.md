@@ -2,9 +2,8 @@
 
 This guide is meant for those who want to do the development work on BulletBot, or wish to set BulletBot up manually. It will instruct and explain the process in which BulletBot is manually set up on a Linux based distribution
 
-### Important Note Before Continuing
-
-Some of the contents of this setup guide are only applicable to BulletBot [v1.2.8](https://github.com/CodeBullet-Community/BulletBot/releases/tag/v1.2.8) and later. Due to improper writing/handling of past documentation, there is no proper documentation that can be referred to for versions older than v1.2.8.
+!!! important "Important Note Before Continuing"
+    Some of the contents of this setup guide are only applicable to BulletBot [v1.2.8](https://github.com/CodeBullet-Community/BulletBot/releases/tag/v1.2.8) and later. Due to improper writing/handling of past documentation, there is no proper documentation that can be referred to for versions older than v1.2.8.
 
 ## Officially Supported Linux Distributions
 
@@ -57,29 +56,28 @@ After everything is installed, it's time to start adding the necessary files and
 
 Below is the recommended folder structure for your project folder:
 
-```Tree
+```tree
 .
 ├── database (location of MongoDB cluster)
 ├── BulletBot (repo location)
 └── docs (location of docs build by TypeDoc)
 ```
 
-Note:
-
-* The rest of this guide will assume you are using this folder structure.
-* You are not expected to create these folders right now. The guide will tell you when you will need to create them. (The BulletBot directory is created when the repo is cloned)
+!!! note
+    * The rest of this guide will assume you are using this folder structure.
+    * You are not expected to create these folders right now. The guide will tell you when you will need to create them. (The BulletBot directory is created when the repo is cloned)
 
 #### 3.2. Cloning The Repo
 
 Clone the repo into your project directory by executing:
 
-```shell
+```bash
 git clone https://github.com/CodeBullet-Community/BulletBot
 ```
 
 If you rather clone a specific branch in the repository, execute:
 
-```shell
+```bash
 git clone -b [branch name] --single-branch https://github.com/CodeBullet-Community/BulletBot
 ```
 
@@ -89,7 +87,7 @@ git clone -b [branch name] --single-branch https://github.com/CodeBullet-Communi
 
 Now that the BulletBot repo has been downloaded, you'll need to install the rest of the Node.js packages locally. Inside the BulletBot repo directory, execute:
 
-```Shell
+```bash
 npm install
 ```
 
@@ -101,16 +99,15 @@ In this guide, the cluster is set up without any authentication or replication. 
 
 Create the database directory in your project folder and in a new terminal (window), start the MongoDB cluster using.
 
-```Shell
+```bash
 mongod --port [port] --dbpath [absolute path to database dir]
 ```
 
-Note:
-
-* Default port is 27017
-* This command only start mongod.service in the current session. This means that you will have to run this command every time before you try to run BulletBot.
-* If mongod.service has already been started, this command will not work. Stop the service by executing `sudo systemctl stop mongod.service`.
-* If the command can't be found, you will have to add it to PATH manually. The cluster is ready when it prints out `[initandlisten]` waiting for connections (might not be the last line it prints out). Don't kill the process as this would kill the cluster.
+!!! note
+    * Default port is 27017
+    * This command only start mongod.service in the current session. This means that you will have to run this command every time before you try to run BulletBot.
+    * If mongod.service has already been started, this command will not work. Stop the service by executing `sudo systemctl stop mongod.service`.
+    * If the command can't be found, you will have to add it to PATH manually. The cluster is ready when it prints out `[initandlisten]` waiting for connections (might not be the last line it prints out). Don't kill the process as this would kill the cluster.
 
 #### 5.2. Inserting Settings Document
 
@@ -124,6 +121,7 @@ Follow the instructions below to add the settings document to the MongoDB databa
 2. Switch to the `settings` collection: `use settings`
 3. Insert the following document:
 
+        :::json
         db.settings.insert(
         {
             "prefix": "?!",
@@ -205,10 +203,9 @@ We will want to put the following template into `BulletBot/out/bot-config.json` 
 
 After placing the template into `bot-config.json`, replace `[bot token]` with the bot's token and `[port]` with the port number that MongoDB will run on (default is 27017).
 
-Note:
-
-* The Google API key is only required if you want to use commands that require access to Google services.
-* The callback is only needed when you want to use webhooks.
+!!! note
+    * The Google API key is only required if you want to use commands that require access to Google services.
+    * The callback is only needed when you want to use webhooks.
 
 ### 7. Compile Code & Running BulletBot
 
@@ -220,7 +217,7 @@ Before running BulletBot, you first need to compile the TypeScript code into Jav
 
 After all the code has compiled into JavaScript, you can now run BulletBot in your current session by executing `node out/index.js` in the `BulletBot` directory. You'll see information printed to the screen, displaying logs on BulletBot's startup. The logs should look similar to this:
 
-```Log
+```log
 [24/10/2019 01:16:15.109] [INFO]   [commands.js:null:52]     loading 4 commands in out/commands/
 [24/10/2019 01:16:15.111] [INFO]   [commands.js:null:55]     1: help.js loaded!
 [24/10/2019 01:16:15.113] [INFO]   [commands.js:null:55]     2: info.js loaded!
@@ -289,11 +286,10 @@ If it doesn't work, check that you did everything correctly or ask for help in t
 
 If you want to build the documentation with TypeDoc, create a directory called `docs` in the project directory, then run the following command in the `BulletBot` repo directory:
 
-```Shell
+```bash
 typedoc --out ../docs/ ./src/ --tsconfig ./tsconfig.json --mode file --name BulletBot --readme ./README.md --media ./media/
 ```
 
-Note:
-
-* You will have to have TypeDoc installed (refer to step 2).
-* You will need to rebuild the documentation every time you want to update it to the new source.
+!!! note
+    * You will have to have TypeDoc installed (refer to step 2).
+    * You will need to rebuild the documentation every time you want to update it to the new source.

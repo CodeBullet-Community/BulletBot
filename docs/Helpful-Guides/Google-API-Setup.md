@@ -14,6 +14,5 @@ Here we'll be looking at how you can get a Google API Key for the bot so that yo
 - Select `API Key` in the `Create Credentials` drop-down.
 - Copy the API, and you are now set.
 
-## IMPORTANT
-
-Do NOT share the API key with others. Everyone that has the key can freely use your API quota.
+!!! important
+    Do NOT share the API key with others. Everyone that has the key can freely use your API quota.
