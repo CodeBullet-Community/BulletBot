@@ -43,26 +43,26 @@ markdown_extensions:
   - footnotes
 
 nav:
-  - Home: index.md
-  - Setup Guides:
-      - Production:
+  - Home:
+      - Introduction: index.md
+      - Commands: Commands/Commands-Readme.md
+      - Commands List: Commands/Commands.md
+  - Installation:
+      - Setup Guides:
           - Linux: Setup-Guides/Production/Linux-Prod-Setup-Guide.md
-      - Development:
+      - Helpful Guides:
+          - Create A Bot: Helpful-Guides/Creating-&-Inviting-A-Bot.md
+          - Invite A Bot: Helpful-Guides/Creating-&-Inviting-A-Bot.md
+          - Bot Token: Helpful-Guides/Bot-Token.md
+          - Google API Key: Helpful-Guides/Google-API-Setup.md
+          - MongoDB Compass: Helpful-Guides/MongoDB-Compass.md
+          - BSSR: Helpful-Guides/BulletBot-Startup-Status-Reports.md
+  - Development:
+      - Readme: dev-documentation/README.md
+      - In Depth Explanations: In-Depth-Explanations.md
+      - Setup Guides:
           - Linux: Setup-Guides/Development/Linux-Dev-Setup-Guide.md
           - Windows: Setup-Guides/Development/Windows-Dev-Setup-Guide.md
-  - Helpful Guides:
-      - Create A Bot: Helpful-Guides/Creating-&-Inviting-A-Bot.md
-      - Invite A Bot: Helpful-Guides/Creating-&-Inviting-A-Bot.md
-      - Bot Token: Helpful-Guides/Bot-Token.md
-      - Google API Key: Helpful-Guides/Google-API-Setup.md
-      - MongoDB Compass: Helpful-Guides/MongoDB-Compass.md
-      - BSSR: Helpful-Guides/BulletBot-Startup-Status-Reports.md
-  - Commands:
-      - Readme: Commands/Commands-Readme.md
-      - Commands List: Commands/Commands.md
-  - In Depth Explanations: In-Depth-Explanations.md
-  - Dev Documentation:
-      - Readme: dev-documentation/README.md
       - Structure: dev-documentation/structure.md
       - Database:
           - main: dev-documentation/database/main.md
