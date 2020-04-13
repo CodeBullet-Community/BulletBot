@@ -45,11 +45,17 @@ markdown_extensions:
 nav:
   - Home:
       - Introduction: index.md
-      - Commands: Commands/Commands-Readme.md
-      - Commands List: Commands/Commands.md
-  - Production:
-      - Setup Guides:
+      - Commands:
+        - Readme: Commands/Commands-Readme.md
+        - Commands List: Commands/Commands.md
+      - In Depth Explanations: In-Depth-Explanations.md
+      - License: License.md
+  - Setup Guides:
+      - Production:
           - Linux: Setup-Guides/Production/Linux-Prod-Setup-Guide.md
+      - Development:
+        - Linux: Setup-Guides/Development/Linux-Dev-Setup-Guide.md
+        - Windows: Setup-Guides/Development/Windows-Dev-Setup-Guide.md
       - Helpful Guides:
           - Create A Bot: Helpful-Guides/Creating-&-Inviting-A-Bot.md
           - Invite A Bot: Helpful-Guides/Creating-&-Inviting-A-Bot.md
@@ -59,10 +65,6 @@ nav:
           - BSSR: Helpful-Guides/BulletBot-Startup-Status-Reports.md
   - Development:
       - Readme: dev-documentation/README.md
-      - In Depth Explanations: In-Depth-Explanations.md
-      - Setup Guides:
-          - Linux: Setup-Guides/Development/Linux-Dev-Setup-Guide.md
-          - Windows: Setup-Guides/Development/Windows-Dev-Setup-Guide.md
       - Structure: dev-documentation/structure.md
       - Database:
           - main: dev-documentation/database/main.md
