@@ -1,0 +1,73 @@
+site_name: BulletBot
+site_description: Wiki for everything about BulletBot, a general purpose Discord bot
+repo_url: https://github.com/CodeBullet-Community/BulletBot
+
+theme:
+  name: material
+  favicon: media/BulletBot.svg
+  logo: media/BulletBot.svg
+  features:
+    - instant
+    - tabs
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+  - git-revision-date-localized:
+      type: date
+
+extra:
+  social:
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/74py7yd
+    - icon: fontawesome/brands/github
+      link: https://github.com/CodeBullet-Community/BulletBot
+
+markdown_extensions:
+  - codehilite:
+      guess_lang: false
+      linenums: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+  - toc:
+      permalink: true
+  - meta
+  - footnotes
+
+nav:
+  - Home:
+      - Introduction: index.md
+      - Commands:
+        - Readme: Commands/Commands-Readme.md
+        - Commands List: Commands/Commands.md
+      - In Depth Explanations: In-Depth-Explanations.md
+      - License: License.md
+  - Setup Guides:
+      - Production:
+          - Linux: Setup-Guides/Production/Linux-Prod-Setup-Guide.md
+      - Development:
+        - Linux: Setup-Guides/Development/Linux-Dev-Setup-Guide.md
+        - Windows: Setup-Guides/Development/Windows-Dev-Setup-Guide.md
+      - Helpful Guides:
+          - Create A Bot: Helpful-Guides/Creating-&-Inviting-A-Bot.md
+          - Invite A Bot: Helpful-Guides/Creating-&-Inviting-A-Bot.md
+          - Bot Token: Helpful-Guides/Bot-Token.md
+          - Google API Key: Helpful-Guides/Google-API-Setup.md
+          - MongoDB Compass: Helpful-Guides/MongoDB-Compass.md
+          - BSSR: Helpful-Guides/BulletBot-Startup-Status-Reports.md
+  - Development:
+      - Readme: dev-documentation/README.md
+      - Structure: dev-documentation/structure.md
+      - Database:
+          - main: dev-documentation/database/main.md
+          - mStats: dev-documentation/database/mStats.md
+          - settings: dev-documentation/database/settings.md
+          - webhooks: dev-documentation/database/webhooks.md
