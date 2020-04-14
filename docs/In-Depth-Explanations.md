@@ -1,4 +1,4 @@
-# Introduction
+# In Depth Explanations
 
 Here we will be looking in-depth at different aspects of BulletBot and the Installers.
 

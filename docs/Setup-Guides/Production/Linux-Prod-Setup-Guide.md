@@ -1,4 +1,4 @@
-# Introduction
+# Linux Production Setup Guide
 
 This setup guide will instruct and explain the process in which BulletBot is set up on a Linux based distribution. The majority of the setup is taken care of by the installers, which will automate the installation and set up of the prerequisites. That said, there is a small portion of this guide that requires manual set up.
 

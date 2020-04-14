@@ -1,4 +1,4 @@
-# Introduction
+# Windows Development Setup Guide
 
 This guide will help you set up the BulletBot on your Windows PC so you can code and test new features. It will also of course show you how to compile the bot which, if you want to have a dev release, can be helpful.
 

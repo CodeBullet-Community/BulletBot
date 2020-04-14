@@ -1,4 +1,4 @@
-# Introduction
+# Linux Development Setup Guide
 
 This guide is meant for those who want to do the development work on BulletBot, or wish to set BulletBot up manually. It will instruct and explain the process in which BulletBot is manually set up on a Linux based distribution
 
