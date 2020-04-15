@@ -8,10 +8,7 @@ assignees: ''
 ---
 
 **Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is.
-Example:
-It is very fustrating when [...].
-Note: If this does not apply to you/why you are requesting a feature, leave it blank or remove it from your post.
+If applicable, provide a clear and concise description of what the problem is.
 
 **Describe the feature you'd like in detail**
 A clear and concise description of what you want added. Describe how the feature would work and (if you can) explain possible ways the feature could be implemented. 
