@@ -24,10 +24,10 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Setup (please complete the following information):**
- - OS: [e.g. Ubuntu]
- - Node.js Version: [e.g. 6.9.0]
- - MongoDB Version: [e.g. 4.2.0]
- - Release Version: [e.g. 1.2.7]
+ * OS: [e.g. Ubuntu]
+ * Node.js Version: [e.g. 6.9.0]
+ * MongoDB Version: [e.g. 4.2.0]
+ * Release Version: [e.g. 1.2.7]
 
 **Additional context**
 Add any other context about the problem here.
