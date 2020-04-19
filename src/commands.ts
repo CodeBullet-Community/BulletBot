@@ -6,9 +6,7 @@ import { CommandCacheWrapper } from './database/wrappers/main/commandCacheWrappe
 import { GuildWrapper, GuildWrapperResolvable } from './database/wrappers/main/guildWrapper';
 import { durationToString, permToString } from './utils/parsers';
 import { PermLevel, PermLevels } from './utils/permissions';
-import { resolveCommand, resolveGuildWrapper } from './utils/resolvers';
 import { BenchmarkTimestamp } from './utils/time';
-import { CommandUsageLimits } from './database/schemas/global';
 
 /**
  * definition of a command with all it's properties and functions
@@ -304,7 +302,7 @@ export class Commands {
      * @memberof Commands
      */
     async getHelpEmbed(commandResolvable: CommandResolvable, guildWrapperResolvable?: GuildWrapperResolvable) {
-        let command = resolveCommand(commandResolvable);
+        let command = this.resolve(commandResolvable);
         let guildWrapper = await resolveGuildWrapper(guildWrapperResolvable);
         let commandUsageLimits = await guildWrapper.getCommandUsageLimits(commandResolvable);
 
@@ -368,21 +366,16 @@ export class Commands {
     }
 
     /**
-     * Merges the provided usage limits provided with those specified in the command
+     * Resolves a command resolvable to a command interface
      *
-     * @param {CommandResolvable} commandResolvable Command for which to get usage limits
-     * @param {CommandUsageLimits} commandUsageLimits Usage limits to merge
-     * @returns {CommandUsageLimits} Merged usage limits
-     * @memberof Commands
+     * @export
+     * @param {CommandResolvable} command CommandResolvable to resolve
+     * @returns {commandInterface}
      */
-    getCommandUsageLimits(commandResolvable: CommandResolvable, commandUsageLimits: CommandUsageLimits): CommandUsageLimits {
-        let command = resolveCommand(commandResolvable);
-
-        return {
-            globalCooldown: commandUsageLimits.globalCooldown || command.cooldownGlobal,
-            localCooldown: commandUsageLimits.localCooldown || command.cooldownLocal,
-            enabled: commandUsageLimits.enabled !== undefined ? commandUsageLimits.enabled : true
-        };
+    resolve(command: CommandResolvable) {
+        if (typeof command === "string")
+            return this.get(command);
+        return command;
     }
 
 }

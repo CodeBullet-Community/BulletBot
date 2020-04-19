@@ -50,6 +50,7 @@ export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
      */
     constructor(model: Model<UserDoc>, user: User) {
         super(model, { id: user.id }, { id: user.id }, keys<UserObject>());
+        this.setDataGetters();
         this.user = user;
     }
 

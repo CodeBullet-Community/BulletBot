@@ -1,9 +1,8 @@
 import _ from 'lodash';
 import { Model } from 'mongoose';
-import { BehaviorSubject } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
 
-import { ExDocument, Keys, ObjectKey, OptionalFields } from '../schemas/global';
+import { ExDocument, Keys, OptionalFields } from '../schemas/global';
+import { DataWrapper } from './dataWrapper';
 import { WrapperSynchronizer } from './wrapperSynchronizer';
 
 /**
@@ -31,17 +30,17 @@ export type LoadOptions<T extends Object> = {
  *
  * @export
  * @class DocWrapper
- * @template T Object which it wraps
+ * @template Data Object which it wraps
  */
-export class DocWrapper<T extends Object> {
+export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<Data>> {
 
     /**
      * Model for document this wrapper holds
      *
-     * @type {Model<ExDocument<T>>}
+     * @type {Model<ExDocument<Data>>}
      * @memberof DocWrapper
      */
-    readonly model: Model<ExDocument<T>>;
+    readonly model: Model<ExDocument<Data>>;
     /**
      * Unique query that identifies the document
      *
@@ -52,32 +51,18 @@ export class DocWrapper<T extends Object> {
     /**
      * Fields that are currently loaded
      *
-     * @type {Keys<T>}
+     * @type {Keys<Data>}
      * @memberof DocWrapper
      */
-    loadedFields: Keys<T>;
-    /**
-     * All fields that the document has (all keys of base document)
-     *
-     * @type {Keys<T>}
-     * @memberof DocWrapper
-     */
-    readonly allFields: Keys<T>;
-    /**
-     * Cached data
-     *
-     * @type {BehaviorSubject<Partial<T>>}
-     * @memberof DocWrapper
-     */
-    readonly data: BehaviorSubject<Partial<T>>;
+    loadedFields: Keys<Data>;
     /**
      * Synchronizer for active synchronization with database
      *
      * @private
-     * @type {WrapperSynchronizer<T>}
+     * @type {WrapperSynchronizer<Data>}
      * @memberof DocWrapper
      */
-    private synchronizer?: WrapperSynchronizer<T>;
+    private synchronizer?: WrapperSynchronizer<Data>;
     /**
      * If document was deleted from database 
      * (Only tracks deletions after creation of wrapper and assumes that document exists when first created)
@@ -90,33 +75,50 @@ export class DocWrapper<T extends Object> {
     /**
      * Creates an instance of DocWrapper.
      * 
-     * @param {Model<T>} model Model of collection where the document is stored in
+     * @param {Model<Data>} model Model of collection where the document is stored in
      * @param {*} uniqueQuery Query conditions for finding the document corresponding to the wrapper 
-     * @param {Partial<T>} obj Already know part of document. All keys in this document will added to loadedFields
-     * @param {Keys<T>} allFields Array of all the fields that the object can have (Use keys<T>() from 'ts-transformer-keys' to get them)
+     * @param {Partial<Data>} obj Already know part of document. All keys in this document will added to loadedFields
+     * @param {Keys<Data>} allFields Array of all the fields that the object can have (Use keys<T>() from 'ts-transformer-keys' to get them)
      * @memberof DocWrapper
      */
-    constructor(model: Model<ExDocument<T>>, uniqueQuery: any, obj: Partial<T>, allFields: Keys<T>) {
+    constructor(model: Model<ExDocument<Data>>, uniqueQuery: any, obj: Partial<Data>, allFields: Keys<Data>) {
+        super(obj, allFields);
+
         this.model = model;
         this.uniqueQuery = uniqueQuery;
         // @ts-ignore
         this.loadedFields = Object.keys(obj);
-        this.allFields = allFields;
-        this.data = new BehaviorSubject(obj);
-        this.allFields.forEach(key => this.setProperty(key));
         this.removed = false;
+    }
+
+    /**
+     * Getter generator that first checks if the key is already loaded
+     *
+     * @protected
+     * @param {keyof Data} key Key to generate getter for
+     * @returns
+     * @memberof DocWrapper
+     */
+    protected dataGetterGenerator(key: keyof Data) {
+        return () => {
+            if (!this.isLoaded(key)) {
+                console.warn(new Error(`The wrapper property "${key}" has been accessed before being loaded. Please first check if a property is already loaded with "Wrapper.load()".`));
+                return undefined;
+            }
+            return this.data.value[key];
+        }
     }
 
     /**
      * Queries the database for the document corresponding to the wrapper
      *
      * @private
-     * @param {Keys<T>} [fields] What parts of the document should be returned
+     * @param {Keys<Data>} [fields] What parts of the document should be returned
      * @returns The document if it was found
      * @memberof DocWrapper
      */
-    protected getDoc(fields?: Keys<T>) {
-        return this.model.findOne(this.uniqueQuery, fields ? fields.join(' ') : undefined).exec();
+    protected getDoc(fields?: Keys<Data>) {
+        return this.model.findOne(this.uniqueQuery, Array.isArray(fields) ? fields.join(' ') : undefined).exec();
     }
 
     /**
@@ -136,12 +138,12 @@ export class DocWrapper<T extends Object> {
      * 
      * IMPORTANT: This function doesn't check if the document is correct or can actually be found by its uniqueQuery.
      *
-     * @param {T} content The content of the document
+     * @param {Data} content The content of the document
      * @param {boolean} [overwrite=false] If it should overwrite the old document (Default false)
      * @returns The created document if it was created
      * @memberof DocWrapper
      */
-    async createDoc(content: T, overwrite = false) {
+    async createDoc(content: Data, overwrite = false) {
         let oldDocExists = await this.docExists();
         if (!overwrite && oldDocExists) return undefined;
         if (oldDocExists) await this.model.deleteOne(this.uniqueQuery).exec();
@@ -151,38 +153,15 @@ export class DocWrapper<T extends Object> {
     }
 
     /**
-     * Pipes the data through distinctUntilChanged so it subscribers only get called if a certain field has changed
-     *
-     * @param {keyof T} field Field to watch for changes on
-     * @returns Piped Observable 
-     * @memberof DocWrapper
-     */
-    subToField(field: keyof T) {
-        return this.data.pipe(
-            distinctUntilChanged((prev, curr) => _.isEqual(prev[field], curr[field]))
-        );
-    }
-
-    /**
-     * Clones the data object so it can be manipulated
-     *
-     * @returns
-     * @memberof DocWrapper
-     */
-    cloneData() {
-        return _.cloneDeep(this.data.value);
-    }
-
-    /**
      * Loads fields from a provided object. 
      * The object is seen as fully loaded, so undefined fields will also be used.
      *
-     * @param {T} obj The object to load from
+     * @param {Data} obj The object to load from
      * @param {boolean} [overwrite=true] If already loaded fields should be replaced
      * @returns The resulting data object
      * @memberof DocWrapper
      */
-    loadFromObject(obj: T) {
+    loadFromObject(obj: Data) {
         this.data.next(obj);
         this.loadedFields = undefined;
         return this;
@@ -192,13 +171,13 @@ export class DocWrapper<T extends Object> {
      * Merges loaded data with the already loaded data
      *
      * @private
-     * @param {T} obj Data to merge
-     * @param {Keys<T>} fieldsToMerge Fields that should be merged
+     * @param {Data} obj Data to merge
+     * @param {Keys<Data>} fieldsToMerge Fields that should be merged
      * @param {boolean} [overwrite=false] If already loaded fields should be overwritten
      * @returns
      * @memberof DocWrapper
      */
-    private mergeData(obj: T, fieldsToMerge: Keys<T>, overwrite = false) {
+    private mergeData(obj: Data, fieldsToMerge: Keys<Data>, overwrite = false) {
         let tempData = this.cloneData();
         for (const key of fieldsToMerge) {
             if (!overwrite && this.loadedFields.includes(key))
@@ -212,11 +191,11 @@ export class DocWrapper<T extends Object> {
     /**
      * Reloads all already loaded fields of the wrapper
      *
-     * @param {Keys<T>} [fields] If set it only reloads those fields (can also be not yet loaded fields)
+     * @param {Keys<Data>} [fields] If set it only reloads those fields (can also be not yet loaded fields)
      * @returns
      * @memberof DocWrapper
      */
-    async resync(fields?: Keys<T>) {
+    async resync(fields?: Keys<Data>) {
         let result = await this.load({ fields: fields || this.loadedFields, reload: true });
         return result ? this : undefined;
     }
@@ -226,11 +205,11 @@ export class DocWrapper<T extends Object> {
      * If synchronizer for specified fields already exist it will only return the synchronizer.
      * Not providing already synced fields will result in them no longer being synchronized.
      *
-     * @param {Keys<T>} [fields] What fields should be synchronized 
+     * @param {Keys<Data>} [fields] What fields should be synchronized 
      * @returns Synchronizer 
      * @memberof DocWrapper
      */
-    enableSync(fields?: Keys<T>) {
+    enableSync(fields?: Keys<Data>) {
         if (!_.isEqual(_.sortBy(this.synchronizer?.syncedFields), _.sortBy(fields)))
             this.synchronizer = new WrapperSynchronizer(this, fields);
         return this.synchronizer;
@@ -246,41 +225,6 @@ export class DocWrapper<T extends Object> {
         if (!this.synchronizer) return;
         this.synchronizer.close();
         delete this.synchronizer;
-    }
-
-    /**
-     * Creates a getter for a specific field that connects with 
-     *
-     * @private
-     * @param {string} key Field to define a getter for
-     * @memberof DocWrapper
-     */
-    private setProperty(key: keyof T) {
-        this.setCustomProperty(key, () => {
-            if (!this.isLoaded(key)) {
-                console.warn(new Error(`The wrapper property "${key}" has been accessed before being loaded. Please first check if a property is already loaded with "Wrapper.load()".`));
-                return undefined;
-            }
-            return this.data.value;
-        });
-    }
-
-    /**
-     * Sets the provided getter and creates a Setter that throws an error
-     *
-     * @protected
-     * @param {ObjectKey} key What key should be used
-     * @param {() => any} getter Getter to set
-     * @memberof DocWrapper
-     */
-    protected setCustomProperty(key: ObjectKey, getter: () => any) {
-        Object.defineProperty(this, key, {
-            get: getter,
-            set: () => {
-                throw new Error(`Attempted to set property "${String(key)}". Wrapper properties cannot be changed directly. Use provided functions for that.`);
-            },
-            configurable: true
-        });
     }
 
     /**
@@ -302,7 +246,7 @@ export class DocWrapper<T extends Object> {
      * @returns If the specified part is loaded
      * @memberof DocWrapper
      */
-    isLoaded(field?: keyof T) {
+    isLoaded(field?: keyof Data) {
         if (!this.loadedFields) return true;
         if (!field) return false;
         return this.loadedFields.includes(field);
@@ -312,11 +256,11 @@ export class DocWrapper<T extends Object> {
      * Updates which fields of the wrapper are loaded
      *
      * @private
-     * @param {Keys<T>} [fields] Fields that were newly loaded
+     * @param {Keys<Data>} [fields] Fields that were newly loaded
      * @returns Which fields weren't loaded before
      * @memberof DocWrapper
      */
-    updateLoadedFields(fields?: Keys<T>) {
+    updateLoadedFields(fields?: Keys<Data>) {
         if (!this.loadedFields)
             return [];
         if (!fields)
@@ -331,11 +275,11 @@ export class DocWrapper<T extends Object> {
      * Extracts fields that should be loaded from LoadOptions
      *
      * @private
-     * @param {LoadOptions<T>} options Options to extract fields from
-     * @returns {Keys<T>} Fields that should be loaded
+     * @param {LoadOptions<Data>} options Options to extract fields from
+     * @returns {Keys<Data>} Fields that should be loaded
      * @memberof DocWrapper
      */
-    private extractFieldsToLoad(options: LoadOptions<T>): Keys<T> {
+    private extractFieldsToLoad(options: LoadOptions<Data>): Keys<Data> {
         if (!options) return;
         if (Array.isArray(options)) return options;
         if (typeof options !== 'object') return [options];
@@ -347,11 +291,11 @@ export class DocWrapper<T extends Object> {
      * Extracts if fields should be reloaded from LoadOptions
      *
      * @private
-     * @param {LoadOptions<T>} options Options to extract it from
+     * @param {LoadOptions<Data>} options Options to extract it from
      * @returns If fields should be reloaded
      * @memberof DocWrapper
      */
-    private extractIfReload(options: LoadOptions<T>) {
+    private extractIfReload(options: LoadOptions<Data>) {
         if (!options) return false;
         // @ts-ignore
         if (options.reload) return true;
@@ -362,11 +306,11 @@ export class DocWrapper<T extends Object> {
      * Loads specified not loaded fields. 
      * If force is true it loads all specified fields regardless of if they are already loaded.
      *
-     * @param {LoadOptions<T>} [options] Options for loading (default loads all fields)
+     * @param {LoadOptions<Data>} [options] Options for loading (default loads all fields)
      * @returns Loaded data
      * @memberof DocWrapper
      */
-    async load(options?: LoadOptions<T>) {
+    async load(options?: LoadOptions<Data>) {
         let fields = this.extractFieldsToLoad(options);
         let reload = this.extractIfReload(options);
         let loadFields = this.updateLoadedFields(fields);

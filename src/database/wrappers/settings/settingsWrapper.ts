@@ -1,13 +1,13 @@
-import { GlobalSettingsObject, GlobalSettingsDoc } from "../../schemas/settings/settings";
-import { DocWrapper } from "../docWrapper";
-import { UsageLimits, CommandUsageLimits } from "../../schemas/global";
-import { PresenceData, Snowflake, UserResolvable, Client } from "discord.js";
-import { CommandName, CommandResolvable, Commands } from "../../../commands";
-import { Bot } from "../../..";
-import { keys } from "ts-transformer-keys";
-import { map } from "rxjs/operators";
-import _ from "lodash";
-import { Model } from "mongoose";
+import { PresenceData, Snowflake, UserResolvable } from 'discord.js';
+import _ from 'lodash';
+import { Model } from 'mongoose';
+import { keys } from 'ts-transformer-keys';
+
+import { Bot } from '../../..';
+import { CommandName, CommandResolvable } from '../../../commands';
+import { CommandUsageLimits, UsageLimits } from '../../schemas/global';
+import { GlobalSettingsDoc, GlobalSettingsObject } from '../../schemas/settings/settings';
+import { DocWrapper } from '../docWrapper';
 
 /**
  * Wrapper for the GlobalSettingsObject so everything can easily be access through one object
@@ -52,9 +52,7 @@ export class SettingsWrapper extends DocWrapper<GlobalSettingsObject> implements
 
         this.bot = bot;
 
-        this.subToField('presence').pipe(
-            map(data => data.presence)
-        ).subscribe(this.setBotStatus);
+        this.subToMappedProperty('presence').subscribe(this.setBotStatus);
     }
 
     /**

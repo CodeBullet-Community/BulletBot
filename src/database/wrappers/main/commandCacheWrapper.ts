@@ -1,12 +1,12 @@
-import { ChannelResolvable, DMChannel, TextChannel, User, Client } from 'discord.js';
+import { ChannelResolvable, DMChannel, TextChannel, User } from 'discord.js';
+import { Model } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
 
-import { commandInterface, CommandResolvable, Commands } from '../../../commands';
-import { PermLevel } from '../../../utils/permissions';
-import { DocWrapper } from '../docWrapper';
-import { CommandCacheObject, CommandCache, CommandCacheDoc } from '../../schemas/main/commandCache';
-import { Model } from 'mongoose';
 import { Bot } from '../../..';
+import { commandInterface, CommandResolvable } from '../../../commands';
+import { PermLevel } from '../../../utils/permissions';
+import { CommandCache, CommandCacheDoc, CommandCacheObject } from '../../schemas/main/commandCache';
+import { DocWrapper } from '../docWrapper';
 
 /**
  * Wrapper for the CommandCache object and document so everything can easily be access through one object
@@ -50,15 +50,15 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
 
         this.bot = bot;
 
-        this.subToField('channel').subscribe(data => this._channel = getTextBasedChannel(data.channel));
-        this.subToField('user').subscribe(async data => this._user = await this.bot.client.users.fetch(data.user));
-        this.subToField('command').subscribe(data => this._command = this.bot.commands.get(data.command));
-        this.subToField('expirationTimestamp').subscribe(data => this._expirationDate = new Date(data.expirationTimestamp));
+        this.subToMappedProperty('channel').subscribe(channel => this._channel = getTextBasedChannel(channel));
+        this.subToMappedProperty('user').subscribe(async user => this._user = await this.bot.client.users.fetch(user));
+        this.subToMappedProperty('command').subscribe(command => this._command = this.bot.commands.get(command));
+        this.subToMappedProperty('expirationTimestamp').subscribe(timestamp => this._expirationDate = new Date(timestamp));
 
-        this.setCustomProperty('channel', () => this._channel);
-        this.setCustomProperty('user', () => this._user);
-        this.setCustomProperty('command', () => this._command);
-        this.setCustomProperty('expirationDate', () => this._expirationDate);
+        this.setWrapperProperty('channel', () => this._channel);
+        this.setWrapperProperty('user', () => this._user);
+        this.setWrapperProperty('command', () => this._command);
+        this.setWrapperProperty('expirationDate', () => this._expirationDate);
     }
 
     /**
