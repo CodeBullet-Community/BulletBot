@@ -378,4 +378,15 @@ export class Commands {
         return command;
     }
 
+    /**
+     * Resolves a command resolvable to a command name
+     *
+     * @export
+     * @param {CommandResolvable} command CommandResolvable to resolve
+     * @returns {CommandName}
+     */
+    resolveName(command: CommandResolvable): CommandName {
+        return this.resolve(command).name;
+    }
+
 }

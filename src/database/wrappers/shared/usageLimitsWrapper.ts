@@ -79,11 +79,11 @@ export class UsageLimitsWrapper<Parent extends DocWrapper<any>> extends Property
      * Returns command usage limits without taking hard coded limits into account
      *
      * @private
-     * @param {string} command
+     * @param {CommandName} command
      * @returns
      * @memberof UsageLimitsWrapper
      */
-    private getRawCommandUsageLimits(command: string) {
+    private getRawCommandUsageLimits(command: CommandName) {
         if (!this.commands[command]) return {};
         return this.commands[command];
     }

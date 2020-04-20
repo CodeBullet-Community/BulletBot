@@ -2,7 +2,7 @@ import { User } from 'discord.js';
 import { Model } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
 
-import { CommandName } from '../../../commands';
+import { CommandName, CommandResolvable, Commands } from '../../../commands';
 import { UserCommandScope, UserDoc, UserObject } from '../../schemas/main/user';
 import { DocWrapper } from '../docWrapper';
 
@@ -21,7 +21,7 @@ export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
      * @type {User}
      * @memberof UserWrapper
      */
-    user: User;
+    readonly user: User;
     /**
      * ID of the user
      *
@@ -40,6 +40,7 @@ export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
             [Command in CommandName]: number;
         };
     };
+    private readonly commandModule: Commands;
 
     /**
      * Creates an instance of UserWrapper.
@@ -48,10 +49,11 @@ export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
      * @param {User} user User to wrap
      * @memberof UserWrapper
      */
-    constructor(model: Model<UserDoc>, user: User) {
+    constructor(model: Model<UserDoc>, user: User, commandModule: Commands) {
         super(model, { id: user.id }, { id: user.id }, keys<UserObject>());
         this.setDataGetters();
         this.user = user;
+        this.commandModule = commandModule;
     }
 
     /**
@@ -73,29 +75,31 @@ export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
      * Gets when command was last used by the user in specified scope
      *
      * @param {UserCommandScope} scope Which scope to check
-     * @param {CommandName} command Command to check
+     * @param {CommandResolvable} command Command to check
      * @returns Timestamp when command was last used (0 when never)
      * @memberof UserWrapper
      */
-    async getCommandLastUsed(scope: UserCommandScope, command: CommandName) {
+    async getCommandLastUsed(scope: UserCommandScope, command: CommandResolvable) {
         await this.load('commandLastUsed');
         this.checkCommandScope(scope);
-        if (!this.commandLastUsed?.[scope]?.[command])
+        let commandName = this.commandModule.resolveName(command);
+        if (!this.commandLastUsed?.[scope]?.[commandName])
             return 0;
-        return this.commandLastUsed[scope][command];
+        return this.commandLastUsed[scope][commandName];
     }
 
     /**
      * Sets a new last used timestamp for command in specified scope and global
      *
      * @param {UserCommandScope} scope Scope to set last used timestamp
-     * @param {CommandName} command Command to set last used timestamp
+     * @param {CommandResolvable} command Command to set last used timestamp
      * @param {number} timestamp When command was last used
      * @memberof UserWrapper
      */
-    async setCommandLastUsed(scope: UserCommandScope, command: CommandName, timestamp: number) {
+    async setCommandLastUsed(scope: UserCommandScope, command: CommandResolvable, timestamp: number) {
         await this.load('commandLastUsed');
         this.checkCommandScope(scope);
+        let commandName = this.commandModule.resolveName(command);
 
         let query = { $set: {} };
         query.$set[`commandLastUsed.${scope}.${command}`] = timestamp;
@@ -104,8 +108,8 @@ export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
         await this.update(query);
 
         let tempData = this.cloneData();
-        this._setCommandLastUsed(tempData, scope, command, timestamp);
-        this._setCommandLastUsed(tempData, 'global', command, timestamp);
+        this._setCommandLastUsed(tempData, scope, commandName, timestamp);
+        this._setCommandLastUsed(tempData, 'global', commandName, timestamp);
         this.data.next(tempData);
     }
 

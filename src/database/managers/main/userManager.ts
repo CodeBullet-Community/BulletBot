@@ -7,6 +7,7 @@ import { LoadOptions } from '../../wrappers/docWrapper';
 import { UserWrapper } from '../../wrappers/main/userWrapper';
 import { CacheManager } from '../cacheManager';
 import { FetchOptions } from '../collectionManager';
+import { Commands } from '../../../commands';
 
 
 /**
@@ -19,6 +20,7 @@ import { FetchOptions } from '../collectionManager';
 export class UserManager extends CacheManager<UserObject> {
 
     private readonly bot: Bot;
+    private readonly commandModule: Commands;
 
     /**
      * Creates an instance of UserManager.
@@ -27,9 +29,10 @@ export class UserManager extends CacheManager<UserObject> {
      * @param {Database} database Database holding all database connections
      * @memberof UserManager
      */
-    constructor(bot: Bot, database: Database) {
+    constructor(bot: Bot, database: Database, commandModule: Commands) {
         super(database, 'main', 'user', userSchema);
         this.bot = bot;
+        this.commandModule = commandModule;
     }
 
     /**
@@ -86,7 +89,7 @@ export class UserManager extends CacheManager<UserObject> {
 
         let wrapper = await this.getCached(cacheKey, options);
         if (!wrapper)
-            wrapper = new UserWrapper(this.model, userObj);
+            wrapper = new UserWrapper(this.model, userObj, this.commandModule);
 
         let loadedFields = await wrapper.load({ fields: options.fields, reload: true });
         if (loadedFields === undefined && options?.create)
