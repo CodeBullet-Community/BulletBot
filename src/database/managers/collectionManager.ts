@@ -2,30 +2,40 @@ import { Model, Schema } from 'mongoose';
 
 import { Database } from '../database';
 import { ExDocument, OptionalFields } from '../schemas/global';
+import { AdvancedLoadOptions, DocWrapper } from '../wrappers/docWrapper';
 
 /**
- * Options defining what fields of a searched doc should be loaded and if it should be created if not found
+ * Advanced fetch options for changing fetching behavior
  *
  * @export
  * @interface FetchOptions
- * @template T
+ * @template Obj Object being fetched
  */
-export interface FetchOptions<T extends Object> {
+export interface AdvancedFetchOptions<Obj extends Object> extends AdvancedLoadOptions<Obj> {
     /**
      * If document should be created if not found
      *
      * @type {boolean}
      * @memberof FetchOptions
      */
-    create?: boolean,
-    /**
-     * What fields should be loaded
-     *
-     * @type {OptionalFields<T>}
-     * @memberof FetchOptions
-     */
-    fields?: OptionalFields<T>
+    create?: boolean;
 }
+
+/**
+ * Options defining what fields of a doc should be loaded and if it should be created if not found
+ *
+ * @export
+ * @template Obj Object being fetched
+ */
+export type FetchOptions<Obj extends Object> = AdvancedFetchOptions<Obj> | OptionalFields<Obj>;
+
+/**
+ * Defines any constructor of class Class
+ * 
+ * @export
+ * @template Class 
+ */
+export type Constructor<Class> = new (...args: any[]) => Class;
 
 /**
  * Holds the model for a specific collection and the fetch function.
@@ -33,12 +43,14 @@ export interface FetchOptions<T extends Object> {
  * @export
  * @abstract
  * @class CollectionManager
- * @template T What document is in the collection
- * @template K What object gets returned with fetch
+ * @template Obj What document is in the collection
  */
-export abstract class CollectionManager<T extends Object, K>{
+export abstract class CollectionManager<Obj extends Object, Wrapper extends DocWrapper<Obj>>{
 
-    protected model: Model<ExDocument<T>>;
+    protected readonly database: Database;
+    private readonly databaseName: string;
+    protected readonly model: Model<ExDocument<Obj>>;
+    protected readonly wrapper: Constructor<Wrapper>;
 
     /**
      * Creates an instance of CollectionManager.
@@ -46,12 +58,16 @@ export abstract class CollectionManager<T extends Object, K>{
      * @param {Database} database Database class to get connection
      * @param {string} databaseName Name of database the collection is in
      * @param {string} modelName Name of the model
-     * @param {Schema<T>} schema Schema for this collection (should include default collection name)
+     * @param {Schema<Obj>} schema Schema for this collection (should include default collection name)
+     * @param {Constructor<Wrapper>} wrapper
      * @memberof CollectionManager
      */
-    constructor(protected database: Database, private databaseName: string, modelName: string, schema: Schema<T>) {
+    constructor(database: Database, databaseName: string, modelName: string, schema: Schema<Obj>, wrapper: Constructor<Wrapper>) {
         let connection = this.database.getConnection(this.databaseName);
+        this.database = database;
+        this.databaseName = databaseName;
         this.model = connection.model(modelName, schema);
+        this.wrapper = wrapper;
     }
 
     /**
@@ -59,19 +75,37 @@ export abstract class CollectionManager<T extends Object, K>{
      *
      * @abstract
      * @param {*} args Arguments that alter the default object
-     * @returns {T} Default object based on arguments
+     * @returns {Obj} Default object based on arguments
      * @memberof CollectionManager
      */
-    abstract getDefaultObject(...args): T;
+    abstract getDefaultObject(...args): Obj;
 
     /**
      * Searches collection and returns found object. If provided it creates a new object if not found.
      *
      * @abstract
      * @param {*} args Search and fetch arguments
-     * @returns {Promise<K>} Searched object
+     * @returns {Promise<FetchObj>} Searched object
      * @memberof CollectionManager
      */
-    abstract async fetch(...args): Promise<K>;
+    abstract async fetch(...args): Promise<DocWrapper<Obj>>;
+
+    /**
+     * Helper function for fetch, which takes a wrapper, calls DocWrapper.load() and optional creates a doc
+     *
+     * @protected
+     * @param {Wrapper} wrapper New/Existing DocWrapper
+     * @param {any[]} defaultObjArgs Arguments for this.getDefaultObject()
+     * @param {FetchOptions<Obj>} options Fetch options
+     * @returns Output that this.fetch() should return
+     * @memberof CollectionManager
+     */
+    protected async fetchWithExistingWrapper(wrapper: Wrapper, defaultObjArgs: any[], options: FetchOptions<Obj>) {
+        let loadedFields = await wrapper.load(options);
+        // @ts-ignore
+        if (loadedFields === undefined && options?.create)
+            await wrapper.createDoc(this.getDefaultObject(...defaultObjArgs), false);
+        return wrapper;
+    }
 
 }

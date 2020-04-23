@@ -6,22 +6,34 @@ import { DataWrapper } from './dataWrapper';
 import { WrapperSynchronizer } from './wrapperSynchronizer';
 
 /**
- * Options defining what and how fields should be loaded in a wrapper
+ * Advanced loading options for changing fetching behavior
+ *
+ * @export
+ * @interface AdvancedLoadOptions
+ * @template Data Data which will be loaded
  */
-export type LoadOptions<T extends Object> = {
+export interface AdvancedLoadOptions<Data extends Object> {
     /**
      * What fields should be loaded
      *
-     * @type {OptionalFields<T>}
+     * @type {OptionalFields<Data>}
      */
-    fields?: OptionalFields<T>;
+    fields?: OptionalFields<Data>;
     /**
      * If already loaded fields should also be reloaded
      *
      * @type {boolean}
      */
     reload?: boolean;
-} | OptionalFields<T>;
+}
+
+/**
+ * Options defining what and how fields should be loaded in a wrapper
+ * 
+ * @export
+ * @template Data Data which will be loaded
+ */
+export type LoadOptions<Data extends Object> = AdvancedLoadOptions<Data> | OptionalFields<Data>;
 
 /**
  * Wrapper for mongoDB documents. 

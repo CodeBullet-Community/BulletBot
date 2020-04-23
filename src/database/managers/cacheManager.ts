@@ -3,7 +3,7 @@ import { Schema } from 'mongoose';
 
 import { Database } from '../database';
 import { DocWrapper, LoadOptions } from '../wrappers/docWrapper';
-import { CollectionManager } from './collectionManager';
+import { CollectionManager, Constructor, FetchOptions } from './collectionManager';
 
 /**
  * Extends CollectionManager and additionally caches and returns DocWrappers
@@ -11,19 +11,20 @@ import { CollectionManager } from './collectionManager';
  * @export
  * @abstract
  * @class CacheManager
- * @extends {CollectionManager<T, DocWrapper<T>>}
- * @template T What object is in the collection and is wrapped
+ * @extends {CollectionManager<Obj, Wrapper>}
+ * @template Obj What object is in the collection and is wrapped
+ * @template Wrapper Wrapper that wraps Obj
  */
-export abstract class CacheManager<T extends Object> extends CollectionManager<T, DocWrapper<T>> {
+export abstract class CacheManager<Obj extends Object, Wrapper extends DocWrapper<Obj>> extends CollectionManager<Obj, Wrapper> {
 
     /**
      * Cache holding all cached DocWrappers
      *
      * @protected
-     * @type {Collection<string, DocWrapper<T>>}
+     * @type {Collection<string, Wrapper>}
      * @memberof CacheManager
      */
-    protected cache: Collection<string, DocWrapper<T>>;
+    protected cache: Collection<string, Wrapper>;
 
     /**
      * Creates an instance of CacheManager.
@@ -31,11 +32,12 @@ export abstract class CacheManager<T extends Object> extends CollectionManager<T
      * @param {Database} database Database class to get connection
      * @param {string} databaseName Name of database the collection is in
      * @param {string} modelName Name of the model
-     * @param {Schema<T>} schema Schema for this collection (should include default collection name)
+     * @param {Schema<Obj>} schema Schema for this collection (should include default collection name)
+     * @param {Constructor<Wrapper>} wrapper Wrapper constructor used when wrapping managed objects
      * @memberof CacheManager
      */
-    constructor(database: Database, databaseName: string, modelName: string, schema: Schema<T>) {
-        super(database, databaseName, modelName, schema);
+    constructor(database: Database, databaseName: string, modelName: string, schema: Schema<Obj>, wrapper: Constructor<Wrapper>) {
+        super(database, databaseName, modelName, schema, wrapper);
         this.cache = new Collection();
     }
 
@@ -54,12 +56,13 @@ export abstract class CacheManager<T extends Object> extends CollectionManager<T
      * Searches cache and returns DocWrapper corresponding to cache key if it was cached.
      *
      * @protected
-     * @param {string} cacheKey Cache key to search in cache
-     * @param {LoadOptions<T>} [options] LoadOptions to pass to cached DocWrapper (default does nothing)
+     * @param {LoadOptions<Obj>} options LoadOptions to pass to cached DocWrapper
+     * @param {*} args Arguments to pass to getCacheKey function
      * @returns DocWrapper, if cached, loaded as specified
      * @memberof CacheManager
      */
-    protected async getCached(cacheKey: string, options?: LoadOptions<T>) {
+    protected async getCached(options: LoadOptions<Obj>, ...args) {
+        let cacheKey = this.getCacheKey(...args);
         let wrapper = this.cache.get(cacheKey);
         if (!wrapper) return undefined;
         if (options) await wrapper.load(options);
@@ -71,10 +74,28 @@ export abstract class CacheManager<T extends Object> extends CollectionManager<T
      *
      * @abstract
      * @param {*} args Query arguments and LoadOptions
-     * @returns {Promise<DocWrapper<T>>} DocWrapper if found
+     * @returns {Promise<DocWrapper<Obj>>} DocWrapper if found
      * @memberof CacheManager
      */
-    abstract async get(...args): Promise<DocWrapper<T>>;
+    abstract async get(...args): Promise<DocWrapper<Obj>>;
+
+    /**
+     * Helper function for fetch, that crates/takes a wrapper (new or cached) and passes it to this.fetchWithExistingWrapper() 
+     *
+     * @protected
+     * @param {any[]} cacheKeyArgs Arguments for this.getCacheKey()
+     * @param {any[]} wrapperArgs Arguments for the wrapper constructor
+     * @param {any[]} defaultObjArgs Arguments for this.getDefaultObject()
+     * @param {FetchOptions<Obj>} options Fetch options
+     * @returns Output that this.fetch() should return
+     * @memberof CacheManager
+     */
+    protected async _fetch(cacheKeyArgs: any[], wrapperArgs: any[], defaultObjArgs: any[], options: FetchOptions<Obj>) {
+        let wrapper = await this.getCached(options, ...cacheKeyArgs);
+        if (!wrapper)
+            wrapper = new this.wrapper(this.model, ...wrapperArgs);
+        return this.fetchWithExistingWrapper(wrapper, defaultObjArgs, options);
+    }
 
     /**
      * Removes all wrappers form the cache where Wrapper.removed is true

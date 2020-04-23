@@ -1,13 +1,13 @@
-import { Client, UserResolvable } from 'discord.js';
+import { Client, Snowflake, UserResolvable } from 'discord.js';
 
 import { Bot } from '../../..';
+import { Commands } from '../../../commands';
 import { Database } from '../../database';
 import { UserObject, userSchema } from '../../schemas/main/user';
 import { LoadOptions } from '../../wrappers/docWrapper';
 import { UserWrapper } from '../../wrappers/main/userWrapper';
 import { CacheManager } from '../cacheManager';
 import { FetchOptions } from '../collectionManager';
-import { Commands } from '../../../commands';
 
 
 /**
@@ -17,7 +17,7 @@ import { Commands } from '../../../commands';
  * @class UserManager
  * @extends {CacheManager<UserObject>}
  */
-export class UserManager extends CacheManager<UserObject> {
+export class UserManager extends CacheManager<UserObject, UserWrapper> {
 
     private readonly bot: Bot;
     private readonly commandModule: Commands;
@@ -30,7 +30,7 @@ export class UserManager extends CacheManager<UserObject> {
      * @memberof UserManager
      */
     constructor(bot: Bot, database: Database, commandModule: Commands) {
-        super(database, 'main', 'user', userSchema);
+        super(database, 'main', 'user', userSchema, UserWrapper);
         this.bot = bot;
         this.commandModule = commandModule;
     }
@@ -38,11 +38,11 @@ export class UserManager extends CacheManager<UserObject> {
     /**
      * Generates a default user object with the provided user id
      *
-     * @param {string} userID User id to generate a user object for
+     * @param {Snowflake} userID User id to generate a user object for
      * @returns
      * @memberof UserManager
      */
-    getDefaultObject(userID: string) {
+    getDefaultObject(userID: Snowflake) {
         return {
             id: userID,
             commandLastUsed: {}
@@ -52,11 +52,11 @@ export class UserManager extends CacheManager<UserObject> {
     /**
      * Returns the userID unmodified
      *
-     * @param {string} userID
+     * @param {Snowflake} userID
      * @returns
      * @memberof UserManager
      */
-    getCacheKey(userID: string) {
+    getCacheKey(userID: Snowflake) {
         return userID;
     }
 
@@ -70,8 +70,7 @@ export class UserManager extends CacheManager<UserObject> {
      */
     get(user: UserResolvable, options?: LoadOptions<UserObject>) {
         let userID = this.bot.client.users.resolveID(user);
-        let cacheKey = this.getCacheKey(userID);
-        return this.getCached(cacheKey, options);
+        return this.getCached(options, userID);
     }
 
     /**
@@ -84,18 +83,22 @@ export class UserManager extends CacheManager<UserObject> {
      * @memberof UserManager
      */
     async fetch(user: UserResolvable, options?: FetchOptions<UserObject>) {
+        let userObj = await this.fetchResolve(user);
+        return this._fetch([userObj.id], [userObj, this.commandModule], [userObj.id], options);
+    }
+
+    /**
+     * Just like the UserManager.resolve() function from Discord.js, but which fetches not yet cached users
+     *
+     * @param {UserResolvable} user User resolvable to be resolved
+     * @returns
+     * @memberof UserManager
+     */
+    async fetchResolve(user: UserResolvable) {
         let userObj = this.bot.client.users.resolve(user);
-        let cacheKey = this.getCacheKey(userObj.id);
-
-        let wrapper = await this.getCached(cacheKey, options);
-        if (!wrapper)
-            wrapper = new UserWrapper(this.model, userObj, this.commandModule);
-
-        let loadedFields = await wrapper.load({ fields: options.fields, reload: true });
-        if (loadedFields === undefined && options?.create)
-            await wrapper.createDoc(this.getDefaultObject(userObj.id), false);
-
-        return wrapper;
+        if (!userObj && typeof user === 'string')
+            userObj = await this.bot.client.users.fetch(user);
+        return userObj
     }
 
 }
