@@ -7,13 +7,10 @@
 # Once the system is deemed as supported, the appropriate sub-master installer
 # will be chosen, downloaded (if it isn't already), then executed.
 #
-# Installer version: v1.2.0 # the version number of the installers as a whole
-# (Corresponding) BulletBot version: v1.2.13
-# Note: The installer version number is only for me. The installer version
-# should not be considered when looking at compatability or anything of the
-# like, as all updates to the installers coinside with the changes in BulletBot
-# version (meaing changes to the installer effect BulletBot's version, but only
-# changes the patch number).
+# Installer version: v1.2.0 # The version number of the installers as a whole
+# Note: The installer version number should not be considered when looking at
+# compatability. The version number is more of a note for myself (Bark Ranger/
+# StrangeRanger/Hunter T.).
 #
 ################################################################################
 #
