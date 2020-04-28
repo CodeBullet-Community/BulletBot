@@ -84,7 +84,7 @@
 #
     clear
 
-    if [[ $option -eq 3 ]]; then
+    if ((option == 3)); then
         printf "We will now download and install nodejs and any required packages. "
         read -p "Press [Enter] to begin."
         install_nodejs
