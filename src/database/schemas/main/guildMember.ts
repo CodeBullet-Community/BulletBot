@@ -1,14 +1,17 @@
-import { Snowflake, User, Guild } from "discord.js";
-import { CommandName } from "../../../commands";
-import { ExDocument } from "../global";
-import { Schema } from "mongoose";
+import { Snowflake } from 'discord.js';
+import { Schema } from 'mongoose';
+
+import { CommandName } from '../../../commands';
+import { GuildWrapper } from '../../wrappers/main/guildWrapper';
+import { UserWrapper } from '../../wrappers/main/userWrapper';
+import { ExDocument } from '../global';
 
 /**
  * Object holding data for GuildMember saved by BulletBot
  */
 export interface BBGuildMember {
-    user: Snowflake | User;
-    guild: Snowflake | Guild;
+    user: Snowflake | UserWrapper;
+    guild: Snowflake | GuildWrapper;
     commandLastUsed: {
         [Command in CommandName]: number;
     };
