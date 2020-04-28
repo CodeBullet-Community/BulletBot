@@ -22,7 +22,8 @@
     # (only files/directories located in the BulletBot root directory)
     files=("installers/" "linux-master-installer.sh" "package-lock.json" \
         "package.json" "tsconfig.json" "src/" "media/" "README.md" "out/" \
-        "CODE_OF_CONDUCT.md" "CONTRIBUTING.md" "LICENSE")
+        "mkdocs.yml" "mkdocs-requirements.txt" ".gitignore/" "docs/" \
+        ".github" "CODE_OF_CONDUCT.md" "CONTRIBUTING.md" "LICENSE")
     bullet_service_content="[Unit] \
         \nDescription=A service to start BulletBot after a crash or system reboot \
         \nAfter=network.target mongod.service  \
@@ -54,10 +55,71 @@
         printf "We will now download the compiled version of the newest release. "
         read -p "Press [Enter] to begin."
         
+        old_bulletbot=$(date)
+
+    #
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #
+    # Error trapping
+    #
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #
+        trap "echo -e \"\n\nScript forcefully stopped\" && clean_up; echo \
+            \"Exiting...\" && exit" SIGINT SIGTERM SIGTSTP
+
+    #
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #
+    # Functions of the function
+    #
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #   
+        # Copies 'bot-config.json' to a temporary file
+        saving_config() {
+            if [[ ! -d tmp ]]; then
+                mkdir tmp || {
+                    echo "Failed to create 'tmp/'" >&2
+                    echo "${cyan}Please move it manually before continuing${nc}"
+                    echo -e "\nExiting..."
+                    exit 1
+                }
+            fi
+            cp "$1"/bot-config.json tmp/ || {
+                echo "${red}Failed to move 'bot-config.json' to 'tmp/'" >&2
+                echo "${cyan}Please move it manually before continuing${nc}"
+                echo -e "\nExiting..."
+                exit 1
+            }
+        }
+
+        # Cleans up any loose ends/left over files if the script exits
+        clean_up() {
+            echo "Cleaning up files and directories..."
+            if [[ -d tmp ]]; then rm -r tmp/; fi
+            if [[ -f BulletBot.zip ]]; then rm -r BulletBot.zip; fi
+
+            if [[ ! -d out || ! -f package-lock.json || ! -f package.json ]]; then
+                echo "Restoring from 'Old_BulletBot/${old_bulletbot}'"
+                cp -r Old_BulletBot/"$old_bulletbot"/* . || {
+                    echo "${red}Failed to restore from 'Old_BulletBot'${nc}" >&2
+                }
+            fi
+
+            echo "Changing ownership of the file(s) in '/home/bulletbot'..."
+            chown bulletbot:bulletbot -R "$home"
+        }
+
+    #
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #
+    # Prepping
+    #
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #
         if [[ $bullet_service_status = "active" ]]; then
             # B.1. $exists = true when 'bulletbot.service' is active, and is
             # used to indicate to the user that the service was stopped and that
-            # they will need to start the service
+            # they will need to start it
             exists="true"
             echo "Stopping 'bulletbot.service'..."
             systemctl stop bulletbot.service || {
@@ -70,11 +132,11 @@
         fi
     
     #
-    ############################################################################
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #
     # Checking for required software/applications
     #
-    ############################################################################
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #
         # Installs curl if it isn't already
         if ! hash curl &>/dev/null; then
@@ -113,42 +175,49 @@
         fi
 
     #
-    ############################################################################
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #
     # Saving 'bot-config.json' and downloading/updating BulletBot and its
     # services
     #
-    ############################################################################
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #
+        # Grabs the tag from the most recent release
         tag=$(curl -s https://api.github.com/repos/CodeBullet-Community/BulletBot/releases/latest \
             | grep -oP '"tag_name": "\K(.*)(?=")')
-        latest_release="https://github.com/CodeBullet-Community/BulletBot/releases/download/${tag}/BulletBot.zip"
+        local latest_release="https://github.com/CodeBullet-Community/BulletBot/releases/download/${tag}/BulletBot.zip"
 
-        # A.1. Downloads compiled code if the uncompiled code for BulletBot is
-        # present instead
-        if [ -d src ]; then
-            # Moves/saves 'bot-config.json', if it exists, to 'tmp/'
-            if [ -f src/bot-config.json ]; then
-                mkdir tmp
-                mv src/bot-config.json tmp/ || {
-                    echo "${red}Failed to move 'bot-config.json' to 'tmp/'" >&2
-                    echo "${cyan}Please move it manually before continuing${nc}"
-                    echo -e "\nExiting..."
-                    exit 1
-                }
-            fi
+        if [[ -f out/bot-config.json ]]; then
+            saving_config "out"
+        elif [[ -f src/bot-config.json ]]; then
+            saving_config "src"
 
             echo "Removing unneeded files..."
-            if [ -d src ]; then rm -r src/; fi
-            if [ -d media ]; then rm -r media/; fi
-            if [ -f tsconfig.json ]; then rm tsconfig.json; fi
+            if [[ -d src ]]; then rm -r src/; fi
+            if [[ -f tsconfig.json ]]; then rm tsconfig.json; fi
         fi
+
+        if [[ ! -d Old_BulletBot ]]; then
+            echo "Creating 'Old_BulletBot/'..."
+            mkdir Old_BulletBot
+        fi
+
+        echo "Creating 'Old_BulletBot/${old_bulletbot}'..."
+        mkdir Old_BulletBot/"$old_bulletbot"
+
+        echo "Moving files/directories associated with BulletBot to 'Old_BulletBot/${old_bulletbot}'..."
+        for dir in "${files[@]}"; do
+            if [[ -d $dir || -f $dir ]]; then
+                mv -f "$dir" Old_BulletBot/"$old_bulletbot"
+            fi
+        done
         
         echo "Downloading latest release..."
         wget -N "$latest_release" || {
             echo "${red}Failed to download the latest release" >&2
             echo "${cyan}Either resolve the issue (recommended) or download" \
                 "the latest release from github${nc}"
+            clean_up
             echo -e "\nExiting..."
             exit 1
         }
@@ -156,6 +225,7 @@
         echo "Unzipping 'BulletBot.zip'..."
         unzip -o BulletBot.zip || {
             echo "${red}Failed to unzip 'BulletBot.zip'" >&2
+            clean_up
             echo -e "\nExiting..."
             exit 1
         }
@@ -163,9 +233,7 @@
         rm BulletBot.zip 2>/dev/null || echo "${red}Failed to remove" \
             "'BulletBot.zip'${nc}" >&2
 
-        # A.2.
-        # Moves 'bot-config.json', if it exists, to 'out/'
-        if [ -f tmp/bot-config.json ]; then
+        if [[ -f tmp/bot-config.json ]]; then
             mv tmp/bot-config.json out/ && rm -r tmp/ || {
                 echo "${red}Failed to move 'bot-config.json' to 'out/'" >&2
                 echo "${yellow}Before starting BulletBot, you will have to" \
@@ -175,36 +243,36 @@
 
         if [[ -f $bullet_service ]]; then
             echo "Updating 'bulletbot.service'..."
-            create_or_update_1="update"
+            local create_or_update_1="update"
         else
             echo "Creating 'bulletbot.service'..."
-            create_or_update_1="create"
+            local create_or_update_1="create"
         fi
         echo -e "$bullet_service_content" > "$bullet_service" || {
             echo "${red}Failed to $create_or_update_1 'bulletbot.service'${nc}" \
                 >&2
-            bb_s_update="Failed"
+            local bb_s_update="Failed"
         }
 
         if [[ -f $start_service ]]; then
             echo "Updating 'bullet-mongo-start.service'..."
-            create_or_update_2="update"
+            local create_or_update_2="update"
         else
             echo "Creating 'bullet-mongo-start.service'..."
-            create_or_update_2="create"
+            local create_or_update_2="create"
         fi
         ./installers/Linux_Universal/auto-restart/auto-restart-updater.sh || {
             echo "${red}Failed to $create_or_update_2 'bullet-mongo-start.service'" \
                 "${nc}" >&2
-            b_m_s_s_update="Failed"
+            local b_m_s_s_update="Failed"
         }
 
     #
-    ############################################################################
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #
     # Cleaning up and presenting results...
     #
-    ############################################################################
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #
         echo "Changing ownership of the file(s) added to '/home/bulletbot'..."
         chown bulletbot:bulletbot -R "$home"
@@ -223,7 +291,7 @@
         fi
 
         # B.1.
-        if [[ $exists ]]; then
+        if [[ $bb_active ]]; then
             echo "${cyan}NOTE: 'bulletbot.service' was stopped to update" \
                 "BulletBot and has to be started using the run modes in the" \
                 "installer menu${nc}"
@@ -250,7 +318,7 @@
             2>/dev/null; echo $?)
 
     #
-    ############################################################################
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #
     # Makes sure that the system user 'bulletbot' and the home directory
     # '/home/bulletbot' already exists, and that your working directory is
@@ -259,7 +327,7 @@
     # TL;DR: Makes sure that all necessary (important) services, files,
     # directories, and users exist and are in their proper locations.
     #
-    ############################################################################
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #
         # Creates a system user named 'bulletbot', if it does not already exist,
         # then creates a home directory for it
@@ -293,7 +361,7 @@
             chown bulletbot:bulletbot -R "$home"
             cd "$home" || {
                 echo "${red}Failed to change working directory to" \
-                    "'/home/bulletbot'"
+                    "'/home/bulletbot'" >&2
                 echo "${cyan}Change your working directory to '/home/bulletbot'" \
                     "${nc}"
                 echo -e "\nExiting..."
@@ -320,7 +388,7 @@
             chown bulletbot:bulletbot -R "$home"
             cd "$home" || {
                 echo "${red}Failed to change working directory to" \
-                    "'/home/bulletbot'"
+                    "'/home/bulletbot'" >&2
                 echo "${cyan}Change your working directory to '/home/bulletbot'" \
                     "${nc}"
                 echo -e "\nExiting..."
@@ -344,7 +412,7 @@
             chown bulletbot:bulletbot -R "$home"
             cd "$home" || {
                 echo "${red}Failed to change working directory to" \
-                    "'/home/bulletbot'"
+                    "'/home/bulletbot'" >&2
                 echo "${cyan}Change your working directory to '/home/bulletbot'" \
                     "${nc}"
                 echo -e "\nExiting..."
@@ -366,12 +434,12 @@
         fi
 
     #
-    ############################################################################
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #
     # User options for installing perquisites, downloading BulletBot, and
     # starting BulletBot in different run modes
     #
-    ############################################################################
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #
         # Checks to see if it is necessary to download BulletBot (the most
         # recent compiled release)
@@ -437,7 +505,7 @@
                     "${green}(Already installed)${nc}"
             fi
 
-            if [ ! -f out/bot-config.json ]; then
+            if [[ ! -f out/bot-config.json ]]; then
                 echo "5. Set up BulletBot config file ${red}(Not setup)${nc}"
             else
                 echo "5. Set up BulletBot config file ${green}(Already" \
