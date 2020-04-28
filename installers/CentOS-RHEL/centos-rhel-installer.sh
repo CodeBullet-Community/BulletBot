@@ -64,7 +64,6 @@
     #
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #
-        #trap "clean_up; echo -e \"\nExiting...\"" EXIT
         trap "echo -e \"\n\nScript forcefully stopped\" && clean_up; echo \
             \"Exiting...\" && exit" SIGINT SIGTERM SIGTSTP
 
@@ -206,7 +205,7 @@
         echo "Creating 'Old_BulletBot/${old_bulletbot}'..."
         mkdir Old_BulletBot/"$old_bulletbot"
 
-        echo "Moving files/directories associated with BulletBot to 'Old_BulletBot'..."
+        echo "Moving files/directories associated with BulletBot to 'Old_BulletBot/${old_bulletbot}'..."
         for dir in "${files[@]}"; do
             if [[ -d $dir || -f $dir ]]; then
                 mv -f "$dir" Old_BulletBot/"$old_bulletbot"
