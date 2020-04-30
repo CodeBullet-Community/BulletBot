@@ -112,13 +112,41 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
      * @memberof DocWrapper
      */
     protected dataGetterGenerator(key: keyof Data) {
+        return this.wrapGetterIfLoaded(key, () => this.data.value[key]);
+    }
+
+    /**
+     * Wraps a getter with a check if the specified key is loaded.
+     * If not, there will be a waning logged.
+     *
+     * @protected
+     * @param {keyof Data} key Key to check
+     * @param {() => any} getter Getter to wrap
+     * @returns Wrapped getter
+     * @memberof DocWrapper
+     */
+    protected wrapGetterIfLoaded(key: keyof Data, getter: () => any) {
         return () => {
             if (!this.isLoaded(key)) {
                 console.warn(new Error(`The wrapper property "${key}" has been accessed before being loaded. Please first check if a property is already loaded with "Wrapper.load()".`));
                 return undefined;
             }
-            return this.data.value[key];
+            return getter();
         }
+    }
+
+    /**
+     * Helper function that wraps getter with this.wrapGetterIfLoaded() 
+     * and then sets it with this.setWrapperProperty()
+     *
+     * @protected
+     * @param {keyof Data} key Key which to check if loaded
+     * @param {() => any} getter Getter to set
+     * @param {string} [setKey] Key to set getter to (default key)
+     * @memberof DocWrapper
+     */
+    protected setIfLoadedProperty(key: keyof Data, getter: () => any, setKey?: string) {
+        this.setWrapperProperty(setKey || key, this.wrapGetterIfLoaded(key, getter));
     }
 
     /**
