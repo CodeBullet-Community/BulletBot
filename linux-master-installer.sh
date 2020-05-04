@@ -7,6 +7,11 @@
 # Once the system is deemed as supported, the appropriate sub-master installer
 # will be chosen, downloaded (if it isn't already), then executed.
 #
+# Installer version: v1.2.0 # The version number of the installers as a whole
+# Note: The installer version number should not be considered when looking at
+# compatability. The version number is more of a note for myself (Bark Ranger/
+# StrangeRanger/Hunter T.).
+#
 ################################################################################
 #
 # [ Variables ] used globally and outside of this script
@@ -29,7 +34,7 @@
 #
     # The '--no-hostname' flag for journalctl only works with systemd 230 and
     # above
-    if [[ $(journalctl --version | grep -oP "[0-9]+" | head -1) -ge "230" ]]; then
+    if (($(journalctl --version | grep -oP "[0-9]+" | head -1) >= 230)); then
         no_hostname="--no-hostname"
         export no_hostname
     fi
@@ -58,8 +63,8 @@
 ################################################################################
 #
     # Checks to see if this script was executed with root privilege
-    if [[ $EUID -ne 0 ]]; then 
-        echo "${red}Please run this script as root or with root privilege${nc}"
+    if ((EUID != 0)); then 
+        echo "${red}Please run this script as root or with root privilege${nc}" >&2
         echo -e "\nExiting..."
         exit 1
     fi
@@ -86,13 +91,13 @@
     detect_distro_ver_arch_bits() {
         arch=$(uname -m | sed 's/x86_//;s/i[3-6]86/32/')
         
-        if [ -f /etc/os-release ]; then
+        if [[ -f /etc/os-release ]]; then
             . /etc/os-release
             distro="$ID"
             # Version: x.x.x...
             ver="$VERSION_ID"
             # Version: x (short handed version)
-            sver=$(echo "$ver" | grep -oP "[0-9]+" | head -1)
+            sver=${ver//.*/}
             pname="$PRETTY_NAME"
             codename="$VERSION_CODENAME"
         else
@@ -309,7 +314,7 @@
         
     if [[ $supported = false ]]; then
         echo "${red}Your operating system/Linux Distribution does not support" \
-            "the installation, setup, and/or use of BulletBot${nc}"
+            "the installation, setup, and/or use of BulletBot${nc}" >&2
         echo -e "\nExiting..."
         exit 1
     fi

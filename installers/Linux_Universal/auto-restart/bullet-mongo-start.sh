@@ -20,7 +20,7 @@
 # about BulletBot's startup, to a collection of emails that'd be placed in
 # ./bullet-mongo-start.conf. More information on how to configure and use
 # this feature can be found here: 
-# https://github.com/CodeBullet-Community/BulletBot/wiki/Sending-BulletBot-Startup-Status-Reports
+# https://bulletbot.readthedocs.io/en/latest/Helpful-Guides/BulletBot-Startup-Status-Reports/
 #
 # Note: Along with 'bullet-mongo-start.conf', this is the only script apart of
 # the installers that is not called by either the master installer or
@@ -51,7 +51,7 @@
 
     # The '--no-hostname' flag for journalctl only works with systemd 230 and
     # above
-    if [[ $(journalctl --version | grep -oP "[0-9]+" | head -1) -ge "230" ]]; then
+    if (($(journalctl --version | grep -oP "[0-9]+" | head -1) >= 230)); then
         no_hostname="--no-hostname"
     fi
 

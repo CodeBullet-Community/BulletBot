@@ -10,7 +10,6 @@ As their name implies, the installers are designed for installing and setting up
 
 !!! important
     * The installers are designed to only work on Linux based systems.
-    * Some of the contents in this section ([installers](#installers)) are only applicable to BulletBot v1.2.11.
 
 ### Installer Hierarchy
 
@@ -64,7 +63,7 @@ The bash script makes sure that BulletBot is started correctly. A problem we ran
 
 After being executed by `bullet-mongo-start.service`, the script waits to make sure that `mongod.service` successfully started, then waits a little longer to give the database enough time to initialize. Once all that is done, the script will attempt to start `bulletbot.service`.
 
-On top of everything mentioned above, this script also has the capability of sending 'BulletBot Startup Status Reports'. These are sent when BulletBot is being ran in the background with auto-restart. These reports lists whether or not BulletBot was successfully started, the exit status of essential services, and the startup logs of three services that can be used to help identify errors that might have occurred during BulletBot's startup. Though please note that for this feature to work, you need to install thrid party mailing software. Follow [this guide](BulletBot-Startup-Status-Reports) to help you set this feature up.
+On top of everything mentioned above, this script also has the capability of sending 'BulletBot Startup Status Reports'. These are sent when BulletBot is being ran in the background with auto-restart. These reports lists whether or not BulletBot was successfully started, the exit status of essential services, and the startup logs of three services that can be used to help identify errors that might have occurred during BulletBot's startup. Though please note that for this feature to work, you need to install third party mailing software. Follow [this guide](BulletBot-Startup-Status-Reports) to help you set this feature up.
 
 ##### Service File
 
@@ -80,6 +79,12 @@ This service is the sole decider of whether or not BulletBot is run with or with
 Just like the method above, this method will start bulletbot in the background of the system, except when the system is restarted or shutdown, BulletBot will NOT be started upon system reboot.
 
 As mentioned in the description of the [service file](#service-file), if `bullet-mongo-start.service` is disabled, the run mode will default to this one. This applies even if you specifically started BulletBot with auto-restart.
+
+### Downloading and Updating BulletBot
+
+Every time you download/update BulletBot, the installers will first archive all of BulletBot's code currently in `/home/bulletbot/`, to `Old_BulletBot/${date}` (${date} is the time at which BulletBot's code is archived).
+
+Currently, the installers do not manage any of the archives it creates. This means that the number of archives it creates in `Old_BulletBot` will continue to grow and increase in size. If you would like to remove old archives, you will need to manually delete them. Each are labeled with the date at which they were created (formatted as such: Wed Apr 29 23:28:10 PDT 2020), which will make it easier identifying what archives are old and which ones are new.
 
 ## BulletBot Modules and Code
 
@@ -113,7 +118,7 @@ For YouTube webhooks, the bot uses the PubSubHubbub protocol and the [hub](https
 
 ### Command Cache
 
-Some commands require the user to reply with more information (`?!abc` as an example). To do this, BulletBot uses something called command caches. This allows a command to temporarily store data the user previously provided and also makes the bot send the reply message which doesn't have the prefix with the command to the specific command. For this to also work in DMs, the cache only stores the channel and the user ID, not the server ID. Then each time the bot receives a message, it checks if there is a command cache for that user and channel. If there is one, it will call the command as it normally would but also passes the command cache as a parameter. What the command does with that depends on the command. To check how the command cache document is build up check out the [database documentation](https://github.com/CodeBullet-Community/BulletBot/master/docs/docs/dev-documentation/database/main.md#commandcaches-collection-document).
+Some commands require the user to reply with more information (`?!abc` as an example). To do this, BulletBot uses something called command caches. This allows a command to temporarily store data the user previously provided and also makes the bot send the reply message which doesn't have the prefix with the command to the specific command. For this to also work in DMs, the cache only stores the channel and the user ID, not the server ID. Then each time the bot receives a message, it checks if there is a command cache for that user and channel. If there is one, it will call the command as it normally would but also passes the command cache as a parameter. What the command does with that depends on the command. To check how the command cache document is build up check out the [database documentation](https://github.com/CodeBullet-Community/BulletBot/blob/master/docs/dev-documentation/database/main.md#commands-collection-document).
 
 ### Rank/Permission System
 
