@@ -1,5 +1,5 @@
 import _, { PropertyPath } from 'lodash';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 
 import { Keys, ObjectKey } from '../schemas/global';
@@ -51,11 +51,12 @@ export abstract class DataWrapper<Data extends object, CachedData extends object
      * Maps data to path and only triggers if value at that path changes
      *
      * @param {PropertyPath} path Path to map to and watch
+     * @param {Observable<any>} [source=this.data] Observable which serves as data source (default this.data)
      * @returns Observable of value at specified path
      * @memberof DataWrapper
      */
-    subToMappedProperty(path: PropertyPath) {
-        return this.data.pipe(
+    subToMappedProperty(path: PropertyPath, source: Observable<any> = this.data) {
+        return source.pipe(
             map(data => _.get(data, path)),
             distinctUntilChanged(_.isEqual)
         );
@@ -65,11 +66,12 @@ export abstract class DataWrapper<Data extends object, CachedData extends object
      * Only triggers when value at the specified path changes
      *
      * @param {PropertyPath} path Path to watch
+     * @param {Observable<any>} [source=this.data] Observable which serves as data source (default this.data)
      * @returns Observable of entire data
      * @memberof DataWrapper
      */
-    subToPropertyChange(path: PropertyPath) {
-        return this.data.pipe(
+    subToPropertyChange(path: PropertyPath, source: Observable<any> = this.data) {
+        return source.pipe(
             distinctUntilChanged((prev, curr) => {
                 let prevProp = _.get(prev, path);
                 let currProp = _.get(curr, path);
