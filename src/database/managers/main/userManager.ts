@@ -1,6 +1,5 @@
 import { Client, Snowflake, UserResolvable } from 'discord.js';
 
-import { Bot } from '../../..';
 import { Commands } from '../../../commands';
 import { Database } from '../../database';
 import { UserObject, userSchema } from '../../schemas/main/user';
@@ -9,6 +8,10 @@ import { UserWrapper } from '../../wrappers/main/userWrapper';
 import { CacheManager } from '../cacheManager';
 import { FetchOptions } from '../collectionManager';
 
+/**
+ * Types that are resolvable to a UserWrapper
+ */
+export type UserWrapperResolvable = UserWrapper | UserResolvable;
 
 /**
  * Hold the user model
@@ -19,19 +22,20 @@ import { FetchOptions } from '../collectionManager';
  */
 export class UserManager extends CacheManager<UserObject, UserWrapper> {
 
-    private readonly bot: Bot;
+    private readonly client: Client;
     private readonly commandModule: Commands;
 
     /**
      * Creates an instance of UserManager.
      * 
-     * @param {Client} client Discord Client
-     * @param {Database} database Database holding all database connections
+     * @param {Database} database Database to get model from
+     * @param {Client} client
+     * @param {Commands} commandModule
      * @memberof UserManager
      */
-    constructor(bot: Bot, database: Database, commandModule: Commands) {
+    constructor(database: Database, client: Client, commandModule: Commands) {
         super(database, 'main', 'user', userSchema, UserWrapper);
-        this.bot = bot;
+        this.client = client;
         this.commandModule = commandModule;
     }
 
@@ -42,22 +46,20 @@ export class UserManager extends CacheManager<UserObject, UserWrapper> {
      * @returns
      * @memberof UserManager
      */
-    getDefaultObject(userID: Snowflake) {
+    getDefaultObject(userID: Snowflake): UserObject {
         return {
             id: userID,
             commandLastUsed: {}
         };
     };
 
-    /**
-     * Returns the userID unmodified
-     *
-     * @param {Snowflake} userID
+    /**   
+     * @param {Snowflake} id User id
      * @returns
      * @memberof UserManager
      */
-    getCacheKey(userID: Snowflake) {
-        return userID;
+    getCacheKey(id: Snowflake) {
+        return id;
     }
 
     /**
@@ -69,7 +71,7 @@ export class UserManager extends CacheManager<UserObject, UserWrapper> {
      * @memberof UserManager
      */
     get(user: UserResolvable, options?: LoadOptions<UserObject>) {
-        let userID = this.bot.client.users.resolveID(user);
+        let userID = this.client.users.resolveID(user);
         return this.getCached(options, userID);
     }
 
@@ -95,10 +97,24 @@ export class UserManager extends CacheManager<UserObject, UserWrapper> {
      * @memberof UserManager
      */
     async fetchResolve(user: UserResolvable) {
-        let userObj = this.bot.client.users.resolve(user);
+        let userObj = this.client.users.resolve(user);
         if (!userObj && typeof user === 'string')
-            userObj = await this.bot.client.users.fetch(user);
+            userObj = await this.client.users.fetch(user);
         return userObj
+    }
+
+    /**
+     * Resolves UserWrapperResolvable to a UserWrapper
+     *
+     * @param {UserWrapperResolvable} user
+     * @param {boolean} [fetch=false] If not cached GuildWrappers should be fetched
+     * @returns
+     * @memberof UserManager
+     */
+    async resolve(user: UserWrapperResolvable, fetch = false) {
+        if (user instanceof UserWrapper) return user;
+        if (fetch) return this.fetch(user, { fields: [] });
+        return this.get(user, { fields: [] });
     }
 
 }
