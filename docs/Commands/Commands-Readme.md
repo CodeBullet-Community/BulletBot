@@ -10,7 +10,7 @@ To determine whether or not a user has the necessary permissions to execute one 
 
 Bot masters have no restrictions when it comes to using BulletBot. They can perform any command, no matter their server, role, or user-level permissions.
 
-Bot masters are added when creating and applying the [settings document](https://github.com/CodeBullet-Community/BulletBot/blob/master/docs/database/settings.md) to the database. Because of this, all users added as a bot master will be recognized as such in any server that the bot is in.
+Bot masters are added when creating and applying the [settings document](https://github.com/CodeBullet-Community/BulletBot/blob/master/docs/dev-documentation/database/settings.md) to the database. Because of this, all users added as a bot master will be recognized as such in any server that the bot is in.
 
 ### Admin
 

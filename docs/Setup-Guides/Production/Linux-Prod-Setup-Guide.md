@@ -352,8 +352,6 @@ Follow the instructions below to enable authentication. Make sure to replace `[a
 ![Run Modes 1](../../media/Run-Modes-1.png)
 ![Run Modes 2](../../media/Run-Modes-2.png)
 
-*The images above may look different to how they actually look, depending on what version of BulletBot you are running.*
-
 !!! info
     A more in-depth look at the run modes can be read in the [In-Depth Explanations](/In-Depth-Explanations/#running-bulletbot) wiki.
 
@@ -374,10 +372,10 @@ When the installers display BulletBot's run modes, it will also indicate whether
 When it displays:
 
 * ![Run Status 1](../../media/Running-Status-1.png)
-  * `bullet-mongo-start.service` exists and is either enabled or disabled (which determines which mode BulletBot runs in), but BulletBot is not currently running.
+    * `bullet-mongo-start.service` exists and is either enabled or disabled (which determines which mode BulletBot runs in), but BulletBot is not currently running.
 * ![Run Status 2](../../media/Running-Status-2.png)
-  * BulletBot is currently running in [run mode].
-  * Note: Choosing the option/run mode that this is displayed on, will cause bulletbot to restart in that same run mode.
+    * BulletBot is currently running in [run mode].
+    * Note: Choosing the option/run mode that this is displayed on, will cause bulletbot to restart in that same run mode.
 
 ## Updating BulletBot
 
@@ -398,7 +396,8 @@ To update BulletBot, do the following:
 6. Stop and exit script
 ```
 
-*The layout may look different to how it actually looks, depending on what version of BulletBot you are running.*
+!!! info
+    For a more in-depth look on how BulletBot is updated, can be read in the [In-Depth Explanations](/In-Depth-Explanations/#downloading-and-updating-bulletbot) wiki.
 
 ## Other Information
 
