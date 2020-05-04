@@ -1,20 +1,20 @@
 import {
     ChannelResolvable,
+    Client,
+    Collection,
     Guild,
+    GuildChannel,
     GuildChannelResolvable,
     GuildMemberResolvable,
-    GuildResolvable,
     Snowflake,
     TextChannel,
 } from 'discord.js';
-import _, { PropertyPath } from 'lodash';
-import { Model, Schema } from 'mongoose';
+import { Model } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
 
-import { Bot } from '../../..';
-import { CommandName, CommandResolvable } from '../../../commands';
+import { CommandName, CommandResolvable, Commands } from '../../../commands';
 import { PermLevels } from '../../../utils/permissions';
-import { CommandUsageLimits, UsageLimits } from '../../schemas/global';
+import { UsageLimits } from '../../schemas/global';
 import {
     BBGuild,
     CommandSettings,
@@ -24,11 +24,9 @@ import {
     guildRanks,
     MegalogFunction,
     megalogGroups,
-    WebhookService,
 } from '../../schemas/main/guild';
 import { DocWrapper } from '../docWrapper';
-
-export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
+import { SettingsWrapper } from '../settings/settingsWrapper';
 
 /**
  * Wrapper for the guild object and document so everything can easily be access through one object
@@ -38,53 +36,115 @@ export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
  * @implements {guildObject}
  */
 export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
+
+    /**
+     * Discord.js Guild object of the guild
+     *
+     * @type {Guild}
+     * @memberof GuildWrapper
+     */
     readonly guild: Guild;
     readonly id: Snowflake;
     readonly prefix?: string;
-    readonly logChannel: Snowflake;
-    readonly caseChannel: Snowflake;
+    private _logChannel?: TextChannel;
+    readonly logChannel?: TextChannel;
+    private _caseChannel?: TextChannel;
+    readonly caseChannel?: TextChannel;
     readonly totalCases: number;
-    readonly logs: Schema.Types.ObjectId[];
-    readonly modmailChannel: Snowflake;
-    readonly webhooks: {
-        // key is service name
-        [K in WebhookService]?: Schema.Types.ObjectId[];
-    };
-    readonly locks: {
-        // channel id
-        [K in Snowflake]: {
-            until?: number;
-            allowOverwrites: Snowflake[];
-            neutralOverwrites: Snowflake[];
-        };
-    };
+    readonly cases: unknown; // TODO: implement CaseLogger
+    readonly logs: unknown; // TODO: implement LogLogger
+    readonly youtubeWebhooks: unknown; // TODO: implement GuildYoutubeWebhookManager
+    private _locks: Collection<string, unknown>; // TODO: add Collection of LockChannelWrappers
+    readonly locks: Collection<string, unknown>;
+    private _usageLimits?: UsageLimits;
     readonly usageLimits?: UsageLimits;
     readonly ranks: {
-        admins: Snowflake[]; // role and user ids
-        mods: Snowflake[]; // role and user ids
-        immune: Snowflake[]; // role and user ids
+        readonly [Rank in GuildRank]: Snowflake[];
     };
     readonly commandSettings: {
-        // key is command name
         [K in CommandName]: CommandSettings
     };
+    private _megalog: {
+        ignoreChannels: TextChannel[];
+    } & { [T in MegalogFunction]: TextChannel };
     readonly megalog: {
-        ignoreChannels: Snowflake[];
-    } & { [T in MegalogFunction]: Snowflake };
-    private readonly bot: Bot;
+        readonly ignoreChannels: TextChannel[];
+    } & { readonly [T in MegalogFunction]?: TextChannel };
+
+    private readonly client: Client;
+    private readonly settings: SettingsWrapper;
+    private readonly commandModule: Commands;
 
     /**
      * Creates an instance of GuildWrapper.
      * 
-     * @param {Snowflake} id ID of the guild
-     * @param {Guild} [guild] optional guild object (so constructor doesn't have to search for it)
+     * @param {Model<GuildDoc>} model Model of guild collection
+     * @param {Guild} guild Discord.js Guild object
+     * @param {Client} client
+     * @param {SettingsWrapper} settings
+     * @param {Commands} commandModule
      * @memberof GuildWrapper
      */
-    constructor(model: Model<GuildDoc>, bot: Bot, guild: Guild) {
+    constructor(model: Model<GuildDoc>, guild: Guild, client: Client, settings: SettingsWrapper, commandModule: Commands) {
         super(model, { id: guild.id }, { id: guild.id }, keys<GuildObject>());
-
-        this.bot = this.bot;
         this.guild = guild;
+        this.client = client;
+        this.settings = settings;
+        this.commandModule = commandModule;
+
+        this.setDataGetters(['logChannel', 'caseChannel', 'locks', 'usageLimits', 'megalog']);
+
+        this.subToMappedProperty('logChannel').subscribe(
+            id => this._logChannel = <TextChannel>this.guild.channels.cache.get(id));
+        this.subToMappedProperty('caseChannel').subscribe(
+            id => this._caseChannel = <TextChannel>this.guild.channels.cache.get(id));
+        // TODO: create hook for _locks
+        // TODO: create hook for _usageLimits
+
+        // creating hooks for megalog property
+        let megalog = this.subToMappedProperty('megalog');
+        this.subToMappedProperty('ignoreChannels', megalog)
+            .subscribe((ids: Snowflake[]) => {
+                this._megalog.ignoreChannels = [];
+                ids.forEach(id => {
+                    let channel = this.guild.channels.cache.get(id);
+                    if (!this.checkMegalogChannel(channel, 'ignoreChannels'))
+                        return;
+                    this._megalog.ignoreChannels.push(channel);
+                });
+            });
+        for (const func of megalogGroups.all)
+            this.subToMappedProperty(func, megalog).subscribe(id => {
+                let channel = this.guild.channels.cache.get(id);
+                if (!this.checkMegalogChannel(channel, func))
+                    return;
+                this._megalog[func] = channel;
+            });
+        /* This would only add and remove the channels that changed and should be more efficient. 
+        The problem is that it does not preserve the order
+    
+        let ignoreChannels = this.subToMappedProperty('ignoreChannels', megalog)
+            .pipe(pairwise());
+        ignoreChannels.pipe(map(([prev, curr]) => _.difference<Snowflake>(prev, curr)))
+            .subscribe(removed => _.remove(this._megalog.ignoreChannels,
+                channel => removed.includes(channel.id)));
+        ignoreChannels.pipe(map(([prev, curr]) => _.difference<Snowflake>(curr, prev)))
+            .subscribe(added => added.forEach(
+                id => {
+                    let channel = this.guild.channels.cache.get(id);
+                    if (!(channel instanceof TextChannel)) {
+                        console.warn(`Megalog channel "${id}" of guild "${this.guild.id}" is of wrong type. ` +
+                            `Expected TextChannel but is "${channel.type}"`);
+                        return;
+                    }
+                    this._megalog.ignoreChannels.push(channel);
+                })); */
+
+        this.setIfLoadedProperty('logChannel', () => this._logChannel);
+        this.setIfLoadedProperty('caseChannel', () => this._caseChannel);
+        this.setIfLoadedProperty('locks', () => this._locks);
+        this.setIfLoadedProperty('usageLimits', () => this._usageLimits);
+        this.setIfLoadedProperty('megalog', () => this._megalog);
     }
 
     /**
@@ -96,7 +156,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
     async getPrefix() {
         await this.load('prefix');
         if (this.prefix) return this.prefix;
-        return this.bot.settings.prefix;
+        return this.settings.prefix;
     }
 
     /**
@@ -106,249 +166,45 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * @memberof GuildWrapper
      */
     async setPrefix(prefix?: string) {
-        let query: any = { $set: { prefix: prefix } };
-        if (!prefix) query = { $unset: { prefix: 0 } };
-        await this.update(query);
-        let tempData = this.cloneData();
-        tempData.prefix = prefix;
-        this.data.next(tempData);
+        if (!prefix)
+            return this.updatePathUnset('prefix');
+        await this.updatePathSet([['prefix', prefix]]);
     }
 
     /**
-     * returns the case log channel object
+     * Sets the channel where LogLogger will send logs
      *
-     * @returns
+     * @param {GuildChannelResolvable} channel Channel to set it to
      * @memberof GuildWrapper
      */
-    async getCaseChannel() {
-        this.load('caseChannel');
-        if (!this.caseChannel) return undefined;
-        return this.guild.channels.cache.get(this.caseChannel);
+    async setLogChannel(channel: GuildChannelResolvable) {
+        let channelID = this.guild.channels.resolveID(channel);
+        await this.updatePathSet([['logChannel', channelID]]);
     }
 
     /**
-     * returns the log channel object
+     * Sets the channel where CaseLogger will send logs
      *
-     * @returns
+     * @param {GuildChannelResolvable} channel Channel to set it to
      * @memberof GuildWrapper
      */
-    async getLogChannel() {
-        this.load('logChannel');
-        if (!this.logChannel) return undefined;
-        return this.guild.channels.cache.get(this.logChannel);
+    async setCaseChannel(channel: GuildChannelResolvable) {
+        let channelID = this.guild.channels.resolveID(channel);
+        await this.updatePathSet([['caseChannel', channelID]]);
     }
 
+    // TODO: implement channel lock functions
+
     /**
-     * returns promise with specified case document
+     * Checks if rank is a valid GuildRank and if not throws an error
      *
-     * @param {number} caseID case ID of case to be returned
-     * @returns
+     * @private
+     * @param {GuildRank} rank Rank to check
      * @memberof GuildWrapper
      */
-    getCase(caseID: number) {
-        return this.bot.caseLogger.findByCase(this.id, caseID);
-    }
-
-    /**
-     * deletes the specified case from the database
-     *
-     * @param {number} caseID case that should be deleted
-     * @returns
-     * @memberof GuildWrapper
-     */
-    removeCase(caseID: number) {
-        return this.bot.caseLogger.deleteCase(this.id, caseID);
-    }
-
-    /**
-     * returns a promise with an array of all cases
-     *
-     * @returns
-     * @memberof GuildWrapper
-     */
-    getCases() {
-        return this.bot.caseLogger.findByGuild(this.id);
-    }
-
-    /**
-     * Adds user/role to admin/mod/immune rank
-     *
-     * @param {GuildRank} rank Which rank the user/role should be added to
-     * @param {Snowflake} snowflake Role/User id to add to the rank
-     * @returns Resulting list of IDs in the rank
-     * @memberof GuildWrapper
-     */
-    async addToRank(rank: GuildRank, snowflake: Snowflake) {
-        await this.load('ranks');
-        if (!guildRanks.includes(rank)) return undefined;
-        if (this.ranks[rank].includes(snowflake)) return undefined;
-        let query = { $addToSet: {} };
-        query.$addToSet[`ranks.${rank}`] = [snowflake];
-        await this.update(query);
-        let tempData = this.cloneData();
-        tempData.ranks[rank].push(snowflake);
-        this.data.next(tempData);
-        return this.ranks[rank];
-    }
-
-    /**
-     * Removes user/role from the admin/mod/immune rank
-     *
-     * @param {GuildRank} rank Rank the user should be removed from
-     * @param {Snowflake} snowflake Role/User id to remove to the rank
-     * @returns Resulting list of IDs in the rank
-     * @memberof GuildWrapper
-     */
-    async removeFromRank(rank: GuildRank, snowflake: Snowflake) {
-        await this.load('ranks');
-        if (!guildRanks.includes(rank)) return undefined;
-        if (!this.ranks[rank].includes(snowflake)) return undefined;
-        let query = { $pull: {} };
-        query.$pull[`ranks.${rank}`] = snowflake;
-        await this.update(query);
-        let tempData = this.cloneData();
-        tempData.ranks[rank].splice(this.ranks[rank].indexOf(snowflake), 1);
-        this.data.next(tempData);
-        return this.ranks[rank];
-    }
-
-    // TODO: add functions for webhooks
-    // TODO: add functions for adding/removing locks
-
-    /**
-     * Always returns a object if the command exists
-     *
-     * @param {string} command Command to get settings of
-     * @returns CommandSettings object
-     * @memberof GuildWrapper
-     */
-    async getCommandSettings(command: CommandName) {
-        await this.load('commandSettings');
-        if (!this.bot.commands.get(command)) return undefined;
-        return this.commandSettings[command] || {};
-    }
-
-    /**
-     * Overrides settings of specified command with provided settings
-     *
-     * @param {string} command Command to override settings of
-     * @param {CommandSettings} settings Settings to override with
-     * @returns The final settings if successful
-     * @memberof GuildWrapper
-     */
-    async setCommandSettings(command: CommandName, settings: CommandSettings) {
-        if (!this.bot.commands.get(command)) return undefined;
-        let query = { $set: {} };
-        query.$set[`commandSettings.${command}`] = settings;
-        await this.update(query);
-        let tempData = this.cloneData();
-        tempData.commandSettings[command] = settings;
-        this.data.next(tempData);
-        return settings;
-    }
-
-    /**
-     * If command is enabled or disabled
-     *
-     * @param {string} command Command to check
-     * @returns if command is enabled
-     * @memberof GuildWrapper
-     */
-    async commandIsEnabled(command: CommandName) {
-        await this.load('commandSettings');
-        if (!this.bot.commands.get(command)) return undefined;
-        if (!this.commandSettings[command] || this.commandSettings[command]._enabled) return true;
-        return false;
-    }
-
-    /**
-     * Toggles a command on or off
-     *
-     * @param {string} command Command to toggle
-     * @param {boolean} [value] Optional value to override the toggling value
-     * @returns The final command toggle settings
-     * @memberof GuildWrapper
-     */
-    async toggleCommand(command: CommandName, value?: boolean) {
-        await this.load('commandSettings');
-        let commandObj = this.bot.commands.get(command);
-        if (!commandObj || !commandObj.togglable) return undefined;
-
-        let settings = await this.getCommandSettings(command);
-        value = value || settings._enabled === false ? true : false;
-
-        let query = { $set: {} };
-        query.$set[`commandSettings.${command}._enabled`] = value;
-        await this.update(query);
-
-        settings._enabled = value;
-        let tempData = this.cloneData();
-        tempData.commandSettings[command] = settings;
-        this.data.next(tempData);
-        return value;
-    }
-
-    /**
-     * Merges the usage limits of the guild and the global settings at the specific path.
-     *
-     * @param {string} [path=''] What part to merge (default everything)
-     * @returns Merge usage limits
-     * @memberof GuildWrapper
-     */
-    async getUsageLimits(path: PropertyPath = '') {
-        await this.load('usageLimits');
-        let globalUsageLimits: any = _.at<any>(this.bot.settings.usageLimits, path) || {};
-        let guildUsageLimits: any = _.at<any>(this.usageLimits, path) || {};
-        return _.merge(globalUsageLimits, guildUsageLimits);
-    }
-
-    /**
-     * Gets command usage limits for specified command
-     *
-     * @param {CommandResolvable} commandResolvable Command for which to get usage limits
-     * @returns {CommandUsageLimits} Usage limits for specified command
-     * @memberof GuildWrapper
-     */
-    async getCommandUsageLimits(commandResolvable: CommandResolvable): Promise<CommandUsageLimits> {
-        let command = this.bot.commands.resolve(commandResolvable);
-        let usageLimits = await this.getUsageLimits(`commands.${command.name}`);
-        return this.bot.commands.getCommandUsageLimits(command, usageLimits);
-    }
-
-    /**
-     *  returns perm level of member
-     *  - member: 0
-     *  - immune: 1
-     *  - mod: 2
-     *  - admin: 3 
-     *  - this.botMaster: 4
-     *
-     * @export
-     * @param {GuildMemberResolvable} member member to get perm level from
-     * @returns perm level
-     */
-    async getPermLevel(memberResolvable: GuildMemberResolvable): Promise<PermLevels> {
-        await this.load('ranks');
-        let member = await this.guild.members.resolve(memberResolvable);
-
-        // if bot master
-        if ((await this.bot.settings.botMasters).includes(member.id))
-            return PermLevels.botMaster;
-
-        // if admin
-        if (member.hasPermission('ADMINISTRATOR'))
-            return PermLevels.admin;
-
-        if (this.ranks.admins.includes(member.id)
-            || member.roles.cache.find(role => this.ranks.admins.includes(role.id)))
-            return PermLevels.admin;
-        if (this.ranks.mods.includes(member.id)
-            || member.roles.cache.find(role => this.ranks.mods.includes(role.id)))
-            return PermLevels.mod;
-        if (this.ranks.immune.includes(member.id)
-            || member.roles.cache.find(role => this.ranks.immune.includes(role.id)))
-            return PermLevels.immune;
-        return PermLevels.member;
+    private checkGuildRank(rank: GuildRank) {
+        if (!guildRanks.includes(rank))
+            throw new Error(`Invalid Input. Expected GuildRank got "${rank}"`);
     }
 
     /**
@@ -360,8 +216,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     async getRankIDs(rank: GuildRank): Promise<Snowflake[]> {
         await this.load('ranks');
-        if (!guildRanks.includes(rank))
-            throw new Error(`Invalid Input. Rank should be either 'admins', 'mods' or 'immune' but was: ${rank}`);
+        this.checkGuildRank(rank);
         return this.ranks[rank];
     }
 
@@ -412,6 +267,189 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
     }
 
     /**
+     * Adds user/role to admin/mod/immune rank. 
+     * If id already is in rank, it will just return undefined.
+     *
+     * @param {GuildRank} rank Which rank the user/role should be added to
+     * @param {Snowflake} snowflake Role/User id to add to the rank
+     * @returns Resulting list of IDs in the rank
+     * @memberof GuildWrapper
+     */
+    async addToRank(rank: GuildRank, snowflake: Snowflake) {
+        await this.load('ranks');
+        this.checkGuildRank(rank);
+        if (this.data.value.ranks[rank].includes(snowflake))
+            return undefined;
+        await this.updatePathAddToSet([[`ranks.${rank}`, snowflake]])
+        return this.ranks[rank];
+    }
+
+    /**
+     * Removes user/role from the admin/mod/immune rank.
+     * If id is not in rank, it will just return undefined.
+     *
+     * @param {GuildRank} rank Rank the user should be removed from
+     * @param {Snowflake} snowflake Role/User id to remove to the rank
+     * @returns Resulting list of IDs in the rank
+     * @memberof GuildWrapper
+     */
+    async removeFromRank(rank: GuildRank, snowflake: Snowflake) {
+        await this.load('ranks');
+        this.checkGuildRank(rank);
+        if (!this.data.value.ranks[rank].includes(snowflake))
+            return undefined;
+        await this.updatePathPull([[`ranks.${rank}`, snowflake]]);
+        return this.ranks[rank];
+    }
+
+    /**
+     *  Returns perm level of member
+     *  - member: 0
+     *  - immune: 1
+     *  - mod: 2
+     *  - admin: 3 
+     *  - botMaster: 4
+     *
+     * @export
+     * @param {GuildMemberResolvable} member Member to get perm level from
+     * @returns
+     */
+    async getPermLevel(memberResolvable: GuildMemberResolvable) {
+        await this.load('ranks');
+        let member = await this.guild.members.resolve(memberResolvable);
+
+        if ((await this.settings.botMasters).includes(member.id))
+            return PermLevels.botMaster;
+        // TODO: use function from SettingsWrapper to check if user is bot master
+
+        if (member.hasPermission('ADMINISTRATOR'))
+            return PermLevels.admin;
+
+        for (const rank of guildRanks)
+            if (this.data.value.ranks[rank].includes(member.id)
+                || member.roles.cache.find(role => this.data.value.ranks[rank].includes(role.id)))
+                return PermLevels[rank];
+
+        return PermLevels.member;
+    }
+
+    /**
+     * Check if command exists and if not throw an error
+     *
+     * @private
+     * @param {CommandResolvable} command Command to check
+     * @returns
+     * @memberof GuildWrapper
+     */
+    private checkCommand(command: CommandResolvable) {
+        let commandObj = this.commandModule.resolve(command);
+        if (commandObj == null)
+            throw new Error(`Invalid command name. Provided command name is not a command "${command}"`);
+        return commandObj;
+    }
+
+    /**
+     * Always returns a object if the command exists
+     *
+     * @param {CommandResolvable} command Command to get settings of
+     * @returns CommandSettings object
+     * @memberof GuildWrapper
+     */
+    async getCommandSettings(command: CommandResolvable) {
+        await this.load('commandSettings');
+        let commandName = this.checkCommand(command).name;
+        return this.commandSettings[commandName] || {};
+    }
+
+    /**
+     * Overrides settings of specified command with provided settings
+     *
+     * @param {CommandResolvable} command Command to override settings of
+     * @param {CommandSettings} settings Settings to override with
+     * @returns The final settings if successful
+     * @memberof GuildWrapper
+     */
+    async setCommandSettings(command: CommandResolvable, settings: CommandSettings) {
+        let commandName = this.checkCommand(command).name;
+        await this.updatePathSet([[`commandSettings.${commandName}`, settings]]);
+        return settings;
+    }
+
+    /**
+     * If command is enabled or disabled
+     *
+     * @param {CommandResolvable} command Command to check
+     * @returns if command is enabled
+     * @memberof GuildWrapper
+     */
+    async commandIsEnabled(command: CommandResolvable) {
+        await this.load('commandSettings');
+        let commandName = this.checkCommand(command).name;
+        if (!this.commandSettings[commandName] || this.commandSettings[commandName]._enabled)
+            return true;
+        return false;
+    }
+
+    /**
+     * Toggles a command on or off
+     *
+     * @param {CommandResolvable} command Command to toggle
+     * @param {boolean} [value] Optional value to override the toggling value
+     * @returns The final command toggle settings
+     * @memberof GuildWrapper
+     */
+    async toggleCommand(command: CommandResolvable, value?: boolean) {
+        await this.load('commandSettings');
+        let commandObj = this.checkCommand(command);
+        if (!commandObj.togglable)
+            throw new Error(`Specified command "${command}" cannot be toggled`);
+
+
+        if (value === undefined) {
+            let settings = await this.getCommandSettings(command);
+            value = settings._enabled === false ? true : false;
+        }
+
+        await this.updatePathSet([
+            [`commandSettings.${commandObj.name}._enabled`, value]
+        ]);
+
+        return value;
+    }
+
+    /**
+     * Check if megalog function exists and if not throw an error
+     *
+     * @private
+     * @param {string} func
+     * @returns {MegalogFunction}
+     * @memberof GuildWrapper
+     */
+    private checkMegalogFunction(func: string): MegalogFunction {
+        if (!megalogGroups.all.includes(<MegalogFunction>func))
+            throw new Error(`Invalid Input. 'func' should be a MegalogFunction but was: ${func}`);
+        return <MegalogFunction>func;
+    }
+
+    /**
+     * Check if provided channel is a TextChannel and if not log a warn
+     *
+     * @private
+     * @param {GuildChannel} channel Channel to check
+     * @param {string} key Key of this.megalog. to know on what property it occurs
+     * @returns {channel is TextChannel}
+     * @memberof GuildWrapper
+     */
+    private checkMegalogChannel(channel: GuildChannel, key: string): channel is TextChannel {
+        if (!(channel instanceof TextChannel)) {
+            console.warn(`Megalog channel "megalog.${key}" of guild "${this.guild.id}" is of wrong type. ` +
+                `Expected TextChannel but is "${channel.type}"`);
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Check if a megalog function is enabled
      *
      * @param {MegalogFunction} func Which megalog function to check
@@ -419,35 +457,9 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * @memberof GuildWrapper
      */
     async megalogIsEnabled(func: MegalogFunction) {
-        return await this.getMegalogChannelID(func) ? true : false;
-    }
-
-    /**
-     * Returns the id of the channel for a specific megalog function if it's defined
-     *
-     * @param {MegalogFunction} func Function to get channel for
-     * @returns
-     * @memberof GuildWrapper
-     */
-    async getMegalogChannelID(func: MegalogFunction) {
         this.load('megalog');
-        if (!megalogGroups.all.includes(func))
-            throw new Error(`Invalid Input. 'func' should be a MegalogFunction but was: ${func}`);
-        return this.megalog[func];
-    }
-
-    /**
-     * Returns the channel for a specific megalog channel if it's defined
-     *
-     * @param {MegalogFunction} func
-     * @returns
-     * @memberof GuildWrapper
-     */
-    async getMegalogChannel(func: MegalogFunction) {
-        let channelID = await this.getMegalogChannelID(func);
-        let channel = this.guild.channels.cache.get(channelID);
-        if (!(channel instanceof TextChannel)) return undefined;
-        return channel;
+        this.checkMegalogFunction(func);
+        return this.megalog[func]?.id ? true : false;
     }
 
     /**
@@ -455,20 +467,18 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      *
      * @param {MegalogFunction} func Function to set the channel for
      * @param {ChannelResolvable} channel Channel to set the function to
-     * @returns The channel id if it was set successfully
+     * @returns The channel if it was not set before
      * @memberof GuildWrapper
      */
     async setMegalogChannel(func: MegalogFunction, channel: ChannelResolvable) {
         this.load('megalog');
-        let channelID = this.bot.client.channels.resolveID(channel);
-        if (await this.getMegalogChannelID(func) == channelID) return undefined;
-        let query = { $set: {} };
-        query.$set[`megalog.${func}`] = channelID;
-        await this.update(query);
-        let tempData = this.cloneData();
-        tempData.megalog[func] = channelID;
-        this.data.next(tempData);
-        return channelID;
+        let channelObj = this.client.channels.resolve(channel);
+        if (!(channelObj instanceof TextChannel))
+            throw new Error(`Invalid channel type. Expected TextChannel but got "${channelObj.type}"`);
+        this.checkMegalogFunction(func);
+        if (this.megalog[func]?.id === channelObj.id) return undefined;
+        await this.updatePathSet([[`megalog.${func}`, channelObj.id]]);
+        return channelObj;
     }
 
     /**
@@ -480,14 +490,10 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     async disableMegalogFunction(func: MegalogFunction) {
         this.load('megalog');
-        let channelId = await this.getMegalogChannelID(func);
+        this.checkMegalogFunction(func);
+        let channelId = this.megalog[func]?.id;
         if (!channelId) return undefined;
-        let query = { $unset: {} };
-        query.$unset[`megalog.${func}`] = 0;
-        await this.update(query);
-        let tempData = this.cloneData();
-        delete tempData.megalog[func];
-        this.data.next(tempData);
+        await this.updatePathUnset(`megalog.${func}`);
         return channelId;
     }
 
@@ -499,20 +505,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     async getMegalogIgnoreChannelIDs() {
         await this.load('megalog');
-        return this.megalog.ignoreChannels;
-    }
-
-    /**
-     * Gets the channels that the megalog should ignore
-     *
-     * @returns {Promise<TextChannel[]>}
-     * @memberof GuildWrapper
-     */
-    async getMegalogIgnoreChannels(): Promise<TextChannel[]> {
-        let IDs = await this.getMegalogIgnoreChannelIDs();
-        let channels = IDs.map(id => this.guild.channels.cache.get(id));
-        // @ts-ignore
-        return channels.filter(channel => channel instanceof TextChannel);
+        return this.megalog.ignoreChannels.map(channel => channel.id);
     }
 
     /**
@@ -525,7 +518,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
     async megalogIsIgnored(channel: GuildChannelResolvable) {
         this.load('megalog');
         let channelID = this.guild.channels.resolveID(channel);
-        return this.megalog.ignoreChannels.includes(channelID);
+        return this.data.value.megalog.ignoreChannels.includes(channelID);
     }
 
     /**
@@ -538,13 +531,9 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
     async removeMegalogIgnoreChannel(channel: GuildChannelResolvable) {
         this.load('megalog');
         let channelID = this.guild.channels.resolveID(channel);
-        if (!this.megalog.ignoreChannels.includes(channelID)) return undefined;
-        let query = { $pull: {} };
-        query.$pull['megalog.ignoreChannels'] = channelID;
-        await this.update(query);
-        let tempData = this.cloneData();
-        _.remove(tempData.megalog.ignoreChannels, channelID);
-        this.data.next(tempData);
+        if (!this.data.value.megalog.ignoreChannels.includes(channelID))
+            return undefined;
+        await this.updatePathPull([['megalog.ignoreChannels', channelID]]);
         return this.megalog.ignoreChannels;
     }
 
@@ -557,15 +546,10 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     async addMegalogIgnoreChannel(channel: GuildChannelResolvable) {
         this.load('megalog');
-        let channelObj = this.guild.channels.resolve(channel);
-        if (!(channelObj instanceof TextChannel)) return undefined;
-        if (this.megalog.ignoreChannels.includes(channelObj.id)) return undefined;
-        let query = { $addToSet: {} };
-        query.$addToSet['megalog.ignoreChannels'] = channelObj.id;
-        await this.update(query);
-        let tempData = this.cloneData();
-        tempData.megalog.ignoreChannels.push(channelObj.id);
-        this.data.next(tempData);
+        let channelID = this.guild.channels.resolveID(channel);
+        if (this.data.value.megalog.ignoreChannels.includes(channelID))
+            return undefined;
+        await this.updatePathAddToSet([['megalog.ignoreChannels', channelID]]);
         return this.megalog.ignoreChannels;
     }
 

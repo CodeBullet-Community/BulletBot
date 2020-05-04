@@ -1,18 +1,45 @@
-import { Snowflake, TextChannel, GuildMember } from "discord.js";
-import { Schema } from "mongoose";
-import { CommandName } from "../../../commands";
-import { UsageLimits, ExDocument, usageLimitSchemaDefinition } from "../global";
-import { LogObject } from "./log";
-import { WebhookObject } from "../webhooks/_webhooks";
+import { Collection, Snowflake, TextChannel } from 'discord.js';
+import { Schema } from 'mongoose';
+
+import { CommandName } from '../../../commands';
+import { UsageLimitsWrapper } from '../../wrappers/shared/usageLimitsWrapper';
+import { ExDocument, UsageLimits, usageLimitSchemaDefinition } from '../global';
+
+/**
+ * Object that defines a channel lock
+ *
+ * @export
+ * @interface ChannelLock
+ */
+export interface ChannelLock {
+    /**
+     * Until when the channel is locked
+     *
+     * @type {number}
+     */
+    until?: number;
+    /**
+     * Overwrites which were on allow before being locked
+     *
+     * @type {Snowflake[]}
+     */
+    allowOverwrites: Snowflake[];
+    /**
+     * Overwrites which were on neutral before being locked
+     *
+     * @type {Snowflake[]}
+     */
+    neutralOverwrites: Snowflake[];
+}
 
 /**
  * String representing a guild rank
  */
-export type GuildRank = 'admins' | 'mods' | 'immune';
+export type GuildRank = 'admin' | 'mod' | 'immune';
 /**
  * Array with all assignable guild ranks
  */
-export const guildRanks: GuildRank[] = ['admins', 'mods', 'immune']
+export const guildRanks: GuildRank[] = ['admin', 'mod', 'immune']
 
 /**
  * Settings object for a command
@@ -93,75 +120,100 @@ export type WebhookService = 'youtube';
  * Object holding data for guild saved by BulletBot
  */
 export interface BBGuild {
+    /**
+     * Id of guild
+     *
+     * @type {Snowflake}
+     * @memberof BBGuild
+     */
     id: Snowflake;
+    /**
+     * Custom prefix that the guild uses
+     *
+     * @type {string}
+     * @memberof BBGuild
+     */
     prefix?: string;
-    logChannel: Snowflake | TextChannel;
-    caseChannel: Snowflake | TextChannel;
+    /**
+     * Channel which LogLogger send logs to
+     *
+     * @type {(Snowflake | TextChannel)}
+     * @memberof BBGuild
+     */
+    logChannel?: Snowflake | TextChannel;
+    /**
+     * Channel which CaseLogger send logs to
+     *
+     * @type {(Snowflake | TextChannel)}
+     * @memberof BBGuild
+     */
+    caseChannel?: Snowflake | TextChannel;
+    /**
+     * Total cases in guild to track next case id.
+     * When a case gets removed, the number stays unchanged
+     *
+     * @type {number}
+     * @memberof BBGuild
+     */
     totalCases: number;
-    logs: (Schema.Types.ObjectId | LogObject)[];
-    modmailChannel: Snowflake | TextChannel;
-    webhooks: {
-        // key is service name
-        [K in WebhookService]?: (Schema.Types.ObjectId | WebhookObject)[];
-    };
+    /**
+     * Channel locks currently active in guild
+     *
+     * @memberof BBGuild
+     */
     locks: {
-        // channel id
-        [K in Snowflake]: {
-            until?: number;
-            allowOverwrites: Snowflake[];
-            neutralOverwrites: Snowflake[];
-        };
-    };
-    usageLimits?: UsageLimits;
+        [K in Snowflake]: ChannelLock;
+    } | Collection<string, unknown>; // TODO: add Collection of LockChannelWrappers
+    /**
+     * Usage limits specific to this guild
+     *
+     * @type {(UsageLimits | UsageLimitsWrapper<any>)}
+     * @memberof BBGuild
+     */
+    usageLimits?: UsageLimits | UsageLimitsWrapper<any>;
+    /**
+     * Different GuildRanks with both role and user ids in one array
+     *
+     * @memberof BBGuild
+     */
     ranks: {
-        admins: (Snowflake | GuildMember)[]; // role and user ids
-        mods: (Snowflake | GuildMember)[]; // role and user ids
-        immune: (Snowflake | GuildMember)[]; // role and user ids
+        [Rank in GuildRank]: Snowflake[];
     };
+    /**
+     * Commands settings for the different commands
+     *
+     * @memberof BBGuild
+     */
     commandSettings: {
-        // key is command name
         [K in CommandName]: CommandSettings
     };
+    /**
+     * Megalog settings for this guild
+     *
+     * @memberof BBGuild
+     */
     megalog: {
+        /**
+         * Channels of which events will not be logged
+         *
+         * @type {((Snowflake | TextChannel)[])}
+         */
         ignoreChannels: (Snowflake | TextChannel)[];
-    } & { [T in MegalogFunction]: Snowflake | TextChannel };
+    } & { [T in MegalogFunction]?: Snowflake | TextChannel };
 }
 /**
  * Object raw data about guild saved in database
  */
 export interface GuildObject extends BBGuild {
-    id: Snowflake;
-    prefix?: string;
-    logChannel: Snowflake;
-    caseChannel: Snowflake;
-    totalCases: number;
-    logs: Schema.Types.ObjectId[];
-    modmailChannel: Snowflake;
-    webhooks: {
-        // key is service name
-        [K in WebhookService]?: Schema.Types.ObjectId[];
-    };
+    logChannel?: Snowflake;
+    caseChannel?: Snowflake;
     locks: {
-        // channel id
-        [K in Snowflake]: {
-            until?: number;
-            allowOverwrites: Snowflake[];
-            neutralOverwrites: Snowflake[];
-        };
+        [K in Snowflake]: ChannelLock;
     };
     usageLimits?: UsageLimits;
-    ranks: {
-        admins: Snowflake[]; // role and user ids
-        mods: Snowflake[]; // role and user ids
-        immune: Snowflake[]; // role and user ids
-    };
-    commandSettings: {
-        // key is command name
-        [K in CommandName]: CommandSettings
-    };
     megalog: {
         ignoreChannels: Snowflake[];
-    } & { [T in MegalogFunction]: Snowflake };
+    } & { [T in MegalogFunction]?: Snowflake };
 }
 /**
  * Mongoose Document for GuildObject
@@ -173,44 +225,16 @@ export type GuildDoc = ExDocument<GuildObject>;
 export const guildSchema = new Schema({
     id: String,
     prefix: { required: false, type: String },
-    logChannel: String,
-    caseChannel: String,
+    logChannel: { required: false, type: String },
+    caseChannel: { required: false, type: String },
     totalCases: Number,
-    modmailChannel: String,
-    logs: [Schema.Types.ObjectId],
-    webhooks: {
-        youtube: { required: false, type: [Schema.Types.ObjectId] }
-    },
     locks: Schema.Types.Mixed,
     usageLimits: { required: false, type: usageLimitSchemaDefinition },
     ranks: {
-        admins: [String],
-        mods: [String],
+        admin: [String],
+        mod: [String],
         immune: [String],
     },
     commandSettings: Schema.Types.Mixed,
-    megalog: {
-        ignoreChannels: [String],
-        channelCreate: { type: String, required: false },
-        channelDelete: { type: String, required: false },
-        channelUpdate: { type: String, required: false },
-        ban: { type: String, required: false },
-        unban: { type: String, required: false },
-        memberJoin: { type: String, required: false },
-        memberLeave: { type: String, required: false },
-        nicknameChange: { type: String, required: false },
-        memberRolesChange: { type: String, required: false },
-        guildNameChange: { type: String, required: false },
-        messageDelete: { type: String, required: false },
-        attachmentCache: { type: String, required: false },
-        messageEdit: { type: String, required: false },
-        reactionAdd: { type: String, required: false },
-        reactionRemove: { type: String, required: false },
-        roleCreate: { type: String, required: false },
-        roleDelete: { type: String, required: false },
-        roleUpdate: { type: String, required: false },
-        voiceTransfer: { type: String, required: false },
-        voiceMute: { type: String, required: false },
-        voiceDeaf: { type: String, required: false }
-    }
+    megalog: Schema.Types.Mixed
 }, { id: false, collection: 'guilds' });
