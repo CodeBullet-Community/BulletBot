@@ -2,9 +2,6 @@
 
 This guide is meant for those who want to do the development work on BulletBot, or wish to set BulletBot up manually. It will instruct and explain the process in which BulletBot is manually set up on a Linux based distribution
 
-!!! important "Important Note Before Continuing"
-    Some of the contents of this setup guide are only applicable to BulletBot [v1.2.8](https://github.com/CodeBullet-Community/BulletBot/releases/tag/v1.2.8) and later. Due to improper writing/handling of past documentation, there is no proper documentation that can be referred to for versions older than v1.2.8.
-
 ## Officially Supported Linux Distributions
 
 Below is a list of Linux Distributions that BulletBot is officially supported on. It also lists what versions of MongoDB and Node.js, along with other system specifications that are supported on specific distributions:

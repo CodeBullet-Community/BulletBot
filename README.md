@@ -20,8 +20,8 @@ There are two types of guides for setting BulletBot up. One is for running the b
   - [Linux](https://bulletbot.readthedocs.io/en/latest/Setup-Guides/Production/Linux-Prod-Setup-Guide/)
   - No Windows guide (You can add one if you like)
 - Development Setup:
-  - [Windows](https://bulletbot.readthedocs.io/en/latest/Setup-Guides/Development/Linux-Dev-Setup-Guide/)
-  - [Linux](https://bulletbot.readthedocs.io/en/latest/Setup-Guides/Development/Windows-Dev-Setup-Guide/)
+  - [Linux](https://bulletbot.readthedocs.io/en/latest/Setup-Guides/Development/Linux-Dev-Setup-Guide/)
+  - [Windows](https://bulletbot.readthedocs.io/en/latest/Setup-Guides/Development/Windows-Dev-Setup-Guide/)
 
 If you need help you can ask on the Discord server.
 
@@ -39,6 +39,17 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on the process for su
 ## Versioning
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/CodeBullet-Community/BulletBot/tags).
+
+### Installers
+
+Because the installers are an extension of BulletBot, but are not directly part of the bot, it's versioning is a little different.
+
+* Major revisions: Changes the current minor revision number
+  * v1.2.0 --> v1.3.0
+* Minor revisions: Changes the current patch number by 2
+  * v1.2.0 --> v1.2.2
+* Patch revisions: Changes the current patch number by 1
+  * v1.2.0 --> v1.2.1
 
 ## License
 

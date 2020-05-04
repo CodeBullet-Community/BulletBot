@@ -36,7 +36,6 @@ This page lists all of the commands that can be used with BulletBot, description
 |     **?!ban**     | Ban members                                                   |      Mod      |
 |    **?!bans**     | Lists all banned members                                      |      Mod      |
 |    **?!case**     | Lists/deletes all cases of a guild                            |      Mod      |
-| **?!casedelete**  | Delete cases from the Database (Removed and merged with **?!case** in v1.2.11)           |      Mod      |
 |    **?!kick**     | Kick members                                                  |      Mod      |
 |    **?!lock**     | Lock a channel for normal members                             |      Mod      |
 |    **?!locks**    | Lists all locked channels                                     |      Mod      |
