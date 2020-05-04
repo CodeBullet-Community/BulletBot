@@ -280,6 +280,118 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
     }
 
     /**
+     * Base helper function to update a doc
+     *
+     * @private
+     * @template Input
+     * @param {string} operation MongoDB operation
+     * @param {(query: any, input: Input) => any} queryBuilder Function that add to the provided query (final query is { [operation]:query })
+     * @param {(data: Partial<Data>, input: Input) => any} dataUpdater Function that updates the provided data
+     * @param {Input[]} inputs Inputs that will be passed to the updater/builder
+     * @memberof DocWrapper
+     */
+    private async updateBaseHelper<Input>(operation: string,
+        queryBuilder: (query: any, input: Input) => any,
+        dataUpdater: (data: Partial<Data>, input: Input) => any, inputs: Input[]) {
+        let operationDoc = {};
+        inputs.forEach(input => queryBuilder(operationDoc, input));
+        let query = {};
+        query[operation] = operationDoc;
+        await this.update(query);
+
+        let tempData = this.cloneData();
+        inputs.forEach(input => dataUpdater(tempData, input));
+        this.data.next(tempData);
+    }
+
+    /**
+     * Sets the specified paths to the specified values in the database doc
+     *
+     * @protected
+     * @param {[string, any][]} pathValuePairs Path value pair array
+     * @returns
+     * @memberof DocWrapper
+     */
+    protected updatePathSet(pathValuePairs: [string, any][]) {
+        return this.updateBaseHelper('$set',
+            (query, pair) => query[pair[0]] = pair[1],
+            (data, pair) => _.set(data, pair[0], pair[1]),
+            pathValuePairs);
+    }
+
+    /**
+     * Unsets specific paths in the database doc
+     *
+     * @protected
+     * @param {...string[]} paths Paths to unset
+     * @returns
+     * @memberof DocWrapper
+     */
+    protected updatePathUnset(...paths: string[]) {
+        return this.updateBaseHelper('$unset',
+            (query, path) => query[path] = 0,
+            (data, path) => _.unset(data, path),
+            paths);
+    }
+
+    /**
+     * Pushes elements to array at specified paths in the database doc
+     *
+     * @protected
+     * @param {([string, any | any[]])} pathElementPairs Path elements pair array
+     * @returns
+     * @memberof DocWrapper
+     */
+    protected updatePathPush(pathElementPairs: [string, any | any[]]) {
+        return this.updateBaseHelper('$push',
+            (query, pair) => {
+                if (pair[1] instanceof Array)
+                    pair[1] = { $each: pair[1] };
+                query[pair[0]] = pair[1];
+            },
+            (data, pair) => _.get(data, pair[0]).concat(pair[1]),
+            pathElementPairs)
+    }
+
+    /**
+     * Pulls elements from array at specified paths in the database doc
+     *
+     * @protected
+     * @param {([string, any | any[]][])} pathElementPairs Path elements pair array
+     * @returns
+     * @memberof DocWrapper
+     */
+    protected updatePathPull(pathElementPairs: [string, any | any[]][]) {
+        return this.updateBaseHelper('$pull',
+            (query, pair) => {
+                if (pair[1] instanceof Array)
+                    pair[1] = { $in: pair[1] };
+                query[pair[0]] = pair[1];
+            },
+            (data, pair) => _.pullAll(_.get(data, pair[0]), [].concat(pair[1])),
+            pathElementPairs);
+    }
+
+    /**
+     * Pushes elements which are not already present to array at specified paths in the database doc
+     *
+     * @protected
+     * @param {([string, any | any[]][])} pathElementPairs Path elements pair array
+     * @returns
+     * @memberof DocWrapper
+     */
+    protected updatePathAddToSet(pathElementPairs: [string, any | any[]][]) {
+        return this.updateBaseHelper('$addToSet',
+            (query, pair) => {
+                if (pair[1] instanceof Array)
+                    pair[1] = { $each: pair[1] };
+                query[pair[0]] = pair[1];
+            },
+            (data, pair) => _.set(data, pair[0], _.union(_.get(data, pair[0]), pair[1])),
+            pathElementPairs);
+    }
+
+    /**
      * If the entire document or a specific field is loaded
      *
      * @param {string} [field] What field to check. If not specified the entire document will be checked
@@ -287,7 +399,7 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
      * @memberof DocWrapper
      */
     isLoaded(field?: keyof Data) {
-        if (!this.loadedFields) return true;
+        if (this.loadedFields === null) return true;
         if (!field) return false;
         return this.loadedFields.includes(field);
     }
@@ -302,6 +414,8 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
      */
     updateLoadedFields(fields?: Keys<Data>) {
         if (!this.loadedFields)
+            return [];
+        if (fields && !fields.length)
             return [];
         if (!fields)
             fields = this.allFields;
@@ -321,7 +435,7 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
      */
     private extractFieldsToLoad(options: LoadOptions<Data>): Keys<Data> {
         if (!options) return;
-        if (Array.isArray(options)) return options;
+        if (options instanceof Array) return options;
         if (typeof options !== 'object') return [options];
         if (options.fields) return [].concat(options.fields);
         return undefined;
