@@ -28,8 +28,8 @@ Service exit status codes:
 -------- End of bullet-mongo-start.service startup log --------
 ```
 
-!!! important "Important note before continuing"
-    This feature (which will be referred to as BSSR for the rest of this guide) is only available in [v1.2.11](https://github.com/CodeBullet-Community/BulletBot/releases/tag/v1.2.11) and [later](https://github.com/CodeBullet-Community/BulletBot/releases).
+!!! Note
+    For the rest of this guide, this feature will be referred to as BSSR.
 
 ## Configuring Auto-Restart
 

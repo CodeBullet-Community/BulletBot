@@ -4,9 +4,6 @@ This setup guide will instruct and explain the process in which BulletBot is set
 
 If you are doing dev work on BulletBot or just want to set him up manually, please follow the [Linux Dev Setup Guide](/Setup-Guides/Development/Linux-Dev-Setup-Guide/).
 
-!!! important "Important note before continuing"
-    Some of the contents of this setup guide are only applicable to BulletBot [v1.2.8](https://github.com/CodeBullet-Community/BulletBot/releases/tag/v1.2.8) and later. Due to improper writing/handling of past documentation, there is no proper documentation that can be referred to for versions older than v1.2.8.
-
 ## Officially Supported Linux Distributions
 
 Below is a list of Linux Distributions that BulletBot is officially supported on. It also lists what versions of MongoDB and Node.js, along with other system specifications that are supported on specific distributions:
@@ -45,7 +42,7 @@ Execute the master installer using `sudo bash linux-master-installer.sh`, then d
 
 ??? info "Downloading from a specific release"
     If you rather download a specific release (such as a pre-release), download the corresponding master installer via: `cd ~/ && wget -N https://github.com/CodeBullet-Community/BulletBot/releases/download/[tag]/linux-master-installer.sh && sudo chmod +x linux-master-installer.sh`
-    
+
     * Replace `[tag]` with the tag/version number of the release you want to download the master installer from.
     * Please note that if you use this method, you might not get the results that you are expecting, since the master and sub-master installers will usually grab files from the most recent release. Pre-releases, on the other hand, will only grab items from the release it was in.
 
@@ -53,13 +50,13 @@ Execute the master installer using `sudo bash linux-master-installer.sh`, then d
 
 When running the master installer for the first time, a system user called `bulletbot` will be created (see [the In-Depth Explanations wiki](/In-Depth-Explanations/#bulletbot-system-user) for more info). All code used by/for BulletBot will then be moved into `/home/bulletbot`.
 
-![System User Creation](../../media/Creating-System-User-v1.2.8.png)
+![System User Creation](../../media/Creating-System-User.png)
 
 ## Setting Up and Installing Prerequisites
 
 The installers automatically detect whether or not the prerequisites have been installed or set up. If it detects that some or all have not been installed/set up, you'll be prompt a menu that looks similar to the one below:
 
-![Installer Menu Prerequisites](../../media/Installer-Menu-Prerequisites-v1.2.8.png)
+![Installer Menu Prerequisites](../../media/Installer-Menu-Prerequisites.png)
 
 The menu will indicate whether or not a particular prerequisite is installed/set up. To install a missing prerequisite, enter the number corresponding to that option.
 
@@ -132,10 +129,7 @@ Here is an example of what it might look like:
 
 #### 5.3 Webhooks
 
-Prior to BulletBot v1.2.11, if you wanted to use webhooks, you would have to manually edit `bot-config.json` and replace `[ip address or domain name]` with your system's public IP Address or domain name. All releases starting from and after v1.2.11, will automatically add your system's IP Address to the config file.
-
-* Please note that if your public IP Address is not static, it will not be possible to use webhooks.
-* By default, webhooks use port 8000 on your system. So if you have a firewall running, make sure that you open port 8000.
+By default, webhooks run on port 8000. So if you have a firewall running, make sure that you open port 8000. Please note that if your public IP Address is not static, it will not be possible to use webhooks.
 
 ## Setting Up MongoDB
 
@@ -380,8 +374,7 @@ When the installers display BulletBot's run modes, it will also indicate whether
 When it displays:
 
 * ![Run Status 1](../../media/Running-Status-1.png)
-  * The required files to run BulletBot in [run mode], are set up and ready to go. (Only applies to BulletBot v1.2.8)
-  * `bullet-mongo-start.service` exists and is either enabled or disabled (which determines which mode BulletBot runs in), but BulletBot is not currently running. (Only applies to BulletBot v1.2.11 and later)
+  * `bullet-mongo-start.service` exists and is either enabled or disabled (which determines which mode BulletBot runs in), but BulletBot is not currently running.
 * ![Run Status 2](../../media/Running-Status-2.png)
   * BulletBot is currently running in [run mode].
   * Note: Choosing the option/run mode that this is displayed on, will cause bulletbot to restart in that same run mode.
