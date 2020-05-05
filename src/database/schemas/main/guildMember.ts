@@ -10,10 +10,27 @@ import { ExDocument } from '../global';
  * Object holding data for GuildMember saved by BulletBot
  */
 export interface BBGuildMember {
+    /**
+     * User which is a member
+     *
+     * @type {(Snowflake | UserWrapper)}
+     * @memberof BBGuildMember
+     */
     user: Snowflake | UserWrapper;
+    /**
+     * Guild which member is in
+     *
+     * @type {(Snowflake | GuildWrapper)}
+     * @memberof BBGuildMember
+     */
     guild: Snowflake | GuildWrapper;
+    /**
+     * When which command was last used
+     *
+     * @memberof BBGuildMember
+     */
     commandLastUsed: {
-        [Command in CommandName]: number;
+        [Command in CommandName]?: number;
     };
 }
 

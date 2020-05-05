@@ -95,7 +95,7 @@ export class UsageLimitsWrapper<Parent extends DocWrapper<any>> extends Property
      * @returns Merged usage limits
      * @memberof UsageLimitsWrapper
      */
-    getCommandUsageLimits(command: CommandResolvable) {
+    getCommandUsageLimits(command: CommandResolvable): CommandUsageLimits {
         let commandObj = this.commandModule.resolve(command);
         let rawLimits = this.getRawCommandUsageLimits(commandObj.name);
 

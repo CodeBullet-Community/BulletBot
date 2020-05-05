@@ -27,6 +27,7 @@ import {
 } from '../../schemas/main/guild';
 import { DocWrapper } from '../docWrapper';
 import { SettingsWrapper } from '../settings/settingsWrapper';
+import { UsageLimitsWrapper } from '../shared/usageLimitsWrapper';
 
 /**
  * Wrapper for the guild object and document so everything can easily be access through one object
@@ -56,8 +57,8 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
     readonly youtubeWebhooks: unknown; // TODO: implement GuildYoutubeWebhookManager
     private _locks: Collection<string, unknown>; // TODO: add Collection of LockChannelWrappers
     readonly locks: Collection<string, unknown>;
-    private _usageLimits?: UsageLimits;
-    readonly usageLimits?: UsageLimits;
+    private _usageLimits?: UsageLimitsWrapper<GuildWrapper>;
+    readonly usageLimits?: UsageLimitsWrapper<GuildWrapper>;
     readonly ranks: {
         readonly [Rank in GuildRank]: Snowflake[];
     };
@@ -78,7 +79,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
     /**
      * Creates an instance of GuildWrapper.
      * 
-     * @param {Model<GuildDoc>} model Model of guild collection
+     * @param {Model<GuildDoc>} model Model of guilds collection
      * @param {Guild} guild Discord.js Guild object
      * @param {Client} client
      * @param {SettingsWrapper} settings
