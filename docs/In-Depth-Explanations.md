@@ -20,7 +20,7 @@ Many of the terms used throughout the guides, documentation, and scripts, are th
 The master installer (`linux-master-installer.sh`) is used for identifying and determining whether BulletBot supports the system it's running on. After confirming that the system is supported, the master installer then executes the [sub-master installer](#sub-master-installers) that corresponds to it's designed Linux Distribution.
 
 ??? info "Unsupported doesn't mean incompatible"
-    Just because the master installer determines that the system is not supported, does not mean that the system is not compatible. What the master installer deems as "supported", is an [Officially Supported Linux Distribution](/Setup-Guides/Production/Linux-Prod-Setup-Guide/#officially-supported-linux-distributions). These distributions are Linux Distros that BulletBot has been tested and are confirmed to work on. So even if a system is not "officially supported", that does not mean that it won't work on that system.
+    Just because the master installer determines that the system is not supported, does not mean that the system is not compatible. What the master installer deems as "supported", is an [Officially Supported Linux Distribution](../Setup-Guides/Production/Linux-Prod-Setup-Guide/#officially-supported-linux-distributions). These distributions are Linux Distros that BulletBot has been tested and are confirmed to work on. So even if a system is not "officially supported", that does not mean that it won't work on that system.
 
 #### Sub-Master Installers
 
@@ -63,7 +63,7 @@ The bash script makes sure that BulletBot is started correctly. A problem we ran
 
 After being executed by `bullet-mongo-start.service`, the script waits to make sure that `mongod.service` successfully started, then waits a little longer to give the database enough time to initialize. Once all that is done, the script will attempt to start `bulletbot.service`.
 
-On top of everything mentioned above, this script also has the capability of sending 'BulletBot Startup Status Reports'. These are sent when BulletBot is being ran in the background with auto-restart. These reports lists whether or not BulletBot was successfully started, the exit status of essential services, and the startup logs of three services that can be used to help identify errors that might have occurred during BulletBot's startup. Though please note that for this feature to work, you need to install third party mailing software. Follow [this guide](BulletBot-Startup-Status-Reports) to help you set this feature up.
+On top of everything mentioned above, this script also has the capability of sending 'BulletBot Startup Status Reports'. These are sent when BulletBot is being ran in the background with auto-restart. These reports lists whether or not BulletBot was successfully started, the exit status of essential services, and the startup logs of three services that can be used to help identify errors that might have occurred during BulletBot's startup. Though please note that for this feature to work, you need to install third party mailing software. Follow [this guide](../Helpful-Guides/BulletBot-Startup-Status-Reports/) to help you set this feature up.
 
 ##### Service File
 
