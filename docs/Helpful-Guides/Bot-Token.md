@@ -2,7 +2,7 @@
 
 This guide will walk you through the steps to find and copy the bot token for an existing Discord application.
 
-If you currently don't have an already existing application, you will need to [create one](Creating-&-Inviting-A-Bot#creating-a-discord-application).
+If you currently don't have an already existing application, you will need to [create one](../Creating-&-Inviting-A-Bot#creating-a-discord-application).
 
 ![Bot Token](../media/Bot-Token.gif)
 
