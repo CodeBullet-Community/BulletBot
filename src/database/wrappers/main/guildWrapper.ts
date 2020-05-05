@@ -121,25 +121,6 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
                     return;
                 this._megalog[func] = channel;
             });
-        /* This would only add and remove the channels that changed and should be more efficient. 
-        The problem is that it does not preserve the order
-    
-        let ignoreChannels = this.subToMappedProperty('ignoreChannels', megalog)
-            .pipe(pairwise());
-        ignoreChannels.pipe(map(([prev, curr]) => _.difference<Snowflake>(prev, curr)))
-            .subscribe(removed => _.remove(this._megalog.ignoreChannels,
-                channel => removed.includes(channel.id)));
-        ignoreChannels.pipe(map(([prev, curr]) => _.difference<Snowflake>(curr, prev)))
-            .subscribe(added => added.forEach(
-                id => {
-                    let channel = this.guild.channels.cache.get(id);
-                    if (!(channel instanceof TextChannel)) {
-                        console.warn(`Megalog channel "${id}" of guild "${this.guild.id}" is of wrong type. ` +
-                            `Expected TextChannel but is "${channel.type}"`);
-                        return;
-                    }
-                    this._megalog.ignoreChannels.push(channel);
-                })); */
 
         this.setIfLoadedProperty('logChannel', () => this._logChannel);
         this.setIfLoadedProperty('caseChannel', () => this._caseChannel);
