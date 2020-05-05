@@ -3,7 +3,7 @@ import { Model } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
 
 import { CommandName, CommandResolvable, Commands } from '../../../commands';
-import { UserCommandScope, UserDoc, UserObject } from '../../schemas/main/user';
+import { BBUser, UserCommandScope, UserDoc, UserObject } from '../../schemas/main/user';
 import { DocWrapper } from '../docWrapper';
 
 /**
@@ -14,7 +14,7 @@ import { DocWrapper } from '../docWrapper';
  * @extends {DocWrapper<UserObject>}
  * @implements {userObject}
  */
-export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
+export class UserWrapper extends DocWrapper<UserObject> implements BBUser {
     /**
      * User object from Discord.js
      *
@@ -22,24 +22,13 @@ export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
      * @memberof UserWrapper
      */
     readonly user: User;
-    /**
-     * ID of the user
-     *
-     * @type {string}
-     * @memberof UserWrapper
-     */
     readonly id: string;
-    /**
-     * When the user last used a command in what scope
-     *
-     * @type {{ [key: string]: { [key: string]: number; }; }}
-     * @memberof UserWrapper
-     */
     readonly commandLastUsed: {
         [Scope in UserCommandScope]?: {
             [Command in CommandName]: number;
         };
     };
+
     private readonly commandModule: Commands;
 
     /**
@@ -47,6 +36,7 @@ export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
      * 
      * @param {Model<UserDoc>} model Model for users collection
      * @param {User} user User to wrap
+     * @param {Commands} commandModule
      * @memberof UserWrapper
      */
     constructor(model: Model<UserDoc>, user: User, commandModule: Commands) {
@@ -101,56 +91,22 @@ export class UserWrapper extends DocWrapper<UserObject> implements UserObject {
         this.checkCommandScope(scope);
         let commandName = this.commandModule.resolveName(command);
 
-        let query = { $set: {} };
-        query.$set[`commandLastUsed.${scope}.${command}`] = timestamp;
+        let pathValuePairs: [string, any][] = [[`commandLastUsed.${scope}.${command}`, timestamp]];
         if (scope !== 'global')
-            query.$set[`commandLastUsed.global.${command}`] = timestamp;
-        await this.update(query);
-
-        let tempData = this.cloneData();
-        this._setCommandLastUsed(tempData, scope, commandName, timestamp);
-        this._setCommandLastUsed(tempData, 'global', commandName, timestamp);
-        this.data.next(tempData);
+            pathValuePairs.push([`commandLastUsed.global.${command}`, timestamp]);
+        await this.updatePathSet(pathValuePairs);
     }
 
     /**
-     * Private helper function that sets commandLastUsed in provided data
+     * Deletes all command last used data of a specific scope.
      *
-     * @private
-     * @param {Partial<UserObject>} data UserObject that should be manipulated
-     * @param {UserCommandScope} scope Scope where to set commandLastUsed
-     * @param {string} commandName Name of the command
-     * @param {number} timestamp When the command was last used
-     * @memberof UserWrapper
-     */
-    private _setCommandLastUsed(data: Partial<UserObject>, scope: UserCommandScope, commandName: CommandName, timestamp: number) {
-        if (!data.commandLastUsed[scope]) data.commandLastUsed[scope] = {};
-        data.commandLastUsed[scope][commandName] = timestamp;
-    }
-
-    /**
-     * Deletes all command last used infos of a specific scope.
-     *
-     * @param {UserCommandScope} scope What scope to delete
-     * @returns The deleted scope if it had content before
+     * @param {UserCommandScope} scope Scope to delete
      * @memberof UserWrapper
      */
     async resetCommandLastUsed(scope: UserCommandScope) {
         await this.load('commandLastUsed');
         this.checkCommandScope(scope);
-        if (!this.commandLastUsed[scope]) return undefined;
-
-        let query = { $unset: {} };
-        query.$unset[scope] = 0;
-        await this.update(query);
-
-        let deletedScope = this.commandLastUsed[scope];
-
-        let tempData = this.cloneData();
-        delete tempData.commandLastUsed[scope];
-        this.data.next(tempData);
-
-        return deletedScope;
+        await this.updatePathUnset(`commandLastUsed.${scope}`);
     }
 
     /**

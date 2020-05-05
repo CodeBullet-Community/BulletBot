@@ -1,21 +1,41 @@
-import { Snowflake } from "discord.js";
-import { CommandName } from "../../../commands";
-import { ExDocument } from "../global";
-import { Schema } from "mongoose";
+import { Snowflake } from 'discord.js';
+import { Schema } from 'mongoose';
 
+import { CommandName } from '../../../commands';
+import { ExDocument } from '../global';
+
+/**
+ * Command scopes that are stored in the user object
+ */
 export type UserCommandScope = 'dm' | 'global'
 
 /**
- * Object holding data that BulletBot stores about a User
+ * Object holding data for User saved by BulletBot
  */
-export interface UserObject {
-    id: Snowflake; // user id
+export interface BBUser {
+    /**
+     * Id of the user
+     *
+     * @type {Snowflake}
+     * @memberof UserObject
+     */
+    id: Snowflake;
+    /**
+     * When which command was used in each UserCommandScope
+     *
+     * @memberof UserObject
+     */
     commandLastUsed: {
         [Scope in UserCommandScope]?: {
-            [Command in CommandName]: number; // timestamp until it can be reused again
+            [Command in CommandName]: number;
         };
     };
 }
+
+/**
+ * Object holding data for User saved by BulletBot in the database
+ */
+export interface UserObject extends BBUser { }
 /**
  * Mongoose Document for UserObject
  */
