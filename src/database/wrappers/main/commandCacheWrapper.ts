@@ -146,7 +146,7 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
         let tempData = this.cloneData();
         tempData.expirationTimestamp = expirationTimestamp;
         this.data.next(tempData);
-        this.updateLoadedFields(['expirationTimestamp']);
+        this.addLoadedFields(['expirationTimestamp']);
         return expirationTimestamp;
     }
 

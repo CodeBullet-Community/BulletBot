@@ -66,12 +66,13 @@ export class PropertyWrapper<Parent extends DocWrapper<any>, Property extends ob
     }
 
     /**
-     * Resyncs field in which this PropertyWrapper is
+     * If field in which this PropertyWrapper is is loaded
      *
+     * @returns
      * @memberof PropertyWrapper
      */
-    resync() {
-        this.load(true);
+    isLoaded() {
+        return this.parent.isLoaded(this.field);
     }
 
     /**
@@ -86,13 +87,12 @@ export class PropertyWrapper<Parent extends DocWrapper<any>, Property extends ob
     }
 
     /**
-     * If field in which this PropertyWrapper is is loaded
+     * Resyncs field in which this PropertyWrapper is
      *
-     * @returns
      * @memberof PropertyWrapper
      */
-    isLoaded() {
-        return this.parent.isLoaded(this.field);
+    resync() {
+        this.load(true);
     }
 
 }

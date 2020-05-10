@@ -116,6 +116,20 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
     }
 
     /**
+     * Helper function that wraps getter with this.wrapGetterIfLoaded() 
+     * and then sets it with this.setWrapperProperty()
+     *
+     * @protected
+     * @param {keyof Data} key Key which to check if loaded
+     * @param {() => any} getter Getter to set
+     * @param {string} [setKey] Key to set getter to (default key)
+     * @memberof DocWrapper
+     */
+    protected setIfLoadedProperty(key: keyof Data, getter: () => any, setKey?: string) {
+        this.setWrapperProperty(setKey || key, this.wrapGetterIfLoaded(key, getter));
+    }
+
+    /**
      * Wraps a getter with a check if the specified key is loaded.
      * If not, there will be a waning logged.
      *
@@ -133,20 +147,6 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
             }
             return getter();
         }
-    }
-
-    /**
-     * Helper function that wraps getter with this.wrapGetterIfLoaded() 
-     * and then sets it with this.setWrapperProperty()
-     *
-     * @protected
-     * @param {keyof Data} key Key which to check if loaded
-     * @param {() => any} getter Getter to set
-     * @param {string} [setKey] Key to set getter to (default key)
-     * @memberof DocWrapper
-     */
-    protected setIfLoadedProperty(key: keyof Data, getter: () => any, setKey?: string) {
-        this.setWrapperProperty(setKey || key, this.wrapGetterIfLoaded(key, getter));
     }
 
     /**
@@ -205,6 +205,94 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
         this.data.next(obj);
         this.loadedFields = undefined;
         return this;
+    }
+
+    /**
+     * If the entire document or a specific fields are loaded
+     *
+     * @param {(keyof Data | (keyof Data)[])} [fields] What field/fields to check. If not specified the entire document will be checked
+     * @returns If the specified part is loaded
+     * @memberof DocWrapper
+     */
+    isLoaded(fields?: keyof Data | (keyof Data)[]) {
+        if (this.loadedFields == null) return true;
+        if (fields == null) return false;
+        let fieldArray = [].concat(fields)
+        return _.difference(fieldArray, this.loadedFields).length === 0;
+    }
+
+    /**
+     * Updates which fields of the wrapper are loaded
+     *
+     * @private
+     * @param {Keys<Data>} [fields] Fields that were newly loaded
+     * @returns Which fields weren't loaded before
+     * @memberof DocWrapper
+     */
+    addLoadedFields(fields?: Keys<Data>) {
+        if (!this.loadedFields)
+            return [];
+        if (fields && !fields.length)
+            return [];
+        if (!fields)
+            fields = this.allFields;
+        let newFields = _.difference(fields, this.loadedFields);
+        this.loadedFields = this.loadedFields.concat(newFields);
+        if (!_.difference(this.loadedFields, this.allFields).length) this.loadedFields = undefined;
+        return newFields;
+    }
+
+    /**
+     * Extracts fields that should be loaded from LoadOptions
+     *
+     * @private
+     * @param {LoadOptions<Data>} options Options to extract fields from
+     * @returns {Keys<Data>} Fields that should be loaded
+     * @memberof DocWrapper
+     */
+    private extractFieldsToLoad(options: LoadOptions<Data>): Keys<Data> {
+        if (!options) return;
+        if (options instanceof Array) return options;
+        if (typeof options !== 'object') return [options];
+        if (options.fields) return [].concat(options.fields);
+        return undefined;
+    }
+
+    /**
+     * Extracts if fields should be reloaded from LoadOptions
+     *
+     * @private
+     * @param {LoadOptions<Data>} options Options to extract it from
+     * @returns If fields should be reloaded
+     * @memberof DocWrapper
+     */
+    private extractIfReload(options: LoadOptions<Data>) {
+        if (!options) return false;
+        // @ts-ignore
+        if (options.reload) return true;
+        return false;
+    }
+
+    /**
+     * Loads specified not loaded fields. 
+     * If force is true it loads all specified fields regardless of if they are already loaded.
+     *
+     * @param {LoadOptions<Data>} [options] Options for loading (default loads all fields)
+     * @returns Loaded data
+     * @memberof DocWrapper
+     */
+    async load(options?: LoadOptions<Data>) {
+        let fields = this.extractFieldsToLoad(options);
+        let reload = this.extractIfReload(options);
+        let loadFields = this.addLoadedFields(fields);
+        if (!loadFields.length && !reload) return [];
+        if (reload) loadFields = fields;
+
+        let doc = await this.getDoc(loadFields);
+        if (!doc) return undefined;
+        this.mergeData(doc, loadFields || this.allFields, true)
+
+        return loadFields;
     }
 
     /**
@@ -354,25 +442,6 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
     }
 
     /**
-     * Pulls elements from array at specified paths in the database doc
-     *
-     * @protected
-     * @param {([string, any | any[]][])} pathElementPairs Path elements pair array
-     * @returns
-     * @memberof DocWrapper
-     */
-    protected updatePathPull(pathElementPairs: [string, any | any[]][]) {
-        return this.updateBaseHelper('$pull',
-            (query, pair) => {
-                if (pair[1] instanceof Array)
-                    pair[1] = { $in: pair[1] };
-                query[pair[0]] = pair[1];
-            },
-            (data, pair) => _.pullAll(_.get(data, pair[0]), [].concat(pair[1])),
-            pathElementPairs);
-    }
-
-    /**
      * Pushes elements which are not already present to array at specified paths in the database doc
      *
      * @protected
@@ -392,90 +461,22 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
     }
 
     /**
-     * If the entire document or a specific field is loaded
+     * Pulls elements from array at specified paths in the database doc
      *
-     * @param {string} [field] What field to check. If not specified the entire document will be checked
-     * @returns If the specified part is loaded
+     * @protected
+     * @param {([string, any | any[]][])} pathElementPairs Path elements pair array
+     * @returns
      * @memberof DocWrapper
      */
-    isLoaded(field?: keyof Data) {
-        if (this.loadedFields === null) return true;
-        if (!field) return false;
-        return this.loadedFields.includes(field);
-    }
-
-    /**
-     * Updates which fields of the wrapper are loaded
-     *
-     * @private
-     * @param {Keys<Data>} [fields] Fields that were newly loaded
-     * @returns Which fields weren't loaded before
-     * @memberof DocWrapper
-     */
-    updateLoadedFields(fields?: Keys<Data>) {
-        if (!this.loadedFields)
-            return [];
-        if (fields && !fields.length)
-            return [];
-        if (!fields)
-            fields = this.allFields;
-        let newFields = _.difference(fields, this.loadedFields);
-        this.loadedFields = this.loadedFields.concat(newFields);
-        if (!_.difference(this.loadedFields, this.allFields).length) this.loadedFields = undefined;
-        return newFields;
-    }
-
-    /**
-     * Extracts fields that should be loaded from LoadOptions
-     *
-     * @private
-     * @param {LoadOptions<Data>} options Options to extract fields from
-     * @returns {Keys<Data>} Fields that should be loaded
-     * @memberof DocWrapper
-     */
-    private extractFieldsToLoad(options: LoadOptions<Data>): Keys<Data> {
-        if (!options) return;
-        if (options instanceof Array) return options;
-        if (typeof options !== 'object') return [options];
-        if (options.fields) return [].concat(options.fields);
-        return undefined;
-    }
-
-    /**
-     * Extracts if fields should be reloaded from LoadOptions
-     *
-     * @private
-     * @param {LoadOptions<Data>} options Options to extract it from
-     * @returns If fields should be reloaded
-     * @memberof DocWrapper
-     */
-    private extractIfReload(options: LoadOptions<Data>) {
-        if (!options) return false;
-        // @ts-ignore
-        if (options.reload) return true;
-        return false;
-    }
-
-    /**
-     * Loads specified not loaded fields. 
-     * If force is true it loads all specified fields regardless of if they are already loaded.
-     *
-     * @param {LoadOptions<Data>} [options] Options for loading (default loads all fields)
-     * @returns Loaded data
-     * @memberof DocWrapper
-     */
-    async load(options?: LoadOptions<Data>) {
-        let fields = this.extractFieldsToLoad(options);
-        let reload = this.extractIfReload(options);
-        let loadFields = this.updateLoadedFields(fields);
-        if (!loadFields.length && !reload) return [];
-        if (reload) loadFields = fields;
-
-        let doc = await this.getDoc(loadFields);
-        if (!doc) return undefined;
-        this.mergeData(doc, loadFields || this.allFields, true)
-
-        return loadFields;
+    protected updatePathPull(pathElementPairs: [string, any | any[]][]) {
+        return this.updateBaseHelper('$pull',
+            (query, pair) => {
+                if (pair[1] instanceof Array)
+                    pair[1] = { $in: pair[1] };
+                query[pair[0]] = pair[1];
+            },
+            (data, pair) => _.pullAll(_.get(data, pair[0]), [].concat(pair[1])),
+            pathElementPairs);
     }
 
     /**
