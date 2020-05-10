@@ -28,10 +28,6 @@ This document is the base of all documents in the `allTime`, `daily` and `hourly
             [key: string]: number;
         }
     };
-    filters: {
-        // key is filter name, catch data
-        [key: string]: number; // number of messages filtered
-    };
     webhooks: {
         // key is service name
         [key: string]: {

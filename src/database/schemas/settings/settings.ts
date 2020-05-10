@@ -23,11 +23,6 @@ export interface GlobalSettingsObject {
             [key: string]: any;
         };
     };
-    filters: {
-        [filter: string]: {
-            [key: string]: any;
-        }
-    };
     usageLimits?: UsageLimits;
 }
 /**
@@ -58,7 +53,6 @@ export let globalSettingsSchema = new Schema({
     },
     botMasters: [String],
     commands: Schema.Types.Mixed,
-    filters: Schema.Types.Mixed,
     usageLimits: { required: false, type: usageLimitSchemaDefinition }
 }, {
     toObject: { minimize: false, versionKey: false },

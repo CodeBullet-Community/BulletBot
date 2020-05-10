@@ -72,24 +72,6 @@ one document for each guild
 }
 ```
 
-## filters Collection Document
-
-one document for each guild
-
-```Typescript
-{
-    guild: string; // guild id
-    filters: {
-        // key is filter name
-        [key: string]: {
-            _enabled: boolean; // if enabled
-            // custom settings of the filter
-            [key: string]: any;
-        }
-    }
-}
-```
-
 ## logs Collection Document
 
 one document for each log entry
@@ -128,15 +110,6 @@ action ID -> string name
     webhookID: string; // document id
     changedChannel ?: boolean; // if channel was changed
     changedMessage ?: boolean; // if message was changed
-}
-```
-
-2 -> `filter` :
-
-```Typescript
-{
-    type: 0 | 1; // add, remove
-    filter: string; // filter name
 }
 ```
 

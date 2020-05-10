@@ -93,20 +93,6 @@ export interface LogWebhookInfo {
 }
 
 /**
- * Log when a filter gets enabled or disabled
- */
-export interface LogFilterObject extends LogObject {
-    info: LogFilterInfo;
-}
-/**
- * Log info when a filter gets enabled or disabled
- */
-export interface LogFilterInfo {
-    type: LogAction.Add | LogAction.Remove; // add, remove or change
-    filter: string; // filter name
-}
-
-/**
  * Log when command gets enabled or disabled
  */
 export interface LogCommandObject extends LogObject {

@@ -27,13 +27,6 @@ only one document in collection
             [key: string]: any;
         };
     };
-    // filter settings
-    filters: {
-        // key is filter name
-        [key: string]: {
-            [key: string]: any;
-        };
-    };
     usageLimits?: UsageLimits; // defined below
 }
 ```

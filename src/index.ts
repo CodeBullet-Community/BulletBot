@@ -16,7 +16,6 @@ import { megalogGroups } from './database/schemas/main/guild.js';
 import { updateDatabaseAfter1_2_8 } from './database/update';
 import { GuildWrapper } from './database/wrappers/main/guildWrapper';
 import { SettingsWrapper } from './database/wrappers/settings/settingsWrapper.js';
-import { Filters } from './filters';
 import {
     cacheAttachment,
     logBan,
@@ -100,7 +99,6 @@ exitHook(() => {
 export class Bot {
     client: Client;
     commands: Commands;
-    filters: Filters;
     youtube: YTWebhookManager;
     database: Database;
     mStats: MStats;
@@ -202,9 +200,6 @@ client.on('message', async message => {
     let prefix = await guildWrapper.getPrefix();
     if (!message.content.startsWith(prefix)) {
         if (!message.content.toLowerCase().startsWith(Bot.settings.prefix + 'prefix')) { // also checks if it contains ?!prefix
-            if (!dm && permLevel == PermLevels.member) {
-                Bot.filters.filterMessage(message); // filters message if from guild and if a member send it
-            }
             return;
         }
         prefix = Bot.settings.prefix;

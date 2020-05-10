@@ -1,7 +1,6 @@
 import { Guild } from 'discord.js';
 
 import { Bot } from '..';
-import { filterAction, filterActions } from './filters';
 import { PermLevels } from './permissions';
 import { Durations } from './time';
 
@@ -232,32 +231,6 @@ export function stringToEmbed(text: string) {
         return null;
     }
     return embed
-}
-
-/**
- * Converts filter action into words. This function creates partial sentences about what the bot did.
- *
- * @export
- * @param {filterAction} action action to stringify
- * @returns
- */
-export function actionToString(action: filterAction) {
-    switch (action.type) {
-        case filterActions.nothing:
-            return 'nothing';
-        case filterActions.delete:
-            if (action.delay == 0) {
-                return 'deleted message';
-            }
-            return `deleted message after ${action.delay}ms`;
-        case filterActions.send:
-
-            return `replied with '${action.message}' to message`;
-        default:
-            // error will already be logged in executeAction()
-            console.warn('actionToString: unknown action');
-            return 'unknown action';
-    }
 }
 
 

@@ -34,13 +34,9 @@ export class SettingsWrapper extends DocWrapper<GlobalSettingsObject> implements
             [key: string]: any;
         };
     };
-    readonly filters: {
-        [filter: string]: {
-            [key: string]: any;
-        }
-    };
     readonly usageLimits?: UsageLimits;
-    private bot: Bot
+
+    private readonly bot: Bot
 
     /**
      * Creates an instance of SettingsWrapper.

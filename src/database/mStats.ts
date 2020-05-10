@@ -151,7 +151,6 @@ export class MStats {
             docObject.hour = hour;
             doc = new model(docObject);
             doc.markModified('commands');
-            doc.markModified('filters');
             doc.markModified('webhooks');
             doc.save();
             pingTestCounter = 0;
@@ -298,7 +297,6 @@ export class MStats {
         mergedObject.day = day;
         var dayDoc = new this.daily(mergedObject);
         dayDoc.markModified('commands');
-        dayDoc.markModified('filters');
         dayDoc.markModified('webhooks');
         await dayDoc.save();
 
@@ -308,7 +306,6 @@ export class MStats {
             mergedObject.to = day + Durations.day;
             allTimeDoc = new this.allTime(mergedObject);
             allTimeDoc.markModified('commands');
-            allTimeDoc.markModified('filters');
             allTimeDoc.markModified('webhooks');
             allTimeDoc.save();
             console.log('made new all time doc');
@@ -356,15 +353,6 @@ export class MStats {
                     } else {
                         mergedDoc.commands[cmd][subCmd] += doc.commands[cmd][subCmd];
                     }
-                }
-            }
-
-            // filter stats
-            for (const filter in doc.filters) {
-                if (!mergedDoc.filters[filter]) {
-                    mergedDoc.filters[filter] = doc.filters[filter];
-                } else {
-                    mergedDoc.filters[filter] += doc.filters[filter];
                 }
             }
 
@@ -559,24 +547,6 @@ export class MStats {
         }
         var resp = (commandStats._resp * uses) + latency;
         this.hourly.doc.commands[command]._resp = resp / (uses + 1);
-    }
-
-    /**
-     * logs a filter catch of a specific filter
-     *
-     * @param {string} filter filter name
-     * @memberof MStats
-     */
-    logFilterCatch(filter: string) {
-        if (!this.hourly) return;
-        if (!this.hourly.doc.filters) {
-            this.hourly.doc.filters = {};
-        }
-        if (this.hourly.doc.filters[filter]) {
-            this.hourly.doc.filters[filter] += 1;
-        } else {
-            this.hourly.doc.filters[filter] = 1;
-        }
     }
 
     /**

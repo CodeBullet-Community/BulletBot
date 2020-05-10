@@ -16,7 +16,7 @@ import { BenchmarkTimestamp } from './utils/time';
  */
 export interface commandInterface {
     /**
-     * name of filter
+     * name of command
      *
      * @type {CommandName}
      * @memberof commandInterface

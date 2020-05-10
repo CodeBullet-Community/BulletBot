@@ -26,10 +26,6 @@ export interface MStatsObject {
             [key: string]: number;
         }
     };
-    filters: {
-        // key is filter name, catch data
-        [key: string]: number;
-    };
     webhooks: {
         // key is service name
         [K in WebhookService]?: {
@@ -72,7 +68,6 @@ export function createEmptyMStatsObject(): MStatsObject {
         botSuggestions: 0,
         commandTotal: 0,
         commands: {},
-        filters: {},
         webhooks: {},
         ping: {
             clientAPI: 0,
@@ -144,7 +139,6 @@ export const mStatsSchemaDefinition = {
     botSuggestions: Number,
     commandTotal: Number,
     commands: Schema.Types.Mixed,
-    filters: Schema.Types.Mixed,
     webhooks: Schema.Types.Mixed,
     ping: {
         clientAPI: Number,
