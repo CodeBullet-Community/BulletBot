@@ -20,11 +20,10 @@ export abstract class CacheManager<Obj extends Object, Wrapper extends DocWrappe
     /**
      * Cache holding all cached DocWrappers
      *
-     * @protected
      * @type {Collection<string, Wrapper>}
      * @memberof CacheManager
      */
-    protected cache: Collection<string, Wrapper>;
+    cache: Collection<string, Wrapper>;
 
     /**
      * Creates an instance of CacheManager.

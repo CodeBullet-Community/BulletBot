@@ -6,6 +6,7 @@ import { BBGuildMember, GuildMemberDoc, GuildMemberObject } from '../../schemas/
 import { DocWrapper } from '../docWrapper';
 import { GuildWrapper } from './guildWrapper';
 import { UserWrapper } from './userWrapper';
+import { Snowflake } from 'discord.js';
 
 /**
  * Wrapper for the GuildMemberObject and document so everything can easily be access through one object
@@ -17,6 +18,7 @@ import { UserWrapper } from './userWrapper';
  */
 export class GuildMemberWrapper extends DocWrapper<GuildMemberObject> implements BBGuildMember {
 
+    readonly id: Snowflake;
     readonly user: UserWrapper;
     readonly guild: GuildWrapper;
     readonly commandLastUsed: {
@@ -38,6 +40,7 @@ export class GuildMemberWrapper extends DocWrapper<GuildMemberObject> implements
         let initialData = { user: user.id, guild: guild.id };
         super(model, initialData, initialData, keys<GuildMemberObject>());
 
+        this.id = this.user.id;
         this.user = user;
         this.guild = guild;
         this.commandModule = commandModule;
@@ -87,6 +90,7 @@ export class GuildMemberWrapper extends DocWrapper<GuildMemberObject> implements
 
         if (await this.getCommandLastUsed(command) + usageLimits.localCooldown > Date.now())
             return false;
+
         let globalLastUsed = await this.user.getCommandLastUsed('global', command);
         if (globalLastUsed + usageLimits.globalCooldown > Date.now())
             return false;

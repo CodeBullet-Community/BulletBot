@@ -118,4 +118,9 @@ export class GuildManager extends CacheManager<GuildObject, GuildWrapper> {
         return this.get(guild, { fields: [] });
     }
 
+    resolveId(guild: GuildWrapperResolvable): Snowflake {
+        if (guild instanceof GuildWrapper) return guild.id;
+        return this.client.guilds.resolveID(guild);
+    }
+
 }

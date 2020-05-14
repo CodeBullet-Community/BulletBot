@@ -117,4 +117,9 @@ export class UserManager extends CacheManager<UserObject, UserWrapper> {
         return this.get(user, { fields: [] });
     }
 
+    resolveId(user: UserWrapperResolvable): Snowflake {
+        if (user instanceof UserWrapper) return user.id;
+        return this.client.users.resolveID(user);
+    }
+
 }
