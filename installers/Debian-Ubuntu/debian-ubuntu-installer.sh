@@ -79,17 +79,28 @@
             if [[ ! -d tmp ]]; then
                 mkdir tmp || {
                     echo "Failed to create 'tmp/'" >&2
-                    echo "${cyan}Please move it manually before continuing${nc}"
+                    echo "${cyan}Please create it manually before continuing${nc}"
                     echo -e "\nExiting..."
                     exit 1
                 }
             fi
             cp "$1"/bot-config.json tmp/ || {
-                echo "${red}Failed to move 'bot-config.json' to 'tmp/'" >&2
-                echo "${cyan}Please move it manually before continuing${nc}"
+                echo "${red}Failed to copy 'bot-config.json' to 'tmp/'" >&2
+                echo "${cyan}Please copy it manually before continuing"
+                echo "File location: '$1/'${nc}"
                 echo -e "\nExiting..."
                 exit 1
             }
+            if [[ -f /home/bulletbot/installers/Linux_Universal/auto-restart/bullet-mongo-start.local ]];
+                cp /home/bulletbot/installers/Linux_Universal/auto-restart/bullet-mongo-start.local tmp/ || {
+                    echo "${red}Failed to copy 'bullet-mongo-start.local' to" \
+                        "'tmp/'" >&2
+                    echo "${cyan}Please copy it manually before continuing"
+                    echo "File location: '/home/bulletbot/installers/Linux_Universal/auto-restart/'${nc}"
+                    echo -e "\nExiting..."
+                    exit 1
+                }
+            fi
         }
 
         # Cleans up any loose ends/left over files if the script exits
@@ -233,12 +244,30 @@
         rm BulletBot.zip 2>/dev/null || echo "${red}Failed to remove" \
             "'BulletBot.zip'${nc}" >&2
 
-        if [[ -f tmp/bot-config.json ]]; then
-            mv tmp/bot-config.json out/ && rm -r tmp/ || {
-                echo "${red}Failed to move 'bot-config.json' to 'out/'" >&2
-                echo "${yellow}Before starting BulletBot, you will have to" \
-                    "manually move 'bot-config.json' from 'tmp/' to 'out/'${nc}"
-            }
+        if [[ -d tmp ]]; then
+            if [[ -f tmp/bot-config.json ]]; then
+                mv tmp/bot-config.json out/ || {
+                    echo "${red}Failed to move 'bot-config.json' to 'out/'" >&2
+                    echo "${yellow}Before starting BulletBot, you will have to" \
+                        "manually move 'bot-config.json' from 'tmp/' to 'out/'${nc}"
+                    move_failed="true"
+                }
+            fi
+
+            if [[ -f tmp/bullet-mongo-start.local ]]; then
+                mv tmp/bullet-mongo-start.local /home/bulletbot/installers/Linux_Universal/auto-restart/ || {
+                    echo "${red}Failed to move 'bullet-mongo-start.local'" >&2
+                    echo "${yellow}Before starting BulletBot, you will have to" \
+                        "manually move 'bullet-mongo-start.local' from 'tmp/' to" \
+                        "'/home/bulletbot/installers/Linux_Universal/auto-restart'${nc}"
+                    move_failed="true"
+                }
+            fi
+    
+            # If an error didn't occur while moving the files above...
+            if [[ ! $move_failed ]]; then
+                rm -r tmp/ || echo "${red}Failed to remove 'tmp/'${nc}" >&2
+            fi
         fi
 
         if [[ -f $bullet_service ]]; then
