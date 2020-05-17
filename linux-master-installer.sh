@@ -7,7 +7,7 @@
 # Once the system is deemed as supported, the appropriate sub-master installer
 # will be chosen, downloaded (if it isn't already), then executed.
 #
-# Installer version: v1.2.0 # The version number of the installers as a whole
+# Installer version: v1.2.1 # The version number of the installers as a whole
 # Note: The installer version number should not be considered when looking at
 # compatability. The version number is more of a note for myself (Bark Ranger/
 # StrangeRanger/Hunter T.).
