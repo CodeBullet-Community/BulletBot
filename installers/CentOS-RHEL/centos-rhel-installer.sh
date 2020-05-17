@@ -84,13 +84,15 @@
                     exit 1
                 }
             fi
+
             cp "$1"/bot-config.json tmp/ || {
                 echo "${red}Failed to copy 'bot-config.json' to 'tmp/'" >&2
                 echo "${cyan}Please copy it manually before continuing${nc}"
                 echo -e "\nExiting..."
                 exit 1
             }
-            if [[ -f /home/bulletbot/installers/Linux_Universal/auto-restart/bullet-mongo-start.local ]];
+
+            if [[ -f /home/bulletbot/installers/Linux_Universal/auto-restart/bullet-mongo-start.local ]]; then
                 cp /home/bulletbot/installers/Linux_Universal/auto-restart/bullet-mongo-start.local tmp/ || {
                     echo "${red}Failed to copy 'bullet-mongo-start.local' to" \
                         "'tmp/'" >&2
