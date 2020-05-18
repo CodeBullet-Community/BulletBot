@@ -1,8 +1,8 @@
 import { Model, Schema } from 'mongoose';
 
 import { Database } from '../database';
-import { ExDocument, OptionalFields } from '../schemas/global';
-import { AdvancedLoadOptions, DocWrapper } from '../wrappers/docWrapper';
+import { ExDocument } from '../schemas/global';
+import { AdvancedLoadOptions, DocWrapper, OptionalFields } from '../wrappers/docWrapper';
 
 /**
  * Advanced fetch options for changing fetching behavior
@@ -30,14 +30,6 @@ export interface AdvancedFetchOptions<Obj extends Object> extends AdvancedLoadOp
 export type FetchOptions<Obj extends Object> = AdvancedFetchOptions<Obj> | OptionalFields<Obj>;
 
 /**
- * Defines any constructor of class Class
- * 
- * @export
- * @template Class 
- */
-export type Constructor<Class> = new (...args: any[]) => Class;
-
-/**
  * Holds the model for a specific collection and the fetch function.
  *
  * @export
@@ -45,12 +37,11 @@ export type Constructor<Class> = new (...args: any[]) => Class;
  * @class CollectionManager
  * @template Obj What document is in the collection
  */
-export abstract class CollectionManager<Obj extends Object, Wrapper extends DocWrapper<Obj>>{
+export abstract class CollectionManager<Obj extends object, Wrapper extends DocWrapper<Obj>, Manager extends CollectionManager<Obj, Wrapper, Manager>>{
 
     protected readonly database: Database;
     private readonly databaseName: string;
     protected readonly model: Model<ExDocument<Obj>>;
-    protected readonly wrapper: Constructor<Wrapper>;
 
     /**
      * Creates an instance of CollectionManager.
@@ -59,15 +50,13 @@ export abstract class CollectionManager<Obj extends Object, Wrapper extends DocW
      * @param {string} databaseName Name of database the collection is in
      * @param {string} modelName Name of the model
      * @param {Schema<Obj>} schema Schema for this collection (should include default collection name)
-     * @param {Constructor<Wrapper>} wrapper
      * @memberof CollectionManager
      */
-    constructor(database: Database, databaseName: string, modelName: string, schema: Schema<Obj>, wrapper: Constructor<Wrapper>) {
+    constructor(database: Database, databaseName: string, modelName: string, schema: Schema<Obj>) {
         let connection = this.database.getConnection(this.databaseName);
         this.database = database;
         this.databaseName = databaseName;
         this.model = connection.model(modelName, schema);
-        this.wrapper = wrapper;
     }
 
     /**
@@ -88,7 +77,7 @@ export abstract class CollectionManager<Obj extends Object, Wrapper extends DocW
      * @returns {Promise<FetchObj>} Searched object
      * @memberof CollectionManager
      */
-    abstract async fetch(...args): Promise<DocWrapper<Obj>>;
+    abstract async fetch(...args): Promise<Wrapper>;
 
     /**
      * Helper function for fetch, which takes a wrapper, calls DocWrapper.load() and optional creates a doc
@@ -100,7 +89,11 @@ export abstract class CollectionManager<Obj extends Object, Wrapper extends DocW
      * @returns Output that this.fetch() should return
      * @memberof CollectionManager
      */
-    protected async fetchWithExistingWrapper(wrapper: Wrapper, defaultObjArgs: any[], options: FetchOptions<Obj>) {
+    protected async fetchWithExistingWrapper(
+        wrapper: Wrapper,
+        defaultObjArgs: Parameters<Manager["getDefaultObject"]>,
+        options: FetchOptions<Obj>
+    ): Promise<Wrapper> {
         let loadedFields = await wrapper.load(options);
         // @ts-ignore
         if (loadedFields === undefined && options?.create)

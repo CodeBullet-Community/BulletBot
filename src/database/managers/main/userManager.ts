@@ -20,7 +20,7 @@ export type UserWrapperResolvable = UserWrapper | UserResolvable;
  * @class UserManager
  * @extends {CacheManager<UserObject>}
  */
-export class UserManager extends CacheManager<UserObject, UserWrapper> {
+export class UserManager extends CacheManager<UserObject, typeof UserWrapper, UserManager> {
 
     private readonly client: Client;
     private readonly commandModule: Commands;
@@ -86,7 +86,12 @@ export class UserManager extends CacheManager<UserObject, UserWrapper> {
      */
     async fetch(user: UserResolvable, options?: FetchOptions<UserObject>) {
         let userObj = await this.fetchResolve(user);
-        return this._fetch([userObj.id], [userObj, this.commandModule], [userObj.id], options);
+        return this._fetch(
+            [userObj.id],
+            [userObj, this.commandModule],
+            [userObj.id],
+            options
+        );
     }
 
     /**
@@ -106,7 +111,7 @@ export class UserManager extends CacheManager<UserObject, UserWrapper> {
     /**
      * Resolves UserWrapperResolvable to a UserWrapper
      *
-     * @param {UserWrapperResolvable} user
+     * @param {UserWrapperResolvable} user Resolvable to resolve
      * @param {boolean} [fetch=false] If not cached GuildWrappers should be fetched
      * @returns
      * @memberof UserManager
@@ -117,6 +122,13 @@ export class UserManager extends CacheManager<UserObject, UserWrapper> {
         return this.get(user, { fields: [] });
     }
 
+    /**
+     * Resolves UserWrapperResolvable to a user id
+     *
+     * @param {UserWrapperResolvable} user Resolvable to resolve
+     * @returns {Snowflake}
+     * @memberof UserManager
+     */
     resolveId(user: UserWrapperResolvable): Snowflake {
         if (user instanceof UserWrapper) return user.id;
         return this.client.users.resolveID(user);

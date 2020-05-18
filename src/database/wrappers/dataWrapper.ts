@@ -2,8 +2,6 @@ import _, { PropertyPath } from 'lodash';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 
-import { Keys, ObjectKey } from '../schemas/global';
-
 /**
  * Generator for getters of a object
  */

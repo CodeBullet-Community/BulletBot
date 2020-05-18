@@ -5,18 +5,6 @@ import { CommandName } from "../../commands";
  * A document that extends on a specific Object
  */
 export type ExDocument<T> = T & Document;
-/**
- * A key of an Object
- */
-export type ObjectKey = string | number | symbol;
-/**
- * Array of keys of a specific Object
- */
-export type Keys<T> = (keyof T)[];
-/**
- * Array of keys or a single key of a specific Object
- */
-export type OptionalFields<T> = keyof T | Keys<T>;
 
 /**
  * Defines the limits in using a specific command

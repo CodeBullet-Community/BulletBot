@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { Model } from 'mongoose';
 
-import { ExDocument, Keys, OptionalFields } from '../schemas/global';
+import { ExDocument } from '../schemas/global';
 import { DataWrapper } from './dataWrapper';
 import { WrapperSynchronizer } from './wrapperSynchronizer';
 
@@ -26,6 +26,11 @@ export interface AdvancedLoadOptions<Data extends Object> {
      */
     reload?: boolean;
 }
+
+/**
+ * Array of keys or a single key of a specific Object
+ */
+export type OptionalFields<T> = keyof T | Keys<T>;
 
 /**
  * Options defining what and how fields should be loaded in a wrapper

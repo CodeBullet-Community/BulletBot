@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import { ChangeStream } from 'mongodb';
 
-import { Keys } from '../schemas/global';
 import { DocWrapper } from './docWrapper';
 
 /**

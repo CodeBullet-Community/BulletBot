@@ -21,7 +21,7 @@ export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
  * @class GuildManager
  * @extends {CacheManager<GuildObject, GuildWrapper>}
  */
-export class GuildManager extends CacheManager<GuildObject, GuildWrapper> {
+export class GuildManager extends CacheManager<GuildObject, typeof GuildWrapper, GuildManager> {
 
     private readonly client: Client;
     private readonly settings: SettingsWrapper;
@@ -98,10 +98,12 @@ export class GuildManager extends CacheManager<GuildObject, GuildWrapper> {
      */
     async fetch(guild: GuildResolvable, options?: FetchOptions<GuildObject>) {
         let guildObj = this.client.guilds.resolve(guild);
-        let sharedArgs = [guildObj.id];
-        return this._fetch(sharedArgs,
+        return this._fetch(
+            [guildObj.id],
             [guildObj, this.client, this.settings, this.commandModule],
-            sharedArgs, options);
+            [guildObj.id],
+            options
+        );
     }
 
     /**
@@ -118,6 +120,13 @@ export class GuildManager extends CacheManager<GuildObject, GuildWrapper> {
         return this.get(guild, { fields: [] });
     }
 
+    /**
+     * Resolves GuildWrapperResolvable to the guild id
+     *
+     * @param {GuildWrapperResolvable} guild Resolvable to resolve
+     * @returns {Snowflake}
+     * @memberof GuildManager
+     */
     resolveId(guild: GuildWrapperResolvable): Snowflake {
         if (guild instanceof GuildWrapper) return guild.id;
         return this.client.guilds.resolveID(guild);

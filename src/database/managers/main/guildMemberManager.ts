@@ -1,13 +1,14 @@
-import { Client, Guild, GuildMemberResolvable, Snowflake } from 'discord.js';
+import { GuildMemberResolvable, Snowflake } from 'discord.js';
 
 import { Commands } from '../../../commands';
 import { Database } from '../../database';
 import { GuildMemberObject, guildMemberSchema } from '../../schemas/main/guildMember';
 import { LoadOptions } from '../../wrappers/docWrapper';
 import { GuildMemberWrapper } from '../../wrappers/main/guildMemberWrapper';
+import { GuildWrapper } from '../../wrappers/main/guildWrapper';
 import { CacheManager } from '../cacheManager';
 import { FetchOptions } from '../collectionManager';
-import { GuildManager, GuildWrapperResolvable } from './guildManager';
+import { GuildManager } from './guildManager';
 import { UserManager, UserWrapperResolvable } from './userManager';
 
 /**
@@ -22,107 +23,116 @@ export type GuildMemberWrapperResolvable = GuildMemberWrapper | GuildMemberResol
  * @class GuildMemberManager
  * @extends {CacheManager<GuildMemberObject, GuildMemberWrapper>}
  */
-export class GuildMemberManager extends CacheManager<GuildMemberObject, GuildMemberWrapper> {
+export class GuildMemberManager extends CacheManager<GuildMemberObject, typeof GuildMemberWrapper, GuildMemberManager> {
 
-    private readonly client: Client;
+    /**
+     * Guild of which members are being managed
+     *
+     * @type {GuildWrapper}
+     * @memberof GuildMemberManager
+     */
+    readonly guild: GuildWrapper;
+
     private readonly userManager: UserManager;
-    private readonly guildManager: GuildManager;
     private readonly commandModule: Commands;
 
     /**
      * Creates an instance of GuildMemberManager.
      * 
      * @param {Database} database Database to get model from
-     * @param {Client} client
+     * @param {GuildWrapper} guild Guild of which to manage members
      * @param {UserManager} userManager
      * @param {GuildManager} guildManager
      * @param {Commands} commandModule
      * @memberof GuildMemberManager
      */
-    constructor(database: Database, client: Client, userManager: UserManager, guildManager: GuildManager, commandModule: Commands) {
+    constructor(database: Database, guild: GuildWrapper, userManager: UserManager, commandModule: Commands) {
         super(database, 'main', 'guildMember', guildMemberSchema, GuildMemberWrapper);
-        this.client = client;
+        this.guild = guild;
         this.userManager = userManager;
-        this.guildManager = guildManager;
         this.commandModule = commandModule;
     }
 
     /**
-     * Generates a default guildMember object with the provided user id and guild id
+     * Generates a default guildMember object with the provided user id
      *
      * @param {Snowflake} userId User id
-     * @param {Snowflake} guildId Guild id
      * @returns
      * @memberof GuildMemberManager
      */
-    getDefaultObject(userId: Snowflake, guildId: Snowflake) {
+    getDefaultObject(userId: Snowflake) {
         return {
             user: userId,
-            guild: guildId,
+            guild: this.guild.id,
             commandLastUsed: {}
         };
     }
 
     /**
      * @param {Snowflake} userId User id
-     * @param {Snowflake} guildId Guild id
      * @returns
      * @memberof GuildMemberManager
      */
-    getCacheKey(userId: Snowflake, guildId: Snowflake) {
-        return `${guildId}:${userId}`;
+    getCacheKey(userId: Snowflake) {
+        return userId;
     }
 
     /**
      * Returns GuildMemberWrapper saved in cache
      *
-     * @param {GuildWrapperResolvable} guild Guild to search in
      * @param {UserWrapperResolvable} user User in guild to search for
      * @param {LoadOptions<GuildMemberObject>} [options] LoadOptions that should be passed to the wrapper
      * @returns
      * @memberof GuildMemberManager
      */
-    get(guild: GuildWrapperResolvable, user: UserWrapperResolvable, options?: LoadOptions<GuildMemberObject>) {
+    get(user: UserWrapperResolvable, options?: LoadOptions<GuildMemberObject>) {
         let userID = this.userManager.resolveId(user);
-        let guildID = this.guildManager.resolveId(guild);
-        return this.getCached(options, userID, guildID);
+        return this.getCached(options, userID, this.guild.id);
     }
 
     /**
      * Searched the database and cache for a GuildMemberObject. 
      * If one isn't found and it's specified in the options a new GuildMemberObject is created
      *
-     * @param {GuildWrapperResolvable} guild Guild to search in
      * @param {UserWrapperResolvable} user User in guild to search for
      * @param {FetchOptions<GuildMemberObject>} [options] Fetch options (include load options passed to wrapper)
      * @returns
      * @memberof GuildMemberManager
      */
-    async fetch(guild: GuildWrapperResolvable, user: UserWrapperResolvable, options?: FetchOptions<GuildMemberObject>) {
+    async fetch(user: UserWrapperResolvable, options?: FetchOptions<GuildMemberObject>) {
         let userWrapper = await this.userManager.resolve(user, true)
-        let guildWrapper = await this.guildManager.resolve(guild, true);
-        let sharedArgs = [userWrapper.id, guildWrapper.id]
-        return this._fetch(sharedArgs, [userWrapper, guildWrapper, this.commandModule], sharedArgs, options);
+        return this._fetch(
+            [userWrapper.id],
+            [userWrapper, this.guild, this.commandModule],
+            [userWrapper.id],
+            options
+        );
     }
 
     /**
      * Resolves GuildMemberWrapperResolvable to a GuildMemberWrapper
      *
-     * @param {GuildWrapperResolvable} guild Guild of member
-     * @param {GuildMemberWrapperResolvable} guildMember Resolvable ti resolve
+     * @param {GuildMemberWrapperResolvable} guildMember Resolvable to resolve
      * @param {boolean} [fetch=false] If not cached GuildWrappers should be fetched
      * @returns
      * @memberof GuildMemberManager
      */
-    async resolve(guild: GuildWrapperResolvable, guildMember: GuildMemberWrapperResolvable, fetch = false) {
+    async resolve(guildMember: GuildMemberWrapperResolvable, fetch = false) {
         if (guildMember instanceof GuildMemberWrapper) return guildMember;
-        if (fetch) return this.fetch(guild, guildMember, { fields: [] });
-        return this.get(guild, guildMember, { fields: [] });
+        if (fetch) return this.fetch(guildMember, { fields: [] });
+        return this.get(guildMember, { fields: [] });
     }
 
-    resolveId(guild: Guild, guildMember: GuildMemberWrapperResolvable): Snowflake {
+    /**
+     * Resolves GuildMemberWrapperResolvable to a guild member id
+     *
+     * @param {GuildMemberWrapperResolvable} guildMember Resolvable to resolve
+     * @returns {Snowflake}
+     * @memberof GuildMemberManager
+     */
+    resolveId(guildMember: GuildMemberWrapperResolvable): Snowflake {
         if (guildMember instanceof GuildMemberWrapper) return guildMember.id;
-        return guild.members.resolveID(guildMember);
+        return this.guild.guild.members.resolveID(guildMember);
     }
 
 }

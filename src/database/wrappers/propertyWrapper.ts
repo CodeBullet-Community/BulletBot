@@ -1,6 +1,5 @@
 import _, { PropertyPath } from 'lodash';
 
-import { Keys } from '../schemas/global';
 import { DataWrapper } from './dataWrapper';
 import { DocWrapper } from './docWrapper';
 
