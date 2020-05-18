@@ -22,6 +22,7 @@
         "discord.js": "^12.2.0",
         "exit-hook": "^2.2.0",
         "express": "^4.17.1",
+        "googleapis": "^51.0.0",
         "lodash": "^4.17.15",
         "mongoose": "^5.9.14",
         "pjson": "^1.0.9",
@@ -37,7 +38,6 @@
         "@types/mongoose": "^5.7.20",
         "@types/node": "^14.0.1",
         "@types/request": "^2.48.5",
-        "googleapis": "^51.0.0",
         "ttypescript": "^1.5.10",
         "typescript": "^3.9.2"
     }
