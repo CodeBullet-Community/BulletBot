@@ -19,26 +19,26 @@
     "dependencies": {
         "console-stamp": "^0.2.9",
         "dateformat": "^3.0.3",
-        "discord.js": "^12.0.2",
+        "discord.js": "^12.2.0",
         "exit-hook": "^2.2.0",
         "express": "^4.17.1",
-        "googleapis": "^45.0.0",
         "lodash": "^4.17.15",
-        "mongoose": "^5.9.6",
+        "mongoose": "^5.9.14",
         "pjson": "^1.0.9",
-        "request": "^2.88.0",
-        "rxjs": "^6.5.4",
+        "request": "^2.88.2",
+        "rxjs": "^6.5.5",
         "ts-transformer-keys": "^0.4.1",
-        "xml2js": "^0.4.22"
+        "xml2js": "^0.4.23"
     },
     "devDependencies": {
         "@types/dateformat": "^3.0.1",
-        "@types/express": "^4.17.2",
-        "@types/lodash": "^4.14.149",
-        "@types/mongoose": "^5.7.7",
-        "@types/node": "^13.9.8",
-        "@types/request": "^2.48.3",
+        "@types/express": "^4.17.6",
+        "@types/lodash": "^4.14.151",
+        "@types/mongoose": "^5.7.20",
+        "@types/node": "^14.0.1",
+        "@types/request": "^2.48.5",
+        "googleapis": "^51.0.0",
         "ttypescript": "^1.5.10",
-        "typescript": "^3.7.5"
+        "typescript": "^3.9.2"
     }
 }
