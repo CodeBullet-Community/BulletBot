@@ -1,7 +1,7 @@
 import { GuildMemberResolvable, Snowflake } from 'discord.js';
 
 import { Commands } from '../../../commands';
-import { Database } from '../../database';
+import { MongoCluster } from '../../mongoCluster';
 import { GuildMemberObject, guildMemberSchema } from '../../schemas/main/guildMember';
 import { LoadOptions } from '../../wrappers/docWrapper';
 import { GuildMemberWrapper } from '../../wrappers/main/guildMemberWrapper';
@@ -39,15 +39,15 @@ export class GuildMemberManager extends CacheManager<GuildMemberObject, typeof G
     /**
      * Creates an instance of GuildMemberManager.
      * 
-     * @param {Database} database Database to get model from
+     * @param {MongoCluster} cluster Database to get model from
      * @param {GuildWrapper} guild Guild of which to manage members
      * @param {UserManager} userManager
      * @param {GuildManager} guildManager
      * @param {Commands} commandModule
      * @memberof GuildMemberManager
      */
-    constructor(database: Database, guild: GuildWrapper, userManager: UserManager, commandModule: Commands) {
-        super(database, 'main', 'guildMember', guildMemberSchema, GuildMemberWrapper);
+    constructor(cluster: MongoCluster, guild: GuildWrapper, userManager: UserManager, commandModule: Commands) {
+        super(cluster, 'main', 'guildMember', guildMemberSchema, GuildMemberWrapper);
         this.guild = guild;
         this.userManager = userManager;
         this.commandModule = commandModule;

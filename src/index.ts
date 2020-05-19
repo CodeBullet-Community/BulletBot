@@ -8,7 +8,7 @@ import { botToken, crashProof, mongoURI } from './bot-config.json';
 import { Catcher } from './catcher';
 import { Commands } from './commands';
 import { CaseLogger } from './database/caseLogger';
-import { Database } from './database/database';
+import { MongoCluster } from './database/mongoCluster';
 import { Logger } from './database/logger';
 import { MStats } from './database/mStats';
 import { PActions } from './database/pActions';
@@ -100,7 +100,7 @@ export class Bot {
     client: Client;
     commands: Commands;
     youtube: YTWebhookManager;
-    database: Database;
+    cluster: MongoCluster;
     mStats: MStats;
     catcher: Catcher;
     logger: Logger;
@@ -122,18 +122,18 @@ export class Bot {
         this.mStats = new MStats(this.mongoURI);
         await this.mStats.init();
 
-        this.database = new Database(this.mongoURI);
-        await this.database.init();
+        this.cluster = new MongoCluster(this.mongoURI);
+        await this.cluster.init();
 
         this.settings = new SettingsWrapper();
         await this.settings.load();
 
-        this.logger = new Logger(this.database);
-        this.caseLogger = new CaseLogger(this.database);
-        this.pActions = new PActions(this.database);
+        this.logger = new Logger(this.cluster);
+        this.caseLogger = new CaseLogger(this.cluster);
+        this.pActions = new PActions(this.cluster);
 
-        this.catcher = new Catcher(this.database);
-        this.youtube = new YTWebhookManager(this.database);
+        this.catcher = new Catcher(this.cluster);
+        this.youtube = new YTWebhookManager(this.cluster);
 
         this.client = new Client({ disableEveryone: true });
         await this.client.login(this.botToken);

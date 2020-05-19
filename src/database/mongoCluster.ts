@@ -1,5 +1,5 @@
-import { Collection } from "discord.js";
-import mongoose, { Connection, Model, Document, Schema } from "mongoose";
+import { Collection } from 'discord.js';
+import mongoose, { Connection } from 'mongoose';
 
 /**
  * Holds connections to MongoDB cluster
@@ -7,7 +7,15 @@ import mongoose, { Connection, Model, Document, Schema } from "mongoose";
  * @export
  * @class Database
  */
-export class Database {
+export class MongoCluster {
+
+    /**
+     * Cached connections for each collection
+     *
+     * @private
+     * @type {Collection<string, Connection>}
+     * @memberof MongoCluster
+     */
     private connections: Collection<string, Connection>;
 
     /**

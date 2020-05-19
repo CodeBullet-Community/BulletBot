@@ -1,7 +1,7 @@
 import { Collection } from 'discord.js';
 import { Schema } from 'mongoose';
 
-import { Database } from '../database';
+import { MongoCluster } from '../mongoCluster';
 import { DocWrapper, LoadOptions } from '../wrappers/docWrapper';
 import { CollectionManager, FetchOptions } from './collectionManager';
 
@@ -42,15 +42,15 @@ export abstract class CacheManager<
     /**
      * Creates an instance of CacheManager.
      * 
-     * @param {Database} database Database class to get connection
+     * @param {MongoCluster} cluster Database class to get connection
      * @param {string} databaseName Name of database the collection is in
      * @param {string} modelName Name of the model
      * @param {Schema<Obj>} schema Schema for this collection (should include default collection name)
      * @param {WrapperConstructor} wrapper Constructor of wrapper to wrap object
      * @memberof CacheManager
      */
-    constructor(database: Database, databaseName: string, modelName: string, schema: Schema<Obj>, wrapper: WrapperConstructor) {
-        super(database, databaseName, modelName, schema);
+    constructor(cluster: MongoCluster, databaseName: string, modelName: string, schema: Schema<Obj>, wrapper: WrapperConstructor) {
+        super(cluster, databaseName, modelName, schema);
         this.cache = new Collection();
         this.wrapper = wrapper;
     }

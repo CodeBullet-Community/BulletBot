@@ -1,6 +1,6 @@
 import { Model, Schema } from 'mongoose';
 
-import { Database } from '../database';
+import { MongoCluster } from '../mongoCluster';
 import { ExDocument } from '../schemas/global';
 import { AdvancedLoadOptions, DocWrapper, OptionalFields } from '../wrappers/docWrapper';
 
@@ -39,22 +39,22 @@ export type FetchOptions<Obj extends Object> = AdvancedFetchOptions<Obj> | Optio
  */
 export abstract class CollectionManager<Obj extends object, Wrapper extends DocWrapper<Obj>, Manager extends CollectionManager<Obj, Wrapper, Manager>>{
 
-    protected readonly database: Database;
+    protected readonly cluster: MongoCluster;
     private readonly databaseName: string;
     protected readonly model: Model<ExDocument<Obj>>;
 
     /**
      * Creates an instance of CollectionManager.
      * 
-     * @param {Database} database Database class to get connection
+     * @param {MongoCluster} cluster Database class to get connection
      * @param {string} databaseName Name of database the collection is in
      * @param {string} modelName Name of the model
      * @param {Schema<Obj>} schema Schema for this collection (should include default collection name)
      * @memberof CollectionManager
      */
-    constructor(database: Database, databaseName: string, modelName: string, schema: Schema<Obj>) {
-        let connection = this.database.getConnection(this.databaseName);
-        this.database = database;
+    constructor(cluster: MongoCluster, databaseName: string, modelName: string, schema: Schema<Obj>) {
+        let connection = this.cluster.getConnection(this.databaseName);
+        this.cluster = cluster;
         this.databaseName = databaseName;
         this.model = connection.model(modelName, schema);
     }

@@ -1,7 +1,7 @@
 import { Client, Snowflake, UserResolvable } from 'discord.js';
 
 import { Commands } from '../../../commands';
-import { Database } from '../../database';
+import { MongoCluster } from '../../mongoCluster';
 import { UserObject, userSchema } from '../../schemas/main/user';
 import { LoadOptions } from '../../wrappers/docWrapper';
 import { UserWrapper } from '../../wrappers/main/userWrapper';
@@ -28,13 +28,13 @@ export class UserManager extends CacheManager<UserObject, typeof UserWrapper, Us
     /**
      * Creates an instance of UserManager.
      * 
-     * @param {Database} database Database to get model from
+     * @param {MongoCluster} cluster Database to get model from
      * @param {Client} client
      * @param {Commands} commandModule
      * @memberof UserManager
      */
-    constructor(database: Database, client: Client, commandModule: Commands) {
-        super(database, 'main', 'user', userSchema, UserWrapper);
+    constructor(cluster: MongoCluster, client: Client, commandModule: Commands) {
+        super(cluster, 'main', 'user', userSchema, UserWrapper);
         this.client = client;
         this.commandModule = commandModule;
     }
