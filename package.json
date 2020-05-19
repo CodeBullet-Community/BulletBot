@@ -26,9 +26,11 @@
         "lodash": "^4.17.15",
         "mongoose": "^5.9.14",
         "pjson": "^1.0.9",
+        "reflect-metadata": "^0.1.13",
         "request": "^2.88.2",
         "rxjs": "^6.5.5",
         "ts-transformer-keys": "^0.4.1",
+        "tsyringe": "^4.3.0",
         "xml2js": "^0.4.23"
     },
     "devDependencies": {

@@ -1,15 +1,15 @@
-import { Client, User, Guild } from 'discord.js';
+import 'reflect-metadata';
+
+import { Client, Guild, User } from 'discord.js';
 import exitHook = require('exit-hook');
-import fs = require('fs');
-import { Observable } from 'rxjs';
 import { keys } from 'ts-transformer-keys';
 
-import { botToken, crashProof, mongoURI } from './bot-config.json';
+import { botToken, mongoURI } from './bot-config.json';
 import { Catcher } from './catcher';
 import { Commands } from './commands';
 import { CaseLogger } from './database/caseLogger';
-import { MongoCluster } from './database/mongoCluster';
 import { Logger } from './database/logger';
+import { MongoCluster } from './database/mongoCluster';
 import { MStats } from './database/mStats';
 import { PActions } from './database/pActions';
 import { megalogGroups } from './database/schemas/main/guild.js';

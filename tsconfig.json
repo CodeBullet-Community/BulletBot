@@ -10,6 +10,8 @@
         "esModuleInterop": true,
         "noImplicitUseStrict": true,
         "sourceMap": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
         "plugins": [
             {
                 "transform": "ts-transformer-keys/transformer"
