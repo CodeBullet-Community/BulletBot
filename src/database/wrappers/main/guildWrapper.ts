@@ -14,7 +14,9 @@ import { keys } from 'ts-transformer-keys';
 
 import { CommandName, CommandResolvable, Commands } from '../../../commands';
 import { PermLevels } from '../../../utils/permissions';
-import { UsageLimits } from '../../schemas/global';
+import { GuildMemberManager } from '../../managers/main/guildMemberManager';
+import { UserManager } from '../../managers/main/userManager';
+import { MongoCluster } from '../../mongoCluster';
 import {
     BBGuild,
     CommandSettings,
@@ -46,6 +48,13 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     readonly guild: Guild;
     readonly id: Snowflake;
+    /**
+     * GuildMember manager of this guild
+     *
+     * @type {GuildMemberManager}
+     * @memberof GuildWrapper
+     */
+    readonly members: GuildMemberManager;
     readonly prefix?: string;
     private _logChannel?: TextChannel;
     readonly logChannel?: TextChannel;
@@ -84,11 +93,22 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * @param {Client} client
      * @param {SettingsWrapper} settings
      * @param {Commands} commandModule
+     * @param {MongoCluster} cluster
+     * @param {UserManager} userManager
      * @memberof GuildWrapper
      */
-    constructor(model: Model<GuildDoc>, guild: Guild, client: Client, settings: SettingsWrapper, commandModule: Commands) {
+    constructor(
+        model: Model<GuildDoc>,
+        guild: Guild,
+        client: Client,
+        settings: SettingsWrapper,
+        commandModule: Commands,
+        cluster: MongoCluster,
+        userManager: UserManager
+    ) {
         super(model, { id: guild.id }, { id: guild.id }, keys<GuildObject>());
         this.guild = guild;
+        this.members = new GuildMemberManager(cluster, this, userManager, commandModule);
         this.client = client;
         this.settings = settings;
         this.commandModule = commandModule;
