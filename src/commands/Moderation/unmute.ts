@@ -1,4 +1,4 @@
-import { Message, Guild } from 'discord.js';
+import { Message, Guild, Util } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
@@ -87,7 +87,7 @@ var command: commandInterface = {
 
             // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send(`:white_check_mark: **${member.user.tag} has been unmuted${reason ? ', ' + reason : ''}**`);
+            message.channel.send(`:white_check_mark: **${member.user.tag} has been unmuted${reason ? ', ' + Util.escapeMarkdown(reason) : ''}**`);
             Bot.mStats.logCommandUsage(command.name);
             Bot.mStats.logMessageSend();
             return true;
