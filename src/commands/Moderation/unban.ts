@@ -60,7 +60,7 @@ var command: commandInterface = {
 
             // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send(`:white_check_mark: **${user.tag} has been unbanned${reason ? ', ' + reason : ''}**`);
+            message.channel.send(`:white_check_mark: **${user.tag} has been unbanned${reason ? ', ' + Util.escapeMarkdown(reason) : ''}**`);
             Bot.mStats.logCommandUsage(command.name);
             Bot.mStats.logMessageSend();
             return true;
