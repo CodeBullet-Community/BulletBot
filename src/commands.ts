@@ -218,7 +218,7 @@ export class Commands {
             message.channel.send(this.getHelpEmbed(cmd));
             return;
         }
-        if (permLevel < cmd.permLevel && !dm) return; //  returns if the member doesn't have enough perms
+        if (permLevel < cmd.permLevel) return; //  returns if the member doesn't have enough perms
         let user: UserWrapper;
         if (cmd.cooldownGlobal || cmd.cooldownLocal) {
             user = await Bot.database.getUser(message.author);
