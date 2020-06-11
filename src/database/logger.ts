@@ -101,7 +101,7 @@ export class Logger {
         var rankName = rank.charAt(0).toUpperCase() + rank.slice(1);
         var embed: any = {
             "embed": {
-                "description": `${role ? 'Role ' + role.toString() : 'User' + user.toString()} was ${type ? 'removed' : 'added to'} ${rank} rank by ${mod.toString()}`,
+                "description": `${role ? 'Role ' + role.toString() : 'User' + user.toString()} was ${type ? 'removed from' : 'added to'} ${rank} rank by ${mod.toString()}`,
                 "color": Bot.database.settingsDB.cache.embedColors.default,
                 "timestamp": date.toISOString(),
                 "author": {
