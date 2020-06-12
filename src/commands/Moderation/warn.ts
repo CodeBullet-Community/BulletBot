@@ -31,6 +31,12 @@ var command: commandInterface = {
                 return false;
             }
 
+            if(args.indexOf(' ') < 0) { // check if there are at least two arguments
+                message.channel.send('Correct usage: `warn [member] [reason]`'); // if not, send the correct usage of the command.
+                Bot.mStats.logMessageSend();
+                return false;
+            }
+
             let user = await stringToMember(message.guild, args.slice(0, args.indexOf(' ')), false, false, false);
             if (!user) { // check if it found the specified member
                 message.channel.send('Couldn\'t find specified member');
