@@ -190,6 +190,8 @@ client.on('message', async message => {
     var permLevel = permLevels.member;
     if (!dm) {// gets perm level of member if message isn't from dms
         permLevel = await getPermLevel(message.member);
+    } else if (Bot.database.getBotMasters().includes(message.author.id)) { // bot masters
+        permLevel = permLevels.botMaster;
     }
 
     if (commandCache) { // directly calls command when command cache exists

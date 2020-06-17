@@ -49,7 +49,7 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
 var command: commandInterface = {
     name: 'help',
     path: '',
-    dm: false,
+    dm: true,
     permLevel: permLevels.member,
     togglable: false,
     help: {

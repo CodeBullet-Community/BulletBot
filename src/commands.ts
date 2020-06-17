@@ -215,10 +215,10 @@ export class Commands {
         var cmd = this.commands.get(command);
         if (!cmd) return; // returns if it can't find the command
         if (!cmd.dm && dm) { // sends the embed help if the request is from a dm and the command doesn't support dms
-            message.channel.send(this.getHelpEmbed(cmd));
+            message.channel.send(await this.getHelpEmbed(cmd));
             return;
         }
-        if (permLevel < cmd.permLevel && !dm) return; //  returns if the member doesn't have enough perms
+        if (permLevel < cmd.permLevel) return; //  returns if the member doesn't have enough perms
         let user: UserWrapper;
         if (cmd.cooldownGlobal || cmd.cooldownLocal) {
             user = await Bot.database.getUser(message.author);
