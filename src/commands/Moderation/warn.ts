@@ -32,7 +32,7 @@ var command: commandInterface = {
             }
 
             if(args.indexOf(' ') < 0) { // check if there are at least two arguments
-                message.channel.send('Reason needs to be specified.'); // if not, send the correct usage of the command.
+                message.channel.send('Reason needs to be specified'); // if not, send the correct usage of the command.
                 Bot.mStats.logMessageSend();
                 return false;
             }
