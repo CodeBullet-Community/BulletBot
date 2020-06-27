@@ -140,6 +140,7 @@ export class WrapperSynchronizer<T extends Object> {
                 break;
             case 'invalidate':
                 this.close();
+                break;
             default:
                 break;
         }

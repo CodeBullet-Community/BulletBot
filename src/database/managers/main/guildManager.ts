@@ -1,4 +1,5 @@
 import { Client, GuildResolvable, Snowflake } from 'discord.js';
+import { singleton } from 'tsyringe';
 
 import { Commands } from '../../../commands';
 import { MongoCluster } from '../../mongoCluster';
@@ -21,26 +22,21 @@ export type GuildWrapperResolvable = GuildWrapper | GuildResolvable;
  * @class GuildManager
  * @extends {CacheManager<GuildObject, GuildWrapper>}
  */
+@singleton()
 export class GuildManager extends CacheManager<GuildObject, typeof GuildWrapper, GuildManager> {
 
     private readonly client: Client;
-    private readonly settings: SettingsWrapper;
-    private readonly commandModule: Commands;
 
     /**
      * Creates an instance of GuildManager.
      * 
      * @param {MongoCluster} cluster Database to get model from
      * @param {Client} client
-     * @param {SettingsWrapper} settings
-     * @param {Commands} commandModule
      * @memberof GuildManager
      */
-    constructor(cluster: MongoCluster, client: Client, settings: SettingsWrapper, commandModule: Commands) {
+    constructor(cluster: MongoCluster, client: Client) {
         super(cluster, 'main', 'guildMember', guildSchema, GuildWrapper);
         this.client = client;
-        this.settings = settings;
-        this.commandModule = commandModule;
     }
 
     /**
@@ -100,7 +96,7 @@ export class GuildManager extends CacheManager<GuildObject, typeof GuildWrapper,
         let guildObj = this.client.guilds.resolve(guild);
         return this._fetch(
             [guildObj.id],
-            [guildObj, this.client, this.settings, this.commandModule],
+            [guildObj],
             [guildObj.id],
             options
         );

@@ -10,6 +10,7 @@ import { CacheManager } from '../cacheManager';
 import { FetchOptions } from '../collectionManager';
 import { GuildManager } from './guildManager';
 import { UserManager, UserWrapperResolvable } from './userManager';
+import { injectable, container } from 'tsyringe';
 
 /**
  * Types that are resolvable to a GuildMemberWrapper
@@ -34,23 +35,17 @@ export class GuildMemberManager extends CacheManager<GuildMemberObject, typeof G
     readonly guild: GuildWrapper;
 
     private readonly userManager: UserManager;
-    private readonly commandModule: Commands;
 
     /**
      * Creates an instance of GuildMemberManager.
      * 
-     * @param {MongoCluster} cluster Database to get model from
      * @param {GuildWrapper} guild Guild of which to manage members
-     * @param {UserManager} userManager
-     * @param {GuildManager} guildManager
-     * @param {Commands} commandModule
      * @memberof GuildMemberManager
      */
-    constructor(cluster: MongoCluster, guild: GuildWrapper, userManager: UserManager, commandModule: Commands) {
-        super(cluster, 'main', 'guildMember', guildMemberSchema, GuildMemberWrapper);
+    constructor(guild: GuildWrapper) {
+        super(container.resolve(MongoCluster), 'main', 'guildMember', guildMemberSchema, GuildMemberWrapper);
         this.guild = guild;
-        this.userManager = userManager;
-        this.commandModule = commandModule;
+        this.userManager = container.resolve(UserManager);
     }
 
     /**
@@ -103,7 +98,7 @@ export class GuildMemberManager extends CacheManager<GuildMemberObject, typeof G
         let userWrapper = await this.userManager.resolve(user, true)
         return this._fetch(
             [userWrapper.id],
-            [userWrapper, this.guild, this.commandModule],
+            [userWrapper, this.guild],
             [userWrapper.id],
             options
         );

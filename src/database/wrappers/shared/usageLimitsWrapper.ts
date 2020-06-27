@@ -5,6 +5,7 @@ import { CommandName, CommandResolvable, Commands } from '../../../commands';
 import { CommandUsageLimits, UsageLimits } from '../../schemas/global';
 import { DocWrapper } from '../docWrapper';
 import { PropertyWrapper } from '../propertyWrapper';
+import { container } from 'tsyringe';
 
 /**
  * Wraps the usage limits property
@@ -48,14 +49,13 @@ export class UsageLimitsWrapper<Parent extends DocWrapper<any>> extends Property
      * Creates an instance of UsageLimitsWrapper and subscribes to the parent data to automatically synchronize data
      * 
      * @param {Parent} parent DocWrapper that holds this PropertyWrapper
-     * @param {Commands} commandModule CommandModule to resolve commands
      * @param {UsageLimits} [parentUsageLimits] UsageLimits of higher scope to inherit from
      * @memberof UsageLimitsWrapper
      */
-    constructor(parent: Parent, commandModule: Commands, parentUsageLimits?: UsageLimits) {
+    constructor(parent: Parent, parentUsageLimits?: UsageLimits) {
         super(parent, 'usageLimits', keys<UsageLimits>());
         this.setDataGetters();
-        this.commandModule = commandModule;
+        this.commandModule = container.resolve(Commands);
         this.parentUsageLimits = parentUsageLimits;
     }
 

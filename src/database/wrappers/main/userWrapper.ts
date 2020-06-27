@@ -5,6 +5,7 @@ import { keys } from 'ts-transformer-keys';
 import { CommandName, CommandResolvable, Commands } from '../../../commands';
 import { BBUser, UserCommandScope, UserDoc, UserObject } from '../../schemas/main/user';
 import { DocWrapper } from '../docWrapper';
+import { container } from 'tsyringe';
 
 /**
  * Wrapper for the user object and document so everything can easily be access through one object
@@ -36,14 +37,13 @@ export class UserWrapper extends DocWrapper<UserObject> implements BBUser {
      * 
      * @param {Model<UserDoc>} model Model for users collection
      * @param {User} user User to wrap
-     * @param {Commands} commandModule
      * @memberof UserWrapper
      */
-    constructor(model: Model<UserDoc>, user: User, commandModule: Commands) {
+    constructor(model: Model<UserDoc>, user: User) {
         super(model, { id: user.id }, { id: user.id }, keys<UserObject>());
         this.setDataGetters();
         this.user = user;
-        this.commandModule = commandModule;
+        this.commandModule = container.resolve(Commands);
     }
 
     /**

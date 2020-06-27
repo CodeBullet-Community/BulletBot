@@ -7,6 +7,7 @@ import { DocWrapper } from '../docWrapper';
 import { GuildWrapper } from './guildWrapper';
 import { UserWrapper } from './userWrapper';
 import { Snowflake } from 'discord.js';
+import { container } from 'tsyringe';
 
 /**
  * Wrapper for the GuildMemberObject and document so everything can easily be access through one object
@@ -33,17 +34,16 @@ export class GuildMemberWrapper extends DocWrapper<GuildMemberObject> implements
      * @param {Model<GuildMemberDoc>} model Model of the guildMembers collection
      * @param {UserWrapper} user User which is a member 
      * @param {GuildWrapper} guild Guild which member is in
-     * @param {Commands} commandModule
      * @memberof GuildMemberWrapper
      */
-    constructor(model: Model<GuildMemberDoc>, user: UserWrapper, guild: GuildWrapper, commandModule: Commands) {
+    constructor(model: Model<GuildMemberDoc>, user: UserWrapper, guild: GuildWrapper) {
         let initialData = { user: user.id, guild: guild.id };
         super(model, initialData, initialData, keys<GuildMemberObject>());
 
         this.id = this.user.id;
         this.user = user;
         this.guild = guild;
-        this.commandModule = commandModule;
+        this.commandModule = container.resolve(Commands);
     }
 
     /**

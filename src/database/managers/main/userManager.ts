@@ -1,4 +1,5 @@
 import { Client, Snowflake, UserResolvable } from 'discord.js';
+import { singleton } from 'tsyringe';
 
 import { Commands } from '../../../commands';
 import { MongoCluster } from '../../mongoCluster';
@@ -20,23 +21,21 @@ export type UserWrapperResolvable = UserWrapper | UserResolvable;
  * @class UserManager
  * @extends {CacheManager<UserObject>}
  */
+@singleton()
 export class UserManager extends CacheManager<UserObject, typeof UserWrapper, UserManager> {
 
     private readonly client: Client;
-    private readonly commandModule: Commands;
 
     /**
      * Creates an instance of UserManager.
      * 
      * @param {MongoCluster} cluster Database to get model from
      * @param {Client} client
-     * @param {Commands} commandModule
      * @memberof UserManager
      */
-    constructor(cluster: MongoCluster, client: Client, commandModule: Commands) {
+    constructor(cluster: MongoCluster, client: Client) {
         super(cluster, 'main', 'user', userSchema, UserWrapper);
         this.client = client;
-        this.commandModule = commandModule;
     }
 
     /**
@@ -88,7 +87,7 @@ export class UserManager extends CacheManager<UserObject, typeof UserWrapper, Us
         let userObj = await this.fetchResolve(user);
         return this._fetch(
             [userObj.id],
-            [userObj, this.commandModule],
+            [userObj],
             [userObj.id],
             options
         );

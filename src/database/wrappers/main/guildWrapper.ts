@@ -30,6 +30,7 @@ import {
 import { DocWrapper } from '../docWrapper';
 import { SettingsWrapper } from '../settings/settingsWrapper';
 import { UsageLimitsWrapper } from '../shared/usageLimitsWrapper';
+import { container } from 'tsyringe';
 
 /**
  * Wrapper for the guild object and document so everything can easily be access through one object
@@ -90,28 +91,15 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * 
      * @param {Model<GuildDoc>} model Model of guilds collection
      * @param {Guild} guild Discord.js Guild object
-     * @param {Client} client
-     * @param {SettingsWrapper} settings
-     * @param {Commands} commandModule
-     * @param {MongoCluster} cluster
-     * @param {UserManager} userManager
      * @memberof GuildWrapper
      */
-    constructor(
-        model: Model<GuildDoc>,
-        guild: Guild,
-        client: Client,
-        settings: SettingsWrapper,
-        commandModule: Commands,
-        cluster: MongoCluster,
-        userManager: UserManager
-    ) {
+    constructor(model: Model<GuildDoc>, guild: Guild) {
         super(model, { id: guild.id }, { id: guild.id }, keys<GuildObject>());
         this.guild = guild;
-        this.members = new GuildMemberManager(cluster, this, userManager, commandModule);
-        this.client = client;
-        this.settings = settings;
-        this.commandModule = commandModule;
+        this.members = new GuildMemberManager(this);
+        this.client = container.resolve(Client);
+        this.settings = container.resolve(SettingsWrapper);
+        this.commandModule = container.resolve(Commands);
 
         this.setDataGetters(['logChannel', 'caseChannel', 'locks', 'usageLimits', 'megalog']);
 
