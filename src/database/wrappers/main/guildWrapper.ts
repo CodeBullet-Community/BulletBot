@@ -94,14 +94,14 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      * @memberof GuildWrapper
      */
     constructor(model: Model<GuildDoc>, guild: Guild) {
-        super(model, { id: guild.id }, { id: guild.id }, keys<GuildObject>());
+        super(model, { id: guild.id }, keys<GuildObject>());
+        this.setDataGetters(['logChannel', 'caseChannel', 'locks', 'usageLimits', 'megalog']);
+
         this.guild = guild;
         this.members = new GuildMemberManager(this);
         this.client = container.resolve(Client);
         this.settings = container.resolve(SettingsWrapper);
         this.commandModule = container.resolve(Commands);
-
-        this.setDataGetters(['logChannel', 'caseChannel', 'locks', 'usageLimits', 'megalog']);
 
         this.subToMappedProperty('logChannel').subscribe(
             id => this._logChannel = <TextChannel>this.guild.channels.cache.get(id));

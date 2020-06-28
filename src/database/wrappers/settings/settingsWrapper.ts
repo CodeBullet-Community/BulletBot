@@ -44,7 +44,7 @@ export class SettingsWrapper extends DocWrapper<GlobalSettingsObject> implements
      * @memberof SettingsWrapper
      */
     constructor(model: Model<GlobalSettingsDoc>, bot: Bot) {
-        super(model, {}, {}, keys<GlobalSettingsObject>());
+        super(model, {}, keys<GlobalSettingsObject>());
 
         this.bot = bot;
 

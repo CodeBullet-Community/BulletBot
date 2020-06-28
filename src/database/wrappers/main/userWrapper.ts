@@ -40,7 +40,7 @@ export class UserWrapper extends DocWrapper<UserObject> implements BBUser {
      * @memberof UserWrapper
      */
     constructor(model: Model<UserDoc>, user: User) {
-        super(model, { id: user.id }, { id: user.id }, keys<UserObject>());
+        super(model, { id: user.id }, keys<UserObject>());
         this.setDataGetters();
         this.user = user;
         this.commandModule = container.resolve(Commands);

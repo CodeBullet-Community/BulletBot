@@ -19,6 +19,12 @@ import { container } from 'tsyringe';
  */
 export class GuildMemberWrapper extends DocWrapper<GuildMemberObject> implements BBGuildMember {
 
+    /**
+     * Id of guild member
+     *
+     * @type {Snowflake}
+     * @memberof GuildMemberWrapper
+     */
     readonly id: Snowflake;
     readonly user: UserWrapper;
     readonly guild: GuildWrapper;
@@ -37,8 +43,8 @@ export class GuildMemberWrapper extends DocWrapper<GuildMemberObject> implements
      * @memberof GuildMemberWrapper
      */
     constructor(model: Model<GuildMemberDoc>, user: UserWrapper, guild: GuildWrapper) {
-        let initialData = { user: user.id, guild: guild.id };
-        super(model, initialData, initialData, keys<GuildMemberObject>());
+        super(model, { user: user.id, guild: guild.id }, keys<GuildMemberObject>());
+        this.setDataGetters(['user', 'guild']);
 
         this.id = this.user.id;
         this.user = user;

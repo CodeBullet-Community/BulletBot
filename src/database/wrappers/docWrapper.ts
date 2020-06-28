@@ -94,17 +94,17 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
      * 
      * @param {Model<Data>} model Model of collection where the document is stored in
      * @param {*} uniqueQuery Query conditions for finding the document corresponding to the wrapper 
-     * @param {Partial<Data>} obj Already know part of document. All keys in this document will added to loadedFields
+     * @param {Partial<Data>} initialData Already know part of document. All keys in this document will added to loadedFields
      * @param {Keys<Data>} allFields Array of all the fields that the object can have (Use keys<T>() from 'ts-transformer-keys' to get them)
      * @memberof DocWrapper
      */
-    constructor(model: Model<ExDocument<Data>>, uniqueQuery: any, obj: Partial<Data>, allFields: Keys<Data>) {
-        super(obj, allFields);
+    constructor(model: Model<ExDocument<Data>>, uniqueQuery: any, allFields: Keys<Data>, initialData: Partial<Data> = uniqueQuery) {
+        super(initialData, allFields);
 
         this.model = model;
         this.uniqueQuery = uniqueQuery;
         // @ts-ignore
-        this.loadedFields = Object.keys(obj);
+        this.loadedFields = Object.keys(initialData);
         this.removed = false;
     }
 
