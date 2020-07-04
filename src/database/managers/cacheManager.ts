@@ -75,7 +75,7 @@ export abstract class CacheManager<
      * @returns DocWrapper, if cached, loaded as specified
      * @memberof CacheManager
      */
-    protected async getCached(options: LoadOptions<Obj>, ...args): Promise<Wrapper> {
+    protected async getCached(options: LoadOptions<Obj>, ...args: Parameters<Manager['getCacheKey']>): Promise<Wrapper> {
         let cacheKey = this.getCacheKey(...args);
         let wrapper = this.cache.get(cacheKey);
         if (!wrapper) return undefined;
@@ -100,7 +100,7 @@ export abstract class CacheManager<
      * @param {Parameters<Manager['getCacheKey']>} cacheKeyArgs Arguments for this.getCacheKey()
      * @param {RemoveFirstFromTuple<ConstructorParameters<WrapperConstructor>>} wrapperArgs Arguments for the wrapper constructor
      * @param {Parameters<Manager["getDefaultObject"]>} defaultObjArgs Arguments for this.getDefaultObject()
-     * @param {FetchOptions<Obj>} options Fetch options
+     * @param {FetchOptions<Obj>} [options] Fetch options
      * @returns Output that this.fetch() should return
      * @memberof CacheManager
      */
@@ -108,7 +108,7 @@ export abstract class CacheManager<
         cacheKeyArgs: Parameters<Manager['getCacheKey']>,
         wrapperArgs: RemoveFirstFromTuple<ConstructorParameters<WrapperConstructor>>,
         defaultObjArgs: Parameters<Manager["getDefaultObject"]>,
-        options: FetchOptions<Obj>
+        options?: FetchOptions<Obj>
     ) {
         let wrapper = await this.getCached(options, ...cacheKeyArgs);
         if (!wrapper)

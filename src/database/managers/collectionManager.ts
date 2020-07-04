@@ -85,18 +85,17 @@ export abstract class CollectionManager<Obj extends object, Wrapper extends DocW
      * @protected
      * @param {Wrapper} wrapper New/Existing DocWrapper
      * @param {any[]} defaultObjArgs Arguments for this.getDefaultObject()
-     * @param {FetchOptions<Obj>} options Fetch options
+     * @param {FetchOptions<Obj>} [options] Fetch options
      * @returns Output that this.fetch() should return
      * @memberof CollectionManager
      */
     protected async fetchWithExistingWrapper(
         wrapper: Wrapper,
         defaultObjArgs: Parameters<Manager["getDefaultObject"]>,
-        options: FetchOptions<Obj>
+        options?: FetchOptions<Obj>
     ): Promise<Wrapper> {
         let loadedFields = await wrapper.load(options);
-        // @ts-ignore
-        if (loadedFields === undefined && options?.create)
+        if (loadedFields === undefined && (<AdvancedFetchOptions<Obj>>options)?.create)
             await wrapper.createDoc(this.getDefaultObject(...defaultObjArgs), false);
         return wrapper;
     }

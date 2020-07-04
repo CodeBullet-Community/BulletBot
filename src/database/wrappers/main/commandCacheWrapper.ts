@@ -8,6 +8,7 @@ import { PermLevel } from '../../../utils/permissions';
 import { CommandCache, CommandCacheDoc, CommandCacheObject } from '../../schemas/main/commandCache';
 import { DocWrapper } from '../docWrapper';
 import { container } from 'tsyringe';
+import { UserWrapper } from './userWrapper';
 
 /**
  * Wrapper for the CommandCache object and document so everything can easily be access through one object
@@ -19,13 +20,12 @@ import { container } from 'tsyringe';
 export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implements CommandCache {
     private _channel: DMChannel | TextChannel;
     readonly channel: DMChannel | TextChannel;
-    readonly user: User;
+    readonly user: UserWrapper;
     private _command: commandInterface;
     readonly command: commandInterface;
     readonly permLevel: number;
     readonly cache: any;
     readonly expirationTimestamp: number;
-    private _expirationDate: Date;
     /**
      * When this cache expires as a data object
      *
@@ -45,7 +45,7 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
      * @param {User} user
      * @memberof CommandCacheWrapper
      */
-    constructor(model: Model<CommandCacheDoc>, channel: DMChannel | TextChannel, user: User) {
+    constructor(model: Model<CommandCacheDoc>, channel: DMChannel | TextChannel, user: UserWrapper) {
         super(model, { channel: channel.id, user: user.id }, keys<CommandCacheObject>());
         this.setDataGetters(['channel', 'user', 'command']);
 
@@ -55,11 +55,10 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
 
         this.subToMappedProperty('channel').subscribe(channel => this._channel = <any>this.client.channels.resolve(channel));
         this.subToMappedProperty('command').subscribe(command => this._command = this.commandModule.get(command));
-        this.subToMappedProperty('expirationTimestamp').subscribe(timestamp => this._expirationDate = new Date(timestamp));
 
         this.setWrapperProperty('channel', () => this._channel);
         this.setWrapperProperty('command', () => this._command);
-        this.setWrapperProperty('expirationDate', () => this._expirationDate);
+        this.setWrapperProperty('expirationDate', () => new Date(this.expirationTimestamp));
     }
 
     /**
@@ -110,6 +109,10 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
      */
     async extendExpirationTimestamp(milliseconds: number) {
         await this.update({ $inc: { expirationTimestamp: milliseconds } });
+        if (!this.isLoaded(['expirationTimestamp'])) return;
+        let tempData = this.cloneData();
+        tempData.expirationTimestamp += milliseconds;
+        this.data.next(tempData);
     }
 
     /**

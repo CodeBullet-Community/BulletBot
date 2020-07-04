@@ -1,12 +1,10 @@
 import { Client, GuildResolvable, Snowflake } from 'discord.js';
 import { singleton } from 'tsyringe';
 
-import { Commands } from '../../../commands';
 import { MongoCluster } from '../../mongoCluster';
 import { GuildObject, guildSchema } from '../../schemas/main/guild';
 import { LoadOptions } from '../../wrappers/docWrapper';
 import { GuildWrapper } from '../../wrappers/main/guildWrapper';
-import { SettingsWrapper } from '../../wrappers/settings/settingsWrapper';
 import { CacheManager } from '../cacheManager';
 import { FetchOptions } from '../collectionManager';
 
@@ -30,7 +28,7 @@ export class GuildManager extends CacheManager<GuildObject, typeof GuildWrapper,
     /**
      * Creates an instance of GuildManager.
      * 
-     * @param {MongoCluster} cluster Database to get model from
+     * @param {MongoCluster} cluster
      * @param {Client} client
      * @memberof GuildManager
      */
@@ -84,8 +82,7 @@ export class GuildManager extends CacheManager<GuildObject, typeof GuildWrapper,
     }
 
     /**
-     * Searched the database and cache for a GuildObject. 
-     * If one isn't found and it's specified in the options a new GuildObject is created
+     * Searches the database and cache for a GuildObject.
      *
      * @param {GuildResolvable} guild Guild to search for
      * @param {FetchOptions<GuildObject>} [options] Fetch options (include load options passed to wrapper)

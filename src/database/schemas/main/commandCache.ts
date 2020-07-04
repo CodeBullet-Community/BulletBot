@@ -2,34 +2,35 @@ import { Snowflake, DMChannel, TextChannel, User } from "discord.js";
 import { CommandName, commandInterface } from "../../../commands";
 import { ExDocument } from "../global";
 import { Schema } from "mongoose";
+import { UserWrapper } from "../../wrappers/main/userWrapper";
 
 /**
  * Holds cache data for commands in between messages from user
  */
 export interface CommandCache {
     /**
-     * Channel the command originally was executed
+     * Channel this cache listens for a response
      *
      * @type {(Snowflake | DMChannel | TextChannel)}
      * @memberof CommandCache
      */
     channel: Snowflake | DMChannel | TextChannel;
     /**
-     * User that executed the command
+     * User this cache is for
      *
      * @type {(Snowflake | User)}
      * @memberof CommandCache
      */
-    user: Snowflake | User;
+    user: Snowflake | UserWrapper;
     /**
-     * Command that was executed
+     * Command this cache is from
      *
      * @type {(CommandName | commandInterface)}
      * @memberof CommandCache
      */
     command: CommandName | commandInterface;
     /**
-     * Permission level command was executed at
+     * Permission level command should be executed at
      *
      * @type {number}
      * @memberof CommandCache
