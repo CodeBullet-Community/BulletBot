@@ -1,6 +1,5 @@
 import { GuildMemberResolvable, Snowflake } from 'discord.js';
 
-import { Commands } from '../../../commands';
 import { MongoCluster } from '../../mongoCluster';
 import { GuildMemberObject, guildMemberSchema } from '../../schemas/main/guildMember';
 import { LoadOptions } from '../../wrappers/docWrapper';
@@ -82,7 +81,7 @@ export class GuildMemberManager extends CacheManager<GuildMemberObject, typeof G
      */
     get(user: UserWrapperResolvable, options?: LoadOptions<GuildMemberObject>) {
         let userID = this.userManager.resolveId(user);
-        return this.getCached(options, userID, this.guild.id);
+        return this.getCached(options, userID);
     }
 
     /**

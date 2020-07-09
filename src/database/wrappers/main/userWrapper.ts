@@ -2,10 +2,11 @@ import { User } from 'discord.js';
 import { Model } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
 
-import { CommandName, CommandResolvable, Commands } from '../../../commands';
 import { BBUser, UserCommandScope, UserDoc, UserObject } from '../../schemas/main/user';
 import { DocWrapper } from '../docWrapper';
 import { container } from 'tsyringe';
+import { CommandName, CommandResolvable } from '../../../commands/command';
+import { CommandModule } from '../../../commands/commandModule';
 
 /**
  * Wrapper for the user object and document so everything can easily be access through one object
@@ -30,7 +31,7 @@ export class UserWrapper extends DocWrapper<UserObject> implements BBUser {
         };
     };
 
-    private readonly commandModule: Commands;
+    private readonly commandModule: CommandModule;
 
     /**
      * Creates an instance of UserWrapper.
@@ -43,7 +44,7 @@ export class UserWrapper extends DocWrapper<UserObject> implements BBUser {
         super(model, { id: user.id }, keys<UserObject>());
         this.setDataGetters();
         this.user = user;
-        this.commandModule = container.resolve(Commands);
+        this.commandModule = container.resolve(CommandModule);
     }
 
     /**

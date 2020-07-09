@@ -1,7 +1,7 @@
 import { PresenceData, Snowflake } from "discord.js";
-import { CommandName } from "../../../commands";
 import { UsageLimits, ExDocument, usageLimitSchemaDefinition } from "../global";
 import { Schema } from "mongoose";
+import { CommandName } from "../../../commands/command";
 
 /**
  * Raw global settings object from the database

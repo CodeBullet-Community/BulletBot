@@ -1,13 +1,14 @@
 import { Model } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
 
-import { CommandName, CommandResolvable, Commands } from '../../../commands';
 import { BBGuildMember, GuildMemberDoc, GuildMemberObject } from '../../schemas/main/guildMember';
 import { DocWrapper } from '../docWrapper';
 import { GuildWrapper } from './guildWrapper';
 import { UserWrapper } from './userWrapper';
 import { Snowflake } from 'discord.js';
 import { container } from 'tsyringe';
+import { CommandName, CommandResolvable } from '../../../commands/command';
+import { CommandModule } from '../../../commands/commandModule';
 
 /**
  * Wrapper for the GuildMemberObject and document so everything can easily be access through one object
@@ -32,7 +33,7 @@ export class GuildMemberWrapper extends DocWrapper<GuildMemberObject> implements
         readonly [Command in CommandName]?: number;
     };
 
-    private readonly commandModule: Commands;
+    private readonly commandModule: CommandModule;
 
     /**
      * Creates an instance of GuildMemberWrapper.
@@ -49,7 +50,7 @@ export class GuildMemberWrapper extends DocWrapper<GuildMemberObject> implements
         this.id = this.user.id;
         this.user = user;
         this.guild = guild;
-        this.commandModule = container.resolve(Commands);
+        this.commandModule = container.resolve(CommandModule);
     }
 
     /**

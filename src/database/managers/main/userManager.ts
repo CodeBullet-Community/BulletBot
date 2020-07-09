@@ -1,7 +1,6 @@
 import { Client, Snowflake, UserResolvable } from 'discord.js';
 import { singleton } from 'tsyringe';
 
-import { Commands } from '../../../commands';
 import { MongoCluster } from '../../mongoCluster';
 import { UserObject, userSchema } from '../../schemas/main/user';
 import { LoadOptions } from '../../wrappers/docWrapper';

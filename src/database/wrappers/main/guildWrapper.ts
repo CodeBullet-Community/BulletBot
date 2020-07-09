@@ -11,12 +11,10 @@ import {
 } from 'discord.js';
 import { Model } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
+import { container } from 'tsyringe';
 
-import { CommandName, CommandResolvable, Commands } from '../../../commands';
 import { PermLevels } from '../../../utils/permissions';
 import { GuildMemberManager } from '../../managers/main/guildMemberManager';
-import { UserManager } from '../../managers/main/userManager';
-import { MongoCluster } from '../../mongoCluster';
 import {
     BBGuild,
     CommandSettings,
@@ -30,7 +28,8 @@ import {
 import { DocWrapper } from '../docWrapper';
 import { SettingsWrapper } from '../settings/settingsWrapper';
 import { UsageLimitsWrapper } from '../shared/usageLimitsWrapper';
-import { container } from 'tsyringe';
+import { CommandName, CommandResolvable } from '../../../commands/command';
+import { CommandModule } from '../../../commands/commandModule';
 
 /**
  * Wrapper for the guild object and document so everything can easily be access through one object
@@ -84,7 +83,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
 
     private readonly client: Client;
     private readonly settings: SettingsWrapper;
-    private readonly commandModule: Commands;
+    private readonly commandModule: CommandModule;
 
     /**
      * Creates an instance of GuildWrapper.
@@ -101,7 +100,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
         this.members = new GuildMemberManager(this);
         this.client = container.resolve(Client);
         this.settings = container.resolve(SettingsWrapper);
-        this.commandModule = container.resolve(Commands);
+        this.commandModule = container.resolve(CommandModule);
 
         this.subToMappedProperty('logChannel').subscribe(
             id => this._logChannel = <TextChannel>this.guild.channels.cache.get(id));

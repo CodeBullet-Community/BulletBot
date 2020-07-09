@@ -1,8 +1,8 @@
 import { Snowflake, DMChannel, TextChannel, User } from "discord.js";
-import { CommandName, commandInterface } from "../../../commands";
 import { ExDocument } from "../global";
 import { Schema } from "mongoose";
 import { UserWrapper } from "../../wrappers/main/userWrapper";
+import { CommandName, Command } from "../../../commands/command";
 
 /**
  * Holds cache data for commands in between messages from user
@@ -28,7 +28,7 @@ export interface CommandCache {
      * @type {(CommandName | commandInterface)}
      * @memberof CommandCache
      */
-    command: CommandName | commandInterface;
+    command: CommandName | Command;
     /**
      * Permission level command should be executed at
      *

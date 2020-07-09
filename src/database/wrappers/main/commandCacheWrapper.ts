@@ -3,12 +3,13 @@ import { Model } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
 
 import { Bot } from '../../..';
-import { commandInterface, CommandResolvable, Commands } from '../../../commands';
 import { PermLevel } from '../../../utils/permissions';
 import { CommandCache, CommandCacheDoc, CommandCacheObject } from '../../schemas/main/commandCache';
 import { DocWrapper } from '../docWrapper';
 import { container } from 'tsyringe';
 import { UserWrapper } from './userWrapper';
+import { Command, CommandResolvable } from '../../../commands/command';
+import { CommandModule } from '../../../commands/commandModule';
 
 /**
  * Wrapper for the CommandCache object and document so everything can easily be access through one object
@@ -21,8 +22,8 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
     private _channel: DMChannel | TextChannel;
     readonly channel: DMChannel | TextChannel;
     readonly user: UserWrapper;
-    private _command: commandInterface;
-    readonly command: commandInterface;
+    private _command: Command;
+    readonly command: Command;
     readonly permLevel: number;
     readonly cache: any;
     readonly expirationTimestamp: number;
@@ -35,7 +36,7 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
     readonly expirationDate: Date;
 
     private readonly client: Client;
-    private readonly commandModule: Commands;
+    private readonly commandModule: CommandModule;
 
     /**
      * Creates an instance of CommandCacheWrapper with basic values to identify the CommandCache.
@@ -51,7 +52,7 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
 
         this.user = user;
         this.client = container.resolve(Client);
-        this.commandModule = container.resolve(Commands);
+        this.commandModule = container.resolve(CommandModule);
 
         this.subToMappedProperty('channel').subscribe(channel => this._channel = <any>this.client.channels.resolve(channel));
         this.subToMappedProperty('command').subscribe(command => this._command = this.commandModule.get(command));

@@ -1,5 +1,5 @@
 import { Document, SchemaDefinition, Schema } from "mongoose";
-import { CommandName } from "../../commands";
+import { CommandName } from "../../commands/command";
 
 /**
  * A document that extends on a specific Object

@@ -1,11 +1,12 @@
 import _ from 'lodash';
 import { keys } from 'ts-transformer-keys';
 
-import { CommandName, CommandResolvable, Commands } from '../../../commands';
 import { CommandUsageLimits, UsageLimits } from '../../schemas/global';
 import { DocWrapper } from '../docWrapper';
 import { PropertyWrapper } from '../propertyWrapper';
 import { container } from 'tsyringe';
+import { CommandModule } from '../../../commands/commandModule';
+import { CommandName, CommandResolvable } from '../../../commands/command';
 
 /**
  * Wraps the usage limits property
@@ -18,7 +19,7 @@ import { container } from 'tsyringe';
  */
 export class UsageLimitsWrapper<Parent extends DocWrapper<any>> extends PropertyWrapper<Parent, UsageLimits> implements UsageLimits {
 
-    private readonly commandModule: Commands;
+    private readonly commandModule: CommandModule;
     readonly parentUsageLimits: UsageLimits;
     readonly commands?: {
         readonly [K in CommandName]: CommandUsageLimits;
@@ -55,7 +56,7 @@ export class UsageLimitsWrapper<Parent extends DocWrapper<any>> extends Property
     constructor(parent: Parent, parentUsageLimits?: UsageLimits) {
         super(parent, 'usageLimits', keys<UsageLimits>());
         this.setDataGetters();
-        this.commandModule = container.resolve(Commands);
+        this.commandModule = container.resolve(CommandModule);
         this.parentUsageLimits = parentUsageLimits;
     }
 

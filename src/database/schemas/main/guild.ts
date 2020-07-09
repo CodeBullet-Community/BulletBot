@@ -1,9 +1,9 @@
 import { Collection, Snowflake, TextChannel } from 'discord.js';
 import { Schema } from 'mongoose';
 
-import { CommandName } from '../../../commands';
 import { UsageLimitsWrapper } from '../../wrappers/shared/usageLimitsWrapper';
 import { ExDocument, UsageLimits, usageLimitSchemaDefinition } from '../global';
+import { CommandName } from '../../../commands/command';
 
 /**
  * Object that defines a channel lock

@@ -1,10 +1,10 @@
 import { Snowflake } from 'discord.js';
 import { Schema } from 'mongoose';
 
-import { CommandName } from '../../../commands';
 import { GuildWrapper } from '../../wrappers/main/guildWrapper';
 import { UserWrapper } from '../../wrappers/main/userWrapper';
 import { ExDocument } from '../global';
+import { CommandName } from '../../../commands/command';
 
 /**
  * Object holding data for GuildMember saved by BulletBot

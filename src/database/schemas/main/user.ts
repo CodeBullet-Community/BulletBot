@@ -1,8 +1,8 @@
 import { Snowflake } from 'discord.js';
 import { Schema } from 'mongoose';
 
-import { CommandName } from '../../../commands';
 import { ExDocument } from '../global';
+import { CommandName } from '../../../commands/command';
 
 /**
  * Command scopes that are stored in the user object
