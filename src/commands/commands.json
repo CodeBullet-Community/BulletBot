@@ -1,0 +1,6 @@
+{
+    "path": "src/commands/root",
+    "name": "root",
+    "description": "Root category",
+    "commands": []
+}
