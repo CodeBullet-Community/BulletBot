@@ -5,6 +5,12 @@ import { container } from 'tsyringe';
 import { Command } from './command';
 import { CommandModule } from './commandModule';
 
+/**
+ * Json config for command module
+ *
+ * @export
+ * @interface CommandCategoryConfig
+ */
 export interface CommandCategoryConfig {
     path: string;
     name: string;
@@ -14,16 +20,59 @@ export interface CommandCategoryConfig {
     subcategories?: CommandCategoryConfig[];
 }
 
+/**
+ * Command category that holds commands and can hold subcategories
+ *
+ * @export
+ * @class CommandCategory
+ */
 export class CommandCategory {
 
+    /**
+     * Name of category
+     *
+     * @type {string}
+     * @memberof CommandCategory
+     */
     readonly name: string;
+    /**
+     * Description of category
+     *
+     * @type {string}
+     * @memberof CommandCategory
+     */
     readonly description: string;
+    /**
+     * If the category is hidden
+     *
+     * @type {boolean}
+     * @memberof CommandCategory
+     */
     readonly hidden: boolean;
+    /**
+     * Commands that are in this category
+     *
+     * @type {Collection<string, Command>}
+     * @memberof CommandCategory
+     */
     readonly commands: Collection<string, Command>;
+    /**
+     * Categories that are in this category
+     *
+     * @type {Collection<string, CommandCategory>}
+     * @memberof CommandCategory
+     */
     readonly subcategories?: Collection<string, CommandCategory>;
 
     private readonly commandModule: CommandModule;
 
+    /**
+     * Creates an instance of CommandCategory.
+     * 
+     * @param {string} basePath Path to the parent directory of the category
+     * @param {CommandCategoryConfig} config Command category configuration
+     * @memberof CommandCategory
+     */
     constructor(basePath: string, config: CommandCategoryConfig) {
         this.commandModule = container.resolve<CommandModule>(CommandModule);
 
@@ -46,13 +95,19 @@ export class CommandCategory {
         }
     }
 
+    /**
+     * Resolves a path and returns the category if there is one. 
+     * If there is no category at specified path it will return undefined.
+     *
+     * @param {string} path Path to resolve
+     * @returns
+     * @memberof CommandCategory
+     */
     resolvePath(path: string) {
         let [nextName, remainder] = path.split(/[/\\]/, 2);
         let next = this.subcategories?.get(nextName);
-        if (remainder == null || remainder == '')
+        if (remainder == null || remainder == '' || next == null)
             return next;
-        if (next == null)
-            throw new Error("Command path is invalid.");
         next.resolvePath(path);
     }
 
