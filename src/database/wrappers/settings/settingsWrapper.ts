@@ -1,13 +1,12 @@
-import { PresenceData, Snowflake, UserResolvable } from 'discord.js';
-import _ from 'lodash';
+import { Client, PresenceData, Snowflake, UserResolvable } from 'discord.js';
 import { Model } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
+import { container } from 'tsyringe';
 
-import { Bot } from '../../..';
-import { CommandName, CommandResolvable } from '../../../commands';
-import { CommandUsageLimits, UsageLimits } from '../../schemas/global';
+import { CommandName } from '../../../commands/command';
 import { GlobalSettingsDoc, GlobalSettingsObject } from '../../schemas/settings/settings';
 import { DocWrapper } from '../docWrapper';
+import { UsageLimitsWrapper } from '../shared/usageLimitsWrapper';
 
 /**
  * Wrapper for the GlobalSettingsObject so everything can easily be access through one object
@@ -34,63 +33,49 @@ export class SettingsWrapper extends DocWrapper<GlobalSettingsObject> implements
             [key: string]: any;
         };
     };
-    readonly usageLimits?: UsageLimits;
+    private _usageLimits: UsageLimitsWrapper<this>;
+    readonly usageLimits: UsageLimitsWrapper<this>;
 
-    private readonly bot: Bot
+    private readonly client: Client;
 
     /**
      * Creates an instance of SettingsWrapper.
      * 
      * @memberof SettingsWrapper
      */
-    constructor(model: Model<GlobalSettingsDoc>, bot: Bot) {
+    constructor(model: Model<GlobalSettingsDoc>) {
         super(model, {}, keys<GlobalSettingsObject>());
+        this.setDataGetters(['prefix', 'presence', 'embedColors', 'commands', 'usageLimits']);
 
-        this.bot = bot;
+        this._usageLimits = new UsageLimitsWrapper(this);
+        this.client = container.resolve(Client);
 
-        this.subToMappedProperty('presence').subscribe(this.setBotStatus);
+        this.subToMappedProperty('presence').subscribe(() => this.client.user.setPresence(this.presence));
+
+        this.setIfLoadedProperty('prefix', () => this.data.value.prefix || '?!');
+        this.setIfLoadedProperty('presence', () => this.data.value.presence || { status: 'online', afk: false, activity: {} });
+        this.setIfLoadedProperty('embedColors', () => this.data.value.embedColors || {
+            default: 8311585,
+            help: 8311585,
+            neutral: 4868682,
+            negative: 15805477,
+            warn: 16086051,
+            positive: 8311585
+        });
+        this.setIfLoadedProperty('commands', () => this.data.value.commands || {});
+        this.setIfLoadedProperty('usageLimits', () => this._usageLimits);
     }
 
     /**
-     * Sets the status of the bot
+     * Gets the specified embed color
      *
-     * @private
-     * @param {PresenceData} presence Presence to which to set it to
+     * @param {keyof SettingsWrapper['embedColors']} name
      * @returns
      * @memberof SettingsWrapper
      */
-    private async setBotStatus(presence: PresenceData) {
-        if (!presence || presence == {}) {
-            await this.bot.client.user.setActivity(undefined);
-            await this.bot.client.user.setStatus('online');
-            return;
-        }
-        await this.bot.client.user.setPresence(this.presence);
-    }
-
-    /**
-     * Always returns an object even if no usage limits were set.
-     *
-     * @returns
-     * @memberof Settings
-     */
-    async getUsageLimits() {
-        await this.load('usageLimits');
-        return this.usageLimits || {};
-    }
-
-    /**
-     * Merges the command usage limits in the code with those specified in the settings
-     *
-     * @param {CommandResolvable} commandResolvable Of what command to get usage limits
-     * @returns {CommandUsageLimits}
-     * @memberof Settings
-     */
-    async getCommandUsageLimits(commandResolvable: CommandResolvable) {
-        await this.load('usageLimits');
-        let command = this.bot.commands.resolve(commandResolvable);
-        let usageLimits = _.get(this.usageLimits, `commands.${command.name}`) || {};
-        return this.bot.commands.getCommandUsageLimits(command, usageLimits);
+    async getColor(name: keyof SettingsWrapper['embedColors']) {
+        await this.load('embedColors');
+        return this.embedColors[name];
     }
 
     /**
@@ -112,8 +97,8 @@ export class SettingsWrapper extends DocWrapper<GlobalSettingsObject> implements
      * @returns
      * @memberof SettingsWrapper
      */
-    async isBotMasters(user: UserResolvable) {
-        let userID = this.bot.client.users.resolveID(user);
+    async isBotMaster(user: UserResolvable) {
+        let userID = this.client.users.resolveID(user);
         return (await this.getBotMasters()).includes(userID);
     }
 
