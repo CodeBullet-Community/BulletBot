@@ -3,6 +3,7 @@ import path from 'path';
 import { container } from 'tsyringe';
 
 import { Command } from './command';
+import { CommandHolder } from './commandHolder';
 import { CommandModule } from './commandModule';
 
 /**
@@ -26,7 +27,7 @@ export interface CommandCategoryConfig {
  * @export
  * @class CommandCategory
  */
-export class CommandCategory {
+export class CommandCategory extends CommandHolder {
 
     /**
      * Name of category
@@ -74,6 +75,7 @@ export class CommandCategory {
      * @memberof CommandCategory
      */
     constructor(basePath: string, config: CommandCategoryConfig) {
+        super();
         this.commandModule = container.resolve<CommandModule>(CommandModule);
 
         this.name = config.name;
@@ -81,7 +83,6 @@ export class CommandCategory {
         this.hidden = config.hidden || false;
         let categoryPath = path.join(basePath, config.path);
 
-        this.commands = new Collection();
         for (const name of config.commands) {
             let command = this.commandModule.loadCommand(path.join(categoryPath, name));
             this.commands.set(name, command);

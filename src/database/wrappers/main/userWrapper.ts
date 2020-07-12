@@ -92,9 +92,9 @@ export class UserWrapper extends DocWrapper<UserObject> implements BBUser {
         this.checkCommandScope(scope);
         let commandName = this.commandModule.resolveName(command);
 
-        let pathValuePairs: [string, any][] = [[`commandLastUsed.${scope}.${command}`, timestamp]];
+        let pathValuePairs: [string, any][] = [[`commandLastUsed.${scope}.${commandName}`, timestamp]];
         if (scope !== 'global')
-            pathValuePairs.push([`commandLastUsed.global.${command}`, timestamp]);
+            pathValuePairs.push([`commandLastUsed.global.${commandName}`, timestamp]);
         await this.updatePathSet(pathValuePairs);
     }
 

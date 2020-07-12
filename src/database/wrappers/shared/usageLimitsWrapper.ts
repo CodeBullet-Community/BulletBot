@@ -101,8 +101,8 @@ export class UsageLimitsWrapper<Parent extends DocWrapper<any>> extends Property
         let rawLimits = this.getRawCommandUsageLimits(commandObj.name);
 
         return {
-            globalCooldown: rawLimits.globalCooldown || commandObj.cooldownGlobal,
-            localCooldown: rawLimits.localCooldown || commandObj.cooldownLocal,
+            globalCooldown: rawLimits.globalCooldown || commandObj.globalCooldown,
+            localCooldown: rawLimits.localCooldown || commandObj.localCooldown,
             enabled: rawLimits.enabled !== undefined ? rawLimits.enabled : true
         };
     }

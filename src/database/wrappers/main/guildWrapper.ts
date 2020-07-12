@@ -332,8 +332,6 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      */
     private checkCommand(command: CommandResolvable) {
         let commandObj = this.commandModule.resolve(command);
-        if (commandObj == null)
-            throw new Error(`Invalid command name. Provided command name is not a command "${command}"`);
         return commandObj;
     }
 

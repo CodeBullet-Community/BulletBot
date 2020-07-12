@@ -73,8 +73,6 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
      */
     async init(command: CommandResolvable, permLevel: PermLevel, cache: object, expirationTimestamp: number) {
         let commandObj = this.commandModule.resolve(command);
-        if (!commandObj)
-            throw new Error('CommandResolvable failed to resolve to command');
 
         let result = await this.createDoc({
             channel: this.channel.id,

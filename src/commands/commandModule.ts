@@ -3,6 +3,7 @@ import { singleton } from 'tsyringe';
 
 import { Command } from './command';
 import { CommandCategory } from './commandCategory';
+import { CommandHolder } from './commandHolder';
 import commandConfig from './commands.json';
 
 /**
@@ -12,7 +13,7 @@ import commandConfig from './commands.json';
  * @class CommandModule
  */
 @singleton()
-export class CommandModule {
+export class CommandModule extends CommandHolder {
 
     /**
      * Commands mapped to their name and all aliases
@@ -38,7 +39,7 @@ export class CommandModule {
      * @memberof CommandModule
      */
     constructor(client: Client) {
-        this.commands = new Collection();
+        super();
         this.structure = new CommandCategory('', commandConfig);
         this.client = client;
     }
