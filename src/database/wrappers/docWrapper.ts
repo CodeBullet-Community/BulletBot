@@ -14,7 +14,7 @@ import { WrapperSynchronizer } from './wrapperSynchronizer';
  */
 export interface AdvancedLoadOptions<Data extends Object> {
     /**
-     * What fields should be loaded
+     * What fields should be loaded. Null means it should load all fields and undefined means none should be loaded.
      *
      * @type {OptionalFields<Data>}
      */
@@ -33,7 +33,7 @@ export interface AdvancedLoadOptions<Data extends Object> {
 export type OptionalFields<T> = keyof T | Keys<T>;
 
 /**
- * Options defining what and how fields should be loaded in a wrapper
+ * Options defining what and how fields should be loaded in a wrapper.  Null means it should load all fields and undefined means none should be loaded.
  * 
  * @export
  * @template Data Data which will be loaded
@@ -66,7 +66,7 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
      */
     readonly uniqueQuery: any;
     /**
-     * Fields that are currently loaded
+     * Fields that are currently loaded. Null or undefined means all fields are loaded.
      *
      * @type {Keys<Data>}
      * @memberof DocWrapper
@@ -256,11 +256,11 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
      * @memberof DocWrapper
      */
     private extractFieldsToLoad(options: LoadOptions<Data>): Keys<Data> {
-        if (!options) return;
+        if (options === null) return undefined;
+        if (options === undefined) return [];
         if (options instanceof Array) return options;
         if (typeof options !== 'object') return [options];
-        if (options.fields) return [].concat(options.fields);
-        return undefined;
+        return this.extractFieldsToLoad(options.fields);
     }
 
     /**
@@ -279,8 +279,7 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
     }
 
     /**
-     * Loads specified not loaded fields. 
-     * If force is true it loads all specified fields regardless of if they are already loaded.
+     * Loads fields like specified in the options
      *
      * @param {LoadOptions<Data>} [options] Options for loading (default loads all fields)
      * @returns Loaded data
@@ -288,6 +287,8 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
      */
     async load(options?: LoadOptions<Data>) {
         let fields = this.extractFieldsToLoad(options);
+        if (fields?.length === 0) return [];
+
         let reload = this.extractIfReload(options);
         let loadFields = this.addLoadedFields(fields);
         if (!loadFields.length && !reload) return [];
@@ -295,7 +296,7 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
 
         let doc = await this.getDoc(loadFields);
         if (!doc) return undefined;
-        this.mergeData(doc, loadFields || this.allFields, true)
+        this.mergeData(doc, loadFields || this.allFields, true);
 
         return loadFields;
     }
@@ -313,7 +314,7 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
     private mergeData(obj: Data, fieldsToMerge: Keys<Data>, overwrite = false) {
         let tempData = this.cloneData();
         for (const key of fieldsToMerge) {
-            if (!overwrite && this.loadedFields.includes(key))
+            if (!overwrite && this.isLoaded(key))
                 continue;
             tempData[key] = obj[key];
         }
