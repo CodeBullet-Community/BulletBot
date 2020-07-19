@@ -17,6 +17,7 @@ import { UsageLimitsWrapper } from '../shared/usageLimitsWrapper';
  * @implements {GlobalSettingsObject}
  */
 export class SettingsWrapper extends DocWrapper<GlobalSettingsObject> implements GlobalSettingsObject {
+    readonly botToken: string;
     readonly prefix: string;
     readonly presence: PresenceData;
     readonly embedColors: {

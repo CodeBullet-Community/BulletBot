@@ -1,11 +1,11 @@
-import { CacheManager } from "../cacheManager";
-import { GuildObject } from "../../schemas/main/guild";
-import { MongoCluster } from "../../mongoCluster";
-import { singleton } from "tsyringe";
-import { globalSettingsSchema, GlobalSettingsObject } from "../../schemas/settings/settings";
-import { SettingsWrapper } from "../../wrappers/settings/settingsWrapper";
-import { LoadOptions } from "../../wrappers/docWrapper";
-import { FetchOptions } from "../collectionManager";
+import { singleton } from 'tsyringe';
+
+import { MongoCluster } from '../../mongoCluster';
+import { GlobalSettingsObject, globalSettingsSchema } from '../../schemas/settings/settings';
+import { LoadOptions } from '../../wrappers/docWrapper';
+import { SettingsWrapper } from '../../wrappers/settings/settingsWrapper';
+import { CacheManager } from '../cacheManager';
+import { FetchOptions } from '../collectionManager';
 
 /**
  * Holds the settings model
@@ -35,6 +35,7 @@ export class SettingsManager extends CacheManager<GlobalSettingsObject, typeof S
      */
     getDefaultObject() {
         return {
+            botToken: '[paste Discord bot token here]',
             botMasters: []
         };
     }

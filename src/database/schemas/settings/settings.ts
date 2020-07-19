@@ -14,6 +14,13 @@ import { ExDocument, UsageLimits, usageLimitSchemaDefinition } from '../global';
  */
 export interface GlobalSettings {
     /**
+     * Token used to log the bot into discord
+     *
+     * @type {string}
+     * @memberof GlobalSettings
+     */
+    botToken: string;
+    /**
      * Default prefix for all guilds and users
      *
      * @type {string}
@@ -80,6 +87,7 @@ export type GlobalSettingsDoc = ExDocument<GlobalSettingsObject>;
  * Schema for GlobalSettingsObject
  */
 export let globalSettingsSchema = new Schema({
+    botToken: String,
     prefix: { required: false, type: String },
     presence: {
         required: false, type: {
