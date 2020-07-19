@@ -1,9 +1,10 @@
-import { Snowflake } from "discord.js";
-import { Schema } from "mongoose";
-import { ExDocument } from "../global";
-import { WebhookService, MegalogFunction } from "./guild";
-import { ObjectId } from "mongodb";
-import { CommandName } from "../../../commands";
+import { Snowflake } from 'discord.js';
+import { ObjectId } from 'mongodb';
+import { Schema } from 'mongoose';
+
+import { CommandName } from '../../../commands/command';
+import { ExDocument } from '../global';
+import { MegalogFunction, WebhookService } from './guild';
 
 /**
  * Object representing raw data of a log entry from the database
@@ -13,7 +14,7 @@ export interface LogObject {
     action: number;
     mod: Snowflake;
     timestamp: number;
-    info?: LogStaffInfo | LogWebhookInfo | LogFilterInfo | LogCommandInfo | LogPrefixInfo | LogMegalogInfo | LogMegalogIgnoreInfo;
+    info?: LogStaffInfo | LogWebhookInfo | LogCommandInfo | LogPrefixInfo | LogMegalogInfo | LogMegalogIgnoreInfo;
 }
 /**
  * Mongoose Document for LogObject
