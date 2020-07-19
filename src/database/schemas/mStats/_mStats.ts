@@ -1,6 +1,7 @@
-import { CommandName } from "../../../commands";
-import { WebhookService, MegalogFunction } from "../main/guild";
-import { Schema } from "mongoose";
+import { Schema } from 'mongoose';
+
+import { CommandName } from '../../../commands/command';
+import { MegalogFunction, WebhookService } from '../main/guild';
 
 /**
  * Raw mStats base object used in all three collections
