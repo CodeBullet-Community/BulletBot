@@ -40,7 +40,7 @@ export class CommandModule extends CommandHolder {
      */
     constructor(client: Client) {
         super();
-        this.structure = new CommandCategory('', commandConfig);
+        this.structure = new CommandCategory(this, '', commandConfig);
         this.client = client;
     }
 

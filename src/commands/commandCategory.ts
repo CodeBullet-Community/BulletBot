@@ -70,13 +70,14 @@ export class CommandCategory extends CommandHolder {
     /**
      * Creates an instance of CommandCategory.
      * 
+     * @param {CommandModule} commandModule The command module is not resolved via dependency injection to prevent circular dependencies
      * @param {string} basePath Path to the parent directory of the category
      * @param {CommandCategoryConfig} config Command category configuration
      * @memberof CommandCategory
      */
-    constructor(basePath: string, config: CommandCategoryConfig) {
+    constructor(commandModule: CommandModule, basePath: string, config: CommandCategoryConfig) {
         super();
-        this.commandModule = container.resolve<CommandModule>(CommandModule);
+        this.commandModule = commandModule;
 
         this.name = config.name;
         this.description = config.description;
@@ -89,9 +90,9 @@ export class CommandCategory extends CommandHolder {
         }
 
         this.subcategories = new Collection();
-        for (const categoryConfig of config.subcategories) {
+        for (const categoryConfig of Object.values(config.subcategories ?? {})) {
             let lowercaseName = categoryConfig.name.toLowerCase();
-            let category = new CommandCategory(categoryPath, categoryConfig);
+            let category = new CommandCategory(commandModule, categoryPath, categoryConfig);
             this.subcategories.set(lowercaseName, category);
         }
     }
