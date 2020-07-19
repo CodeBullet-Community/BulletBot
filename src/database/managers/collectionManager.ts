@@ -53,10 +53,9 @@ export abstract class CollectionManager<Obj extends object, Wrapper extends DocW
      * @memberof CollectionManager
      */
     constructor(cluster: MongoCluster, databaseName: string, modelName: string, schema: Schema<Obj>) {
-        let connection = this.cluster.getConnection(this.databaseName);
         this.cluster = cluster;
         this.databaseName = databaseName;
-        this.model = connection.model(modelName, schema);
+        this.model = this.cluster.getConnection(this.databaseName).model(modelName, schema);
     }
 
     /**

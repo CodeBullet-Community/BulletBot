@@ -86,7 +86,7 @@ export abstract class DataWrapper<Data extends object, CachedData extends object
      * @memberof DataWrapper
      */
     protected setDataGetters(ignoreKeys: Keys<Data> = []) {
-        this.setCustomDataGetters(this.dataGetterGenerator, _.difference(this.allFields, ignoreKeys));
+        this.setCustomDataGetters((key) => this.dataGetterGenerator(key), _.difference(this.allFields, ignoreKeys));
     }
 
     /**

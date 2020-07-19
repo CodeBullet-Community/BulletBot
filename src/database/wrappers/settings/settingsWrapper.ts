@@ -51,7 +51,7 @@ export class SettingsWrapper extends DocWrapper<GlobalSettingsObject> implements
         this._usageLimits = new UsageLimitsWrapper(this);
         this.client = container.resolve(Client);
 
-        this.subToMappedProperty('presence').subscribe(() => this.client.user.setPresence(this.presence));
+        this.subToMappedProperty('presence').subscribe(() => this.client.user?.setPresence(this.presence));
 
         this.setIfLoadedProperty('prefix', () => this.data.value.prefix || '?!');
         this.setIfLoadedProperty('presence', () => this.data.value.presence || { status: 'online', afk: false, activity: {} });

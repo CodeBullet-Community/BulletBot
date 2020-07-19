@@ -25,6 +25,7 @@ export class MongoCluster {
      * @memberof Database
      */
     constructor(private mongoURI: string) {
+        this.connections = new Collection();
         mongoose.set('useNewUrlParser', true);
         mongoose.set('useUnifiedTopology', true);
     }
