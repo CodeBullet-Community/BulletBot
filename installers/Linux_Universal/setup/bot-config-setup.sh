@@ -31,7 +31,7 @@
                 if [[ $epel_installed = false ]]; then
                     yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && epel_installed=true || {
                         echo "${red}Failed to install Extra Packages for" \
-                            "Enterprise Linux${nc}"
+                            "Enterprise Linux${nc}" >&2
                     }
                 fi
                 pkg_manager="yum"
@@ -39,7 +39,7 @@
                 if [[ $epel_installed = false ]]; then
                     dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && epel_installed=true || {
                         echo "${red}Failed to install Extra Packages for" \
-                            "Enterprise Linux${nc}"
+                            "Enterprise Linux${nc}" >&2
                     }
 
                 fi
@@ -186,7 +186,7 @@
         }
     }"
 
-    if [ ! -f out/bot-config.json ]; then
+    if [[ ! -f out/bot-config.json ]]; then
         echo "Creating 'bot-config.json'..."
         # A.1 Piping json to jq formats the output into human-readable json format
         echo "$json" | jq . > out/bot-config.json || {
@@ -205,7 +205,7 @@
             read option
             case "$option" in
                 1)
-                    if [ -f out/bot-config.json.old ]; then
+                    if [[ -f out/bot-config.json.old ]]; then
                         echo "Overwriting current 'bot-config.json.old' with" \
                             "current 'bot-config.json'..."
                     else

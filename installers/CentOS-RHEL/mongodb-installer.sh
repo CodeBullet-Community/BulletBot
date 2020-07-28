@@ -38,7 +38,7 @@
         }
     echo "Updating packages and installing MongoDB..."
     yum -y install mongodb-org || {
-        echo "${red}Failed to install MongoDB${nc}"
+        echo "Failed to install MongoDB${nc}" >&2
         read -p "Press [Enter] to return to the installer menu"
         exit 1
     }
@@ -65,5 +65,5 @@
 
     echo -e "\n${green}Finished installing MongoDB"
     echo "${cyan}NOTE: As a reminder, you will need to manually add the settings" \
-        "document to the MongoDB database (see wiki)${nc}"
+        "document to the MongoDB database (see documentation)${nc}"
     read -p "Press [Enter] to return to the installer menu"

@@ -20,7 +20,7 @@
 # about BulletBot's startup, to a collection of emails that'd be placed in
 # ./bullet-mongo-start.conf. More information on how to configure and use
 # this feature can be found here: 
-# https://github.com/CodeBullet-Community/BulletBot/wiki/Sending-BulletBot-Startup-Status-Reports
+# https://bulletbot.readthedocs.io/en/latest/Helpful-Guides/BulletBot-Startup-Status-Reports/
 #
 # Note: Along with 'bullet-mongo-start.conf', this is the only script apart of
 # the installers that is not called by either the master installer or
@@ -45,13 +45,13 @@
 #
 ################################################################################
 #
-    addresses=$_MAIL_TO # The email addresses that the Status Report is sent to
-    send_status=$_SEND_STATUS # Determines if the Status Report can be/is sent
+    addresses=$MailTo # The email addresses that the Status Report is sent to
+    send_status=$SendStatus # Determines if the Status Report can be/is sent
     attempt_mongo_restart=true
 
     # The '--no-hostname' flag for journalctl only works with systemd 230 and
     # above
-    if [[ $(journalctl --version | grep -oP "[0-9]+" | head -1) -ge "230" ]]; then
+    if (($(journalctl --version | grep -oP "[0-9]+" | head -1) >= 230)); then
         no_hostname="--no-hostname"
     fi
 
@@ -76,7 +76,7 @@
                 elif [[ ! $(echo $addresses | grep -E -o "\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}\b") \
                         ]]; then
                     send_status=false
-                    echo "[WARNING] One or more or the email addresses in" \
+                    echo "[WARNING] One or more of the email addresses in" \
                         "'bullet-monog-start.conf' are invalid" >&2
                 fi
             else

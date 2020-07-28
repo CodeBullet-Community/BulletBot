@@ -12,7 +12,13 @@ While planning a feature, keep in mind, that the bot should be stateless. Meanin
 
 ## Coding Style
 
+### BulletBot
+
 As a style guide we use [this](https://github.com/basarat/typescript-book/blob/master/docs/styleguide/styleguide.md) guide from [basarat](https://github.com/basarat) and his typescript book.
+
+### Installers
+
+For the installers, we follow [this](https://github.com/StrangeRanger/bash-style-guide) style guide that has been modified by [Bark Ranger](https://github.com/StrangeRanger).
 
 ### Arguments in Utils and Database
 
