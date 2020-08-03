@@ -5,6 +5,7 @@ import { pActionsInterval, YTResubInterval } from '../bot-config.json';
 import { Guild, GuildMember, TextChannel } from 'discord.js';
 import { durationToString } from '../utils/parsers';
 import { durations } from '../utils/time';
+import { databaseUnmute } from '../commands/Moderation/unmute';
 
 /**
  * Manages pending actions and the connection to the pAction collection
@@ -73,6 +74,9 @@ export class PActions {
                         guild = Bot.client.guilds.get(actionObject.info.guild);
                         if (!guild) break;
                         if (!guild.me.hasPermission('MANAGE_ROLES')) break;
+
+                        //@ts-ignore
+                        databaseUnmute(guild.id, actionObject.info.user);
 
                         let member: GuildMember;
                         try {

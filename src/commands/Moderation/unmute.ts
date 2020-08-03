@@ -1,10 +1,21 @@
-import { Message, Guild, Util } from 'discord.js';
+import { Message, Guild, Util, Snowflake } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, durationToString, stringToMember } from '../../utils/parsers';
 import { durations } from '../../utils/time';
+
+/**
+ * Removes the user from the user list of the guild
+ *
+ * @export
+ * @param {Snowflake} guildId
+ * @param {Snowflake} userId
+ */
+export async function databaseUnmute(guildId: Snowflake, userId: Snowflake) {
+    await Bot.database.mainDB.guilds.updateOne({ guild: guildId }, { $pull: { muted: userId } });
+}
 
 var command: commandInterface = {
     name: 'unmute',
@@ -80,6 +91,8 @@ var command: commandInterface = {
             await member.removeRole(role, `Manual unmuted by ${message.author.tag} (${message.author.id})`);
             // make a case
             await Bot.caseLogger.logUnmute(message.guild, member, message.member, reason);
+
+            await databaseUnmute(message.guild.id, member.id);
 
             // dm to member that they has been unmuted
             member.send(`You were unmuted in **${message.guild.name}** ${reason.length ? 'for:\n' + reason : ''}`);
