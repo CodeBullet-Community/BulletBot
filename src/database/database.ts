@@ -554,7 +554,7 @@ export class Database {
      * @returns
      * @memberof Database
      */
-    findCommandCacheDoc(channelID: string, userID: string, timestamp: Number = Date.now()) {
+    findCommandCacheDoc(channelID: string, userID: string, timestamp: number = Date.now()) {
         return this.mainDB.commandCache.findOne({ channel: channelID, user: userID, delete: { $gt: timestamp } }).exec();
     }
 

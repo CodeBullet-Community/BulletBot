@@ -184,7 +184,7 @@ export class PActions {
      * @memberof PActions
      */
     async addMute(guildID: string, userID: string, until: number, caseID: number, requestTime?: number) {
-        let pMute = await this.pActions.findOne({ action: pActionActions.mute, info: { guild: guildID, user: userID } }).exec();
+        let pMute = await this.pActions.findOne({ action: pActionActions.mute, 'info.guild': guildID, 'info.user': userID }).exec();
         if (pMute) {
             pMute.to = until;
             //@ts-ignore
