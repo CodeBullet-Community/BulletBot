@@ -47,8 +47,8 @@ var command: commandInterface = {
     permLevel: permLevels.admin,
     togglable: false,
     help: {
-        shortDescription: 'Let\'s you toggle filters',
-        longDescription: 'Let\'s you enable and disable filters',
+        shortDescription: 'Lets you toggle filters',
+        longDescription: 'Lets you enable and disable filters',
         usages: [
             '{command} list',
             '{command} list [filter name/category]\nuse `category/subcategory` to get list from subcategory',

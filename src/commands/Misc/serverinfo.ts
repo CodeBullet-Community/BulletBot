@@ -14,8 +14,8 @@ var command: commandInterface = {
     permLevel: permLevels.member,
     togglable: false,
     help: {
-        shortDescription: 'returns infos about the server',
-        longDescription: 'returns infos about the server',
+        shortDescription: 'Returns infos about the server',
+        longDescription: 'Returns infos about the server',
         usages: [
             '{command}'
         ],

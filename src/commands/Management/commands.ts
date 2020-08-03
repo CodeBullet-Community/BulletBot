@@ -13,8 +13,8 @@ var command: commandInterface = {
     permLevel: permLevels.admin,
     togglable: false,
     help: {
-        shortDescription: 'Let\'s you toggle commands',
-        longDescription: 'Let\'s you disable and enable commands',
+        shortDescription: 'Lets you toggle commands',
+        longDescription: 'Lets you disable and enable commands',
         usages: [
             '{command} list',
             '{command} list [command name/category]\nuse `category/subcategory` to get list from subcategory',

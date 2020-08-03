@@ -14,8 +14,8 @@ var command: commandInterface = {
     togglable: false,
     cooldownGlobal: durations.second * 20,
     help: {
-        shortDescription: 'reports a bug to the devs',
-        longDescription: 'reports a bug to the dev. Be as descriptive as you can',
+        shortDescription: 'Reports a bug to the devs',
+        longDescription: 'Reports a bug to the dev. Be as descriptive as you can',
         usages: [
             '{command} [bug]'
         ],

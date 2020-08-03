@@ -12,8 +12,8 @@ var command: commandInterface = {
     permLevel: permLevels.member,
     togglable: false,
     help: {
-        shortDescription: 'gives infos about the bot',
-        longDescription: 'gives infos about the bot',
+        shortDescription: 'Gives infos about the bot',
+        longDescription: 'Gives infos about the bot',
         usages: [
             '{command}'
         ],

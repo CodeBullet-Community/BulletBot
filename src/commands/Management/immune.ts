@@ -13,8 +13,8 @@ var command: commandInterface = {
     permLevel: permLevels.admin,
     togglable: false,
     help: {
-        shortDescription: 'manage the immune rank',
-        longDescription: 'let\'s you add, remove and list immune roles and users',
+        shortDescription: 'Manage the immune rank',
+        longDescription: 'Lets you add, remove and list immune roles and users',
         usages: [
             '{command} add [role/user]',
             '{command} rem [role/user]',
