@@ -1,12 +1,14 @@
 import { ChannelResolvable, Client, DMChannel, Snowflake, TextChannel } from 'discord.js';
 import { singleton } from 'tsyringe';
 
+import { CommandResolvable } from '../../../commands/command';
+import { PermLevel } from '../../../utils/permissions';
 import { MongoCluster } from '../../mongoCluster';
 import { CommandCacheObject, commandCacheSchema } from '../../schemas/main/commandCache';
 import { LoadOptions } from '../../wrappers/docWrapper';
 import { CommandCacheWrapper } from '../../wrappers/main/commandCacheWrapper';
 import { CacheManager } from '../cacheManager';
-import { AdvancedFetchOptions, FetchOptions } from '../collectionManager';
+import { FetchOptions, ManualCreate } from '../collectionManager';
 import { UserManager, UserWrapperResolvable } from './userManager';
 
 /**
@@ -17,7 +19,7 @@ import { UserManager, UserWrapperResolvable } from './userManager';
  * @extends {CacheManager<CommandCacheObject, typeof CommandCacheWrapper, CommandCacheManager>}
  */
 @singleton()
-export class CommandCacheManager extends CacheManager<CommandCacheObject, typeof CommandCacheWrapper, CommandCacheManager>{
+export class CommandCacheManager extends CacheManager<CommandCacheObject, typeof CommandCacheWrapper, CommandCacheManager> implements ManualCreate<CommandCacheWrapper>{
 
     private readonly userManager: UserManager;
     private readonly client: Client;
@@ -31,19 +33,9 @@ export class CommandCacheManager extends CacheManager<CommandCacheObject, typeof
      * @memberof CommandCacheManager
      */
     constructor(cluster: MongoCluster, userManager: UserManager, client: Client) {
-        super(cluster, 'main', 'commandCache', commandCacheSchema, CommandCacheWrapper);
+        super(cluster, 'main', 'commandCache', commandCacheSchema, false, CommandCacheWrapper);
         this.userManager = userManager;
         this.client = client;
-    }
-
-    /**
-     * Just returns null. This manager does not support the AdvancedFetchOptions.create option.
-     *
-     * @returns
-     * @memberof CommandCacheManager
-     */
-    getDefaultObject() {
-        return null;
     }
 
     /**
@@ -76,25 +68,59 @@ export class CommandCacheManager extends CacheManager<CommandCacheObject, typeof
      *
      * @param {ChannelResolvable} channel Channel cache is listening
      * @param {UserWrapperResolvable} user User cache is for
-     * @param {FetchOptions<CommandCacheObject>} [options] Fetch options (include load options passed to wrapper)
+     * @param {LoadOptions<CommandCacheObject>} [options] Load options passed to the wrapper
      * @returns
      * @memberof CommandCacheManager
      */
-    async fetch(channel: ChannelResolvable, user: UserWrapperResolvable, options?: FetchOptions<CommandCacheObject>) {
-        if ((<AdvancedFetchOptions<CommandCacheObject>>options)?.create)
-            throw new Error("The CommandCacheManager does not support the AdvancedFetchOptions.create option. Use CommandCacheWrapper.init() instead.");
-
-        let channelObj = this.client.channels.resolve(channel);
-        if (!(channelObj instanceof TextChannel || channelObj instanceof DMChannel))
-            throw new Error('Invalid CommandCache channel type. Expected channel to be of type TextChannel or DMChannel.');
+    async fetch(channel: ChannelResolvable, user: UserWrapperResolvable, options?: LoadOptions<CommandCacheObject>) {
+        let channelObj = await this.resolveCacheChannel(channel);
         let userWrapper = await this.userManager.resolve(user, true);
 
+        if (!channelObj || !userWrapper) return undefined;
         return this._fetch(
             [channelObj.id, userWrapper.id],
             [channelObj, userWrapper],
-            [],
+            undefined,
             options
         );
+    }
+
+    /**
+     * Creates a new CommandCache or overwrite an existing one.
+     *
+     * @param {ChannelResolvable} channel Channel to listen to
+     * @param {UserWrapperResolvable} user User cache is for 
+     * @param {CommandResolvable} command Command for the cache
+     * @param {PermLevel} permLevel What permissions level this CommandCache executes with
+     * @param {object} cache Object that should be cached
+     * @param {number} expirationTimestamp When cache expires (default 10 sec later)
+     * @returns The created CommandCacheWrapper
+     * @memberof CommandCacheManager
+     */
+    async create(channel: ChannelResolvable, user: UserWrapperResolvable, command: CommandResolvable, permLevel: PermLevel, cache: object, expirationTimestamp: number) {
+        let channelObj = await this.resolveCacheChannel(channel);
+        let userWrapper = await this.userManager.resolve(user, true);
+
+        let wrapper = new this.wrapper(this.model, channelObj, userWrapper);
+        await wrapper.init(command, permLevel, cache, expirationTimestamp);
+        this.set([channelObj.id, userWrapper.id], wrapper);
+
+        return wrapper;
+    }
+
+    /**
+     * Resolves a ChannelResolvable to either TextChannel or DMChannel.
+     * If the channel is neither of those types it throws an error.
+     *
+     * @param {ChannelResolvable} channel Resolvable to resolve
+     * @returns
+     * @memberof CommandCacheManager
+     */
+    async resolveCacheChannel(channel: ChannelResolvable) {
+        let channelObj = this.client.channels.resolve(channel);
+        if (!(channelObj instanceof TextChannel || channelObj instanceof DMChannel))
+            throw new Error('Invalid CommandCache channel type. Expected channel to be of type TextChannel or DMChannel.');
+        return channelObj;
     }
 
 }

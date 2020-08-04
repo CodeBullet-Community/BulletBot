@@ -13,7 +13,7 @@ import { AdvancedLoadOptions, DocWrapper, OptionalFields } from '../wrappers/doc
  */
 export interface AdvancedFetchOptions<Obj extends Object> extends AdvancedLoadOptions<Obj> {
     /**
-     * If document should be created if not found
+     * If document should be created if not found (Default true)
      *
      * @type {boolean}
      * @memberof FetchOptions
@@ -30,6 +30,25 @@ export interface AdvancedFetchOptions<Obj extends Object> extends AdvancedLoadOp
 export type FetchOptions<Obj extends Object> = AdvancedFetchOptions<Obj> | OptionalFields<Obj>;
 
 /**
+ * Adds the .create() method definition for if the object needs to manually be created
+ *
+ * @export
+ * @interface ManualCreate
+ * @template Wrapper
+ */
+export interface ManualCreate<Wrapper extends DocWrapper<any>> {
+    /**
+     * Creates a new object with the provided parameters. 
+     * Overwrites old already existing objects.
+     *
+     * @param {...any[]} args
+     * @returns {Promise<Wrapper>}
+     * @memberof ManualCreate
+     */
+    create(...args: any[]): Promise<Wrapper>;
+}
+
+/**
  * Holds the model for a specific collection and the fetch function.
  *
  * @export
@@ -39,9 +58,33 @@ export type FetchOptions<Obj extends Object> = AdvancedFetchOptions<Obj> | Optio
  */
 export abstract class CollectionManager<Obj extends object, Wrapper extends DocWrapper<Obj>, Manager extends CollectionManager<Obj, Wrapper, Manager>>{
 
-    protected readonly cluster: MongoCluster;
+
+    /**
+     * Name of database this manager is connected with
+     *
+     * @private
+     * @type {string}
+     * @memberof CollectionManager
+     */
     private readonly databaseName: string;
+    /**
+     * Model of document this manager manages
+     *
+     * @protected
+     * @type {Model<ExDocument<Obj>>}
+     * @memberof CollectionManager
+     */
     protected readonly model: Model<ExDocument<Obj>>;
+    /**
+     * If the manager automatically creates a document if it doesn't exist
+     *
+     * @protected
+     * @type {boolean}
+     * @memberof CollectionManager
+     */
+    protected readonly autoCreate: boolean;
+
+    protected readonly cluster: MongoCluster;
 
     /**
      * Creates an instance of CollectionManager.
@@ -50,12 +93,14 @@ export abstract class CollectionManager<Obj extends object, Wrapper extends DocW
      * @param {string} databaseName Name of database the collection is in
      * @param {string} modelName Name of the model
      * @param {Schema<Obj>} schema Schema for this collection (should include default collection name)
+     * @param {boolean} autoCreate If new documents should be created automatically when they do not exist
      * @memberof CollectionManager
      */
-    constructor(cluster: MongoCluster, databaseName: string, modelName: string, schema: Schema<Obj>) {
+    constructor(cluster: MongoCluster, databaseName: string, modelName: string, schema: Schema<Obj>, autoCreate: boolean) {
         this.cluster = cluster;
         this.databaseName = databaseName;
         this.model = this.cluster.getConnection(this.databaseName).model(modelName, schema);
+        this.autoCreate = autoCreate;
     }
 
     /**
@@ -66,7 +111,7 @@ export abstract class CollectionManager<Obj extends object, Wrapper extends DocW
      * @returns {Obj} Default object based on arguments
      * @memberof CollectionManager
      */
-    abstract getDefaultObject(...args): Obj;
+    getDefaultObject?(...args): Obj;
 
     /**
      * Searches collection and returns found object. If provided it creates a new object if not found.
@@ -77,6 +122,19 @@ export abstract class CollectionManager<Obj extends object, Wrapper extends DocW
      * @memberof CollectionManager
      */
     abstract async fetch(...args): Promise<Wrapper>;
+
+    /**
+     * Extracts option if wrapper should be automatically created
+     *
+     * @private
+     * @param {FetchOptions<Obj>} [options] Options to extract from
+     * @returns
+     * @memberof CollectionManager
+     */
+    private extractIfCreate(options?: FetchOptions<Obj>) {
+        if (typeof options !== 'object' || Array.isArray(options) || options?.create == null || !this.autoCreate) return this.autoCreate;
+        return options.create;
+    }
 
     /**
      * Helper function for fetch, which takes a wrapper, calls DocWrapper.load() and optional creates a doc
@@ -94,8 +152,11 @@ export abstract class CollectionManager<Obj extends object, Wrapper extends DocW
         options?: FetchOptions<Obj>
     ): Promise<Wrapper> {
         let loadedFields = await wrapper.load(options);
-        if (loadedFields === undefined && (<AdvancedFetchOptions<Obj>>options)?.create)
-            await wrapper.createDoc(this.getDefaultObject(...defaultObjArgs), false);
+        if (loadedFields === undefined)
+            if (this.extractIfCreate(options))
+                await wrapper.createDoc(this.getDefaultObject(...defaultObjArgs), false);
+            else
+                return undefined;
         return wrapper;
     }
 

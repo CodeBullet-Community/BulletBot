@@ -5,7 +5,7 @@ import { BBGuildMember, GuildMemberDoc, GuildMemberObject } from '../../schemas/
 import { DocWrapper } from '../docWrapper';
 import { GuildWrapper } from './guildWrapper';
 import { UserWrapper } from './userWrapper';
-import { Snowflake } from 'discord.js';
+import { Snowflake, GuildMember } from 'discord.js';
 import { container } from 'tsyringe';
 import { CommandName, CommandResolvable } from '../../../commands/command';
 import { CommandModule } from '../../../commands/commandModule';
@@ -27,6 +27,13 @@ export class GuildMemberWrapper extends DocWrapper<GuildMemberObject> implements
      * @memberof GuildMemberWrapper
      */
     readonly id: Snowflake;
+    /**
+     * Discord.js GuildMember object
+     *
+     * @type {GuildMember}
+     * @memberof GuildMemberWrapper
+     */
+    readonly member: GuildMember;
     readonly user: UserWrapper;
     readonly guild: GuildWrapper;
     readonly commandLastUsed: {
@@ -39,15 +46,17 @@ export class GuildMemberWrapper extends DocWrapper<GuildMemberObject> implements
      * Creates an instance of GuildMemberWrapper.
      * 
      * @param {Model<GuildMemberDoc>} model Model of the guildMembers collection
+     * @param {GuildMember} guildMember Discord.js GuildMember of this member
      * @param {UserWrapper} user User which is a member 
      * @param {GuildWrapper} guild Guild which member is in
      * @memberof GuildMemberWrapper
      */
-    constructor(model: Model<GuildMemberDoc>, user: UserWrapper, guild: GuildWrapper) {
+    constructor(model: Model<GuildMemberDoc>, guildMember: GuildMember, user: UserWrapper, guild: GuildWrapper) {
         super(model, { user: user.id, guild: guild.id }, keys<GuildMemberObject>());
         this.setDataGetters(['user', 'guild']);
 
         this.id = this.user.id;
+        this.member = guildMember;
         this.user = user;
         this.guild = guild;
         this.commandModule = container.resolve(CommandModule);
@@ -103,6 +112,16 @@ export class GuildMemberWrapper extends DocWrapper<GuildMemberObject> implements
             return false;
 
         return true;
+    }
+
+    /**
+     * Returns PermLevel of member
+     *
+     * @returns
+     * @memberof GuildMemberWrapper
+     */
+    async getPermLevel() {
+        return this.guild.getPermLevel(this);
     }
 
 }

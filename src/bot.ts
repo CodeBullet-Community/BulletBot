@@ -31,7 +31,7 @@ export class Bot {
         container.register(Client, { useValue: this.client });
 
         let settingsManager = container.resolve(SettingsManager);
-        let settings = await settingsManager.fetch({ fields: null });
+        let settings = await settingsManager.fetch(null);
         container.register(SettingsWrapper, { useValue: settings });
 
         this.guildManager = container.resolve(GuildManager);

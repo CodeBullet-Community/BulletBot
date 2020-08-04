@@ -41,6 +41,24 @@ export type OptionalFields<T> = keyof T | Keys<T>;
 export type LoadOptions<Data extends Object> = AdvancedLoadOptions<Data> | OptionalFields<Data>;
 
 /**
+ * Adds .init() method definition
+ *
+ * @export
+ * @interface WrapperInit
+ */
+export interface WrapperInit {
+    /**
+     * Creates a new document with the provided arguments.
+     * Overwrites existing document.
+     *
+     * @param {...any[]} args
+     * @returns {Promise<void>}
+     * @memberof WrapperInit
+     */
+    init(...args: any[]): Promise<void>;
+}
+
+/**
  * Wrapper for mongoDB documents. 
  * This class handles what part of the document is already loaded and 
  * general interfacing with the document on the database 
@@ -295,7 +313,10 @@ export class DocWrapper<Data extends Object> extends DataWrapper<Data, Partial<D
         if (reload) loadFields = fields;
 
         let doc = await this.getDoc(loadFields);
-        if (!doc) return undefined;
+        if (!doc) {
+            this.removed = true;
+            return undefined;
+        }
         this.mergeData(doc, loadFields || this.allFields, true);
 
         return loadFields;
