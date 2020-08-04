@@ -23,11 +23,11 @@ This page lists all of the commands that can be used with BulletBot, description
 |                   |                                                               |               |
 | **_MANAGEMENT_**  |                                                               |               |
 |    **?!admin**    | For managing the admin rank                                   |     Admin     |
-|  **?!commands**   | Let's you toggle commands                                     |     Admin     |
-|   **?!filters**   | Let's you toggle filters                                      |     Admin     |
+|  **?!commands**   | Lets you toggle commands                                     |     Admin     |
+|   **?!filters**   | Lets you toggle filters                                      |     Admin     |
 |   **?!immune**    | For managing the immune rank                                  |     Admin     |
-|     **?!log**     | Let's you set the log channel                                 |     Admin     |
-|   **?!megalog**   | Let's you change megalog settings                             |     Admin     |
+|     **?!log**     | Lets you set the log channel                                 |     Admin     |
+|   **?!megalog**   | Lets you change megalog settings                             |     Admin     |
 |     **?!mod**     | For managing the mod rank                                     |     Admin     |
 |   **?!prefix**    | Sets custom prefix                                            |     Admin     |
 |   **?!youtube**   | Create/delete/change YouTube webhooks                         |     Admin     |
@@ -43,7 +43,7 @@ This page lists all of the commands that can be used with BulletBot, description
 |    **?!mutes**    | Lists all muted members                                       |      Mod      |
 |    **?!purge**    | Command deletes last x messages                               |      Mod      |
 |   **?!reason**    | Change reason of case                                         |      Mod      |
-|     **?!say**     | Let's the bot speak for you                                   |      Mod      |
+|     **?!say**     | Lets the bot speak for you                                   |      Mod      |
 |   **?!softban**   | Kick members and delete all their messages/reactions          |      Mod      |
 |    **?!unban**    | Unban users                                                   |      Mod      |
 |   **?!unlock**    | Unlocks a by the bot locked channel                           |      Mod      |

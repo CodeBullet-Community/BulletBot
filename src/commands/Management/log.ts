@@ -12,8 +12,8 @@ var command: commandInterface = {
     permLevel: permLevels.admin,
     togglable: false,
     help: {
-        shortDescription: 'let\'s you set the log channel',
-        longDescription: 'assigns, unassigns and lists the log and case channel',
+        shortDescription: 'Lets you set the log channel',
+        longDescription: 'Assigns, unassigns and lists the log and case channel',
         usages: [
             '{command} [logtype] [channel]',
             '{command} rem [logtype]',

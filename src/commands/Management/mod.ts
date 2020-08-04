@@ -13,8 +13,8 @@ var command: commandInterface = {
     permLevel: permLevels.admin,
     togglable: false,
     help: {
-        shortDescription: 'for managing the mod rank',
-        longDescription: 'let\'s you add, remove and list mod roles and users',
+        shortDescription: 'For managing the mod rank',
+        longDescription: 'Lets you add, remove and list mod roles and users',
         usages: [
             '{command} add [role/user]',
             '{command} rem [role/user]',

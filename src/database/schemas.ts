@@ -1,5 +1,5 @@
 import mongoose = require('mongoose');
-import { PresenceData, DMChannel, GroupDMChannel, TextChannel, User } from 'discord.js';
+import { PresenceData, DMChannel, GroupDMChannel, TextChannel, User, Snowflake } from 'discord.js';
 import { Bot } from '..';
 
 // guild
@@ -23,6 +23,7 @@ export interface guildObject {
             neutralOverwrites: string[];
         };
     };
+    muted?: Snowflake[];
 }
 export interface guildDoc extends mongoose.Document, guildObject { }
 export const guildSchema = new mongoose.Schema({
@@ -36,7 +37,8 @@ export const guildSchema = new mongoose.Schema({
     webhooks: {
         youtube: [mongoose.Schema.Types.ObjectId]
     },
-    locks: mongoose.Schema.Types.Mixed
+    locks: mongoose.Schema.Types.Mixed,
+    muted: { required: false, type: [String] }
 });
 
 // staff

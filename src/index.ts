@@ -15,6 +15,7 @@ import fs = require('fs');
 import { logChannelToggle, logChannelUpdate, logBan, logMember, logNickname, logMemberRoles, logGuildName, cacheAttachment, logMessageDelete, logMessageBulkDelete, logMessageEdit, logReactionToggle, logReactionRemoveAll, logRoleToggle, logRoleUpdate, logVoiceTransfer, logVoiceMute, logVoiceDeaf } from './megalogger';
 import { PActions } from './database/pActions';
 import { CaseLogger } from "./database/caseLogger";
+import { getMuteRole } from './commands/Moderation/mute';
 
 // add console logging info
 require('console-stamp')(console, {
@@ -311,6 +312,9 @@ client.on('guildBanRemove', async (guild: discord.Guild, user: discord.User) => 
 
 client.on('guildMemberAdd', async member => {
     logMember(member, true);
+    let guildDoc = await Bot.database.findGuildDoc(member.guild.id, ['muted']);
+    if (guildDoc?.muted?.includes(member.user.id))
+        await member.addRole(await getMuteRole(member.guild), 'Reapplying mute role after rejoined');
 });
 
 client.on('guildMemberRemove', async member => {

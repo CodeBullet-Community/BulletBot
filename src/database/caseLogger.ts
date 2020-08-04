@@ -151,7 +151,7 @@ export class CaseLogger {
      * @param caseID the ID of the case
      */
     async findByCase(guildID: string, caseID: string) {
-        return await this.cases.findOne({ guild: guildID, caseID: caseID }).exec();
+        return await this.cases.findOne({ guild: guildID, caseID: Number(caseID) }).exec();
     }
 
     /**
@@ -198,7 +198,7 @@ export class CaseLogger {
     async editReason(guildID: string, caseID: string, reason: string) {
         let success = false;
         if (!isNaN(Number(caseID))) {
-            let editCase = await this.cases.findOne({ guild: guildID, caseID: caseID }).exec();
+            let editCase = await this.cases.findOne({ guild: guildID, caseID: Number(caseID) }).exec();
             if (editCase) {
                 editCase.reason = reason;
                 editCase.save();

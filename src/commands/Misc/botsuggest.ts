@@ -14,7 +14,7 @@ var command: commandInterface = {
     togglable: false,
     cooldownGlobal: durations.second * 20,
     help: {
-        shortDescription: 'make suggestion for bot',
+        shortDescription: 'Make suggestion for bot',
         longDescription: 'Make a suggestion for the bot. Be as descriptive as you can.',
         usages: [
             '{command} [suggestion]'
