@@ -125,7 +125,7 @@ exitHook(() => {
 // write the current timestamp to a file. This can be used to determine if the bot has crashed or is disconnected.
 setInterval(() => {
     if (client.status === 0) {
-        fs.writeFileSync(crashProof.file, Date.now());
+        fs.writeFileSync(crashProof.file, Date.now().toString());
     }
 }, crashProof.interval);
 
