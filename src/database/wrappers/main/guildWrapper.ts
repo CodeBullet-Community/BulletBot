@@ -5,7 +5,6 @@ import {
     Guild,
     GuildChannel,
     GuildChannelResolvable,
-    GuildMemberResolvable,
     Snowflake,
     TextChannel,
 } from 'discord.js';
@@ -13,8 +12,10 @@ import { Model } from 'mongoose';
 import { keys } from 'ts-transformer-keys';
 import { container } from 'tsyringe';
 
+import { CommandName, CommandResolvable } from '../../../commands/command';
+import { CommandModule } from '../../../commands/commandModule';
 import { PermLevels } from '../../../utils/permissions';
-import { GuildMemberManager } from '../../managers/main/guildMemberManager';
+import { GuildMemberManager, GuildMemberWrapperResolvable } from '../../managers/main/guildMemberManager';
 import {
     BBGuild,
     CommandSettings,
@@ -28,8 +29,7 @@ import {
 import { DocWrapper } from '../docWrapper';
 import { SettingsWrapper } from '../settings/settingsWrapper';
 import { UsageLimitsWrapper } from '../shared/usageLimitsWrapper';
-import { CommandName, CommandResolvable } from '../../../commands/command';
-import { CommandModule } from '../../../commands/commandModule';
+import { GuildMemberParser } from '../../../parsers/guildMemberParser';
 
 /**
  * Wrapper for the guild object and document so everything can easily be access through one object
@@ -81,6 +81,14 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
         readonly ignoreChannels: TextChannel[];
     } & { readonly [T in MegalogFunction]?: TextChannel };
 
+    /**
+     * GuildMemberParser for this guild
+     *
+     * @type {GuildMemberParser}
+     * @memberof GuildWrapper
+     */
+    readonly memberParser: GuildMemberParser;
+
     private readonly client: Client;
     private readonly settings: SettingsWrapper;
     private readonly commandModule: CommandModule;
@@ -98,6 +106,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
 
         this.guild = guild;
         this.members = new GuildMemberManager(this);
+        this.memberParser = new GuildMemberParser(this);
         this.client = container.resolve(Client);
         this.settings = container.resolve(SettingsWrapper);
         this.commandModule = container.resolve(CommandModule);
@@ -300,16 +309,15 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
      *  - botMaster: 4
      *
      * @export
-     * @param {GuildMemberResolvable} member Member to get perm level from
+     * @param {GuildMemberWrapperResolvable} member Member to get perm level from
      * @returns
      */
-    async getPermLevel(memberResolvable: GuildMemberResolvable) {
+    async getPermLevel(memberResolvable: GuildMemberWrapperResolvable) {
         await this.load('ranks');
-        let member = await this.guild.members.resolve(memberResolvable);
+        let member = (await this.members.resolve(memberResolvable, true)).member;
 
-        if ((await this.settings.botMasters).includes(member.id))
+        if (this.settings.isBotMaster(member))
             return PermLevels.botMaster;
-        // TODO: use function from SettingsWrapper to check if user is bot master
 
         if (member.hasPermission('ADMINISTRATOR'))
             return PermLevels.admin;

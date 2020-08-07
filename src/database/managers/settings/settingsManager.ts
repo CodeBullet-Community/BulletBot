@@ -24,7 +24,7 @@ export class SettingsManager extends CacheManager<GlobalSettingsObject, typeof S
      * @memberof SettingsManager
      */
     constructor(cluster: MongoCluster) {
-        super(cluster, 'settings', 'settings', globalSettingsSchema, SettingsWrapper);
+        super(cluster, 'settings', 'settings', globalSettingsSchema, true, SettingsWrapper);
     }
 
     /**

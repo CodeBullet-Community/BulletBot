@@ -46,11 +46,12 @@ export abstract class CacheManager<
      * @param {string} databaseName Name of database the collection is in
      * @param {string} modelName Name of the model
      * @param {Schema<Obj>} schema Schema for this collection (should include default collection name)
+     * @param {boolean} autoCreate If new documents should be created automatically when they do not exist
      * @param {WrapperConstructor} wrapper Constructor of wrapper to wrap object
      * @memberof CacheManager
      */
-    constructor(cluster: MongoCluster, databaseName: string, modelName: string, schema: Schema<Obj>, wrapper: WrapperConstructor) {
-        super(cluster, databaseName, modelName, schema);
+    constructor(cluster: MongoCluster, databaseName: string, modelName: string, schema: Schema<Obj>, autoCreate: boolean, wrapper: WrapperConstructor) {
+        super(cluster, databaseName, modelName, schema, autoCreate);
         this.cache = new Collection();
         this.wrapper = wrapper;
     }
@@ -94,7 +95,7 @@ export abstract class CacheManager<
     abstract async get(...args): Promise<Wrapper>;
 
     /**
-     * Helper function for fetch, that crates/takes a wrapper (new or cached) and passes it to this.fetchWithExistingWrapper() 
+     * Helper function for fetch, that creates/takes a wrapper (new or cached) and passes it to this.fetchWithExistingWrapper() and caches it if fetched successfully
      *
      * @protected
      * @param {Parameters<Manager['getCacheKey']>} cacheKeyArgs Arguments for this.getCacheKey()
@@ -113,7 +114,23 @@ export abstract class CacheManager<
         let wrapper = await this.getCached(options, ...cacheKeyArgs);
         if (!wrapper)
             wrapper = new this.wrapper(this.model, ...wrapperArgs);
-        return this.fetchWithExistingWrapper(wrapper, defaultObjArgs, options);
+        wrapper = await this.fetchWithExistingWrapper(wrapper, defaultObjArgs, options);
+        if (wrapper)
+            this.set(cacheKeyArgs, wrapper);
+        return wrapper;
+    }
+
+    /**
+     * Inserts a wrapper into the cache
+     *
+     * @protected
+     * @param {Parameters<Manager['getCacheKey']>} cacheKeyArgs Arguments for this.getCacheKey()
+     * @param {Wrapper} wrapper Wrapper to cache
+     * @returns
+     * @memberof CacheManager
+     */
+    protected set(cacheKeyArgs: Parameters<Manager['getCacheKey']>, wrapper: Wrapper) {
+        return this.cache.set(this.getCacheKey(...cacheKeyArgs), wrapper);
     }
 
     /**

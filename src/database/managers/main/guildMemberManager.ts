@@ -42,7 +42,7 @@ export class GuildMemberManager extends CacheManager<GuildMemberObject, typeof G
      * @memberof GuildMemberManager
      */
     constructor(guild: GuildWrapper) {
-        super(container.resolve(MongoCluster), 'main', 'guildMember', guildMemberSchema, GuildMemberWrapper);
+        super(container.resolve(MongoCluster), 'main', 'guildMember', guildMemberSchema, true, GuildMemberWrapper);
         this.guild = guild;
         this.userManager = container.resolve(UserManager);
     }
@@ -74,30 +74,32 @@ export class GuildMemberManager extends CacheManager<GuildMemberObject, typeof G
     /**
      * Returns GuildMemberWrapper saved in cache
      *
-     * @param {UserWrapperResolvable} user User in guild to search for
+     * @param {UserWrapperResolvable} member Member in guild to search for
      * @param {LoadOptions<GuildMemberObject>} [options] LoadOptions that should be passed to the wrapper
      * @returns
      * @memberof GuildMemberManager
      */
-    get(user: UserWrapperResolvable, options?: LoadOptions<GuildMemberObject>) {
-        let userID = this.userManager.resolveId(user);
-        return this.getCached(options, userID);
+    get(member: UserWrapperResolvable, options?: LoadOptions<GuildMemberObject>) {
+        return this.getCached(options, this.userManager.resolveId(member));
     }
 
     /**
      * Searched the database and cache for a GuildMemberObject. 
      * If one isn't found and it's specified in the options a new GuildMemberObject is created
      *
-     * @param {UserWrapperResolvable} user User in guild to search for
+     * @param {UserWrapperResolvable} member User in guild to search for
      * @param {FetchOptions<GuildMemberObject>} [options] Fetch options (include load options passed to wrapper)
      * @returns
      * @memberof GuildMemberManager
      */
-    async fetch(user: UserWrapperResolvable, options?: FetchOptions<GuildMemberObject>) {
-        let userWrapper = await this.userManager.resolve(user, true)
+    async fetch(member: UserWrapperResolvable, options?: FetchOptions<GuildMemberObject>) {
+        let userWrapper = await this.userManager.resolve(member, true);
+        if (!userWrapper) return undefined;
+        let guildMember = await this.guild.members.resolve(userWrapper.user, true);
+        if (!guildMember) return undefined;
         return this._fetch(
             [userWrapper.id],
-            [userWrapper, this.guild],
+            [guildMember, userWrapper, this.guild],
             [userWrapper.id],
             options
         );
@@ -113,8 +115,8 @@ export class GuildMemberManager extends CacheManager<GuildMemberObject, typeof G
      */
     async resolve(guildMember: GuildMemberWrapperResolvable, fetch = false) {
         if (guildMember instanceof GuildMemberWrapper) return guildMember;
-        if (fetch) return this.fetch(guildMember, { fields: [] });
-        return this.get(guildMember, { fields: [] });
+        if (fetch) return this.fetch(guildMember);
+        return this.get(guildMember);
     }
 
     /**

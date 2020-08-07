@@ -33,7 +33,7 @@ export class GuildManager extends CacheManager<GuildObject, typeof GuildWrapper,
      * @memberof GuildManager
      */
     constructor(cluster: MongoCluster, client: Client) {
-        super(cluster, 'main', 'guildMember', guildSchema, GuildWrapper);
+        super(cluster, 'main', 'guildMember', guildSchema, true, GuildWrapper);
         this.client = client;
     }
 
@@ -91,6 +91,7 @@ export class GuildManager extends CacheManager<GuildObject, typeof GuildWrapper,
      */
     async fetch(guild: GuildResolvable, options?: FetchOptions<GuildObject>) {
         let guildObj = this.client.guilds.resolve(guild);
+        if (!guildObj) return undefined;
         return this._fetch(
             [guildObj.id],
             [guildObj],
@@ -109,8 +110,8 @@ export class GuildManager extends CacheManager<GuildObject, typeof GuildWrapper,
      */
     async resolve(guild: GuildWrapperResolvable, fetch = false) {
         if (guild instanceof GuildWrapper) return guild;
-        if (fetch) return this.fetch(guild, { fields: [] });
-        return this.get(guild, { fields: [] });
+        if (fetch) return this.fetch(guild);
+        return this.get(guild);
     }
 
     /**

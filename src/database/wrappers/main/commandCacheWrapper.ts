@@ -7,7 +7,7 @@ import { Command, CommandResolvable } from '../../../commands/command';
 import { CommandModule } from '../../../commands/commandModule';
 import { PermLevel } from '../../../utils/permissions';
 import { CommandCache, CommandCacheDoc, CommandCacheObject } from '../../schemas/main/commandCache';
-import { DocWrapper } from '../docWrapper';
+import { DocWrapper, WrapperInit } from '../docWrapper';
 import { UserWrapper } from './userWrapper';
 
 /**
@@ -17,7 +17,7 @@ import { UserWrapper } from './userWrapper';
  * @class CommandCache
  * @implements {commandCacheObject}
  */
-export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implements CommandCache {
+export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implements CommandCache, WrapperInit {
     private _channel: DMChannel | TextChannel;
     readonly channel: DMChannel | TextChannel;
     readonly user: UserWrapper;
@@ -67,10 +67,10 @@ export class CommandCacheWrapper extends DocWrapper<CommandCacheObject> implemen
      * @param {CommandResolvable} command Command for the cache
      * @param {PermLevel} permLevel What permissions level this CommandCache executes with
      * @param {object} cache Object that should be cached
-     * @param {number} expirationTimestamp When cache expires
+     * @param {number} expirationTimestamp When cache expires (default 10 sec later)
      * @memberof CommandCacheWrapper
      */
-    async init(command: CommandResolvable, permLevel: PermLevel, cache: object, expirationTimestamp: number) {
+    async init(command: CommandResolvable, permLevel: PermLevel, cache: object, expirationTimestamp = Date.now() + 10000) {
         let commandObj = this.commandModule.resolve(command);
 
         let result = await this.createDoc({

@@ -33,7 +33,7 @@ export class UserManager extends CacheManager<UserObject, typeof UserWrapper, Us
      * @memberof UserManager
      */
     constructor(cluster: MongoCluster, client: Client) {
-        super(cluster, 'main', 'user', userSchema, UserWrapper);
+        super(cluster, 'main', 'user', userSchema, true, UserWrapper);
         this.client = client;
     }
 
@@ -84,6 +84,7 @@ export class UserManager extends CacheManager<UserObject, typeof UserWrapper, Us
      */
     async fetch(user: UserResolvable, options?: FetchOptions<UserObject>) {
         let userObj = await this.fetchResolve(user);
+        if (!userObj) return undefined;
         return this._fetch(
             [userObj.id],
             [userObj],
@@ -116,8 +117,8 @@ export class UserManager extends CacheManager<UserObject, typeof UserWrapper, Us
      */
     async resolve(user: UserWrapperResolvable, fetch = false) {
         if (user instanceof UserWrapper) return user;
-        if (fetch) return this.fetch(user, { fields: [] });
-        return this.get(user, { fields: [] });
+        if (fetch) return this.fetch(user);
+        return this.get(user);
     }
 
     /**
