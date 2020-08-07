@@ -7,7 +7,7 @@
 # Once the system is deemed as supported, the appropriate sub-master installer
 # will be chosen, downloaded (if it isn't already), then executed.
 #
-# Installer version: v1.2.1 # The version number of the installers as a whole
+# Installer version: v1.2.3 # The version number of the installers as a whole
 # Note: The installer version number should not be considered when looking at
 # compatability. The version number is more of a note for myself (Bark Ranger/
 # StrangeRanger/Hunter T.).
@@ -136,7 +136,7 @@
     }
 
     execute_debian_ubuntu_installer() {
-        supported=true
+        supported="true"
         ./installers/Debian-Ubuntu/debian-ubuntu-installer.sh || {
             # A.1. Downloads the corresponding sub-master installer if it
             # doesn't exist
@@ -184,7 +184,7 @@
     }
 
     execute_centos_rhel_installer() {
-        supported=true
+        supported="true"
         ./installers/CentOS-RHEL/centos-rhel-installer.sh || {
             # A.1.
             if [[ ! -f installers/CentOS-RHEL/centos-rhel-installer.sh ]]; then
@@ -259,7 +259,7 @@
                 if [[ $bits = 64 ]]; then
                     execute_debian_ubuntu_installer
                 else
-                    supported=false
+                    supported="false"
                 fi
                 ;;
             18.04)
@@ -267,11 +267,11 @@
                 if [[ $bits = 64 ]]; then
                     execute_debian_ubuntu_installer
                 else
-                    supported=false
+                    supported="false"
                 fi
                 ;;
             *)
-                supported=false
+                supported="false"
                 ;;
         esac
     elif [[ $distro = "debian" ]]; then
@@ -283,7 +283,7 @@
                 execute_debian_ubuntu_installer
                 ;;
             *)
-                supported=false
+                supported="false"
                 ;;
         esac
     elif [[ $distro = "rhel" || $distro = "centos" ]]; then
@@ -293,7 +293,7 @@
                 if [[ $bits = 64 ]]; then
                     execute_centos_rhel_installer
                 else
-                    supported=false
+                    supported="false"
                 fi
                 ;;
             8)
@@ -301,18 +301,18 @@
                 if [[ $bits = 64 ]]; then
                     execute_centos_rhel_installer
                 else
-                    supported=false
+                    supported="false"
                 fi
                 ;;
             *)
-                supported=false
+                supported="false"
                 ;;
         esac
     else
-        supported=false
+        supported="false"
     fi
         
-    if [[ $supported = false ]]; then
+    if [[ $supported = "false" ]]; then
         echo "${red}Your operating system/Linux Distribution does not support" \
             "the installation, setup, and/or use of BulletBot${nc}" >&2
         echo -e "\nExiting..."

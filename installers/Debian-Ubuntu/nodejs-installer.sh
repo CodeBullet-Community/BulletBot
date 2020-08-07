@@ -2,9 +2,9 @@
 
 ################################################################################
 #
-# Takes care of installing Node.js (version 13.x) and the required packages and
-# dependencies required for BulletBot to run.
-# Node.js is installed using the instructions described here:
+# Installs Node.js (version 14.x) and the required packages and
+# dependencies for Bottius to run. Node.js is installed using the instructions
+# described here:
 # https://github.com/nodesource/distributions/blob/master/README.md
 #
 # Note: All variables are exported from 'linux-master-installer.sh' and
@@ -17,10 +17,9 @@
 ################################################################################
 #
     install_nodejs() {
-        echo "Downloading Node.js repo installer..." 
-        curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash - || {
+        echo "Downloading the Node.js repo installer..." 
+        curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - || {
             echo "${red}Failed to download the Node.js installer" >&2
-            echo "${cyan}Without the installer, nodejs can't be installed${nc}"
             read -p "Press [Enter] to return to the installer menu"
             exit 1
         }
@@ -66,7 +65,7 @@
                     # Sometimes npm isn't installed for some reason, and it is
                     # necessary to reinstall Node.js
                     echo -e "${cyan}Try reinstalling nodejs, then try again" \
-                        "\nTo uninstall nodejs: sudo apt reinstall" \
+                        "\nTo reinstall nodejs: sudo apt reinstall" \
                         "nodejs${nc}"
                     read -p "Press [Enter] to return to the installer menu"
                     exit 1

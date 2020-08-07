@@ -35,8 +35,8 @@
         echo "Enabling 'bullet-mongo-start.service'..."
         systemctl enable bullet-mongo-start.service || {
             echo "${red}Failed to enable 'bullet-mongo-start.service'" >&2
-            echo "${cyan}This service must be enabled in order to run" \
-                "BulletBot in this run mode${nc}"
+            echo "${cyan}This service needs to be enabled in order to use this" \
+                "run mode${nc}"
             read -p "Press [Enter] to return to the installer menu"
             exit 1
         }
@@ -45,8 +45,7 @@
         echo "Creating 'bullet-mongo-start.service'..."
         ./installers/Linux_Universal/auto-restart/auto-restart-updater.sh || {
             echo "${red}Failed to create 'bullet-mongo-start.service'" >&2
-            echo "${cyan}This service must exist in order to run BulletBot in" \
-                "this run mode${nc}"
+            echo "${cyan}This service is required to use this run mode${nc}"
             read -p "Press [Enter] to return to the installer menu"
             exit 1
         }
@@ -65,9 +64,7 @@
     # If 'bullet-mongo-start.sh' doesn't exist
     if [[ ! -f $start_script ]]; then
         echo "${red}'bullet-mongo-start.sh' does not exist" >&2
-        echo "${cyan}'bullet-mongo-start.sh' is required to use this run mode"
-        echo "Re-download bulletbot using the installers, then retry starting" \
-            "BulletBot in this run mode${nc}"
+        echo "${cyan}'bullet-mongo-start.sh' is required to use this run mode${cn}"
         read -p "Press [Enter] to return to the installer menu"
         exit 1
     fi
