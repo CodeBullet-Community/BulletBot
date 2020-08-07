@@ -29,6 +29,7 @@
         "reflect-metadata": "^0.1.13",
         "request": "^2.88.2",
         "rxjs": "^6.5.5",
+        "string-similarity": "^4.0.1",
         "ts-transformer-keys": "^0.4.1",
         "tsyringe": "^4.3.0",
         "xml2js": "^0.4.23"
@@ -40,6 +41,7 @@
         "@types/mongoose": "^5.7.20",
         "@types/node": "^14.0.1",
         "@types/request": "^2.48.5",
+        "@types/string-similarity": "^3.0.0",
         "ttypescript": "^1.5.10",
         "typescript": "^3.9.2"
     }

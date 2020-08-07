@@ -29,6 +29,7 @@ import {
 import { DocWrapper } from '../docWrapper';
 import { SettingsWrapper } from '../settings/settingsWrapper';
 import { UsageLimitsWrapper } from '../shared/usageLimitsWrapper';
+import { GuildMemberParser } from '../../../parsers/guildMemberParser';
 
 /**
  * Wrapper for the guild object and document so everything can easily be access through one object
@@ -80,6 +81,14 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
         readonly ignoreChannels: TextChannel[];
     } & { readonly [T in MegalogFunction]?: TextChannel };
 
+    /**
+     * GuildMemberParser for this guild
+     *
+     * @type {GuildMemberParser}
+     * @memberof GuildWrapper
+     */
+    readonly memberParser: GuildMemberParser;
+
     private readonly client: Client;
     private readonly settings: SettingsWrapper;
     private readonly commandModule: CommandModule;
@@ -97,6 +106,7 @@ export class GuildWrapper extends DocWrapper<GuildObject> implements BBGuild {
 
         this.guild = guild;
         this.members = new GuildMemberManager(this);
+        this.memberParser = new GuildMemberParser(this);
         this.client = container.resolve(Client);
         this.settings = container.resolve(SettingsWrapper);
         this.commandModule = container.resolve(CommandModule);
