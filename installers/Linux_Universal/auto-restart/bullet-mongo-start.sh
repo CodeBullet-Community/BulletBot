@@ -47,7 +47,7 @@
 #
     addresses=$MailTo # The email addresses that the Status Report is sent to
     send_status=$SendStatus # Determines if the Status Report can be/is sent
-    attempt_mongo_restart=true
+    attempt_mongo_restart="true"
 
     # The '--no-hostname' flag for journalctl only works with systemd 230 and
     # above
@@ -63,7 +63,7 @@
 #
 ################################################################################
 #
-    if [[ $send_status = true ]]; then
+    if [[ $send_status = "true" ]]; then
         if hash postfix &>/dev/null; then
             if hash sendmail &>/dev/null; then
                 # If the email addresses in the config file are the default
@@ -120,7 +120,7 @@
                 bullet_service_status=$(systemctl is-active bulletbot.service)
                 if [[ $bullet_service_status = "active" ]]; then
                     echo "Successfully started 'bulletbot.service'"
-                    if [[ $send_status = true ]]; then
+                    if [[ $send_status = "true" ]]; then
                         echo "Sending 'BulletBot Startup Status Report'"
                         echo -e "To: $addresses\nSubject: BulletBot Startup Status Report" \
                             "\n\nSuccessfully started bulletbot.service" \
@@ -148,7 +148,7 @@
                 elif [[ $bullet_service_status = "inactive" || $bullet_service_status = "failed" \
                         ]]; then
                     echo "Failed to start 'bulletbot.service'" >&2
-                    if [[ $send_status = true ]]; then
+                    if [[ $send_status = "true" ]]; then
                         echo "Sending 'BulletBot Startup Status Report'"
                         echo -e "To: $addresses\nSubject: BulletBot Startup Status Report" \
                             "\n\nWARNING!!!" \
@@ -177,7 +177,7 @@
                 else
                     echo "[ERROR] Either could not get the status of 'bulletbot.service'" \
                         "or the status of 'bulletbot.service' is unrecognized" >&2
-                    if [[ $send_status = true ]]; then
+                    if [[ $send_status = "true" ]]; then
                         echo "Sending 'BulletBot Startup Status Report'"
                         echo -e "To: $addresses\nSubject: BulletBot Startup Status Report" \
                             "\n\nERROR!!!" \
@@ -207,7 +207,7 @@
             done
         # Attempts to start 'mongod.service'
         elif [[ $mongo_status = "inactive" || $mongo_status = "failed" ]]; then
-            if [[ $attempt_mongo_restart = true ]]; then
+            if [[ $attempt_mongo_restart = "true" ]]; then
                 echo "Starting 'mongod.service'"
                 systemctl start mongod.service
                 attempt_mongo_restart=false
@@ -216,7 +216,7 @@
                 continue
             else
                 echo "Failed to start 'mongod.service'" >&2
-                if [[ $send_status = true ]]; then
+                if [[ $send_status = "true" ]]; then
                     echo "Sending 'BulletBot Startup Status Report'"
                     echo -e "To: $addresses\nSubject: BulletBot Startup Status Report" \
                         "\n\nWARNING!!!" \
@@ -245,7 +245,7 @@
         else
             echo "[ERROR] Either could not get the status of 'mongod.service'" \
                 "or the status of 'mongod.service' is unrecognized" >&2
-            if [[ $send_status = true ]]; then
+            if [[ $send_status = "true" ]]; then
                 echo "Sending 'BulletBot Startup Status Report'"
                 echo -e "To: $addresses\nSubject: BulletBot Startup Status Report" \
                     "\nERROR!!!" \

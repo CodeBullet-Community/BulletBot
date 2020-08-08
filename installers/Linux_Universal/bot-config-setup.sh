@@ -13,7 +13,7 @@
     clear
     read -p "We will now set up 'bot-config.json'. Press [Enter] to begin."
 
-    epel_installed=false
+    epel_installed="false"
 
 #
 ################################################################################
@@ -28,20 +28,19 @@
         if [[ $distro = "centos" || $distro = "rhel" ]]; then
             # EPEL must be installed in order to install jq and during
             if [[ $sver = "7" ]]; then
-                if [[ $epel_installed = false ]]; then
-                    yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && epel_installed=true || {
+                if [[ $epel_installed = "false" ]]; then
+                    yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && epel_installed="true" || {
                         echo "${red}Failed to install Extra Packages for" \
                             "Enterprise Linux${nc}" >&2
                     }
                 fi
                 pkg_manager="yum"
             else
-                if [[ $epel_installed = false ]]; then
-                    dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && epel_installed=true || {
+                if [[ $epel_installed = "false" ]]; then
+                    dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && epel_installed="true" || {
                         echo "${red}Failed to install Extra Packages for" \
                             "Enterprise Linux${nc}" >&2
                     }
-
                 fi
                 pkg_manager="dnf"
             fi
@@ -49,6 +48,7 @@
             pkg_manager="apt"
         fi
     }
+
 #
 ################################################################################
 #
@@ -114,42 +114,7 @@
 #
 ################################################################################
 #
-    echo -e "\n-------------"
-    echo "${cyan}This field is required and cannot be left blank${nc}"
-    while true; do
-        read -p "Enter bot token: " bot_token
-        if [[ -n $bot_token ]]; then 
-            break
-        fi
-    done
-    echo "Bot token: $bot_token"
-    echo -e "-------------\n"
-
-    echo "-------------"
-    echo "${cyan}If this field is left blank, the default MongoDB URL will be" \
-        "used: mongodb://localhost:27017${nc}"
-    read -p "Enter the MongoDB URL (i.e. mongodb://localhost:[port]): " mongodb_url
-    if [[ -z $mongodb_url ]]; then mongodb_url="mongodb://localhost:27017"; fi
-    echo "MongoDB URL: $mongodb_url"
-    echo -e "-------------\n"
-
-    echo "-------------"
-    echo "${cyan}Depending on how MongoDB was set up (i.e. Authorization is" \
-        "not used), this field can be left empty${nc}"
-    read -p "Enter the MongoDB URL suffix (i.e. ?authSource=admin): " mongodb_url_suffix
-    echo "MongoDB URL suffix: $mongodb_url_suffix"
-    if [[ -z $mongodb_url_suffix ]]; then mongodb_url_suffix=""; fi
-    echo -e "-------------\n"
-
-    echo "-------------"
-    read -p "Enter the Google API Key: " google_api_key
-    echo "Google API Key: $google_api_key"
-    if [[ -z $google_api_key ]]; then
-        google_api_key=""
-        echo "${yellow}You will not be able to use commands that require" \
-            "access to Google products${nc}"
-    fi
-    echo -e "-------------\n"
+    # TODO: TO BE DETERMINED
 
 #
 ################################################################################
@@ -158,33 +123,9 @@
 # if the config file already exists
 #
 ################################################################################
-#
-    json="{
-        \"botToken\": \"$bot_token\",
-        \"cluster\": {
-            \"url\": \"$mongodb_url\",
-            \"suffix\": \"$mongodb_url_suffix\"
-        },
-        \"googleAPIKey\": \"$google_api_key\",
-        \"globalUpdateInterval\": 10000,
-        \"cleanInterval\": 600000,
-        \"pActionsInterval\": 1000,
-        \"YTResubInterval\": 259200000,
-        \"crashProof\": {
-            \"file\": \"/home/bulletbot/crashProof.time\",
-            \"interval\": 10000
-        },
-        \"callback\": {
-            \"URL\": \"$public_ip\",
-            \"port\": 8000,
-            \"path\": \"/webhooks\"
-        },
-        \"youtube\": {
-            \"logo\": \"https://www.android-user.de/wp-content/uploads/2018/07/icon-youtobe.png\",
-            \"color\": 16711680,
-            \"name\": \"YouTube\"
-        }
-    }"
+#   
+    # TODO: TO BE DETERMINED
+    json="TO BE DETERMINED"
 
     if [[ ! -f out/bot-config.json ]]; then
         echo "Creating 'bot-config.json'..."
