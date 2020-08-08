@@ -1,6 +1,7 @@
 import { Parser, ParseOptions, ParseOptionsType } from "./parser";
 import _ from "lodash";
 import { findBestMatch } from "string-similarity";
+import { singleton } from "tsyringe";
 
 /**
  * Parse options for the StringParser
@@ -69,21 +70,8 @@ export class StringParseOptions extends ParseOptions<string> implements StringPa
  * @class StringParser
  * @extends {Parser<string, StringParseOptionsType>}
  */
+@singleton()
 export class StringParser extends Parser<string, StringParseOptionsType> {
-
-    /**
-     * Matches text in quotes. 
-     * If there is no text inside the quotes or there are no quotes it will return `undefined`.
-     *
-     * @private
-     * @param {string} raw String to match against
-     * @param {boolean} onlyStart If quotes need to be at the start of the string
-     * @returns
-     * @memberof StringParser
-     */
-    private matchTextInQuotes(raw: string, onlyStart: boolean) {
-        return raw.match(this.getRegex(/"(.+?)"/, onlyStart))?.[1];
-    }
 
     /**
      * Gets all the text before a certain character. 
@@ -113,15 +101,15 @@ export class StringParser extends Parser<string, StringParseOptionsType> {
 
         if (wrappedOptions.validValues == null) {
             if (wrappedOptions.quotesAsLimiters) {
-                let inQuotes = this.matchTextInQuotes(raw, wrappedOptions.onlyStart);
+                let inQuotes = this.matchRegex(raw, /"(.+?)"/, wrappedOptions.onlyStart);
                 if (inQuotes)
-                    return this.generateResult(inQuotes, inQuotes.length + 2);
+                    return this.generateResult(inQuotes.value, inQuotes.length);
             }
             let value = wrappedOptions.split ? this.getTextBeforeSplit(raw, ' ', 0) : raw;
             return this.generateResult(value, value.length);
         }
         for (const value of wrappedOptions.validValues)
-            if (raw.match(this.getRegex(_.escapeRegExp(value), wrappedOptions.onlyStart)))
+            if (this.getRegex(_.escapeRegExp(value), wrappedOptions.onlyStart).test(raw))
                 return this.generateResult(value, value.length, true);
 
         if (!wrappedOptions.allowNotExact) return this.getNoParseResult(wrappedOptions);

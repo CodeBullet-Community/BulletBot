@@ -140,6 +140,25 @@ export abstract class Parser<Type, OptionsType extends ParseOptionsType<Type> = 
     }
 
     /**
+     * Matches string with regex and returns the first group with the whole length of the match.
+     *
+     * @protected
+     * @param {string} raw
+     * @param {(RegExp | string)} pattern
+     * @param {boolean} onlyStart
+     * @returns
+     * @memberof Parser
+     */
+    protected matchRegex(raw: string, pattern: RegExp | string, onlyStart: boolean) {
+        let result = raw.match(this.getRegex(pattern, onlyStart));
+        if (!result) return undefined;
+        return {
+            value: result[1],
+            length: result[0].length
+        }
+    }
+
+    /**
      * Generates the parse results.
      * Look at ParseResult<Type> for argument documentation.
      *

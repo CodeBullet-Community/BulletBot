@@ -86,11 +86,11 @@ export class GuildMemberParser extends Parser<GuildMemberWrapper, GuildMemberPar
      * @returns {Promise<ParseResult<GuildMemberWrapper>>}
      * @memberof GuildMemberParser
      */
-    async parse(raw: string, options?: GuildMemberParseOptionsType): Promise<ParseResult<GuildMemberWrapper>> {
+    async parse(raw: string, options?: GuildMemberParseOptionsType) {
         let wrappedOptions = new GuildMemberParseOptions(options);
         if (wrappedOptions.searchById) {
             let result = await this.parseAsUser(raw, wrappedOptions);
-            if (result != null) return result;
+            if (result) return result;
         }
 
         if (!wrappedOptions.searchByName) return this.getNoParseResult(wrappedOptions);
@@ -119,7 +119,7 @@ export class GuildMemberParser extends Parser<GuildMemberWrapper, GuildMemberPar
      * @returns
      * @memberof GuildMemberParser
      */
-    private async parseAsUser(raw: string, options: GuildMemberParseOptions) {
+    private async parseAsUser(raw: string, options: GuildMemberParseOptions): Promise<ParseResult<GuildMemberWrapper>> {
         let result = await this.userParser.parse(raw, { onlyStart: options.onlyStart });
         if (!result) return undefined;
         let member = this.guild.members.fetch(result.value);
