@@ -2,6 +2,8 @@ import { Parser, ParseOptions, ParseOptionsType } from "./parser";
 import { UserWrapper } from "../database/wrappers/main/userWrapper";
 import { GuildWrapper } from "../database/wrappers/main/guildWrapper";
 import { UserManager } from "../database/managers/main/userManager";
+import { SnowflakeParser } from "./snowflakeParser";
+import { singleton } from "tsyringe";
 
 /**
  * Parse options for the UserParser
@@ -51,21 +53,16 @@ export class UserParseOptions extends ParseOptions<UserWrapper> implements UserP
  * @class UserParser
  * @extends {Parser<UserWrapper, UserParseOptionsType>}
  */
+@singleton()
 export class UserParser extends Parser<UserWrapper, UserParseOptionsType> {
 
     private readonly userManager: UserManager;
+    private readonly snowflakeParser: SnowflakeParser;
 
-    constructor(userManager: UserManager) {
+    constructor(userManager: UserManager, snowflakeParser: SnowflakeParser) {
         super();
         this.userManager = userManager;
-    }
-
-    private matchUserMention(raw: string, onlyStart: boolean) {
-        return raw.match(this.getRegex(/<@!?(\d{17,19})>/, onlyStart));
-    }
-
-    private matchSnowflake(raw: string, onlyStart: boolean) {
-        return raw.match(this.getRegex(/(\d{17,19})/, onlyStart))?.[1];
+        this.snowflakeParser = snowflakeParser;
     }
 
     /**
@@ -79,22 +76,25 @@ export class UserParser extends Parser<UserWrapper, UserParseOptionsType> {
     async parse(raw: string, options?: UserParseOptionsType) {
         let wrappedOptions = new UserParseOptions(options);
 
-        let mentionMatch = this.matchUserMention(raw, wrappedOptions.onlyStart);
-        let snowflake = this.matchSnowflake(raw, wrappedOptions.onlyStart);
-        let wrapper = await this.userManager.fetch(mentionMatch?.[1] ?? snowflake);
-        if (wrapper) return this.generateResult(wrapper, mentionMatch?.[0].length ?? snowflake.length);
+        let snowflakeResult = await this.snowflakeParser.parse(raw, {
+            onlyStart: wrappedOptions.onlyStart,
+            types: ['plain', 'user']
+        });
+        if (snowflakeResult) {
+            let wrapper = await this.userManager.fetch(snowflakeResult.value);
+            if (wrapper) return this.generateResult(wrapper, snowflakeResult.length);
+        }
 
         if (!wrappedOptions.guild) return this.getNoParseResult(wrappedOptions);
-
-        let result = await wrappedOptions.guild.memberParser.parse(raw, {
+        let memberResult = await wrappedOptions.guild.memberParser.parse(raw, {
             onlyStart: true,
             searchById: false,
             searchByName: true,
             allowNotExact: wrappedOptions.allowNotExact,
             similarityThreshold: wrappedOptions.similarityThreshold
         });
-        if (!result) return this.getNoParseResult(wrappedOptions);
-        return this.generateResult(result.value.user, result.length, result.exactMatch);
+        if (!memberResult) return this.getNoParseResult(wrappedOptions);
+        return this.generateResult(memberResult.value.user, memberResult.length, memberResult.exactMatch);
     }
 
 }
