@@ -4,6 +4,7 @@ repo_url: https://github.com/CodeBullet-Community/BulletBot
 
 theme:
   name: material
+  custom_dir: docs/overrides
   palette:
     scheme: slate
     primary: blue
