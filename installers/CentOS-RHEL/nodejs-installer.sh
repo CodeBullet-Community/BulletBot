@@ -2,7 +2,7 @@
 
 ################################################################################
 #
-# Takes care of installing Node.js (version 13.x) and the required packages and
+# Takes care of installing Node.js (version 14.x) and the required packages and
 # dependencies required for BulletBot to run.
 # Node.js is installed using the instructions described here:
 # https://github.com/nodesource/distributions/blob/master/README.md
@@ -18,7 +18,7 @@
 #
     install_nodejs() {
         echo "Downloading Node.js repo installer..."
-        curl -sL https://rpm.nodesource.com/setup_13.x | bash - || {
+        curl -sL https://rpm.nodesource.com/setup_14.x | bash - || {
             echo "${red}Failed to download the Node.js installer" >&2
             echo "${cyan}Without the installer, nodejs can't be installed${nc}"
             read -p "Press [Enter] to return to the installer menu"
