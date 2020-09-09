@@ -69,3 +69,9 @@ bot-config.json.old
 
 # crash proof system
 crashProof.time
+
+# macOS files
+.DS_Store
+
+# old bulletbot files
+Old_BulletBot/

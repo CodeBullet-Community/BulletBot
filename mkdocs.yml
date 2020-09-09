@@ -4,6 +4,11 @@ repo_url: https://github.com/CodeBullet-Community/BulletBot
 
 theme:
   name: material
+  custom_dir: docs/overrides
+  palette:
+    scheme: slate
+    primary: blue
+    accent: blue
   favicon: media/BulletBot.svg
   logo: media/BulletBot.svg
   features:
@@ -13,11 +18,11 @@ theme:
     repo: fontawesome/brands/github
 
 plugins:
-  - search
   - minify:
       minify_html: true
   - git-revision-date-localized:
       type: date
+  - search
 
 extra:
   social:
@@ -29,18 +34,20 @@ extra:
 markdown_extensions:
   - codehilite:
       guess_lang: false
-      linenums: true
-  - admonition
-  - pymdownx.details
-  - pymdownx.inlinehilite
-  - pymdownx.tabbed
-  - pymdownx.tasklist:
-      custom_checkbox: true
-  - pymdownx.tilde
   - toc:
       permalink: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - admonition
   - meta
   - footnotes
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tilde
 
 nav:
   - Home:
