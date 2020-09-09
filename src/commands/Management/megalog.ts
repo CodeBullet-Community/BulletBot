@@ -13,8 +13,8 @@ var command: commandInterface = {
     permLevel: permLevels.admin,
     togglable: false,
     help: {
-        shortDescription: 'let\'s you change megalog settings',
-        longDescription: 'Let\'s you enable and disable megalog functions.\nThe megalogger is divided in functions. Each function logs certain events. To make it easier to enable several at once, the functions are also grouped.\nYou can enable functions separately or use the groups to enable several at once.\nYou can also make the megalogger ignore certain channels.',
+        shortDescription: 'Lets you change megalog settings',
+        longDescription: 'Lets you enable and disable megalog functions.\nThe megalogger is divided in functions. Each function logs certain events. To make it easier to enable several at once, the functions are also grouped.\nYou can enable functions separately or use the groups to enable several at once.\nYou can also make the megalogger ignore certain channels.',
         usages: [
             '{command} list',
             '{command} enable [group/function] [channel]',

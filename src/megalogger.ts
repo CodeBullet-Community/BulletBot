@@ -25,7 +25,7 @@ export async function logChannelToggle(channel: GuildChannel, created: boolean) 
     if (!logChannel || !(logChannel instanceof TextChannel)) return;
     await logChannel.send({
         "embed": {
-            "description": `**Channel ${created ? 'Created' : 'Deleted'}: ${created ? channel.toString() : '#' + channel.name}**`,
+            "description": `**${channel.type === 'category' ? "Category" : "Channel"} ${created ? 'Created' : 'Deleted'}: ${created ? channel.toString() : '#' + channel.name}**`,
             "color": (created ? Bot.database.settingsDB.cache.embedColors.positive : Bot.database.settingsDB.cache.embedColors.negative),
             "timestamp": new Date().toISOString(),
             "footer": {
@@ -67,7 +67,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
     if (oldChannel.name != newChannel.name) { // if name was changed
         await logChannel.send({
             "embed": {
-                "description": `**Channel name changed of ${newChannel.toString()}**`,
+                "description": `**${newChannel.type === 'category' ? "Category" : "Channel"} name changed of ${newChannel.toString()}**`,
                 "color": Bot.database.settingsDB.cache.embedColors.default,
                 "timestamp": new Date().toISOString(),
                 "footer": {
@@ -95,7 +95,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
     } if (oldChannel instanceof TextChannel && newChannel instanceof TextChannel && oldChannel.topic != newChannel.topic) { // if topic was changed
         await logChannel.send({
             "embed": {
-                "description": `**Channel topic changed of ${newChannel.toString()}**`,
+                "description": `**${newChannel.type === 'category' ? "Category" : "Channel"} topic changed of ${newChannel.toString()}**`,
                 "color": Bot.database.settingsDB.cache.embedColors.default,
                 "timestamp": new Date().toISOString(),
                 "footer": {
@@ -135,7 +135,7 @@ export async function logChannelUpdate(oldChannel: GuildChannel, newChannel: Gui
     if (permDiff.size) {
         let embed = { // base embed
             "embed": {
-                "description": `**Channel permissions changed of ${newChannel.toString()}**\n*note:* check [docs](https://discordapp.com/developers/docs/topics/permissions) to see what the numbers mean`,
+                "description": `**${newChannel.type === 'category' ? "Category" : "Channel"} permissions changed of ${newChannel.toString()}**\n*note:* check [docs](https://discordapp.com/developers/docs/topics/permissions) to see what the numbers mean`,
                 "color": Bot.database.settingsDB.cache.embedColors.default,
                 "timestamp": new Date().toISOString(),
                 "footer": {

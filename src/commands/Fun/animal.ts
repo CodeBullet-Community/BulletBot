@@ -58,7 +58,7 @@ var command: commandInterface = {
     permLevel: permLevels.member,
     togglable: true,
     help: {
-        shortDescription: 'returns cute animal images',
+        shortDescription: 'Returns cute animal images',
         longDescription: 'Gets image of specified animal.',
         usages: [
             '{command} [animal]',

@@ -12,8 +12,8 @@ var command: commandInterface = {
     permLevel: permLevels.mod,
     togglable: false,
     help: {
-        shortDescription: 'let\'s the bot speak for you',
-        longDescription: 'let\'s you control what bot says\ncan also send embed\nuse [this generator](https://leovoel.github.io/embed-visualizer/) to generate the json text for embed',
+        shortDescription: 'Lets the bot speak for you',
+        longDescription: 'Lets you control what bot says\ncan also send embed\nuse [this generator](https://leovoel.github.io/embed-visualizer/) to generate the json text for embed',
         usages: [
             '{command} [channel] [message]',
             '{command} [channel] embed [embed json]',

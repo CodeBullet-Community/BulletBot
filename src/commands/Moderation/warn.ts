@@ -1,4 +1,4 @@
-import { Message, Guild } from 'discord.js';
+import { Message, Guild, Util } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
@@ -31,6 +31,12 @@ var command: commandInterface = {
                 return false;
             }
 
+            if(args.indexOf(' ') < 0) { // check if there are at least two arguments
+                message.channel.send('Reason needs to be specified'); // if not, send the correct usage of the command.
+                Bot.mStats.logMessageSend();
+                return false;
+            }
+
             let user = await stringToMember(message.guild, args.slice(0, args.indexOf(' ')), false, false, false);
             if (!user) { // check if it found the specified member
                 message.channel.send('Couldn\'t find specified member');
@@ -48,7 +54,7 @@ var command: commandInterface = {
 
             // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send(`:white_check_mark: **${user.user.tag} has been warned, ${reason}**`);
+            message.channel.send(`:white_check_mark: **${user.user.tag} has been warned, ${Util.escapeMarkdown(reason)}**`);
             Bot.mStats.logCommandUsage(command.name);
             Bot.mStats.logMessageSend();
             return true;

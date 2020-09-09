@@ -14,8 +14,8 @@ var command: commandInterface = {
     permLevel: permLevels.botMaster,
     togglable: false,
     help: {
-        shortDescription: 'gives bot status',
-        longDescription: 'gives status of different parts of the bot',
+        shortDescription: 'Gives bot status',
+        longDescription: 'Gives status of different parts of the bot',
         usages: [
             '{command}'
         ],

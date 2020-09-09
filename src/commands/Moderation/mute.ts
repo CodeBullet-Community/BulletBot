@@ -1,4 +1,4 @@
-import { Message, Guild, GuildMember } from 'discord.js';
+import { Message, Guild, GuildMember, Util, Snowflake } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
@@ -12,7 +12,7 @@ import { durations } from '../../utils/time';
  * @param {Guild} guild guild to get muted role from
  * @returns
  */
-async function getMuteRole(guild: Guild) {
+export async function getMuteRole(guild: Guild) {
     // check if there is already a role called "muted"
     let role = guild.roles.find(x => x.name.toLowerCase() == 'muted');
     if (role) return role;
@@ -49,6 +49,21 @@ async function createMute(message: Message, member: GuildMember, reason: string,
     } else if (deletePending) {
         Bot.pActions.removeMute(message.guild.id, member.user.id);
     }
+}
+
+/**
+ * Adds the user to the muted list of the guild
+ *
+ * @param {Snowflake} guildId
+ * @param {Snowflake} userId
+ */
+async function databaseMute(guildId: Snowflake, userId: Snowflake) {
+    let guildDoc = await Bot.database.findGuildDoc(guildId, ['muted']);
+    if (guildDoc.muted == null)
+        guildDoc.muted = [];
+    guildDoc.muted.push(userId);
+    guildDoc.markModified('muted');
+    await guildDoc.save();
 }
 
 var command: commandInterface = {
@@ -140,9 +155,11 @@ var command: commandInterface = {
                 member.send(`You were muted in **${message.guild.name}** for ${stringTime} ${reason ? 'because of following reason:\n' + reason : ''}`);
                 Bot.mStats.logMessageSend();
 
+                databaseMute(message.guild.id, member.id);
+
                 // send confirmation message
                 Bot.mStats.logResponseTime(command.name, requestTime);
-                message.channel.send(`:white_check_mark: **${member.user.tag} has been muted for ${stringTime}${reason ? ', ' + reason : ''}**`);
+                message.channel.send(`:white_check_mark: **${member.user.tag} has been muted for ${stringTime}${reason ? ', ' + Util.escapeMarkdown(reason) : ''}**`);
                 Bot.mStats.logCommandUsage(command.name, 'new');
                 Bot.mStats.logMessageSend();
             } else {
@@ -154,7 +171,7 @@ var command: commandInterface = {
 
                 // send confirmation message
                 Bot.mStats.logResponseTime(command.name, requestTime);
-                message.channel.send(`:white_check_mark: **${member.user.tag}'s mute time has been changed to ${stringTime}${reason ? ', ' + reason : ''}**`);
+                message.channel.send(`:white_check_mark: **${member.user.tag}'s mute time has been changed to ${stringTime}${reason ? ', ' + Util.escapeMarkdown(reason) : ''}**`);
                 Bot.mStats.logCommandUsage(command.name, 'changed');
                 Bot.mStats.logMessageSend();
             }

@@ -2,7 +2,7 @@
 
 This setup guide will instruct and explain the process in which BulletBot is set up on a Linux based distribution. The majority of the setup is taken care of by the installers, which will automate the installation and set up of the prerequisites. That said, there is a small portion of this guide that requires manual set up.
 
-If you are doing dev work on BulletBot or just want to set him up manually, please follow the [Linux Dev Setup Guide](/Setup-Guides/Development/Linux-Dev-Setup-Guide/).
+If you are doing dev work on BulletBot or just want to set him up manually, please follow the [Linux Dev Setup Guide](../../../Setup-Guides/Development/Linux-Dev-Setup-Guide/).
 
 ## Officially Supported Linux Distributions
 
@@ -48,7 +48,7 @@ Execute the master installer using `sudo bash linux-master-installer.sh`, then d
 
 ### Running the Master Installer for the First Time
 
-When running the master installer for the first time, a system user called `bulletbot` will be created (see [the In-Depth Explanations wiki](/In-Depth-Explanations/#bulletbot-system-user) for more info). All code used by/for BulletBot will then be moved into `/home/bulletbot`.
+When running the master installer for the first time, a system user called `bulletbot` will be created (see [the In-Depth Explanations wiki](../../../In-Depth-Explanations/#bulletbot-system-user) for more info). All code used by/for BulletBot will then be moved into `/home/bulletbot`.
 
 ![System User Creation](../../media/Creating-System-User.png)
 
@@ -84,7 +84,7 @@ Because option 3 already takes care of this, it is unlikely that you'll need to 
 
 Option 5 requires you to enter information such as the bot key, MongoDB URL, and so on. This information will be placed into BulletBot's configuration file (`bot-config.json`).
 
-First and foremost, if you haven't already [created an application/bot](/Helpful-Guides/Creating-%26-Inviting-A-Bot/#creating-and-inviting-a-discord-application), do so now. You'll need the bot key that is generated when setting up BulletBot's config file. Once you have done this, you can continue and set up the config file.
+First and foremost, if you haven't already [created an application/bot](../../../Helpful-Guides/Creating-%26-Inviting-A-Bot/#creating-and-inviting-a-discord-application), do so now. You'll need the bot key that is generated when setting up BulletBot's config file. Once you have done this, you can continue and set up the config file.
 
 #### 5.1. Setting Up bot-config.json WITHOUT MongoDB Authentication
 
@@ -92,7 +92,7 @@ If you prefer to set BulletBot up WITHOUT MongoDB Authentication (which is not r
 
 1. `Enter bot token:`
     * The bot token should look similar to: `1h90B4mpNDU5Mzg24jsmNTQ0.X1m.pJ-Rrgz-1OY-3iIdaynmLiGwqErAoIc`.
-    * For help on finding and coping the bot token for your application, follow [this guide](/Helpful-Guides/Bot-Token).
+    * For help on finding and coping the bot token for your application, follow [this guide](../../../Helpful-Guides/Bot-Token).
 2. `Enter the MongoDB URL (i.e. mongodb://localhost:[port]):`
     * If you don't plan on doing anything fancy with MongoDB (i.e., replication, etc.), you can leave this field blank, and the default MongoDB URL (`mongodb://localhost:27017`) will automatically be used.
     * Though if you plan to do some advanced things with MongoDB, use [this link](https://docs.mongodb.com/manual/reference/connection-string/) to help you properly configure the URL.
@@ -100,7 +100,7 @@ If you prefer to set BulletBot up WITHOUT MongoDB Authentication (which is not r
     * Similar to field 2, unless you are doing some fancy stuff with MongoDB, you can leave this field blank.
 4. `Enter the Google API Key:`
     * The Google API Key should look similar to: `PaTZgFgtywVH6FFq8A5W3gSvT5f15SObwZj29Ia0`
-    * For help on creating a Google API Key, follow the instructions in [this guide](/Helpful-Guides/Google-API-Setup).
+    * For help on creating a Google API Key, follow the instructions in [this guide](../../../Helpful-Guides/Google-API-Setup).
     * Note that if you leave this field empty, you will not be able to use any services and commands that rely on Google services (i.e., webhooks).
 
 Here is an example of what it might look like:
@@ -207,7 +207,7 @@ Follow the instructions below to add the settings document to the MongoDB databa
 Enabling authentication causes MongoDB to require all users who connect to the database to authenticate/login to an existing user in the database. It is highly recommended that you enable this feature so that the cluster is secure and so that you can remotely access it, for example, with [MongoDB Compass](https://www.mongodb.com/products/compass).
 
 !!! info
-    For instructions on how to use/setup MongoDB Compass, follow [this guide](/Helpful-Guides/MongoDB-Compass/).
+    For instructions on how to use/setup MongoDB Compass, follow [this guide](../../../Helpful-Guides/MongoDB-Compass/).
 
 Follow the instructions below to enable authentication. Make sure to replace `[admin password]` with a password you'll remember, and `[bulletbot password]` with the password you used when setting up BulletBot's config file.
 
@@ -353,7 +353,7 @@ Follow the instructions below to enable authentication. Make sure to replace `[a
 ![Run Modes 2](../../media/Run-Modes-2.png)
 
 !!! info
-    A more in-depth look at the run modes can be read in the [In-Depth Explanations](/In-Depth-Explanations/#running-bulletbot) wiki.
+    A more in-depth look at the run modes can be read in the [In-Depth Explanations](../../../In-Depth-Explanations/#running-bulletbot) wiki.
 
 ### Run Modes
 
@@ -397,8 +397,8 @@ To update BulletBot, do the following:
 ```
 
 !!! info
-    For a more in-depth look on how BulletBot is updated, can be read in the [In-Depth Explanations](/In-Depth-Explanations/#downloading-and-updating-bulletbot) wiki.
+    For a more in-depth look on how BulletBot is updated, can be read in the [In-Depth Explanations](../../../In-Depth-Explanations/#downloading-and-updating-bulletbot) wiki.
 
 ## Other Information
 
-When BulletBot is running in the background with auto-restart, the installers can send a report via postfix/sendmail on BulletBot's startup status. The report lists whether or not BulletBot was successfully started, the exit status of essential services, and the startup logs of three services that can be used to help identify errors that might have occurred during BulletBot's startup. To learn how to set up this feature, follow [this guide](/Helpful-Guides/BulletBot-Startup-Status-Reports/).
+When BulletBot is running in the background with auto-restart, the installers can send a report via postfix/sendmail on BulletBot's startup status. The report lists whether or not BulletBot was successfully started, the exit status of essential services, and the startup logs of three services that can be used to help identify errors that might have occurred during BulletBot's startup. To learn how to set up this feature, follow [this guide](../../../Helpful-Guides/BulletBot-Startup-Status-Reports/).

@@ -98,8 +98,8 @@ var command: commandInterface = {
     permLevel: permLevels.admin,
     togglable: false,
     help: {
-        shortDescription: 'create/delete/change YouTube webhooks',
-        longDescription: 'let\'s you create, delete and change YouTube webhooks',
+        shortDescription: 'Create/delete/change YouTube webhooks',
+        longDescription: 'Lets you create, delete and change YouTube webhooks',
         usages: [
             '{command} list',
             '{command} add [URL/Name] [channel] [message]' +

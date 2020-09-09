@@ -13,8 +13,8 @@ var command: commandInterface = {
     permLevel: permLevels.mod,
     togglable: false,
     help: {
-        shortDescription: 'delete, list or view cases',
-        longDescription: 'delete, list or view cases of a guild or member',
+        shortDescription: 'Delete, list or view cases',
+        longDescription: 'Delete, list or view cases of a guild or member',
         usages: [
             '{command} list [member]',
             '{command} view [caseID]',

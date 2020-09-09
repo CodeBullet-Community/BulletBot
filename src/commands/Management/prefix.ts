@@ -12,8 +12,8 @@ var command: commandInterface = {
     permLevel: permLevels.admin,
     togglable: false,
     help: {
-        shortDescription: 'sets custom prefix',
-        longDescription: 'let\'s you set a custom prefix or reset it to the default one.\n`?!prefix` will always list the prefix, even if a custom prefix was set.',
+        shortDescription: 'Sets custom prefix',
+        longDescription: 'Lets you set a custom prefix or reset it to the default one.\n`?!prefix` will always list the prefix, even if a custom prefix was set.',
         usages: [
             '{command}',
             '{command} [custom prefix]',

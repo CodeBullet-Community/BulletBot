@@ -12,8 +12,8 @@ var command: commandInterface = {
     permLevel: permLevels.member,
     togglable: false,
     help: {
-        shortDescription: 'checks bots responsiveness',
-        longDescription: 'let\'s you see if bot is responsive',
+        shortDescription: 'Checks bots responsiveness',
+        longDescription: 'Lets you see if bot is responsive',
         usages: [
             '{command}'
         ],

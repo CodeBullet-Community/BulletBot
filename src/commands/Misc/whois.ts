@@ -175,8 +175,8 @@ var command: commandInterface = {
     permLevel: permLevels.member,
     togglable: false,
     help: {
-        shortDescription: 'returns infos about a user',
-        longDescription: 'returns infos about a user',
+        shortDescription: 'Returns infos about a user',
+        longDescription: 'Returns infos about a user',
         usages: [
             '{command}',
             '{command} [member]'

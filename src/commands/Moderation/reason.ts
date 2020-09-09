@@ -1,4 +1,4 @@
-import { Message, Guild } from 'discord.js';
+import { Message, Guild, Util } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { permLevels } from '../../utils/permissions';
 import { Bot } from '../..';
@@ -56,7 +56,7 @@ var command: commandInterface = {
 
             // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send(`:white_check_mark: **the reason of case ${argsArray[0].replace("@", "")} has been changed to ${reason.replace("@", "")}**`);
+            message.channel.send(`:white_check_mark: **the reason of case ${argsArray[0].replace("@", "")} has been changed to ${Util.escapeMarkdown(reason.replace("@", ""))}**`);
             Bot.mStats.logCommandUsage(command.name);
             Bot.mStats.logMessageSend();
             return true;

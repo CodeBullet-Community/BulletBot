@@ -14,8 +14,8 @@ var command: commandInterface = {
     permLevel: permLevels.member,
     togglable: false,
     help: {
-        shortDescription: 'returns infos about a channel',
-        longDescription: 'returns infos about a channel',
+        shortDescription: 'Returns infos about a channel',
+        longDescription: 'Returns infos about a channel',
         usages: [
             '{command} [channel]'
         ],

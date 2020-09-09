@@ -49,12 +49,12 @@ async function sendCommandList(guild: Guild, message: Message, strucObject: any,
 var command: commandInterface = {
     name: 'help',
     path: '',
-    dm: false,
+    dm: true,
     permLevel: permLevels.member,
     togglable: false,
     help: {
-        shortDescription: 'gives a command list and help',
-        longDescription: 'lists all commands/categories and can get detailed help for command',
+        shortDescription: 'Gives a command list and help',
+        longDescription: 'Lists all commands/categories and can get detailed help for command',
         usages: [
             '{command}',
             '{command} [command name/category]\nuse `category/subcategory` to get list from subcategory'

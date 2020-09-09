@@ -14,8 +14,8 @@ var command: commandInterface = {
     permLevel: permLevels.member,
     togglable: false,
     help: {
-        shortDescription: 'gives a description of a role',
-        longDescription: 'gives a description of a role',
+        shortDescription: 'Gives a description of a role',
+        longDescription: 'Gives a description of a role',
         usages: [
             '{command} [role]'
         ],

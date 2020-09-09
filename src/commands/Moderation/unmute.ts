@@ -1,10 +1,21 @@
-import { Message, Guild } from 'discord.js';
+import { Message, Guild, Util, Snowflake } from 'discord.js';
 import { commandInterface } from '../../commands';
 import { permLevels, getPermLevel } from '../../utils/permissions';
 import { Bot } from '../..';
 import { sendError } from '../../utils/messages';
 import { permToString, durationToString, stringToMember } from '../../utils/parsers';
 import { durations } from '../../utils/time';
+
+/**
+ * Removes the user from the user list of the guild
+ *
+ * @export
+ * @param {Snowflake} guildId
+ * @param {Snowflake} userId
+ */
+export async function databaseUnmute(guildId: Snowflake, userId: Snowflake) {
+    await Bot.database.mainDB.guilds.updateOne({ guild: guildId }, { $pull: { muted: userId } });
+}
 
 var command: commandInterface = {
     name: 'unmute',
@@ -81,13 +92,15 @@ var command: commandInterface = {
             // make a case
             await Bot.caseLogger.logUnmute(message.guild, member, message.member, reason);
 
+            await databaseUnmute(message.guild.id, member.id);
+
             // dm to member that they has been unmuted
             member.send(`You were unmuted in **${message.guild.name}** ${reason.length ? 'for:\n' + reason : ''}`);
             Bot.mStats.logMessageSend();
 
             // send confirmation message
             Bot.mStats.logResponseTime(command.name, requestTime);
-            message.channel.send(`:white_check_mark: **${member.user.tag} has been unmuted${reason ? ', ' + reason : ''}**`);
+            message.channel.send(`:white_check_mark: **${member.user.tag} has been unmuted${reason ? ', ' + Util.escapeMarkdown(reason) : ''}**`);
             Bot.mStats.logCommandUsage(command.name);
             Bot.mStats.logMessageSend();
             return true;
