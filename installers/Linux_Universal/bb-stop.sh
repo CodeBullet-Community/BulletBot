@@ -13,7 +13,7 @@
 clear
 read -p "We will now stop BulletBot. Press [Enter] to begin."
 
-if [[ $bullet_service_status = "active" ]]; then
+if [[ $bulletbot_service_status = "active" ]]; then
     echo "Stopping 'bulletbot.service'..."
     systemctl stop bulletbot || {
         echo "${red}Failed to stop 'bulletbot.service'" >&2
