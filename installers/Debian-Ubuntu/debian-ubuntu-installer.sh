@@ -217,6 +217,7 @@
             echo "Skipping typescript compilation..."
         else
             echo "Compiling code..."
+            export NODE_OPTIONS="--max-old-space-size=600"
             tsc || {
                 echo "${red}Failed to compile code${nc}" >&2
                 echo -e "\nExiting..."
@@ -444,6 +445,7 @@
                     printf "We will now compile the bulletbot code. "
                     read -p "Press [Enter] to continue."
                     echo "Compiling code..."
+                    export NODE_OPTIONS="--max-old-space-size=600"
                     tsc || {
                         echo "${red}Failed to compile code${nc}" >&2
                         read -p "Press [Enter] to return to the installer menu"
