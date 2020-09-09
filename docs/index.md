@@ -1,3 +1,6 @@
+!!! important
+    BulletBot is in the process of being merged with another discord bot called [Bottius](https://github.com/Motori/Bottius). Their merging will result in the creation of a new bot called [Botler](https://github.com/Botler-Dev/Botler). Because of this, all development on BulletBot has been dropped. Until Botler is released, BulletBot will continue to get bug fixes, but will no longer receive feature updates.
+
 # Who Is BulletBot
 
 I'm a general-purpose Discord bot that originated from a webhook problem in the [Code Bullet and Co](https://discord.gg/3wTEZkh) server. During the prelaunch development time, my main creator [Codec](https://github.com/Jet132) decided to extend this project to replacing every bot in the server. Currently, I’ve only replaced one entire bot, but also many functions from other bots.

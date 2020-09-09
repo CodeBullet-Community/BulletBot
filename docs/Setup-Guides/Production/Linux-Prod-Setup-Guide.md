@@ -6,45 +6,27 @@ If you are doing dev work on BulletBot or just want to set him up manually, plea
 
 ## Officially Supported Linux Distributions
 
-Below is a list of Linux Distributions that BulletBot is officially supported on. It also lists what versions of MongoDB and Node.js, along with other system specifications that are supported on specific distributions:
+Below is a list of Linux Distributions that BulletBot is officially supported on.
 
-| Distro        | MongoDB Support        | Node\.js Support | Architecture |
-|---------------|------------------------|------------------|--------------|
-| Ubuntu 16\.04 | 3\.4, 3\.6, 4\.0, 4\.2 | 8\.x\-13\.x      | 64 bit<br>- \(ARM64 not supported\) |
-| Ubuntu 18\.04 | 4\.0, 4\.2             | 8\.x\-13\.x      | 64 bit       |
-| Debian 9      | 4\.0, 4\.2             | 8\.x\-13\.x      | 64 bit       |
-| Debian 10     | 4\.2\.1\+              | 8\.x\-13\.x      | 64 bit       |
-| RHEL 7        | 3\.4, 3\.6, 4\.0, 4\.2 | 8\.x\-13\.x      | 64 bit       |
-| RHEL 8        | 4\.2\.1\+              | 8\.x\-13\.x      | 64 bit       |
-| CentOS 7      | 3\.4, 3\.6, 4\.0, 4\.2 | 8\.x\-13\.x      | 64 bit       |
-| CentOS 8      | 4\.2\.1\+              | 8\.x\-13\.x      | 64 bit       |
-
-For more information on supported platforms specific to MongoDB and Node.js, visit:
-
-* MongoDB: <https://docs.mongodb.com/manual/installation/#supported-platforms>
-* Node.js: <https://github.com/nodesource/distributions/blob/master/README.md>
+| Distributions | Distro Versions | Architecture |
+|---------------|-----------------|--------------|
+| Ubuntu        | 16.04<br>18.04  | 64 bit<br>- \(ARM64 not supported\) |
+| Debian        | 9<br>10         | 64 bit       |
+| RHEL          | 7<br>8          | 64 bit       |
+| CentOS        | 7<br>8          | 64 bit       |
 
 ### Versions of MongoDB and Node.js Installed
 
 These are the versions of MongoDB and Node.js that are installed via the installers:
 
 * MongoDB: Version 4.2.x
-* Node.js: Version 13.x
-
-!!! note
-    If you instead install older versions of the two pieces of software, refer to the table above for compatible versions of each software that corresponds to their respective Linux Distributions.
+* Node.js: Version 14.x
 
 ## Getting Started
 
-To start the setup process, first download the master installer: `cd ~/ && wget -N https://github.com/CodeBullet-Community/BulletBot/releases/latest/download/linux-master-installer.sh && sudo chmod +x linux-master-installer.sh`
+To start the setup process, first download the master installer: `cd ~/ && wget -N https://raw.githubusercontent.com/CodeBullet-Community/BulletBot/release/linux-master-installer.sh && sudo chmod +x linux-master-installer.sh`
 
 Execute the master installer using `sudo bash linux-master-installer.sh`, then download BulletBot via option `1` in the installer menu.
-
-??? info "Downloading from a specific release"
-    If you rather download a specific release (such as a pre-release), download the corresponding master installer via: `cd ~/ && wget -N https://github.com/CodeBullet-Community/BulletBot/releases/download/[tag]/linux-master-installer.sh && sudo chmod +x linux-master-installer.sh`
-
-    * Replace `[tag]` with the tag/version number of the release you want to download the master installer from.
-    * Please note that if you use this method, you might not get the results that you are expecting, since the master and sub-master installers will usually grab files from the most recent release. Pre-releases, on the other hand, will only grab items from the release it was in.
 
 ### Running the Master Installer for the First Time
 
