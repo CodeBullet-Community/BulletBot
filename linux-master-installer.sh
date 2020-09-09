@@ -7,7 +7,7 @@
 # Once the system is deemed as supported, the appropriate sub-master installer
 # will be chosen, downloaded (if it isn't already), then executed.
 #
-# Installer version: v1.2.1 # The version number of the installers as a whole
+# Installer version: v2.0.0 # The version number of the installers as a whole
 # Note: The installer version number should not be considered when looking at
 # compatability. The version number is more of a note for myself (Bark Ranger/
 # StrangeRanger/Hunter T.).
@@ -33,14 +33,14 @@
 ################################################################################
 #
     # The '--no-hostname' flag for journalctl only works with systemd 230 and
-    # above
+    # later 
     if (($(journalctl --version | grep -oP "[0-9]+" | head -1) >= 230)); then
         no_hostname="--no-hostname"
         export no_hostname
     fi
 
     # Used in combination with the sub-master installers to apply changes to
-    # the installers after downloading the latest BulletBot release, without
+    # the installers after downloading the latest updates for BulletBot, without
     # requiring the user to exit then re-execute the master installer
     master_installer="/home/bulletbot/linux-master-installer.sh"
     export master_installer
@@ -136,14 +136,15 @@
     }
 
     execute_debian_ubuntu_installer() {
-        supported=true
-        ./installers/Debian-Ubuntu/debian-ubuntu-installer.sh || {
+        supported="true"
+        ./installers/Debian-Ubuntu/debian-ubuntu-installer.sh || ./debian-ubuntu-installer.sh || {
             # A.1. Downloads the corresponding sub-master installer if it
             # doesn't exist
             if [[ ! -f installers/Debian-Ubuntu/debian-ubuntu-installer.sh ]]; then
                 echo "Downloading 'debian-ubuntu-installer.sh'..."
                 while true; do
-                    wget -N https://github.com/CodeBullet-Community/BulletBot/releases/latest/download/debian-ubuntu-installer.sh || {
+                    wget -N https://raw.githubusercontent.com/CodeBullet-Community/BulletBot/installers/installers/Debian-Ubuntu/debian-ubuntu-installer.sh || {
+                    #wget -N https://raw.githubusercontent.com/CodeBullet-Community/BulletBot/latest/installers/Debian-Ubuntu/debian-ubuntu-installer.sh || {
                         echo "${red}Failed to download 'debian-ubuntu-installer.sh'" \
                             "${nc}" >&2
                         if ! hash wget &>/dev/null; then
@@ -184,13 +185,14 @@
     }
 
     execute_centos_rhel_installer() {
-        supported=true
-        ./installers/CentOS-RHEL/centos-rhel-installer.sh || {
+        supported="true"
+        ./installers/CentOS-RHEL/centos-rhel-installer.sh || ./centos-rhel-installer.sh || {
             # A.1.
             if [[ ! -f installers/CentOS-RHEL/centos-rhel-installer.sh ]]; then
                 echo "Downloading 'centos-rhel-installer.sh'..."
                 while true; do
-                    wget -N https://github.com/CodeBullet-Community/BulletBot/releases/latest/download/centos-rhel-installer.sh || {
+                    wget -N https://raw.githubusercontent.com/CodeBullet-Community/BulletBot/installers/installers/CentOS-RHEL/centos-rhel-installer.sh || {
+                    #wget -N https://raw.githubusercontent.com/CodeBullet-Community/BulletBot/latest/installers/CentOS-RHEL/centos-rhel-installer.sh || {
                         echo "${red}Failed to download 'centos-rhel-installer.sh'" \
                             "${nc}" >&2
                         if ! hash wget &>/dev/null; then
@@ -259,7 +261,7 @@
                 if [[ $bits = 64 ]]; then
                     execute_debian_ubuntu_installer
                 else
-                    supported=false
+                    supported="false"
                 fi
                 ;;
             18.04)
@@ -267,11 +269,11 @@
                 if [[ $bits = 64 ]]; then
                     execute_debian_ubuntu_installer
                 else
-                    supported=false
+                    supported="false"
                 fi
                 ;;
             *)
-                supported=false
+                supported="false"
                 ;;
         esac
     elif [[ $distro = "debian" ]]; then
@@ -283,7 +285,7 @@
                 execute_debian_ubuntu_installer
                 ;;
             *)
-                supported=false
+                supported="false"
                 ;;
         esac
     elif [[ $distro = "rhel" || $distro = "centos" ]]; then
@@ -293,7 +295,7 @@
                 if [[ $bits = 64 ]]; then
                     execute_centos_rhel_installer
                 else
-                    supported=false
+                    supported="false"
                 fi
                 ;;
             8)
@@ -301,20 +303,20 @@
                 if [[ $bits = 64 ]]; then
                     execute_centos_rhel_installer
                 else
-                    supported=false
+                    supported="false"
                 fi
                 ;;
             *)
-                supported=false
+                supported="false"
                 ;;
         esac
     else
-        supported=false
+        supported="false"
     fi
         
-    if [[ $supported = false ]]; then
-        echo "${red}Your operating system/Linux Distribution does not support" \
-            "the installation, setup, and/or use of BulletBot${nc}" >&2
+    if [[ $supported = "false" ]]; then
+        echo "${red}Your operating system/Linux Distribution is not supported" \
+            "by the installation, setup, and/or use of BulletBot${nc}" >&2
         echo -e "\nExiting..."
         exit 1
     fi

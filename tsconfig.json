@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "target": "esnext",
-        "watch": true,
+        "watch": false,
         "outDir": "out",
         "rootDir": "src",
         "moduleResolution": "node",

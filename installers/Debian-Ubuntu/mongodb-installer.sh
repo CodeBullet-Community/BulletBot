@@ -2,9 +2,9 @@
 
 ################################################################################
 #
-# Takes care of installing MongoDB 4.2.x.
-# MongoDB is installed using the instructions described here:
-# https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/
+# Installs MongoDB 4.2.x. MongoDB is installed using the instructions described
+# here: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/ and
+# https://docs.mongodb.com/manual/tutorial/install-mongodb-on-debian/
 #
 # Note: All variables are exported from 'linux-master-installer.sh' and
 # 'debian-ubuntu-installer.sh'.
@@ -26,8 +26,8 @@
     echo "Importing public key..."
     wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add - || {
         echo "${red}Failed to import public key" >&2
-        echo "${cyan}The public key must be imported in order to download and" \
-            "install MongoDB${nc}"
+        echo "${cyan}The public key is required to download and install" \
+            "MongoDB${nc}"
         read -p "Press [Enter] to return to the installer menu"
         exit 1
     }
@@ -37,18 +37,18 @@
         echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu" \
             "${codename}/mongodb-org/4.2 multiverse" | sudo tee \
             /etc/apt/sources.list.d/mongodb-org-4.2.list || {
-                echo "${red}Failed to create MongoDB source list file" >&2
-                echo "${cyan}The source list file must be created in order to" \
-                    "download and install MongoDB${nc}"
+                echo "${red}Failed to create MongoDB source file" >&2
+                echo "${cyan}The source file is required to download and" \
+                    "install MongoDB${nc}"
                 read -p "Press [Enter] to return to the installer menu"
                 exit 1
             }
     elif [[ $distro = "debian" ]]; then
         echo "deb http://repo.mongodb.org/apt/debian ${codename}/mongodb-org/4.2" \
             "main" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list || {
-                echo "${red}Failed to create MongoDB source list file" >&2
-                echo "${cyan}The source list file must be created in order to" \
-                    "download and install MongoDB${nc}"
+                echo "${red}Failed to create MongoDB source file" >&2
+                echo "${cyan}The source file is required to download and" \
+                    "install MongoDB${nc}"
                 read -p "Press [Enter] to return to the installer menu"
                 exit 1
             }
@@ -73,13 +73,13 @@
     echo "Enabling 'mongod.service'..."
     systemctl enable mongod.service || {
         echo "${red}Failed to enable 'mongod.service'" >&2
-        echo "${cyan}'mongod.service' should be enabled so that it is" \
+        echo "${cyan}'mongod.service' must be enabled so MongoDB is" \
             "automatically started on system reboot${nc}"
     }
     echo "Starting 'mongod.service'..."
     systemctl start mongod.service || {
         echo "${red}Failed to start 'mongod.service'" >&2
-        echo "${yellow}'mongod.service' needs to be running for BulletBot to" \
+        echo "${yellow}'mongod.service' must be running for BulletBot to" \
             "work${nc}"
     }
 

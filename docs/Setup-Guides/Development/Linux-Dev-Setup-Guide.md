@@ -4,23 +4,14 @@ This guide is meant for those who want to do the development work on BulletBot, 
 
 ## Officially Supported Linux Distributions
 
-Below is a list of Linux Distributions that BulletBot is officially supported on. It also lists what versions of MongoDB and Node.js, along with other system specifications that are supported on specific distributions:
+Below is a list of Linux Distributions that BulletBot is officially supported on.
 
-| Distro        | MongoDB Support        | Node\.js Support | Architecture |
-|---------------|------------------------|------------------|--------------|
-| Ubuntu 16\.04 | 3\.4, 3\.6, 4\.0, 4\.2 | 8\.x\-13\.x      | 64 bit<br>- \(ARM64 not supported\) |
-| Ubuntu 18\.04 | 4\.0, 4\.2             | 8\.x\-13\.x      | 64 bit       |
-| Debian 9      | 4\.0, 4\.2             | 8\.x\-13\.x      | 64 bit       |
-| Debian 10     | 4\.2\.1\+              | 8\.x\-13\.x      | 64 bit       |
-| RHEL 7        | 3\.4, 3\.6, 4\.0, 4\.2 | 8\.x\-13\.x      | 64 bit       |
-| RHEL 8        | 4\.2\.1\+              | 8\.x\-13\.x      | 64 bit       |
-| CentOS 7      | 3\.4, 3\.6, 4\.0, 4\.2 | 8\.x\-13\.x      | 64 bit       |
-| CentOS 8      | 4\.2\.1\+              | 8\.x\-13\.x      | 64 bit       |
-
-For more information on supported platforms specific to MongoDB and Node.js, visit:
-
-* MongoDB: <https://docs.mongodb.com/manual/installation/#supported-platforms>
-* Node.js: <https://github.com/nodesource/distributions/blob/master/README.md>
+| Distributions | Distro Versions | Architecture |
+|---------------|-----------------|--------------|
+| Ubuntu        | 16.04<br>18.04  | 64 bit<br>- \(ARM64 not supported\) |
+| Debian        | 9<br>10         | 64 bit       |
+| RHEL          | 7<br>8          | 64 bit       |
+| CentOS        | 7<br>8          | 64 bit       |
 
 ## Getting Started
 
@@ -28,7 +19,7 @@ For more information on supported platforms specific to MongoDB and Node.js, vis
 
 First, you will have to install the required software to compile and run the bot. BulletBot runs on Node.js and uses a MongoDB cluster to work. Download and install both via the links below:
 
-* Node.js (Recommended version: 13.x):
+* Node.js (Recommended version: 14.x):
   * Download and install via a package manager: <https://github.com/nodesource/distributions/blob/master/README.md>
 * MongoDB (Recommended: version 4.2.x):
   * Download and install guide: <https://docs.mongodb.com/manual/administration/install-on-linux/>
