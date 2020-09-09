@@ -23,7 +23,7 @@
 #
 ################################################################################
 #
-# Dealing with 'bullet-mongo-start.service'
+# Disables 'bullet-mongo-start.service'
 #
 ################################################################################
 #
@@ -32,8 +32,8 @@
         echo "Disabling 'bullet-mongo-start.service'..."
         systemctl disable bullet-mongo-start.service || {
             echo "${red}Failed to disable 'bullet-mongo-start.service'" >&2
-            echo "${cyan}This service must be disabled in order to run" \
-                "BulletBot in this run mode"
+            echo "${cyan}This service must be disabled in order to use this" \
+                "run mode${nc}"
             read -p "Press [Enter] to return to the installer menu"
             exit 1
         }
@@ -42,11 +42,11 @@
 #
 ################################################################################
 #
-# Starting and/or restarting 'bulletbot.service'
+# Starting or restarting 'bulletbot.service'
 #
 ################################################################################
 #
-    if [[ $bullet_service_status = "active" ]]; then
+    if [[ $bulletbot_service_status = "active" ]]; then
         echo "Restarting 'bulletbot.service'..."
         systemctl restart bulletbot.service || {
             echo "${red}Failed to restart 'bulletbot.service'${nc}" >&2
@@ -78,14 +78,12 @@
         ((timer-=1))
     done
 
-    # Lists the startup logs in order to better identify if and when
-    # an error occurred during the startup of 'bulletbot.service'
     # Note: $no_hostname is purposefully unquoted. Do not quote those variables.
     echo -e "\n\n-------- bulletbot.service startup logs ---------" \
         "\n$(journalctl -u bulletbot -b $no_hostname -S "$start_time")" \
         "\n--------- End of bulletbot.service startup logs --------\n"
 
-    echo -e "Please check the logs above to make sure that there aren't any" \
+    echo -e "${cyan}Please check the logs above to make sure that there aren't any" \
         "errors, and if there are, to resolve whatever issue is causing them\n"
 
     echo "${green}BulletBot is now running in the background${nc}"

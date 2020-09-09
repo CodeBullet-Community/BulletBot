@@ -2,9 +2,9 @@
 
 ################################################################################
 #
-# Takes care of installing Node.js (version 14.x) and the required packages and
-# dependencies required for BulletBot to run.
-# Node.js is installed using the instructions described here:
+# Installs Node.js (version 14.x) and the required packages and
+# dependencies for Bottius to run. Node.js is installed using the instructions
+# described here:
 # https://github.com/nodesource/distributions/blob/master/README.md
 #
 # Note: All variables are exported from 'linux-master-installer.sh' and
@@ -17,10 +17,9 @@
 ################################################################################
 #
     install_nodejs() {
-        echo "Downloading Node.js repo installer..." 
+        echo "Downloading the Node.js repo installer..." 
         curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - || {
-            echo "${red}Failed to download the Node.js installer" >&2
-            echo "${cyan}Without the installer, nodejs can't be installed${nc}"
+            echo "${red}Failed to download the Node.js installer${nc}" >&2
             read -p "Press [Enter] to return to the installer menu"
             exit 1
         }
@@ -51,11 +50,18 @@
                         "Authentication, you can ignore this. Otherwise, you" \
                         "will need to install it manually.${nc}"                    
                 }
+                npm isntall -g typescript || {
+                    echo "${red}Failed to install typescript globally" >&2
+                    echo "${cyan}Typescript is required to compile the code to" \
+                        "JS${nc}"
+                    read -p "Press [Enter] to return to the installer menu"
+                    exit 1
+                }
                 break
             else
                 echo "${yellow}npm is not installed${nc}"
                 
-                # Npm might not be installed due to Node.js not being installed
+                # Npm might not exist due to Node.js not being installed
                 if (! hash node || ! hash nodejs) &>/dev/null; then
                     echo "${yellow}nodejs is not installed${nc}"
                     install_nodejs
@@ -66,7 +72,7 @@
                     # Sometimes npm isn't installed for some reason, and it is
                     # necessary to reinstall Node.js
                     echo -e "${cyan}Try reinstalling nodejs, then try again" \
-                        "\nTo uninstall nodejs: sudo apt reinstall" \
+                        "\nTo reinstall nodejs: sudo apt reinstall" \
                         "nodejs${nc}"
                     read -p "Press [Enter] to return to the installer menu"
                     exit 1
