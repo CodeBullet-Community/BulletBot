@@ -10,5 +10,8 @@
         "esModuleInterop": true,
         "noImplicitUseStrict": true
     },
-    "exclude": ["src/commands/[command-name].ts"]
+    "exclude": [
+        "src/commands/[command-name].ts",
+        "Old_BulletBot"
+    ]
 }
