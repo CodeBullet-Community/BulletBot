@@ -143,8 +143,7 @@
             if [[ ! -f installers/Debian-Ubuntu/debian-ubuntu-installer.sh ]]; then
                 echo "Downloading 'debian-ubuntu-installer.sh'..."
                 while true; do
-                    wget -N https://raw.githubusercontent.com/CodeBullet-Community/BulletBot/installers/installers/Debian-Ubuntu/debian-ubuntu-installer.sh || {
-                    #wget -N https://raw.githubusercontent.com/CodeBullet-Community/BulletBot/latest/installers/Debian-Ubuntu/debian-ubuntu-installer.sh || {
+                    wget -N https://raw.githubusercontent.com/CodeBullet-Community/BulletBot/release/installers/Debian-Ubuntu/debian-ubuntu-installer.sh || {
                         echo "${red}Failed to download 'debian-ubuntu-installer.sh'" \
                             "${nc}" >&2
                         if ! hash wget &>/dev/null; then
@@ -191,8 +190,7 @@
             if [[ ! -f installers/CentOS-RHEL/centos-rhel-installer.sh ]]; then
                 echo "Downloading 'centos-rhel-installer.sh'..."
                 while true; do
-                    wget -N https://raw.githubusercontent.com/CodeBullet-Community/BulletBot/installers/installers/CentOS-RHEL/centos-rhel-installer.sh || {
-                    #wget -N https://raw.githubusercontent.com/CodeBullet-Community/BulletBot/latest/installers/CentOS-RHEL/centos-rhel-installer.sh || {
+                    wget -N https://raw.githubusercontent.com/CodeBullet-Community/BulletBot/release/installers/CentOS-RHEL/centos-rhel-installer.sh || {
                         echo "${red}Failed to download 'centos-rhel-installer.sh'" \
                             "${nc}" >&2
                         if ! hash wget &>/dev/null; then

@@ -196,8 +196,7 @@
             }
         else
             echo "Downloading BulletBot..."
-            git clone --single-branch -b installers "$repo" tmp || {
-            #git clone --single-branch -b release "$repo" tmp || {
+            git clone --single-branch -b release "$repo" tmp || {
                 echo "${red}Failed to download BulletBot${nc}" >&2
                 clean_up
                 echo -e "\nExiting..."
