@@ -377,7 +377,7 @@
                 echo "2. Install MongoDB ${green}(Already installed)${nc}"
             fi
             
-            if (! hash node || ! hash npm || ! hash nodejs) &>/dev/null; then
+            if (! hash node || ! hash npm) &>/dev/null; then
                 echo "3. Install Node.js (will also perform the actions of" \
                     "option 4) ${red}(Not installed)${nc}"
             else
