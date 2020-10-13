@@ -1,5 +1,6 @@
 # Portable installation that doesn't install anything on your machine.
 
+# Note: The database is not persistent by default. To enable persistence, mount a volume or a directory to /data/db on the container.
 # How to use:
 #   - Install docker
 #   - Run "docker build . -t bulletbot" in the same directory as the Dockerfile
