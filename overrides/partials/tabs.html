@@ -1,0 +1,151 @@
+<style>
+.md-tabs {
+  width: 100%;
+  overflow: auto;
+  color: var(--md-primary-bg-color);
+  background: linear-gradient(180deg, rgba(2,0,36,1) -100%, rgba(32,148,243,1) 100%);
+  transition: background 250ms;
+
+  .no-js & {
+    transition: none;
+  }
+
+  @include break-to-device(tablet) {
+    display: none;
+  }
+
+  @media print {
+    display: none;
+  }
+
+  &__list {
+    margin: 0;
+    margin-left: px2rem(4px);
+    padding: 0;
+    white-space: nowrap;
+    list-style: none;
+    contain: content;
+
+    // Adjust for right-to-left languages
+    [dir="rtl"] & {
+      margin-right: px2rem(4px);
+      margin-left: initial;
+    }
+  }
+
+  &__item {
+    display: inline-block;
+    height: px2rem(48px);
+    padding-right: px2rem(12px);
+    padding-left: px2rem(12px);
+  }
+
+  &__link {
+    display: block;
+    margin-top: px2rem(16px);
+    font-size: px2rem(14px);
+    opacity: 0.7;
+    transition:
+      transform 400ms cubic-bezier(0.1, 0.7, 0.1, 1),
+      opacity   250ms;
+
+    .no-js & {
+      transition: none;
+    }
+
+    &--active,
+    &:hover {
+      color: inherit;
+      opacity: 1;
+    }
+
+    @for $i from 2 through 16 {
+      .md-tabs__item:nth-child(#{$i}) & {
+        transition-delay: 20ms * ($i - 1);
+      }
+    }
+  }
+
+  &[data-md-state="hidden"] {
+    pointer-events: none;
+
+    .md-tabs__link {
+      transform: translateY(50%);
+      opacity: 0;
+      transition:
+        color     250ms,
+        transform   0ms 400ms,
+        opacity   100ms;
+    }
+  }
+
+  @include break-from-device(screen) {
+
+    ~ .md-main .md-nav--primary > .md-nav__list > .md-nav__item--nested {
+      display: none;
+    }
+
+    &--active ~ .md-main {
+
+      .md-nav--primary {
+
+        .md-nav__title {
+          display: block;
+          padding: 0 px2rem(12px);
+          pointer-events: none;
+          scroll-snap-align: start;
+
+          &[for="__drawer"] {
+            display: none;
+          }
+        }
+
+        > .md-nav__list > .md-nav__item {
+          display: none;
+
+          &--active {
+            display: block;
+            padding: 0;
+
+            > .md-nav__link {
+              display: none;
+            }
+          }
+        }
+      }
+
+      .md-nav[data-md-level="1"] {
+        display: block;
+
+        > .md-nav__list > .md-nav__item {
+          padding: 0 px2rem(12px);
+        }
+
+        .md-nav .md-nav__title {
+          display: none;
+        }
+      }
+    }
+  }
+}
+</style>
+
+{% set class = "md-tabs" %}
+{% if page.ancestors | length > 0 %}
+  {% set class = "md-tabs md-tabs--active" %}
+{% endif %}
+
+<!-- Tabs with outline -->
+<nav
+  class="{{ class }}"
+  aria-label="{{ lang.t('tabs.title') }}"
+  data-md-component="tabs"
+>
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      {% for nav_item in nav %}
+        {% include "partials/tabs-item.html" %}
+      {% endfor %}
+    </ul>
+  </div>
+</nav>
