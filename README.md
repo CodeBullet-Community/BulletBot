@@ -1,6 +1,6 @@
 # BulletBot
 
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![Project Status: Inactive – The project has reached a stable, usable state but is no longer being actively developed; support/maintenance will be provided as time allows.](https://www.repostatus.org/badges/latest/inactive.svg)](https://www.repostatus.org/#inactive)
 [![Discord](https://discordapp.com/api/guilds/630139225869647913/widget.png)](https://discord.gg/74py7yd)
 
 This is a general-purpose Discord bot that originated from a webhook problem in the [Code Bullet and Co](https://discord.gg/3wTEZkh) server. During the prelaunch development time, the main creator [Codec](https://github.com/Jet132) decided to extend this project to replacing every bot in the server. Until now, I only replaced one entire bot but also some functions from other bots.
